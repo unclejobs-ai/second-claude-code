@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0] - 2026-03-20
+
+### Added
+- Comprehensive README overhaul with Mermaid diagrams and shields.io badges
+- Korean README (README.ko.md) for the Korean developer community
+- Hero SVG skill wheel diagram (docs/images/hero.svg)
+- VHS tape script for terminal demo recording (docs/demo.tape)
+
+### Changed
+- README restructured into 13 sections (~315 lines, up from 125)
+- Loop command example changed from "newsletter" to "article"
+- Added `<details>` sections for frameworks table and architecture tree
+- Language toggle between English and Korean versions
+
 ## [0.1.0] - 2026-03-19
 
 ### Added
