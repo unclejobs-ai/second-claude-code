@@ -42,7 +42,7 @@ graph LR
 **1. 설치**
 
 ```bash
-claude plugin add github:parkeungje/second-claude
+claude plugin add github:EungjePark/second-claude-code
 ```
 
 **2. 확인** — 새 Claude Code 세션을 시작하면 컨텍스트가 주입됩니다:
@@ -67,35 +67,35 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 ## 8개의 명령어
 
-명령어는 `/second-claude-code:` 접두사를 사용합니다 (단축형: `/scc:`).
+명령어는 `/second-claude-code:` 접두사를 사용합니다.
 
 ### 탐색 (Discover)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `research` | 반복 정제를 거치는 자율 심층 리서치 | `/scc:research "AI 에이전트 동향 2026"` |
-| `hunt` | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/scc:hunt "terraform 보안 감사"` |
+| `research` | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
+| `hunt` | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
 
 ### 생성 (Create)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `write` | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/scc:write article "바이브 코딩의 미래"` |
-| `analyze` | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/scc:analyze swot "우리 SaaS 제품"` |
+| `write` | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
+| `analyze` | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
 
 ### 품질 (Quality)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `review` | 다중 관점 품질 게이트 + 합의 투표 | `/scc:review docs/draft.md --preset content` |
-| `loop` | 목표 점수를 향한 반복 개선 | `/scc:loop "이 아티클을 4.5/5로 올려" --max 3` |
+| `review` | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
+| `loop` | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
 
 ### 관리 (Manage)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `capture` | 지식 캡처 및 PARA 분류 | `/scc:capture https://example.com/article` |
-| `pipeline` | 커스텀 워크플로우 빌더 및 실행기 | `/scc:pipeline run "weekly-digest"` |
+| `capture` | 지식 캡처 및 PARA 분류 | `/second-claude-code:capture https://example.com/article` |
+| `pipeline` | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
 
@@ -119,14 +119,14 @@ AI 에이전트 프레임워크 현황을 조사해줘
 ### 라우팅 예시
 
 ```
-"AI 에이전트에 대해 조사해"              →  /scc:research
-"이 주제로 아티클 작성해"                →  /scc:write
-"SWOT으로 분석해"                       →  /scc:analyze
-"이 초안을 리뷰해"                      →  /scc:review
-"더 좋게 다듬어"                        →  /scc:loop
-"이 링크 저장해줘"                      →  /scc:capture
-"주간 워크플로우 자동화"                 →  /scc:pipeline
-"보안 감사 스킬 있어?"                   →  /scc:hunt
+"AI 에이전트에 대해 조사해"              →  /second-claude-code:research
+"이 주제로 아티클 작성해"                →  /second-claude-code:write
+"SWOT으로 분석해"                       →  /second-claude-code:analyze
+"이 초안을 리뷰해"                      →  /second-claude-code:review
+"더 좋게 다듬어"                        →  /second-claude-code:loop
+"이 링크 저장해줘"                      →  /second-claude-code:capture
+"주간 워크플로우 자동화"                 →  /second-claude-code:pipeline
+"보안 감사 스킬 있어?"                   →  /second-claude-code:hunt
 ```
 
 `hooks/prompt-detect.mjs`에서 영어 약 40개, 한국어 약 35개의 트리거 패턴을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다.
@@ -146,7 +146,7 @@ sequenceDiagram
     participant V as Review
     participant L as Loop
 
-    U->>R: "Write a market report on edge AI"
+    U->>R: "엣지 AI 시장 보고서 작성해줘"
     R->>A: findings (haiku subagents)
     A->>W: framework output (sonnet)
     W->>V: draft
@@ -165,13 +165,13 @@ research → analyze → review → done                # 전략 분석
 capture → research → write → pipeline(save)       # 지식 → 콘텐츠 전환
 ```
 
-`/scc:write`는 내부적으로 `/scc:research`와 `/scc:review`를 자동 호출하므로, 하나의 write 명령어만으로 리서치 기반 + 리뷰 검증된 콘텐츠를 생산할 수 있습니다.
+`/second-claude-code:write`는 내부적으로 `/second-claude-code:research`와 `/second-claude-code:review`를 자동 호출하므로, 하나의 write 명령어만으로 리서치 기반 + 리뷰 검증된 콘텐츠를 생산할 수 있습니다.
 
 ---
 
 ## 다중 관점 리뷰
 
-`/scc:review`는 3~5명의 전문 서브에이전트를 병렬로 실행합니다. 각각 다른 모델과 전문 영역을 가집니다.
+`/second-claude-code:review`는 3~5명의 전문 서브에이전트를 병렬로 실행합니다. 각각 다른 모델과 전문 영역을 가집니다.
 
 ### 리뷰어
 
@@ -223,7 +223,7 @@ graph TD
 <details>
 <summary><strong>15개 전략 프레임워크</strong></summary>
 
-`/scc:analyze`는 용도별로 분류된 15개의 내장 프레임워크를 지원합니다:
+`/second-claude-code:analyze`는 용도별로 분류된 15개의 내장 프레임워크를 지원합니다:
 
 | 카테고리 | 프레임워크 |
 |----------|------------|
@@ -235,9 +235,9 @@ graph TD
 각 프레임워크는 `skills/analyze/references/frameworks/`에 독립 레퍼런스 문서로 존재합니다. 프롬프트에서 자동으로 적절한 프레임워크를 선택하거나, 직접 지정할 수도 있습니다:
 
 ```bash
-/scc:analyze porter "클라우드 인프라 시장"
-/scc:analyze rice --input features.md
-/scc:analyze lean-canvas "내 스타트업 아이디어"
+/second-claude-code:analyze porter "클라우드 인프라 시장"
+/second-claude-code:analyze rice --input features.md
+/second-claude-code:analyze lean-canvas "내 스타트업 아이디어"
 ```
 
 </details>
@@ -318,7 +318,7 @@ second-claude/
 
 | 플랫폼 | 설치 방법 |
 |--------|-----------|
-| **Claude Code** (주력) | `claude plugin add github:parkeungje/second-claude` |
+| **Claude Code** (주력) | `claude plugin add github:EungjePark/second-claude-code` |
 | **OpenClaw** | 표준 ACP 프로토콜 — 자동 감지 |
 | **Codex** | SKILL.md 표준 호환 |
 | **Gemini CLI** | SKILL.md 표준 호환 |

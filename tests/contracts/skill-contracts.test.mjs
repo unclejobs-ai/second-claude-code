@@ -59,15 +59,15 @@ test("review presets only reference implemented reviewer agents", () => {
   }
 
   assert.ok(
-    readme.includes("| `content` | deep + devil + tone |"),
+    readme.includes("| `content` | deep-reviewer + devil-advocate + tone-guardian |"),
     "README should document the content preset"
   );
   assert.ok(
-    readme.includes("| `strategy` | deep + devil + fact |"),
+    readme.includes("| `strategy` | deep-reviewer + devil-advocate + fact-checker |"),
     "README should document the strategy preset"
   );
   assert.ok(
-    readme.includes("| `code` | deep + fact + structure |"),
+    readme.includes("| `code` | deep-reviewer + fact-checker + structure-analyst |"),
     "README should document the code preset"
   );
 
@@ -164,6 +164,25 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
   }
 });
 
+test("README install and command namespace match the plugin surface", () => {
+  const plugin = JSON.parse(read(".claude-plugin/plugin.json"));
+  const readme = read("README.md");
+  const readmeKo = read("README.ko.md");
+  const expectedInstall = "claude plugin add github:EungjePark/second-claude-code";
+  const publicPrefix = `/${plugin.name}:`;
+
+  for (const doc of [readme, readmeKo]) {
+    assert.match(doc, new RegExp(expectedInstall.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    assert.doesNotMatch(doc, /github:parkeungje\/second-claude\b/);
+    assert.doesNotMatch(doc, /\/scc:/);
+    assert.match(
+      doc,
+      new RegExp(publicPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+      "README should document the public slash command prefix from plugin.json"
+    );
+  }
+});
+
 test("analyze framework templates use the standardized section layout", () => {
   const templateDir = path.join(root, "skills", "analyze", "references", "frameworks");
   const requiredSections = [
@@ -256,9 +275,8 @@ test("numeric contracts stay aligned across docs", () => {
   );
 });
 
-test("repository docs and skills do not contain Hangul", () => {
+test("core docs and skills outside bilingual READMEs do not contain Hangul", () => {
   const targets = [
-    "README.md",
     "agents",
     "commands",
     "hooks",

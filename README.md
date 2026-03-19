@@ -43,7 +43,7 @@ graph LR
 **1. Install**
 
 ```bash
-claude plugin add github:parkeungje/second-claude
+claude plugin add github:EungjePark/second-claude-code
 ```
 
 **2. Verify** — start a new Claude Code session and look for the context injection:
@@ -68,35 +68,35 @@ The auto-router picks `/second-claude-code:research` for you. No slash commands 
 
 ## The 8 Commands
 
-Commands use the `/second-claude-code:` prefix (shorthand: `/scc:`).
+Commands use the `/second-claude-code:` prefix.
 
 ### Discover
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `research` | Autonomous deep research with iterative refinement | `/scc:research "AI agent landscape 2026"` |
-| `hunt` | Skill discovery — find and install new capabilities | `/scc:hunt "terraform security audit"` |
+| `research` | Autonomous deep research with iterative refinement | `/second-claude-code:research "AI agent landscape 2026"` |
+| `hunt` | Skill discovery — find and install new capabilities | `/second-claude-code:hunt "terraform security audit"` |
 
 ### Create
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `write` | Content production (articles, newsletters, scripts) | `/scc:write newsletter "The future of vibe coding"` |
-| `analyze` | Strategic framework analysis (15 built-in frameworks) | `/scc:analyze swot "our SaaS product"` |
+| `write` | Content production (articles, newsletters, scripts) | `/second-claude-code:write newsletter "The future of vibe coding"` |
+| `analyze` | Strategic framework analysis (15 built-in frameworks) | `/second-claude-code:analyze swot "our SaaS product"` |
 
 ### Quality
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `review` | Multi-perspective quality gate with consensus voting | `/scc:review docs/draft.md --preset content` |
-| `loop` | Iterative improvement toward a target score | `/scc:loop "Raise this article to 4.5/5" --max 3` |
+| `review` | Multi-perspective quality gate with consensus voting | `/second-claude-code:review docs/draft.md --preset content` |
+| `loop` | Iterative improvement toward a target score | `/second-claude-code:loop "Raise this article to 4.5/5" --max 3` |
 
 ### Manage
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `capture` | Knowledge capture and PARA classification | `/scc:capture https://example.com/article` |
-| `pipeline` | Custom workflow builder and runner | `/scc:pipeline run "weekly-digest"` |
+| `capture` | Knowledge capture and PARA classification | `/second-claude-code:capture https://example.com/article` |
+| `pipeline` | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
 
@@ -105,12 +105,12 @@ Commands use the `/second-claude-code:` prefix (shorthand: `/scc:`).
 You do not need to memorize slash commands. The hook-based auto-router detects intent from natural language in both English and Korean, then dispatches the right skill.
 
 ```
-"Write an article about AI agents"     →  /scc:write
-"AI 에이전트에 대해 조사해"              →  /scc:research
-"Analyze this market with SWOT"        →  /scc:analyze
-"이 초안을 리뷰해"                      →  /scc:review
-"Save this for later"                  →  /scc:capture
-"How do I run a security audit?"       →  /scc:hunt
+"Write an article about AI agents"     →  /second-claude-code:write
+"AI 에이전트에 대해 조사해"              →  /second-claude-code:research
+"Analyze this market with SWOT"        →  /second-claude-code:analyze
+"이 초안을 리뷰해"                      →  /second-claude-code:review
+"Save this for later"                  →  /second-claude-code:capture
+"How do I run a security audit?"       →  /second-claude-code:hunt
 ```
 
 The router matches against ~40 English and ~35 Korean trigger patterns via `hooks/prompt-detect.mjs` and injects the appropriate skill context before the model responds.
@@ -149,13 +149,13 @@ research → analyze → review → done                # Strategic analysis
 capture → research → write → pipeline(save)       # Knowledge-to-content
 ```
 
-`/scc:write` automatically invokes `/scc:research` and `/scc:review` internally, so a single write command can produce research-backed, review-gated content.
+`/second-claude-code:write` automatically invokes `/second-claude-code:research` and `/second-claude-code:review` internally, so a single write command can produce research-backed, review-gated content.
 
 ---
 
 ## Multi-Perspective Review
 
-`/scc:review` dispatches 3-5 specialized subagents in parallel, each with a different model and focus area.
+`/second-claude-code:review` dispatches 3-5 specialized subagents in parallel, each with a different model and focus area.
 
 ### Reviewers
 
@@ -207,7 +207,7 @@ graph TD
 <details>
 <summary><strong>15 Strategic Frameworks</strong></summary>
 
-`/scc:analyze` supports 15 built-in frameworks, grouped by use case:
+`/second-claude-code:analyze` supports 15 built-in frameworks, grouped by use case:
 
 | Category | Frameworks |
 |----------|------------|
@@ -219,9 +219,9 @@ graph TD
 Each framework lives in `skills/analyze/references/frameworks/` as a standalone reference document. The analyze skill selects the right framework from your prompt or you can specify one directly:
 
 ```bash
-/scc:analyze porter "cloud infrastructure market"
-/scc:analyze rice --input features.md
-/scc:analyze lean-canvas "my startup idea"
+/second-claude-code:analyze porter "cloud infrastructure market"
+/second-claude-code:analyze rice --input features.md
+/second-claude-code:analyze lean-canvas "my startup idea"
 ```
 
 </details>
@@ -305,7 +305,7 @@ Context-efficient + zero dependency = fast, cheap, portable across platforms.
 
 | Platform | Install |
 |----------|---------|
-| **Claude Code** (primary) | `claude plugin add github:parkeungje/second-claude` |
+| **Claude Code** (primary) | `claude plugin add github:EungjePark/second-claude-code` |
 | **OpenClaw** | Standard ACP protocol — auto-detected |
 | **Codex** | SKILL.md standard compatible |
 | **Gemini CLI** | SKILL.md standard compatible |
