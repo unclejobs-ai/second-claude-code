@@ -29,11 +29,11 @@ Most organizations in 2024 operated at L1-L2. The 2025 inflection is the growing
 
 ### Vertical AI agents are replacing horizontal tools
 
-Generic chatbots are giving way to domain-specific agents. Devin (Cognition Labs) operates as an autonomous software engineer. Harvey targets legal research and drafting. Abridge transcribes and summarizes medical consultations in real time. These vertical agents outperform general-purpose models because they encode domain knowledge, regulatory constraints, and workflow patterns specific to their industry.
+Generic chatbots are giving way to domain-specific agents. Devin (Cognition Labs) operates as an autonomous software engineer. Harvey targets legal research and drafting. Abridge transcribes and summarizes medical consultations in real time. These vertical agents outperform general-purpose models because they encode domain knowledge, regulatory constraints, and workflow patterns specific to their industry. In maturity model terms, vertical agents are what make L3 (Execution) viable: a general-purpose LLM might draft a contract at L2, but only a domain-tuned agent like Harvey can execute the full research-draft-cite workflow that constitutes L3 legal work.
 
 ### The "human-in-the-loop" is shrinking but not disappearing
 
-Early AI workflows required human approval at every step. Current systems increasingly operate autonomously within defined guardrails, escalating only on edge cases. Intercom's Fin AI agent resolves 50% of support tickets without human intervention. However, high-stakes domains -- healthcare diagnosis, legal advice, financial trading -- maintain mandatory human checkpoints, and regulators (EU AI Act, 2024) are codifying this requirement.
+Early AI workflows required human approval at every step -- pure L1. Current systems increasingly operate at L3 within defined guardrails, escalating only on edge cases. Intercom's Fin AI agent resolves 50% of support tickets without human intervention (January 2024). However, high-stakes domains -- healthcare diagnosis, legal advice, financial trading -- maintain mandatory human checkpoints at L2, and regulators (EU AI Act, adopted March 2024) are codifying this requirement. The practical boundary between L2 and L3 is not technical capability but organizational risk tolerance.
 
 ### Cost economics are tilting toward delegation
 
@@ -47,12 +47,21 @@ The thesis promised that delegation introduces new failure modes. Here are three
 
 **Accountability gaps**. When an AI agent autonomously sends a customer communication, generates a legal brief, or modifies production code, who is responsible for errors? Current legal frameworks were not designed for AI-delegated decisions. The EU AI Act (2024) mandates human oversight for high-risk applications, but the practical mechanisms for enforcing this in real-time agent workflows remain immature.
 
-**Cascading agent failures**. In multi-agent architectures -- where one agent's output feeds another's input -- a single hallucination can propagate through the entire chain before a human notices. An engineering team at a mid-stage startup reported a case where a code-generation agent introduced a subtle type error that passed the testing agent (which was also AI-powered), reached production, and took 14 hours to diagnose because the debugging agent kept "fixing" the wrong layer.
+**Cascading agent failures**. In multi-agent architectures -- where one agent's output feeds another's input -- a single hallucination can propagate through the entire chain before a human notices. This is the defining risk of L4 (Orchestration). One widely discussed example (reported anecdotally on engineering forums, not independently verified): a code-generation agent introduced a subtle type error that passed an AI-powered testing agent, reached production, and took 14 hours to diagnose because a debugging agent kept "fixing" the wrong layer. Whether apocryphal or not, the failure pattern is architecturally sound: autonomous multi-step chains lack the natural error-correction that human handoffs provide.
 
 These failure modes are not theoretical. They are the engineering challenges that separate organizations successfully deploying AI agents from those generating expensive, high-profile failures.
+
+**The counter-scenario**: It is worth acknowledging that this trajectory is not guaranteed. Previous waves of enterprise AI adoption -- IBM Watson for oncology, early RPA deployments -- generated hype cycles that ended in quiet retrenchment. If a high-profile AI agent failure causes significant financial or legal damage (a misgenerated SEC filing, a healthcare misdiagnosis at scale), regulatory backlash could freeze adoption. A sustained period of model capability plateau -- no substantial improvement over current frontier models for 18+ months -- would also slow the L2-to-L3 transition. The current momentum is real, but so is the fragility of enterprise confidence.
 
 ## Conclusion: The Uncomfortable Middle Ground
 
 Knowledge work automation is not a future trend -- it is a present reality producing measurable ROI in specific, well-defined domains. But the organizations benefiting most are not those replacing humans wholesale. They are the ones that have identified which tasks are delegation-ready (structured, repeatable, low-consequence-on-failure) and which still require human judgment (novel situations, ethical decisions, stakeholder relationships).
 
-The risk is not that AI will automate all knowledge work. The risk is that organizations will either over-delegate (trusting AI in domains where it fails silently) or under-adopt (missing the productivity gains their competitors are already capturing). The winners will be those who treat knowledge work automation as an engineering discipline -- with testing, monitoring, and rollback mechanisms -- rather than a magic wand.
+The risk is not that AI will automate all knowledge work. The risk is that organizations will either over-delegate (trusting AI in domains where it fails silently) or under-adopt (missing the productivity gains their competitors are already capturing). The winners will be those who treat knowledge work automation as an engineering discipline. In practice, this means:
+
+1. **Task-level classification** -- Audit knowledge work tasks against the L1-L4 maturity model. Delegate only tasks where the current technology reliably operates at L3 or above.
+2. **Output validation pipelines** -- Never deploy an AI agent without automated checks on its output. For code agents, this means CI/CD with comprehensive test suites. For content agents, this means factual verification layers. For financial agents, this means reconciliation against known baselines.
+3. **Rollback-by-default architecture** -- Every agent action should be reversible. Design systems so that agent output lands in a staging state, not directly in production, with human-triggered promotion.
+4. **Cost accounting that includes the full stack** -- Track total cost of ownership (API + infrastructure + human review + error remediation), not just API spend.
+
+Knowledge work automation is neither magic nor hype. It is an engineering problem -- and the organizations that treat it as one will capture the value while managing the risk.
