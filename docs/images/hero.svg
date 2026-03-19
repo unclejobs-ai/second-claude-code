@@ -1,18 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" fill="none">
   <defs>
-    <style>
-      .node { fill: #1a1a2e; stroke: #e0e0e0; stroke-width: 2; rx: 12; }
-      .node-main { fill: #1a1a2e; stroke: #7c3aed; stroke-width: 2.5; rx: 12; }
-      .node-support { fill: #1a1a2e; stroke: #6b7280; stroke-width: 1.5; rx: 12; stroke-dasharray: 6 3; }
-      .label { font-family: 'Inter', 'SF Pro', system-ui, sans-serif; font-size: 13px; fill: #f0f0f0; text-anchor: middle; dominant-baseline: central; font-weight: 600; }
-      .label-small { font-family: 'Inter', 'SF Pro', system-ui, sans-serif; font-size: 11px; fill: #9ca3af; text-anchor: middle; dominant-baseline: central; }
-      .arrow { stroke: #7c3aed; stroke-width: 1.5; fill: none; marker-end: url(#arrowhead); }
-      .arrow-dim { stroke: #4b5563; stroke-width: 1; fill: none; marker-end: url(#arrowhead-dim); stroke-dasharray: 5 3; }
-      .title { font-family: 'Inter', 'SF Pro', system-ui, sans-serif; font-size: 24px; fill: #f0f0f0; font-weight: 700; }
-      .subtitle { font-family: 'Inter', 'SF Pro', system-ui, sans-serif; font-size: 13px; fill: #9ca3af; }
-      .bg { fill: #0d1117; }
-      .badge { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; fill: #c4b5fd; text-anchor: middle; dominant-baseline: central; }
-    </style>
     <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
       <polygon points="0 0, 8 3, 0 6" fill="#7c3aed"/>
     </marker>
@@ -22,81 +9,71 @@
   </defs>
 
   <!-- Background -->
-  <rect width="800" height="400" class="bg" rx="16"/>
+  <rect width="800" height="400" fill="#0d1117" rx="16"/>
 
-  <!-- Title area -->
-  <text x="400" y="38" class="title" text-anchor="middle">Knowledge Work OS</text>
-  <text x="400" y="60" class="subtitle" text-anchor="middle">8 skills &#xB7; 10 agents &#xB7; 15 frameworks</text>
+  <!-- Title -->
+  <text x="400" y="38" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="24" fill="#f0f0f0" font-weight="700" text-anchor="middle">Knowledge Work OS</text>
+  <text x="400" y="60" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#9ca3af" text-anchor="middle">8 skills · 10 agents · 15 frameworks</text>
 
-  <!-- Main flow nodes (circular arrangement) -->
-  <!-- Research (top-left) -->
-  <rect x="80" y="110" width="120" height="50" class="node-main"/>
-  <text x="140" y="130" class="label">Research</text>
-  <text x="140" y="147" class="badge">haiku</text>
+  <!-- Main flow nodes -->
+  <!-- Research -->
+  <rect x="80" y="110" width="120" height="50" fill="#1a1a2e" stroke="#7c3aed" stroke-width="2.5" rx="12"/>
+  <text x="140" y="130" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Research</text>
+  <text x="140" y="147" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">haiku</text>
 
-  <!-- Analyze (top-right) -->
-  <rect x="280" y="85" width="120" height="50" class="node-main"/>
-  <text x="340" y="105" class="label">Analyze</text>
-  <text x="340" y="122" class="badge">15 frameworks</text>
+  <!-- Analyze -->
+  <rect x="280" y="85" width="120" height="50" fill="#1a1a2e" stroke="#7c3aed" stroke-width="2.5" rx="12"/>
+  <text x="340" y="105" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Analyze</text>
+  <text x="340" y="122" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">15 frameworks</text>
 
-  <!-- Write (center-right) -->
-  <rect x="480" y="110" width="120" height="50" class="node-main"/>
-  <text x="540" y="130" class="label">Write</text>
-  <text x="540" y="147" class="badge">sonnet</text>
+  <!-- Write -->
+  <rect x="480" y="110" width="120" height="50" fill="#1a1a2e" stroke="#7c3aed" stroke-width="2.5" rx="12"/>
+  <text x="540" y="130" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Write</text>
+  <text x="540" y="147" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">sonnet</text>
 
-  <!-- Review (right) -->
-  <rect x="630" y="185" width="120" height="50" class="node-main"/>
-  <text x="690" y="205" class="label">Review</text>
-  <text x="690" y="222" class="badge">5 reviewers</text>
+  <!-- Review -->
+  <rect x="630" y="185" width="120" height="50" fill="#1a1a2e" stroke="#7c3aed" stroke-width="2.5" rx="12"/>
+  <text x="690" y="205" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Review</text>
+  <text x="690" y="222" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">5 reviewers</text>
 
-  <!-- Loop (bottom-right) -->
-  <rect x="520" y="280" width="120" height="50" class="node-main"/>
-  <text x="580" y="300" class="label">Loop</text>
-  <text x="580" y="317" class="badge">iterate</text>
+  <!-- Loop -->
+  <rect x="520" y="280" width="120" height="50" fill="#1a1a2e" stroke="#7c3aed" stroke-width="2.5" rx="12"/>
+  <text x="580" y="300" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Loop</text>
+  <text x="580" y="317" font-family="SF Mono, Fira Code, monospace" font-size="10" fill="#c4b5fd" text-anchor="middle" dominant-baseline="central">iterate</text>
 
   <!-- Supporting nodes -->
-  <!-- Capture (bottom-left) -->
-  <rect x="80" y="260" width="120" height="50" class="node-support"/>
-  <text x="140" y="280" class="label">Capture</text>
-  <text x="140" y="297" class="label-small">PARA</text>
+  <!-- Capture -->
+  <rect x="80" y="260" width="120" height="50" fill="#1a1a2e" stroke="#6b7280" stroke-width="1.5" rx="12" stroke-dasharray="6 3"/>
+  <text x="140" y="280" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Capture</text>
+  <text x="140" y="297" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="11" fill="#9ca3af" text-anchor="middle" dominant-baseline="central">PARA</text>
 
-  <!-- Pipeline (bottom-center) -->
-  <rect x="280" y="300" width="120" height="50" class="node-support"/>
-  <text x="340" y="320" class="label">Pipeline</text>
-  <text x="340" y="337" class="label-small">orchestrate</text>
+  <!-- Pipeline -->
+  <rect x="280" y="300" width="120" height="50" fill="#1a1a2e" stroke="#6b7280" stroke-width="1.5" rx="12" stroke-dasharray="6 3"/>
+  <text x="340" y="320" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Pipeline</text>
+  <text x="340" y="337" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="11" fill="#9ca3af" text-anchor="middle" dominant-baseline="central">orchestrate</text>
 
-  <!-- Hunt (left) -->
-  <rect x="30" y="185" width="100" height="50" class="node-support"/>
-  <text x="80" y="205" class="label">Hunt</text>
-  <text x="80" y="222" class="label-small">discover</text>
+  <!-- Hunt -->
+  <rect x="30" y="185" width="100" height="50" fill="#1a1a2e" stroke="#6b7280" stroke-width="1.5" rx="12" stroke-dasharray="6 3"/>
+  <text x="80" y="205" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="13" fill="#f0f0f0" text-anchor="middle" dominant-baseline="central" font-weight="600">Hunt</text>
+  <text x="80" y="222" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="11" fill="#9ca3af" text-anchor="middle" dominant-baseline="central">discover</text>
 
   <!-- Main flow arrows -->
-  <!-- Research → Analyze -->
-  <path d="M200,130 Q240,100 280,110" class="arrow"/>
-  <!-- Research → Write -->
-  <path d="M200,135 Q340,145 480,135" class="arrow"/>
-  <!-- Analyze → Write -->
-  <path d="M400,110 Q440,110 480,120" class="arrow"/>
-  <!-- Write → Review -->
-  <path d="M600,140 Q620,160 630,185" class="arrow"/>
-  <!-- Review → Loop -->
-  <path d="M700,235 Q660,260 640,280" class="arrow"/>
-  <!-- Loop → Write (iterate) -->
-  <path d="M520,295 Q460,260 540,160" class="arrow"/>
+  <path d="M200,130 Q240,100 280,110" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M200,135 Q340,145 480,135" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M400,110 Q440,110 480,120" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M600,140 Q620,160 630,185" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M700,235 Q660,260 640,280" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M520,295 Q460,260 540,160" stroke="#7c3aed" stroke-width="1.5" fill="none" marker-end="url(#arrowhead)"/>
 
   <!-- Supporting arrows -->
-  <!-- Capture → Research -->
-  <path d="M140,260 Q130,200 140,160" class="arrow-dim"/>
-  <!-- Pipeline → Research -->
-  <path d="M280,310 Q200,250 160,160" class="arrow-dim"/>
-  <!-- Pipeline → Write -->
-  <path d="M400,310 Q460,270 520,160" class="arrow-dim"/>
-  <!-- Hunt → Pipeline -->
-  <path d="M130,220 Q200,280 280,320" class="arrow-dim"/>
+  <path d="M140,260 Q130,200 140,160" stroke="#4b5563" stroke-width="1" fill="none" stroke-dasharray="5 3" marker-end="url(#arrowhead-dim)"/>
+  <path d="M280,310 Q200,250 160,160" stroke="#4b5563" stroke-width="1" fill="none" stroke-dasharray="5 3" marker-end="url(#arrowhead-dim)"/>
+  <path d="M400,310 Q460,270 520,160" stroke="#4b5563" stroke-width="1" fill="none" stroke-dasharray="5 3" marker-end="url(#arrowhead-dim)"/>
+  <path d="M130,220 Q200,280 280,320" stroke="#4b5563" stroke-width="1" fill="none" stroke-dasharray="5 3" marker-end="url(#arrowhead-dim)"/>
 
   <!-- Legend -->
   <line x1="30" y1="375" x2="60" y2="375" stroke="#7c3aed" stroke-width="2"/>
-  <text x="70" y="375" class="label-small" text-anchor="start" dominant-baseline="central">Main flow</text>
+  <text x="70" y="375" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="11" fill="#9ca3af" text-anchor="start" dominant-baseline="central">Main flow</text>
   <line x1="150" y1="375" x2="180" y2="375" stroke="#4b5563" stroke-width="1" stroke-dasharray="5 3"/>
-  <text x="190" y="375" class="label-small" text-anchor="start" dominant-baseline="central">Supporting</text>
+  <text x="190" y="375" font-family="Inter, SF Pro, system-ui, sans-serif" font-size="11" fill="#9ca3af" text-anchor="start" dominant-baseline="central">Supporting</text>
 </svg>

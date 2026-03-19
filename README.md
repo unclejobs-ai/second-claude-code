@@ -46,10 +46,14 @@ graph LR
 claude plugin add github:parkeungje/second-claude
 ```
 
-**2. Verify** — start a new Claude Code session and look for the banner:
+**2. Verify** — start a new Claude Code session and look for the context injection:
 
 ```
-[second-claude-code] Knowledge Work OS loaded — 8 skills, 10 agents ready.
+# Second Claude Code — Knowledge Work OS
+
+8 commands for all knowledge work:
+| Command | Purpose |
+...
 ```
 
 **3. Try it** — just type naturally:

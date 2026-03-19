@@ -45,10 +45,14 @@ graph LR
 claude plugin add github:parkeungje/second-claude
 ```
 
-**2. 확인** — 새 Claude Code 세션을 시작하면 아래 배너가 표시됩니다:
+**2. 확인** — 새 Claude Code 세션을 시작하면 컨텍스트가 주입됩니다:
 
 ```
-[second-claude-code] Knowledge Work OS loaded — 8 skills, 10 agents ready.
+# Second Claude Code — Knowledge Work OS
+
+8 commands for all knowledge work:
+| Command | Purpose |
+...
 ```
 
 **3. 바로 사용** — 자연어로 입력하세요:
