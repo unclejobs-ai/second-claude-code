@@ -108,5 +108,5 @@ MIT Sloan Management Review는 2026년의 성공이 점점 더 '에이전트 리
 | Major | Article length (1,800 words) below 3,000-word format minimum | Acknowledged; user request conflict |
 | Major | Named expert quotes missing (only organizational citations) | Partially addressed via org-level attribution |
 | Minor | Some statistics could benefit from more precise date attribution | Low risk given 2026 context |
-| Minor | Korean text has one typo ("스스로" should be "스스로" -> actually correct as stylistic) | Verified |
+| Minor | "스스로" usage verified as correct Korean (abbreviation of 스스로) | No action needed |
 | Suggestion | Add a visual element (chart/infographic) for market growth data | Out of scope for text output |

@@ -20,9 +20,10 @@ Three reviewer subagents are dispatched in parallel. Each receives the content t
 
 ## Consensus Threshold
 
-- **APPROVED**: threshold met and no Critical findings from any reviewer
-- **MINOR FIXES**: threshold met but non-critical issues remain
-- **MUST FIX**: threshold not met, or any Critical finding from any reviewer
+- **APPROVED**: threshold met, no Critical or Major findings
+- **MINOR FIXES**: threshold met, no Critical findings, but Major or Minor issues remain
+- **NEEDS IMPROVEMENT**: threshold NOT met, but no Critical findings — substantive rework needed
+- **MUST FIX**: any Critical finding from any reviewer (regardless of threshold)
 
 ## Critical Finding Override
 

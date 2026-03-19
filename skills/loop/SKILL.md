@@ -16,9 +16,9 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 ## Workflow
 
 1. Read the current file and record a baseline hash.
-2. Run `/second-claude-code:review` and collect a verdict plus ranked feedback.
+2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass.
 3. Apply only the top 3 feedback items.
-4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert to the previous baseline.
+4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert using `git checkout -- <file>` to the committed baseline.
 5. Stop when the target is met, `--max` is reached, or the verdict plateaus.
 6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a loop option) one final time. If it returns `MUST FIX`, continue the loop. Only exit when the gate passes.
 
@@ -45,7 +45,8 @@ Return the final draft plus an iteration log showing verdict progression and maj
 ## Gotchas
 
 - Do not claim improvement without comparing verdicts between iterations.
-- Revert through git or the recorded baseline hash, not memory.
+- Revert through `git checkout -- <file>`, not in-memory hash comparison. Git is the source of truth.
+- Do not simulate review inline — always dispatch through `/second-claude-code:review`.
 - Stop early if the verdict stops improving across iterations.
 - The completion gate is mandatory — never skip the final `/second-claude-code:review --preset quick` check.
 

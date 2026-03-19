@@ -288,29 +288,15 @@ second-claude/
 
 7가지 원칙이 플러그인 아키텍처를 지배합니다:
 
-1. **Few but Deep** (Pi) — 80개가 아닌 8개 스킬. 각각 내부적으로 깊습니다.
-2. **Gotchas over Instructions** (Thariq) — 행복한 경로뿐 아니라 실패 모드를 문서화합니다.
-3. **Progressive Disclosure** (Thariq + Tw93) — SKILL.md는 짧게, `references/`에서 깊게.
-4. **Context-Efficient** (Tw93) — 8개 스킬 설명 전체가 100 토큰 이내.
-5. **Zero Dependency Core** (Pi) — `npm install` 불필요. 서브에이전트와 셸 스크립트만 사용.
-6. **State in Files** (Ars Contexta + Pi) — 플러그인 데이터 디렉토리에 JSON 상태 영속화.
-7. **Composable** (Autoresearch) — 스킬이 서로를 호출하여, 8개 프리미티브로 무한한 워크플로우 구성.
+1. **Few but Deep** — 80개가 아닌 8개 스킬. 각각 내부적으로 깊습니다.
+2. **Gotchas over Instructions** — 행복한 경로뿐 아니라 실패 모드를 문서화합니다.
+3. **Progressive Disclosure** — SKILL.md는 짧게, `references/`에서 깊게.
+4. **Context-Efficient** — 8개 스킬 설명 전체가 100 토큰 이내.
+5. **Zero Dependency Core** — `npm install` 불필요. 서브에이전트와 셸 스크립트만 사용.
+6. **State in Files** — 플러그인 데이터 디렉토리에 JSON 상태 영속화.
+7. **Composable** — 스킬이 서로를 호출하여, 8개 프리미티브로 무한한 워크플로우 구성.
 
 **원칙 간 상호작용:** Few-but-deep + composable = 작은 표면적, 무한한 조합. Gotchas-first + progressive disclosure = 장문 없이도 안전한 사용. Context-efficient + zero dependency = 빠르고, 저렴하고, 플랫폼 무관.
-
----
-
-## 계보 (Lineage)
-
-| 출처 | 흡수한 패턴 |
-|------|-------------|
-| Tiago Forte (Second Brain) | collect 스킬의 PARA 분류 체계 |
-| Andrej Karpathy (autoresearch) | 정제를 거듭하는 반복 리서치 루프 |
-| Ars Contexta (6Rs framework) | 수집/합성 흐름, 큐 오케스트레이션 |
-| Claude Octopus (consensus gate) | 투표 기반 다중 관점 리뷰 |
-| Pi / badlogic (minimalist plugin) | 제로 의존성 아키텍처, 파일 기반 상태 |
-| Tw93 (prompt engineering) | 컨텍스트 효율성, 15토큰 이하 설명 |
-| Thariq / Anthropic (skill design) | SKILL.md 포맷, gotchas-first 문서화 |
 
 ---
 

@@ -37,8 +37,9 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 ## Consensus Gate
 
 - Pass with `2/3` reviewer approvals, or `3/5` for `full`
-- Any `Critical` finding forces `MUST FIX`
-- Final verdicts: `APPROVED`, `MINOR FIXES`, `MUST FIX`
+- Any `Critical` finding forces `MUST FIX` regardless of threshold
+- Final verdicts: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
+- `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)
 
 ## Workflow
 

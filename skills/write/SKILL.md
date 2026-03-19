@@ -47,6 +47,15 @@ Produce content with automatic research and review unless the caller explicitly 
 - `social`: platform-optimized short post
 - `card-news`: slide-by-slide narrative with visual direction
 
+## Length Negotiation
+
+When user-specified length conflicts with format minimums:
+1. Inform the user: "Article format minimum is 3000 words, you requested ~800."
+2. Offer alternatives: switch to `shorts` or `social` format, OR keep `article` at full length.
+3. If user insists on short article, respect user intent but note the override in output metadata.
+
+Never silently truncate or silently exceed the user's request.
+
 ## Gotchas
 
 - Do not skip research unless real sources are already supplied.

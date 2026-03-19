@@ -272,32 +272,18 @@ second-claude/
 
 Seven principles govern the plugin's architecture:
 
-1. **Few but Deep** (Pi) — 8 skills, not 80. Each one internally rich.
-2. **Gotchas over Instructions** (Thariq) — Document failure modes, not just happy paths.
-3. **Progressive Disclosure** (Thariq + Tw93) — SKILL.md is short; `references/` goes deep.
-4. **Context-Efficient** (Tw93) — All 8 skill descriptions fit under 100 tokens total.
-5. **Zero Dependency Core** (Pi) — No `npm install`. Subagents and shell scripts only.
-6. **State in Files** (Ars Contexta + Pi) — JSON state persisted in the plugin data directory.
-7. **Composable** (Autoresearch) — Skills call each other; 8 primitives yield infinite workflows.
+1. **Few but Deep** — 8 skills, not 80. Each one internally rich.
+2. **Gotchas over Instructions** — Document failure modes, not just happy paths.
+3. **Progressive Disclosure** — SKILL.md is short; `references/` goes deep.
+4. **Context-Efficient** — All 8 skill descriptions fit under 100 tokens total.
+5. **Zero Dependency Core** — No `npm install`. Subagents and shell scripts only.
+6. **State in Files** — JSON state persisted in the plugin data directory.
+7. **Composable** — Skills call each other; 8 primitives yield infinite workflows.
 
 **How the principles interact:**
 Few-but-deep + composable = small surface area, infinite combinations.
 Gotchas-first + progressive disclosure = safe usage without walls of text.
 Context-efficient + zero dependency = fast, cheap, portable across platforms.
-
----
-
-## Lineage
-
-| Source | Absorbed Pattern |
-|--------|-----------------|
-| Tiago Forte (Second Brain) | PARA classification in the collect skill |
-| Andrej Karpathy (autoresearch) | Iterative research loop with refinement |
-| Ars Contexta (6Rs framework) | Capture/synthesis flow, queue orchestration |
-| Claude Octopus (consensus gate) | Multi-perspective review with voting |
-| Pi / badlogic (minimalist plugin) | Zero-dependency architecture, file-based state |
-| Tw93 (prompt engineering) | Context-efficiency, sub-15-token descriptions |
-| Thariq / Anthropic (skill design) | SKILL.md format, gotchas-first documentation |
 
 ---
 
