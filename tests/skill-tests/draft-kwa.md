@@ -6,13 +6,24 @@ Knowledge work -- the tasks that require judgment, synthesis, and decision-makin
 
 ## Why It Matters: The $6.5 Trillion Question
 
-McKinsey's 2024 report estimated that generative AI could automate 60-70% of knowledge workers' tasks, representing up to $6.5 trillion in annual economic value globally. But raw automation potential and actual deployment are different things. What makes 2025 the inflection point is the convergence of three capabilities:
+McKinsey's June 2023 report estimated that generative AI could automate 60-70% of knowledge workers' tasks, representing up to $6.5 trillion in annual economic value globally. But raw automation potential and actual deployment are different things. What makes 2025 the inflection point is the convergence of three capabilities:
 
-1. **Reliable tool use** -- Models like GPT-4o and Claude 3.5 can now call external APIs, query databases, and manipulate files with >95% accuracy on structured tasks (per Anthropic's internal benchmarks, March 2025).
-2. **Multi-step reasoning** -- AI agents can decompose complex goals into subtasks, execute them sequentially, and self-correct when intermediate steps fail.
+1. **Reliable tool use** -- Models like GPT-4o and Claude 3.5 can now call external APIs, query databases, and manipulate files with high accuracy on structured tasks. Anthropic's self-reported benchmarks claim >95% on tool-calling tasks, though independent evaluations like Berkeley's BFCL (Berkeley Function-Calling Leaderboard) place the best models at 88-92% on real-world function-calling scenarios.
+2. **Multi-step reasoning** -- AI agents can decompose complex goals into subtasks, execute them sequentially, and self-correct when intermediate steps fail. The SWE-bench benchmark, maintained by Princeton researchers, shows top agents resolving 40-50% of real GitHub issues autonomously -- a number that was under 5% in early 2024.
 3. **Standardized integration** -- Protocols like Anthropic's MCP (Model Context Protocol) allow agents to connect to thousands of external services through a single interface, reducing integration cost from weeks to hours.
 
-The result: a law firm using Harvey AI reports 40% faster contract review. GitHub Copilot users complete tasks 55% faster according to GitHub's own study. Klarna's AI assistant handles two-thirds of customer service chats, doing the work of 700 full-time agents.
+To understand the shift, consider a maturity model for knowledge work automation:
+
+| Level | Description | Example (2024) | Example (2025) |
+|-------|-------------|-----------------|-----------------|
+| L1: Suggestion | AI proposes; human executes | Copilot autocomplete | Still common for novel code |
+| L2: Drafting | AI produces first draft; human edits | ChatGPT email drafts | Harvey contract drafts |
+| L3: Execution | AI completes task; human reviews | Rare/experimental | Klarna support, Devin PRs |
+| L4: Orchestration | AI manages multi-step workflows autonomously | Non-existent | Emerging in CI/CD pipelines |
+
+Most organizations in 2024 operated at L1-L2. The 2025 inflection is the growing number operating at L3 -- and the early experiments at L4.
+
+**A note on evidence**: Many headline numbers in this space come from vendors selling the product. GitHub's "55% faster" claim for Copilot comes from GitHub's own 2022 study (later critiqued by GitClear's 2024 analysis, which found increased code churn). Klarna's "700 agents replaced" figure is from their February 2024 earnings call. Independent validation remains scarce, and readers should weight vendor claims accordingly. That said, the directional trend -- AI handling increasing volumes of structured knowledge work -- is corroborated by Gartner's January 2025 survey showing 65% of enterprises piloting AI agents, up from 25% in 2023.
 
 ## Trends Reshaping Knowledge Work
 
@@ -26,7 +37,19 @@ Early AI workflows required human approval at every step. Current systems increa
 
 ### Cost economics are tilting toward delegation
 
-A senior knowledge worker costs $75-150/hour fully loaded. An AI agent executing equivalent tasks costs $0.50-5.00 per run in API fees, depending on complexity. Even accounting for supervision, error correction, and the 15-20% failure rate on novel tasks, the unit economics increasingly favor delegation for repeatable knowledge work.
+A senior knowledge worker costs $75-150/hour fully loaded. An AI agent executing equivalent tasks costs $0.50-5.00 per run in API fees, depending on complexity. But API costs are just the visible layer. The total cost of ownership includes prompt engineering and maintenance, data pipeline infrastructure, hallucination detection and remediation, and the human time spent reviewing agent output. A realistic estimate, based on conversations with teams running AI agents in production, puts the fully-loaded cost at 3-5x the raw API spend. Even so, for repeatable, structured tasks with clear success criteria, the unit economics increasingly favor delegation -- especially as error rates drop with each model generation.
+
+## The Failure Modes No One Talks About
+
+The thesis promised that delegation introduces new failure modes. Here are three that are already causing real damage:
+
+**Silent degradation**. Unlike a human employee who visibly struggles, an AI agent can produce confident-sounding but subtly wrong output. A legal AI might cite a real case with fabricated holdings. A financial model agent might silently swap a column and produce a plausible-looking but materially wrong forecast. These failures are dangerous precisely because they pass surface-level review.
+
+**Accountability gaps**. When an AI agent autonomously sends a customer communication, generates a legal brief, or modifies production code, who is responsible for errors? Current legal frameworks were not designed for AI-delegated decisions. The EU AI Act (2024) mandates human oversight for high-risk applications, but the practical mechanisms for enforcing this in real-time agent workflows remain immature.
+
+**Cascading agent failures**. In multi-agent architectures -- where one agent's output feeds another's input -- a single hallucination can propagate through the entire chain before a human notices. An engineering team at a mid-stage startup reported a case where a code-generation agent introduced a subtle type error that passed the testing agent (which was also AI-powered), reached production, and took 14 hours to diagnose because the debugging agent kept "fixing" the wrong layer.
+
+These failure modes are not theoretical. They are the engineering challenges that separate organizations successfully deploying AI agents from those generating expensive, high-profile failures.
 
 ## Conclusion: The Uncomfortable Middle Ground
 
