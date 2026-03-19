@@ -54,13 +54,15 @@ const ko = {
     "\uB354 \uC88B\uAC8C",
     "\uB2E4\uB4EC\uC5B4",
   ],
-  capture: [
+  collect: [
     "\uC800\uC7A5",
     "\uCEA1\uCC98",
     "\uC815\uB9AC\uD574\uB46C",
     "\uBA54\uBAA8",
     "\uAE30\uB85D",
     "\uD074\uB9AC\uD551",
+    "\uC218\uC9D1",
+    "\uC218\uC9D1\uD574",
   ],
   pipeline: [
     "\uD30C\uC774\uD504\uB77C\uC778",
@@ -148,15 +150,15 @@ const routes = [
   },
   {
     patterns: [
-      ...ko.capture,
+      ...ko.collect,
       "save",
-      "capture",
+      "collect",
       "note",
       "record",
       "clip",
     ],
-    skill: "second-claude-code:capture",
-    label: "capture",
+    skill: "second-claude-code:collect",
+    label: "collect",
   },
   {
     patterns: [

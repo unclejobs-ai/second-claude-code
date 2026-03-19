@@ -39,7 +39,7 @@ if (!enabled) {
       "/second-claude-code:analyze",
       "/second-claude-code:review",
       "/second-claude-code:loop",
-      "/second-claude-code:capture",
+      "/second-claude-code:collect",
       "/second-claude-code:pipeline",
       "/second-claude-code:hunt",
     ]) {

@@ -7,7 +7,7 @@ Key sources that shaped second-claude's design and what was absorbed from each.
 ## Tiago Forte -- Second Brain
 
 **Source**: Building a Second Brain (BASB), PARA method, CODE framework
-**Absorbed**: The PARA classification system (Projects, Areas, Resources, Archives) drives the `/second-claude-code:capture` skill. The CODE cycle (Capture, Organize, Distill, Express) maps directly to the capture-to-write pipeline.
+**Absorbed**: The PARA classification system (Projects, Areas, Resources, Archives) drives the `/second-claude-code:collect` skill. The CODE cycle (Capture, Organize, Distill, Express) maps directly to the collect-to-write pipeline.
 
 ## Andrej Karpathy -- Autoresearch
 

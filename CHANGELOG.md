@@ -2,6 +2,10 @@
 
 ## [0.2.0] - 2026-03-20
 
+### Breaking
+- Renamed `capture` skill to `collect` — command is now `/second-claude-code:collect`
+- Collect skill now saves dual format: `.json` (machine) + `.md` (human-readable)
+
 ### Added
 - Comprehensive README overhaul with Mermaid diagrams and shields.io badges
 - Korean README (README.ko.md) for the Korean developer community
@@ -23,7 +27,7 @@
 - `/scc:analyze` — strategic framework analysis (15+ frameworks)
 - `/scc:review` — multi-perspective quality gate with 3-5 parallel reviewers
 - `/scc:loop` — iterative improvement engine with review-driven feedback
-- `/scc:capture` — knowledge capture with PARA classification
+- `/scc:collect` — knowledge collection with PARA classification
 - `/scc:pipeline` — custom workflow builder for skill chaining
 - `/scc:hunt` — dynamic skill discovery and installation
 - 8 specialized subagents (researcher, analyst, writer, editor, strategist, deep-reviewer, devil-advocate, fact-checker)

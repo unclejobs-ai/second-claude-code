@@ -89,7 +89,7 @@ function main() {
   lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
   lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3 parallel reviewers) |");
   lines.push("| `/second-claude-code:loop` | Iterative improvement until quality target met |");
-  lines.push("| `/second-claude-code:capture` | Knowledge capture & PARA organization |");
+  lines.push("| `/second-claude-code:collect` | Knowledge collection & PARA organization |");
   lines.push("| `/second-claude-code:pipeline` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:hunt` | Dynamic skill discovery & installation |");
   lines.push("");

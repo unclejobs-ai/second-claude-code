@@ -139,7 +139,7 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
     "analyze",
     "review",
     "loop",
-    "capture",
+    "collect",
     "pipeline",
     "hunt",
   ];
@@ -210,8 +210,8 @@ test("numeric contracts stay aligned across docs", () => {
   const writerAgent = read("agents/writer.md");
   const newsletterTemplate = read("templates/newsletter.md");
   const writeGotchas = read("skills/write/gotchas.md");
-  const captureSkill = read("skills/capture/SKILL.md");
-  const captureGotchas = read("skills/capture/gotchas.md");
+  const captureSkill = read("skills/collect/SKILL.md");
+  const captureGotchas = read("skills/collect/gotchas.md");
   const researchSkill = read("skills/research/SKILL.md");
   const researchGotchas = read("skills/research/gotchas.md");
 
@@ -246,12 +246,12 @@ test("numeric contracts stay aligned across docs", () => {
   assert.match(
     captureSkill,
     /exactly 3 key points/i,
-    "capture skill should require exactly 3 key points"
+    "collect skill should require exactly 3 key points"
   );
   assert.match(
     captureGotchas,
     /key_points exactly 3/i,
-    "capture gotchas should align to exactly 3 key points"
+    "collect gotchas should align to exactly 3 key points"
   );
   assert.match(
     researchSkill,

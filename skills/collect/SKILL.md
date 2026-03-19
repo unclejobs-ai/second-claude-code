@@ -1,11 +1,11 @@
 ---
-name: capture
-description: "Use when saving URLs, notes, files, or excerpts into structured PARA knowledge"
+name: collect
+description: "Use when collecting URLs, notes, files, or excerpts into structured PARA knowledge"
 ---
 
-# Capture
+# Collect
 
-Capture a source, reduce it, connect it to existing knowledge, and store it in a PARA-shaped knowledge base.
+Collect a source, reduce it, connect it to existing knowledge, and store it in a PARA-shaped knowledge base.
 
 ## When to Use
 
@@ -42,12 +42,23 @@ Capture a source, reduce it, connect it to existing knowledge, and store it in a
 ## Storage
 
 - Path: `${CLAUDE_PLUGIN_DATA}/knowledge/{para-category}/{slug}.json`
-- Required fields: `title`, `source`, `source_type`, `captured_at`, `category`, `tags`, `summary`, `key_points`, `connections`
+- Required fields: `title`, `source`, `source_type`, `collected_at`, `category`, `tags`, `summary`, `key_points`, `connections`
 - `key_points` must contain exactly 3 items
+
+## Dual Output
+
+Each collected item is saved in two formats:
+
+| Format | Purpose | Path |
+|--------|---------|------|
+| `.json` | Machine-readable search index | `${CLAUDE_PLUGIN_DATA}/knowledge/{category}/{slug}.json` |
+| `.md` | Human-readable note | `${CLAUDE_PLUGIN_DATA}/knowledge/{category}/{slug}.md` |
+
+The markdown file uses YAML frontmatter for metadata and renders the same key points and connections as readable prose.
 
 ## Search
 
-`/second-claude-code:capture --search "query"` scans stored JSON and returns ranked matches across title, summary, key points, and tags.
+`/second-claude-code:collect --search "query"` scans stored JSON and returns ranked matches across title, summary, key points, and tags.
 
 ## Gotchas
 

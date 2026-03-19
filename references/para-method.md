@@ -1,6 +1,6 @@
 # PARA Method
 
-The classification system used by `/second-claude-code:capture` to organize captured knowledge into actionable categories.
+The classification system used by `/second-claude-code:collect` to organize collected knowledge into actionable categories.
 
 ---
 
@@ -35,7 +35,7 @@ Is there a deadline and specific outcome?
           Yes --> Area
           No  --> Is it potentially useful reference material?
                   Yes --> Resource
-                  No  --> Do not capture (or Archive if it was previously captured)
+                  No  --> Do not collect (or Archive if it was previously collected)
 ```
 
 ## Storage Structure
@@ -48,4 +48,4 @@ $CLAUDE_PLUGIN_DATA/captures/
   archives/     # Inactive items (auto-moved after project completion)
 ```
 
-Each captured item is stored as a JSON file with metadata (source URL, capture date, PARA category, tags) and content (extracted text, summary, key points).
+Each collected item is stored as a JSON file with metadata (source URL, collection date, PARA category, tags) and content (extracted text, summary, key points).

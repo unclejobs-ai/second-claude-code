@@ -1,8 +1,8 @@
-# Capture Gotchas
+# Collect Gotchas
 
-## Common failure patterns in knowledge capture
+## Common failure patterns in knowledge collection
 
-### 1. Verbatim capture
+### 1. Verbatim collection
 **Symptom**: The full URL content is stored with no reduction step
 **Fix**: Force key_points exactly 3 and keep the summary to at most 3 sentences.
 
@@ -14,8 +14,8 @@
 **Symptom**: "This is related to AI" with no precise shared concept
 **Fix**: Every connection must name the exact shared concept or insight. "AI" is too broad to be useful.
 
-### 4. Duplicate capture
-**Symptom**: The same URL or content is captured multiple times
+### 4. Duplicate collection
+**Symptom**: The same URL or content is collected multiple times
 **Fix**: Check for duplicate URLs and near-identical titles before saving.
 
 ### 5. Unsearchable storage

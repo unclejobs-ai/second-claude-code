@@ -30,7 +30,7 @@ graph LR
     Write --> Review
     Review --> Loop
     Loop --> Write
-    Capture --> Research
+    Collect --> Research
     Pipeline -.->|orchestrates| Research
     Pipeline -.->|orchestrates| Write
     Hunt -.->|discovers| Pipeline
@@ -95,7 +95,7 @@ Commands use the `/second-claude-code:` prefix.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `capture` | Knowledge capture and PARA classification | `/second-claude-code:capture https://example.com/article` |
+| `collect` | Knowledge collection and PARA classification | `/second-claude-code:collect https://example.com/article` |
 | `pipeline` | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
@@ -109,7 +109,7 @@ You do not need to memorize slash commands. The hook-based auto-router detects i
 "AI 에이전트에 대해 조사해"              →  /second-claude-code:research
 "Analyze this market with SWOT"        →  /second-claude-code:analyze
 "이 초안을 리뷰해"                      →  /second-claude-code:review
-"Save this for later"                  →  /second-claude-code:capture
+"Save this for later"                  →  /second-claude-code:collect
 "How do I run a security audit?"       →  /second-claude-code:hunt
 ```
 
@@ -146,7 +146,7 @@ sequenceDiagram
 ```
 research → write → review → loop → done          # Full content pipeline
 research → analyze → review → done                # Strategic analysis
-capture → research → write → pipeline(save)       # Knowledge-to-content
+collect → research → write → pipeline(save)       # Knowledge-to-content
 ```
 
 `/second-claude-code:write` automatically invokes `/second-claude-code:research` and `/second-claude-code:review` internally, so a single write command can produce research-backed, review-gated content.
@@ -240,7 +240,7 @@ second-claude/
 │   ├── analyze/                  # Strategic framework analysis (15 frameworks)
 │   ├── review/                   # Multi-perspective quality gate
 │   ├── loop/                     # Iterative improvement
-│   ├── capture/                  # Knowledge capture (PARA)
+│   ├── collect/                  # Knowledge collection (PARA)
 │   ├── pipeline/                 # Custom workflow builder
 │   └── hunt/                     # Skill discovery
 ├── agents/                       # 10 specialized subagents
@@ -291,7 +291,7 @@ Context-efficient + zero dependency = fast, cheap, portable across platforms.
 
 | Source | Absorbed Pattern |
 |--------|-----------------|
-| Tiago Forte (Second Brain) | PARA classification in the capture skill |
+| Tiago Forte (Second Brain) | PARA classification in the collect skill |
 | Andrej Karpathy (autoresearch) | Iterative research loop with refinement |
 | Ars Contexta (6Rs framework) | Capture/synthesis flow, queue orchestration |
 | Claude Octopus (consensus gate) | Multi-perspective review with voting |

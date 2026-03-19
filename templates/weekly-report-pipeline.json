@@ -1,0 +1,26 @@
+{
+  "name": "weekly-report",
+  "description": "Weekly report pipeline: research current topics, analyze with a strategic framework, then write a polished report. Designed for recurring weekly team or leadership reporting.",
+  "steps": [
+    {
+      "skill": "/second-claude-code:research",
+      "args": "--depth medium --sources web,news --lang ko",
+      "output": "research-brief.md",
+      "on_fail": "abort"
+    },
+    {
+      "skill": "/second-claude-code:analyze",
+      "args": "--framework swot --with-research --depth standard --lang ko",
+      "input_from": "research-brief.md",
+      "output": "analysis.md",
+      "on_fail": "abort"
+    },
+    {
+      "skill": "/second-claude-code:write",
+      "args": "--format report --voice expert --skip-research --lang ko",
+      "input_from": "analysis.md",
+      "output": "weekly-report.md",
+      "on_fail": "retry"
+    }
+  ]
+}

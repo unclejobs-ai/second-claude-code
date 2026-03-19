@@ -29,7 +29,7 @@ graph LR
     Write --> Review
     Review --> Loop
     Loop --> Write
-    Capture --> Research
+    Collect --> Research
     Pipeline -.->|orchestrates| Research
     Pipeline -.->|orchestrates| Write
     Hunt -.->|discovers| Pipeline
@@ -94,7 +94,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `capture` | 지식 캡처 및 PARA 분류 | `/second-claude-code:capture https://example.com/article` |
+| `collect` | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
 | `pipeline` | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
@@ -112,7 +112,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 | **analyze** (분석) | `분석해`, `전략` |
 | **review** (리뷰) | `리뷰`, `검토`, `품질`, `체크`, `피드백` |
 | **loop** (반복) | `개선`, `반복`, `더 좋게`, `다듬어` |
-| **capture** (캡처) | `저장`, `캡처`, `정리해줘`, `메모`, `기록`, `클리핑` |
+| **collect** (수집) | `저장`, `캡처`, `정리해줘`, `메모`, `기록`, `클리핑`, `수집`, `수집해` |
 | **pipeline** (파이프라인) | `파이프라인`, `자동화`, `워크플로우` |
 | **hunt** (탐색) | `스킬 있`, `어떻게 해`, `할 수 있`, `방법`, `도구` |
 
@@ -124,7 +124,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 "SWOT으로 분석해"                       →  /second-claude-code:analyze
 "이 초안을 리뷰해"                      →  /second-claude-code:review
 "더 좋게 다듬어"                        →  /second-claude-code:loop
-"이 링크 저장해줘"                      →  /second-claude-code:capture
+"이 링크 저장해줘"                      →  /second-claude-code:collect
 "주간 워크플로우 자동화"                 →  /second-claude-code:pipeline
 "보안 감사 스킬 있어?"                   →  /second-claude-code:hunt
 ```
@@ -162,7 +162,7 @@ sequenceDiagram
 ```
 research → write → review → loop → done          # 풀 콘텐츠 파이프라인
 research → analyze → review → done                # 전략 분석
-capture → research → write → pipeline(save)       # 지식 → 콘텐츠 전환
+collect → research → write → pipeline(save)       # 지식 → 콘텐츠 전환
 ```
 
 `/second-claude-code:write`는 내부적으로 `/second-claude-code:research`와 `/second-claude-code:review`를 자동 호출하므로, 하나의 write 명령어만으로 리서치 기반 + 리뷰 검증된 콘텐츠를 생산할 수 있습니다.
@@ -256,7 +256,7 @@ second-claude/
 │   ├── analyze/                  # 전략 프레임워크 분석 (15개 프레임워크)
 │   ├── review/                   # 다중 관점 품질 게이트
 │   ├── loop/                     # 반복 개선
-│   ├── capture/                  # 지식 캡처 (PARA)
+│   ├── collect/                  # 지식 수집 (PARA)
 │   ├── pipeline/                 # 커스텀 워크플로우 빌더
 │   └── hunt/                     # 스킬 탐색
 ├── agents/                       # 10개 전문 서브에이전트
@@ -304,9 +304,9 @@ second-claude/
 
 | 출처 | 흡수한 패턴 |
 |------|-------------|
-| Tiago Forte (Second Brain) | capture 스킬의 PARA 분류 체계 |
+| Tiago Forte (Second Brain) | collect 스킬의 PARA 분류 체계 |
 | Andrej Karpathy (autoresearch) | 정제를 거듭하는 반복 리서치 루프 |
-| Ars Contexta (6Rs framework) | 캡처/합성 흐름, 큐 오케스트레이션 |
+| Ars Contexta (6Rs framework) | 수집/합성 흐름, 큐 오케스트레이션 |
 | Claude Octopus (consensus gate) | 투표 기반 다중 관점 리뷰 |
 | Pi / badlogic (minimalist plugin) | 제로 의존성 아키텍처, 파일 기반 상태 |
 | Tw93 (prompt engineering) | 컨텍스트 효율성, 15토큰 이하 설명 |

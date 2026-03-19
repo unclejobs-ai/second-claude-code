@@ -33,7 +33,7 @@ test("natural-language prompts resolve to command docs and backing skills", () =
     { prompt: "run a swot on this SaaS product", command: "analyze" },
     { prompt: "review this draft for quality", command: "review" },
     { prompt: "iterate until this is better", command: "loop" },
-    { prompt: "save this URL to my notes", command: "capture" },
+    { prompt: "save this URL to my notes", command: "collect" },
     { prompt: "automate this workflow as a pipeline", command: "pipeline" },
     { prompt: "find a skill for terraform security audit", command: "hunt" },
   ];
