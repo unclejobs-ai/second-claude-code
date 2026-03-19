@@ -41,7 +41,7 @@ Is there a deadline and specific outcome?
 ## Storage Structure
 
 ```
-$CLAUDE_PLUGIN_DATA/captures/
+$CLAUDE_PLUGIN_DATA/knowledge/
   projects/     # Active project materials
   areas/        # Ongoing responsibility references
   resources/    # Topic-based reference library
@@ -49,3 +49,31 @@ $CLAUDE_PLUGIN_DATA/captures/
 ```
 
 Each collected item is stored as a JSON file with metadata (source URL, collection date, PARA category, tags) and content (extracted text, summary, key points).
+
+## Connection Quality Gate
+
+A connection must name a **specific principle, pattern, or concept** -- not a topic or domain.
+
+| Quality | Example | Verdict |
+|---------|---------|---------|
+| Good | "Both use the Zettelkasten principle of atomic notes" | Pass |
+| Good | "Shares the PARA classification heuristic for active vs reference" | Pass |
+| Good | "Both apply progressive summarization layer 2 (bold key passages)" | Pass |
+| Bad | "Related to knowledge management" | Fail -- topic, not concept |
+| Bad | "Also about productivity" | Fail -- domain, not pattern |
+| Bad | "Similar content" | Fail -- says nothing specific |
+
+If no specific connection exists, set `connections` to an empty array rather than forcing a vague one.
+
+## Search Ranking
+
+Results from `/second-claude-code:collect --search` are scored by match location:
+
+| Match Location | Weight | Example |
+|----------------|--------|---------|
+| Exact tag match | 10 | query `"zettelkasten"` matches tag `zettelkasten` |
+| Title substring | 7 | query `"atomic"` found in title `"Atomic Habits Summary"` |
+| Key point match | 4 | query `"spaced repetition"` found in a key point |
+| Summary match | 2 | query `"retrieval"` found in summary text |
+
+When multiple matches occur in the same item, scores are summed. Results are returned in descending score order. Ties are broken by `collected_at` (newest first).

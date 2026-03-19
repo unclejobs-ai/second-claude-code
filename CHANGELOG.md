@@ -30,7 +30,7 @@
 - `/scc:collect` — knowledge collection with PARA classification
 - `/scc:pipeline` — custom workflow builder for skill chaining
 - `/scc:hunt` — dynamic skill discovery and installation
-- 8 specialized subagents (researcher, analyst, writer, editor, strategist, deep-reviewer, devil-advocate, fact-checker)
+- 10 specialized subagents (researcher, analyst, writer, editor, strategist, deep-reviewer, devil-advocate, fact-checker, tone-guardian, structure-analyst)
 - SessionStart hook with context injection and state restoration
 - UserPromptSubmit hook with auto-routing (natural language → skill)
 - Reference docs: design principles, lineage, consensus gate, PARA method

@@ -22,19 +22,19 @@ Knowledge workers drown in tool fragmentation — a different plugin for researc
 
 ## The Knowledge Work Cycle
 
-```mermaid
-graph LR
-    Research --> Write
-    Research --> Analyze
-    Analyze --> Review
-    Write --> Review
-    Review --> Loop
-    Loop --> Write
-    Collect --> Research
-    Pipeline -.->|orchestrates| Research
-    Pipeline -.->|orchestrates| Write
-    Hunt -.->|discovers| Pipeline
-```
+The product reads in two layers: a single core workflow, then a quieter support layer around it.
+
+**Core flow**
+
+`Research` → `Analyze` → `Write` → `Review` → `Loop`
+
+**Supporting commands**
+
+| Command | Role |
+|---------|------|
+| `hunt` | Discover missing capabilities around the workflow |
+| `collect` | Save sources and notes into a PARA-friendly system |
+| `pipeline` | Chain repeatable workflows across commands |
 
 ---
 
@@ -56,6 +56,8 @@ claude plugin add github:EungjePark/second-claude-code
 ...
 ```
 
+If nothing appears, verify the plugin is installed: `claude plugin list`
+
 **3. Try it** — just type naturally:
 
 ```
@@ -63,6 +65,23 @@ Research the current state of AI agent frameworks in 2026
 ```
 
 The auto-router picks `/second-claude-code:research` for you. No slash commands to memorize.
+
+If auto-routing does not trigger, use the explicit command: `/second-claude-code:research "AI agent frameworks 2026"`
+
+---
+
+## Choose Your Skill
+
+| I want to... | Use |
+|--------------|-----|
+| Find information about a topic | `research` |
+| Apply a strategic framework (SWOT, Porter, etc.) | `analyze` |
+| Produce a newsletter, article, or report | `write` |
+| Get multi-perspective feedback on a draft | `review` |
+| Iteratively improve a draft to a target score | `loop` |
+| Save a URL, note, or excerpt for later | `collect` |
+| Chain multiple skills into a repeatable workflow | `pipeline` |
+| Find and install a new skill I do not have | `hunt` |
 
 ---
 
@@ -74,29 +93,29 @@ Commands use the `/second-claude-code:` prefix.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `research` | Autonomous deep research with iterative refinement | `/second-claude-code:research "AI agent landscape 2026"` |
-| `hunt` | Skill discovery — find and install new capabilities | `/second-claude-code:hunt "terraform security audit"` |
+| [`research`](docs/skills/research.md) | Autonomous deep research with iterative refinement | `/second-claude-code:research "AI agent landscape 2026"` |
+| [`hunt`](docs/skills/hunt.md) | Skill discovery — find and install new capabilities | `/second-claude-code:hunt "terraform security audit"` |
 
 ### Create
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `write` | Content production (articles, newsletters, scripts) | `/second-claude-code:write newsletter "The future of vibe coding"` |
-| `analyze` | Strategic framework analysis (15 built-in frameworks) | `/second-claude-code:analyze swot "our SaaS product"` |
+| [`write`](docs/skills/write.md) | Content production (articles, newsletters, scripts) | `/second-claude-code:write newsletter "The future of vibe coding"` |
+| [`analyze`](docs/skills/analyze.md) | Strategic framework analysis (15 built-in frameworks) | `/second-claude-code:analyze swot "our SaaS product"` |
 
 ### Quality
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `review` | Multi-perspective quality gate with consensus voting | `/second-claude-code:review docs/draft.md --preset content` |
-| `loop` | Iterative improvement toward a target score | `/second-claude-code:loop "Raise this article to 4.5/5" --max 3` |
+| [`review`](docs/skills/review.md) | Multi-perspective quality gate with consensus voting | `/second-claude-code:review docs/draft.md --preset content` |
+| [`loop`](docs/skills/loop.md) | Iterative improvement toward a target score | `/second-claude-code:loop "Raise this article to 4.5/5" --max 3` |
 
 ### Manage
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| `collect` | Knowledge collection and PARA classification | `/second-claude-code:collect https://example.com/article` |
-| `pipeline` | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
+| [`collect`](docs/skills/collect.md) | Knowledge collection and PARA classification | `/second-claude-code:collect https://example.com/article` |
+| [`pipeline`](docs/skills/pipeline.md) | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
 
@@ -113,7 +132,7 @@ You do not need to memorize slash commands. The hook-based auto-router detects i
 "How do I run a security audit?"       →  /second-claude-code:hunt
 ```
 
-The router matches against ~40 English and ~35 Korean trigger patterns via `hooks/prompt-detect.mjs` and injects the appropriate skill context before the model responds.
+The router matches against ~58 English and ~41 Korean trigger patterns via `hooks/prompt-detect.mjs` and injects the appropriate skill context before the model responds. When multiple skills match, the pattern that appears earliest in the prompt wins.
 
 ---
 
@@ -185,10 +204,11 @@ graph TD
     G --> V{Verdict}
     V -->|pass| AP[APPROVED]
     V -->|issues| MF[MINOR FIXES]
+    V -->|threshold miss| NI[NEEDS IMPROVEMENT]
     V -->|critical| MU[MUST FIX]
 ```
 
-**Consensus gate:** 2/3 passes = APPROVED (3/5 for `full` preset). Any Critical finding = MUST FIX.
+**Consensus gate:** 2/3 passes = APPROVED (3/5 for `full` preset). Threshold not met with no Critical findings = NEEDS IMPROVEMENT. Any Critical finding = MUST FIX.
 
 ### Presets
 
@@ -250,7 +270,7 @@ second-claude/
 │   ├── prompt-detect.mjs         # Natural language auto-router
 │   ├── session-start.mjs         # Session banner + state init
 │   └── session-end.mjs           # Cleanup
-├── references/                   # Design principles, lineage, consensus gate
+├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
 ├── scripts/                      # Shell utilities
 └── config/                       # User configuration
@@ -262,7 +282,7 @@ second-claude/
 | `agents/` | 10 subagent definitions: 5 production agents (researcher, analyst, editor, strategist, writer) and 5 reviewers (deep-reviewer, devil-advocate, fact-checker, tone-guardian, structure-analyst). |
 | `commands/` | Thin wrappers that route `/second-claude-code:*` invocations to the matching skill. |
 | `hooks/` | Session lifecycle hooks and the auto-routing engine that maps natural language to skills. |
-| `references/` | Shared knowledge: design principles, consensus gate spec, PARA method, lineage documentation. |
+| `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
 </details>
 
@@ -289,12 +309,14 @@ Context-efficient + zero dependency = fast, cheap, portable across platforms.
 
 ## Compatibility
 
-| Platform | Install |
-|----------|---------|
-| **Claude Code** (primary) | `claude plugin add github:EungjePark/second-claude-code` |
-| **OpenClaw** | Standard ACP protocol — auto-detected |
-| **Codex** | SKILL.md standard compatible |
-| **Gemini CLI** | SKILL.md standard compatible |
+| Platform | Install | Status |
+|----------|---------|--------|
+| **Claude Code** (primary) | `claude plugin add github:EungjePark/second-claude-code` | Tested |
+| **OpenClaw** | Standard ACP protocol — auto-detected | Experimental |
+| **Codex** | SKILL.md standard compatible | Experimental |
+| **Gemini CLI** | SKILL.md standard compatible | Experimental |
+
+> Non-Claude platforms are expected to work via the SKILL.md standard but have not been fully validated. Please report issues if you encounter compatibility problems.
 
 ## Contributing
 

@@ -32,7 +32,7 @@ The core 8 workflows should run without installing external packages. Optional m
 ## 6. State in Files
 All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databases, no external services, no environment variables for state. File-based state is inspectable, versionable, and survives session restarts without configuration.
 
-**Implication**: Use `$CLAUDE_PLUGIN_DATA/state.json` for plugin state. Use `$CLAUDE_PLUGIN_DATA/captures/` for knowledge base. Never rely on in-memory state across session boundaries.
+**Implication**: Use `$CLAUDE_PLUGIN_DATA/state.json` for plugin state. Use `$CLAUDE_PLUGIN_DATA/knowledge/` for knowledge base. Never rely on in-memory state across session boundaries.
 
 ## 7. Composable
 The 8 core skills are building blocks, not endpoints. `/second-claude-code:write` calls `/second-claude-code:research` internally. `/second-claude-code:loop` wraps any other skill in an iteration cycle. `/second-claude-code:pipeline` chains arbitrary skill sequences. Composition is the primary extension mechanism.

@@ -21,19 +21,19 @@ Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second C
 
 ## 지식 작업 사이클
 
-```mermaid
-graph LR
-    Research --> Write
-    Research --> Analyze
-    Analyze --> Review
-    Write --> Review
-    Review --> Loop
-    Loop --> Write
-    Collect --> Research
-    Pipeline -.->|orchestrates| Research
-    Pipeline -.->|orchestrates| Write
-    Hunt -.->|discovers| Pipeline
-```
+이 구조는 두 레이어로 읽히도록 정리했습니다. 먼저 핵심 워크플로를 이해하고, 그다음 보조 명령어를 보게 됩니다.
+
+**핵심 흐름**
+
+`Research` → `Analyze` → `Write` → `Review` → `Loop`
+
+**보조 명령어**
+
+| 명령어 | 역할 |
+|--------|------|
+| `hunt` | 워크플로 주변에서 필요한 기능을 탐색 |
+| `collect` | 자료와 메모를 PARA 친화적으로 저장 |
+| `pipeline` | 여러 명령어를 반복 가능한 흐름으로 연결 |
 
 ---
 
@@ -55,6 +55,8 @@ claude plugin add github:EungjePark/second-claude-code
 ...
 ```
 
+아무것도 표시되지 않으면 플러그인 설치를 확인하세요: `claude plugin list`
+
 **3. 바로 사용** — 자연어로 입력하세요:
 
 ```
@@ -62,6 +64,23 @@ AI 에이전트 프레임워크 현황을 조사해줘
 ```
 
 자동 라우터가 `/second-claude-code:research`를 자동으로 선택합니다. 슬래시 명령어를 외울 필요가 없습니다.
+
+자동 라우팅이 작동하지 않으면 명시적 명령어를 사용하세요: `/second-claude-code:research "AI 에이전트 프레임워크 2026"`
+
+---
+
+## 스킬 선택 가이드
+
+| 하고 싶은 것 | 사용할 스킬 |
+|-------------|------------|
+| 주제에 대한 정보 조사 | `research` |
+| 전략 프레임워크 적용 (SWOT, Porter 등) | `analyze` |
+| 뉴스레터, 아티클, 보고서 작성 | `write` |
+| 초안에 대한 다중 관점 피드백 받기 | `review` |
+| 목표 점수까지 초안 반복 개선 | `loop` |
+| URL, 메모, 발췌를 저장 | `collect` |
+| 여러 스킬을 반복 가능한 워크플로우로 연결 | `pipeline` |
+| 없는 스킬을 찾아 설치 | `hunt` |
 
 ---
 
@@ -73,29 +92,29 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `research` | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
-| `hunt` | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
+| [`research`](docs/skills/research.md) | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
+| [`hunt`](docs/skills/hunt.md) | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
 
 ### 생성 (Create)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `write` | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
-| `analyze` | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
+| [`write`](docs/skills/write.md) | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
+| [`analyze`](docs/skills/analyze.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
 
 ### 품질 (Quality)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `review` | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
-| `loop` | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
+| [`review`](docs/skills/review.md) | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
+| [`loop`](docs/skills/loop.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
 
 ### 관리 (Manage)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| `collect` | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
-| `pipeline` | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
+| [`collect`](docs/skills/collect.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
+| [`pipeline`](docs/skills/pipeline.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ---
 
@@ -129,7 +148,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 "보안 감사 스킬 있어?"                   →  /second-claude-code:hunt
 ```
 
-`hooks/prompt-detect.mjs`에서 영어 약 40개, 한국어 약 35개의 트리거 패턴을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다.
+`hooks/prompt-detect.mjs`에서 영어 약 58개, 한국어 약 41개의 트리거 패턴을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다. 여러 스킬이 매칭될 경우, 프롬프트에서 가장 먼저 나타나는 패턴의 스킬이 선택됩니다.
 
 ---
 
@@ -201,10 +220,11 @@ graph TD
     G --> V{Verdict}
     V -->|pass| AP[APPROVED]
     V -->|issues| MF[MINOR FIXES]
+    V -->|threshold miss| NI[NEEDS IMPROVEMENT]
     V -->|critical| MU[MUST FIX]
 ```
 
-**Consensus gate (합의 게이트):** 2/3 통과 시 APPROVED (full 프리셋은 3/5). Critical 발견 시 즉시 MUST FIX.
+**Consensus gate (합의 게이트):** 2/3 통과 시 APPROVED (full 프리셋은 3/5). 임계값 미달 + Critical 없음 = NEEDS IMPROVEMENT. Critical 발견 시 즉시 MUST FIX.
 
 ### 프리셋
 
@@ -266,7 +286,7 @@ second-claude/
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터
 │   ├── session-start.mjs         # 세션 배너 + 상태 초기화
 │   └── session-end.mjs           # 정리
-├── references/                   # 설계 원칙, 계보, 합의 게이트
+├── references/                   # 설계 원칙, 합의 게이트
 ├── templates/                    # 출력 템플릿
 ├── scripts/                      # 셸 유틸리티
 └── config/                       # 사용자 설정
@@ -278,7 +298,7 @@ second-claude/
 | `agents/` | 10개 서브에이전트 정의: 프로덕션 에이전트 5개(researcher, analyst, editor, strategist, writer) + 리뷰어 5개(deep-reviewer, devil-advocate, fact-checker, tone-guardian, structure-analyst). |
 | `commands/` | `/second-claude-code:*` 호출을 해당 스킬로 연결하는 얇은 래퍼. |
 | `hooks/` | 세션 라이프사이클 훅과 자연어를 스킬에 매핑하는 자동 라우팅 엔진. |
-| `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 메소드, 계보 문서. |
+| `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 메소드. |
 
 </details>
 
@@ -302,12 +322,14 @@ second-claude/
 
 ## 호환성
 
-| 플랫폼 | 설치 방법 |
-|--------|-----------|
-| **Claude Code** (주력) | `claude plugin add github:EungjePark/second-claude-code` |
-| **OpenClaw** | 표준 ACP 프로토콜 — 자동 감지 |
-| **Codex** | SKILL.md 표준 호환 |
-| **Gemini CLI** | SKILL.md 표준 호환 |
+| 플랫폼 | 설치 방법 | 상태 |
+|--------|-----------|------|
+| **Claude Code** (주력) | `claude plugin add github:EungjePark/second-claude-code` | 검증 완료 |
+| **OpenClaw** | 표준 ACP 프로토콜 — 자동 감지 | 실험적 |
+| **Codex** | SKILL.md 표준 호환 | 실험적 |
+| **Gemini CLI** | SKILL.md 표준 호환 | 실험적 |
+
+> Claude Code 이외 플랫폼은 SKILL.md 표준을 통해 동작할 것으로 기대되지만, 아직 완전히 검증되지 않았습니다. 호환성 문제를 발견하면 이슈로 알려주세요.
 
 ## 기여 및 라이선스
 

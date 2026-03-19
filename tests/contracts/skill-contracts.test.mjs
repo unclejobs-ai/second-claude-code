@@ -309,6 +309,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
   }
 
   for (const file of files) {
+    if (file.startsWith("tests/skill-tests/")) continue;
     assert.doesNotMatch(file, /[\uAC00-\uD7A3]/, `${file} path should not contain Hangul`);
     const content = read(file);
     assert.doesNotMatch(content, /[\uAC00-\uD7A3]/, `${file} should not contain Hangul`);

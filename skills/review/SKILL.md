@@ -41,23 +41,46 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 - Final verdicts: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
 - `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)
 
+## Severity Calibration
+
+Three levels: **Critical** (ship-blocking), **Major** (significant gap), **Minor** (polish). See `references/consensus-gate.md` for detailed criteria and examples.
+
 ## Workflow
 
-1. Dispatch preset reviewers in parallel with independent context.
+1. Dispatch preset reviewers in parallel with independent context. Each reviewer receives ONLY the content to review and their role prompt — never another reviewer's findings.
 2. Collect structured findings with severity levels.
-3. Deduplicate and synthesize them.
+3. Deduplicate overlapping findings (see Deduplication Rules below).
 4. Apply the consensus gate and return a single report.
+
+## Deduplication Rules
+
+See `references/consensus-gate.md` for the full deduplication protocol. Key rule: severity conflicts use the higher severity with a noted disagreement.
 
 ## Output
 
+Each finding MUST include all four fields: location, severity, description, and fix suggestion.
+
 ```markdown
 # Review Report
-## Verdict: {APPROVED | MINOR FIXES | MUST FIX}
+## Verdict: {APPROVED | MINOR FIXES | NEEDS IMPROVEMENT | MUST FIX}
 Consensus: {X}/{Y}
 
-## Critical / Major / Minor
-- [reviewer] finding — evidence
+## Findings
+
+### Critical
+- **[reviewer(s)]** `{file:line | Section > Subsection | paragraph N}` — {description with evidence} → **Fix:** {specific actionable suggestion}
+
+### Major
+- **[reviewer(s)]** `{location}` — {description} → **Fix:** {specific suggestion}
+
+### Minor
+- **[reviewer(s)]** `{location}` — {description} → **Fix:** {specific suggestion}
 ```
+
+**Format rules**:
+- Location must be precise enough to find the issue without re-reading the whole document. Use `file:line` for code, `Section > Subsection` or `paragraph N` for prose.
+- Fix suggestion must be a concrete action ("Change X to Y", "Add Z after line N"), never vague ("improve this", "consider revising").
+- If multiple reviewers flagged the same finding, list all in the `[reviewer(s)]` tag.
 
 ## Options
 
@@ -70,17 +93,7 @@ Consensus: {X}/{Y}
 
 ## External Reviewers
 
-When `--external` is set, the review skill detects installed external CLIs and dispatches a review to the first available one. This provides a cross-model perspective.
-
-Detection order:
-1. `mmbridge` — multi-model bridge (preferred)
-2. `kimi` — Kimi reviewer
-3. `codex` — OpenAI Codex CLI
-4. `gemini` — Google Gemini CLI
-
-The external review runs in parallel with internal reviewers. Its findings are merged into the consensus gate as an additional voter. Configure available reviewers in `config.example.json` under `quality_gate.external_reviewers`.
-
-If no external CLI is detected, `--external` is silently ignored.
+When `--external` is set, detects installed external CLIs and dispatches a cross-model review in parallel. See `references/consensus-gate.md` for detection order and configuration. Silently ignored if no CLI is found.
 
 ## Gotchas
 

@@ -4,7 +4,7 @@
   "steps": [
     {
       "skill": "/second-claude-code:research",
-      "args": "--depth medium",
+      "args": "\"{{topic}}\" --depth medium",
       "output": "research-brief.md",
       "on_fail": "abort"
     },

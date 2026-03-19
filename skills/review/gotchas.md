@@ -21,3 +21,15 @@
 ### 5. Rewriting instead of reviewing
 **Symptom**: The reviewer rewrites the entire document instead of identifying issues
 **Fix**: Reviewers identify problems only. The `editor` agent owns revisions.
+
+### 6. Cross-contamination between reviewers
+**Symptom**: Later reviewers echo the same phrasing or framing as earlier reviewers; findings converge suspiciously
+**Fix**: Each reviewer receives ONLY the content to review and their role prompt. They must NOT receive other reviewers' findings, summaries, or verdicts — not even across rounds. The main session merges findings after all reviewers have completed independently.
+
+### 7. Vague fix suggestions
+**Symptom**: Findings say "improve this section" or "consider revising" without actionable specifics
+**Fix**: Every finding must include a concrete fix suggestion: "Change X to Y", "Add error handling for case Z", "Move paragraph 3 before paragraph 2". If the reviewer cannot propose a specific fix, they must state why (e.g., "requires domain expertise to determine correct value").
+
+### 8. Duplicate findings inflate severity
+**Symptom**: Three reviewers flag the same typo, making it look like three separate issues
+**Fix**: Apply deduplication rules from SKILL.md. Merge identical findings, credit all agreeing reviewers, but count the issue only once in the report. Agreeing reviewers still count as individual voters for consensus.

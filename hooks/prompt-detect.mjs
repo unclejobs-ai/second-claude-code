@@ -78,7 +78,10 @@ const ko = {
   ],
 };
 
-// Pattern → skill mapping (order matters — first match wins)
+// Pattern → skill mapping.
+// Uses multi-word phrases for common English words to reduce false positives
+// on routine coding tasks like "search for a file" or "save this file".
+// The earliest-position algorithm below handles multi-match disambiguation.
 const routes = [
   {
     patterns: [
@@ -86,8 +89,9 @@ const routes = [
       "research",
       "investigate",
       "look up",
-      "search",
-      "explore",
+      "search about",
+      "search for information",
+      "find out about",
     ],
     skill: "second-claude-code:research",
     label: "research",
@@ -95,10 +99,13 @@ const routes = [
   {
     patterns: [
       ...ko.review,
-      "review",
-      "quality",
-      "check",
-      "feedback",
+      "review this",
+      "review my",
+      "review the",
+      "quality review",
+      "quality check",
+      "give feedback",
+      "get feedback",
     ],
     skill: "second-claude-code:review",
     label: "review",
@@ -107,11 +114,12 @@ const routes = [
     patterns: [
       ...ko.write,
       "newsletter",
-      "report",
-      "script",
-      "article",
-      "write",
-      "draft",
+      "write a report",
+      "write an article",
+      "write a script",
+      "article about",
+      "write about",
+      "draft a",
       "card news",
     ],
     skill: "second-claude-code:write",
@@ -121,17 +129,17 @@ const routes = [
     patterns: [
       ...ko.analyze,
       "swot",
-      "rice",
+      "rice analysis",
       "okr",
       "prd",
       "lean canvas",
       "analyze",
-      "strategy",
+      "strategic analysis",
       "porter",
       "pestle",
       "persona",
-      "journey",
-      "pricing",
+      "journey map",
+      "pricing analysis",
     ],
     skill: "second-claude-code:analyze",
     label: "analyze",
@@ -139,11 +147,15 @@ const routes = [
   {
     patterns: [
       ...ko.loop,
-      "improve",
+      "improve this",
+      "improve my",
+      "improve the",
       "iterate",
       "loop",
-      "polish",
-      "better",
+      "polish this",
+      "make this better",
+      "raise the score",
+      "raise this to",
     ],
     skill: "second-claude-code:loop",
     label: "loop",
@@ -151,11 +163,13 @@ const routes = [
   {
     patterns: [
       ...ko.collect,
-      "save",
-      "collect",
-      "note",
-      "record",
-      "clip",
+      "save this",
+      "save this link",
+      "save for later",
+      "collect this",
+      "take a note",
+      "clip this",
+      "save to knowledge",
     ],
     skill: "second-claude-code:collect",
     label: "collect",
@@ -173,22 +187,37 @@ const routes = [
   {
     patterns: [
       ...ko.hunt,
-      "skill",
+      "find a skill",
+      "skill for",
       "hunt",
       "how do i",
       "how can i",
-      "tool",
+      "is there a skill",
+      "find a tool for",
     ],
     skill: "second-claude-code:hunt",
     label: "hunt",
   },
 ];
 
+// Find all matching routes and pick the one whose keyword appears earliest
+// in the input (first-verb heuristic). This prevents "write a review" from
+// mis-routing to review when "write" appears first.
+let bestMatch = null;
+let bestPos = Infinity;
+
 for (const route of routes) {
-  if (route.patterns.some((p) => lower.includes(p))) {
-    console.log(
-      `[second-claude-code:auto-route] Detected intent: ${route.label} → Consider using /${route.skill}`
-    );
-    break;
+  for (const p of route.patterns) {
+    const pos = lower.indexOf(p);
+    if (pos !== -1 && pos < bestPos) {
+      bestPos = pos;
+      bestMatch = route;
+    }
   }
+}
+
+if (bestMatch) {
+  console.log(
+    `[second-claude-code:auto-route] Detected intent: ${bestMatch.label} → Consider using /${bestMatch.skill}`
+  );
 }

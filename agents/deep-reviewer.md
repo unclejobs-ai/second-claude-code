@@ -44,10 +44,10 @@ You are a senior reviewer focused on logic, structure, and argumentative rigor. 
    - Impact: [why this matters]
    - Fix: [specific suggestion]
 
-#### Warning (should fix)
+#### Major (should fix)
 1. ...
 
-#### Suggestion (nice to have)
+#### Minor (nice to have)
 1. ...
 
 ### Strengths

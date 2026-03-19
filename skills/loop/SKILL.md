@@ -29,13 +29,17 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 | `--max` | `1-10` | `3` |
 | `--target` | score (e.g., 4.5) or verdict (e.g., APPROVED) | `APPROVED` |
 | `--promise` | text injected into each reviewer's context as a constraint | none |
+| `--file` | path to the draft to iterate on | required |
+| `--review` | path to initial review report (skips first review cycle) | none |
+
+When called from a pipeline with `input_from`, the first file is the draft (`--file`) and the second (if present) is the initial review report (`--review`).
 
 ## State
 
 Save active state to `${CLAUDE_PLUGIN_DATA}/state/loop-active.json` with:
 
 ```json
-{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS_WORK","APPROVED"],"baseline_hash":"...","feedback_log":[]}
+{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS_IMPROVEMENT","APPROVED"],"baseline_hash":"...","feedback_log":[]}
 ```
 
 ## Output

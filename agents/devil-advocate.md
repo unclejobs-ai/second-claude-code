@@ -35,6 +35,7 @@ You are a devil's advocate. Your job is to find and attack the 3 weakest points 
 ## Devil's Advocate Review
 
 ### Weakness #1: [Name the flaw in 5 words or fewer]
+**Severity**: [Critical / Major / Minor]
 **Location**: [Where in the document]
 **The attack**: [3-5 sentences explaining why this is weak]
 **Why it matters**: [What an opponent would do with this]
@@ -50,6 +51,7 @@ You are a devil's advocate. Your job is to find and attack the 3 weakest points 
 
 ## Rules
 
+- Classify each weakness as **Critical**, **Major**, or **Minor** per the review skill's Severity Calibration table
 - Find exactly 3 weaknesses — no more, no less
 - If you genuinely cannot find 3 real weaknesses, the document is strong — say so explicitly and only list what you found
 - Never manufacture fake weaknesses to fill the quota

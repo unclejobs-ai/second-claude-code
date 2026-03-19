@@ -29,6 +29,9 @@ Produce content with automatic research and review unless the caller explicitly 
 | `--skip-research` | flag | off |
 | `--skip-review` | flag | off |
 | `--lang` | `ko\|en` | `ko` |
+| `--input` | file path | none |
+
+When `--input` is provided (or when called from a pipeline with `input_from`), the file content is injected as source context and `--skip-research` is implied.
 
 ## Voices
 

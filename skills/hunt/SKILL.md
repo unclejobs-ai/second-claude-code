@@ -16,58 +16,68 @@ Find existing skills first, then search external marketplaces only when needed a
 ## Workflow
 
 1. Scan local skills by name and description.
-2. If no strong match exists, search external sources when the required CLIs are available.
-3. Score candidates on relevance, popularity, recency, dependency weight, and source trust.
-4. Present ranked options and wait for explicit approval.
-5. Install only with approval and only when the environment supports it.
+2. If no strong match, search external sources in priority order (see Source Prioritization).
+3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. See `references/hunt-scoring.md` for the full inspection workflow.
+4. Score candidates on relevance, popularity, recency, dependency weight, and source trust. Show the full weighted breakdown (see `references/hunt-scoring.md`).
+5. Apply the **Build vs Install** threshold. If no candidate scores above 3.0, recommend a custom pipeline instead.
+6. Present ranked options with pinned versions and wait for explicit approval.
+7. Install only with approval and only when the environment supports it.
 
-## Search Sources
+## Source Prioritization
 
-| Source | Condition |
-|--------|-----------|
-| Local `skills/` | always |
-| `npx skills search` | when `npx` is available |
-| `npm search --json` | when `npm` is available |
-| `gh search repos` | when `gh` is available |
+| Priority | Source | Condition | Trust Tier |
+|----------|--------|-----------|------------|
+| 1 | Local `skills/` directory | Always | Tier 1 (highest) |
+| 2 | GitHub repos with `SKILL.md` | When `gh` is available | Tier 2 |
+| 3 | npm packages with `claude-code` keyword | When `npm` is available | Tier 3 |
+| 4 | General web search | Always available | Tier 4 (lowest) |
+
+Trust tier scores: Tier 1 = 5, Tier 2 = 4, Tier 3 = 3, Tier 4 = 2. Bumps apply for verified orgs or scoped packages.
 
 ## Evaluation Weights
 
-Each criterion is scored on a 1-5 scale. The weighted sum produces a final score (1.0-5.0).
+Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 
-| Criterion | Weight |
-|-----------|--------|
-| Relevance | 30% |
-| Popularity | 20% |
-| Recency | 20% |
-| Dependencies | 15% |
-| Source trust | 15% |
+| Criterion | Weight | Scoring Guide |
+|-----------|--------|---------------|
+| Relevance | 30% | 5 = exact match, 3 = partial overlap, 1 = tangential |
+| Popularity | 20% | 5 = 1000+ stars, 3 = 100-999, 1 = <50 |
+| Recency | 20% | 5 = updated within 30 days, 3 = within 6 months, 1 = >1 year stale |
+| Dependencies | 15% | 5 = zero or minimal, 3 = moderate (5-15), 1 = heavy or native |
+| Source trust | 15% | See trust tier mapping above |
 
 ## Thresholds
 
-- `4.0+`: strong recommendation
-- `3.0-3.9`: viable with caveats
-- `<3.0`: mention only if nothing else exists
+| Score Range | Action |
+|-------------|--------|
+| `4.0+` | Strong recommendation -- install with confidence |
+| `3.0-3.9` | Viable with caveats -- list limitations |
+| `<3.0` | Do NOT recommend. Suggest building a custom pipeline instead. |
 
 ## Safety
 
-- Never auto-install.
-- Pin exact versions.
+- Never auto-install. Pin exact versions (see `references/hunt-scoring.md`).
 - Flag heavy or stale packages.
 - Degrade gracefully to local-scan-only mode if marketplace tooling is missing.
+- Flag repos with no LICENSE file or suspicious content.
 
 ## Output
 
-Return a short ranked list with score, update date, source, and exact install command when applicable.
+Return a short ranked list with: full score breakdown with rationale, inspection notes, update date and source, exact install command with pinned version, and build-vs-install recommendation if below threshold.
 
 ## Gotchas
 
 - Never invent package names.
 - Never recommend a package without checking recency and source.
 - Never skip the approval step.
+- Never recommend a bare repo URL without a pinned version or commit hash.
+- Never rely solely on metadata -- always attempt Candidate Inspection.
+- If marketplace CLI does not exist, skip silently and note the gap.
 
 ## Subagents
 
 ```yaml
-searcher: { model: haiku, tools: [Bash, WebSearch], constraint: "return only real results" }
-evaluator: { model: sonnet, tools: [Read], constraint: "score and rank candidates consistently" }
+searcher: { model: haiku, tools: [Bash, WebSearch], constraint: "return only real results; query sources in priority order" }
+inspector: { model: sonnet, tools: [Bash, Read], constraint: "fetch and read README/SKILL.md for top 3; verify claims" }
+evaluator: { model: sonnet, tools: [Read], constraint: "score consistently; show full breakdown with rationale" }
 ```
