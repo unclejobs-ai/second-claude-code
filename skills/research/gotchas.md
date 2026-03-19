@@ -1,23 +1,23 @@
 # Research Gotchas
 
-## Claude가 리서치에서 자주 실패하는 패턴
+## Common failure patterns in research
 
-### 1. 1회 검색 후 멈춤
-**증상**: WebSearch 1번 하고 "충분한 정보를 모았습니다"
-**해결**: depth에 따라 최소 검색 횟수 강제 (shallow=3, medium=5, deep=10)
+### 1. Stopping after one search
+**Symptom**: Running one WebSearch and declaring the topic covered
+**Fix**: Enforce depth minimums: shallow=3, medium=5, deep=10.
 
-### 2. 링크 나열 = 리서치
-**증상**: URL 10개 나열 후 "다양한 소스를 확인했습니다"
-**해결**: 각 소스에서 추출한 구체적 데이터 포인트 필수. "이 소스에서 배운 것: X"
+### 2. Treating link dumps as research
+**Symptom**: Listing 10 URLs and calling it complete research
+**Fix**: Extract concrete data points from each source and say what was learned from it.
 
-### 3. 출처 날조
-**증상**: 존재하지 않는 URL, 잘못된 통계 인용
-**해결**: 모든 URL은 WebFetch로 접근 가능해야 함. 접근 불가 URL = 삭제
+### 3. Fabricated sources
+**Symptom**: Nonexistent URLs or incorrect statistics appear in the brief
+**Fix**: Every URL must be fetchable. If it cannot be fetched, remove it.
 
-### 4. 확증 편향
-**증상**: 첫 검색 결과와 일치하는 정보만 수집
-**해결**: 반드시 "반대 의견" 또는 "대안적 관점" 검색 포함
+### 4. Confirmation bias
+**Symptom**: Collecting only information that matches the first search result
+**Fix**: Require at least one counter-view or alternative-angle query.
 
-### 5. 분석 없는 수집
-**증상**: 정보는 많지만 "그래서 뭐?" (So What?)가 없음
-**해결**: Key Findings에 반드시 "시사점" 열 포함
+### 5. Collection without synthesis
+**Symptom**: Plenty of information, but no "So what?"
+**Fix**: Every key finding must include an implication, not just a fact.

@@ -1,23 +1,23 @@
 # Capture Gotchas
 
-## Claude가 지식 캡처에서 자주 실패하는 패턴
+## Common failure patterns in knowledge capture
 
-### 1. 전문 복사
-**증상**: URL 전체 내용을 그대로 저장 — Reduce 단계 생략
-**해결**: key_points 최대 5개, summary 최대 3문장 강제
+### 1. Verbatim capture
+**Symptom**: The full URL content is stored with no reduction step
+**Fix**: Force key_points exactly 3 and keep the summary to at most 3 sentences.
 
-### 2. PARA 오분류
-**증상**: 모든 것이 Resource로 분류됨
-**해결**: 명확한 기준 적용 — Project(데드라인 있음), Area(지속 책임), Resource(참조), Archive(비활성)
+### 2. Wrong PARA classification
+**Symptom**: Everything gets labeled as a Resource
+**Fix**: Apply explicit criteria: Project has a deadline, Area is ongoing, Resource is reference material, Archive is inactive.
 
-### 3. 피상적 연결
-**증상**: "이것은 AI와 관련됩니다" — 너무 넓은 연결
-**해결**: connections에 구체적 공유 개념/인사이트 명시. "AI" 수준은 연결이 아님
+### 3. Superficial connections
+**Symptom**: "This is related to AI" with no precise shared concept
+**Fix**: Every connection must name the exact shared concept or insight. "AI" is too broad to be useful.
 
-### 4. 중복 캡처
-**증상**: 같은 URL/내용을 여러 번 캡처
-**해결**: 저장 전 기존 지식베이스에서 URL/제목 중복 체크
+### 4. Duplicate capture
+**Symptom**: The same URL or content is captured multiple times
+**Fix**: Check for duplicate URLs and near-identical titles before saving.
 
-### 5. 검색 불가능한 저장
-**증상**: 저장은 했지만 나중에 찾을 수 없음
-**해결**: tags 필수 (최소 3개), 제목에 핵심 키워드 포함
+### 5. Unsearchable storage
+**Symptom**: The item is stored, but impossible to find later
+**Fix**: Require tags, and make sure the title contains the primary search term.

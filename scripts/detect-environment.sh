@@ -24,9 +24,18 @@ if command -v npx &>/dev/null; then
   capabilities+=("npx-skills")
 fi
 
-# Check for mmbridge (optional external reviewer)
+# Check for external reviewers / CLIs
 if command -v mmbridge &>/dev/null; then
   capabilities+=("mmbridge")
+fi
+if command -v kimi &>/dev/null; then
+  capabilities+=("kimi")
+fi
+if command -v codex &>/dev/null; then
+  capabilities+=("codex")
+fi
+if command -v gemini &>/dev/null; then
+  capabilities+=("gemini")
 fi
 
 # Check for firecrawl

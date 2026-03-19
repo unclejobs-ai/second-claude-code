@@ -1,23 +1,23 @@
 # Analyze Gotchas
 
-## Claude가 전략 분석에서 자주 실패하는 패턴
+## Common failure patterns in strategic analysis
 
-### 1. 균등 배분
-**증상**: SWOT 각 사분면 정확히 4개씩, RICE 점수가 다 비슷
-**해결**: 비대칭 깊이 강제. "가장 중요한 1-2개에 집중하고 나머지는 간략히"
+### 1. Artificial symmetry
+**Symptom**: Every SWOT quadrant has exactly 4 bullets, or every RICE score clusters too tightly
+**Fix**: Enforce asymmetric depth. Focus on the most important 1-2 items and keep the rest brief.
 
-### 2. 반론 생략
-**증상**: "이 전략은 성공할 것입니다" — 약점/리스크 언급 없음
-**해결**: devil-advocate 서브에이전트 필수. 반론 없는 분석 = 미완성
+### 2. Missing counterarguments
+**Symptom**: "This strategy will succeed" with no risk or weakness discussion
+**Fix**: Require the `devil-advocate` subagent. Analysis without challenge is incomplete.
 
-### 3. 제네릭 예시
-**증상**: "좋은 팀", "강력한 기술력" — 어디에나 해당되는 분석
-**해결**: 모든 항목에 구체적 증거 (숫자, 이름, 사실) 필수
+### 3. Generic examples
+**Symptom**: Phrases like "great team" or "strong technology" that apply to anyone
+**Fix**: Require specific evidence for every item: numbers, names, or verifiable facts.
 
-### 4. 프레임워크 혼동
-**증상**: Lean Canvas에 SWOT 내용, OKR에 태스크 리스트
-**해결**: 프레임워크별 참조 문서(references/frameworks/) 로드 후 작성
+### 4. Framework confusion
+**Symptom**: SWOT content shows up in Lean Canvas, or OKRs turn into task lists
+**Fix**: Consult the framework-specific reference doc before writing.
 
-### 5. 실행 가능성 무시
-**증상**: 훌륭한 분석이지만 "그래서 내일 뭘 해야 하나?"에 답 없음
-**해결**: 모든 분석에 "Recommended Actions (우선순위 포함)" 섹션 필수
+### 5. No execution path
+**Symptom**: The analysis sounds smart but does not answer "What should we do next?"
+**Fix**: Require a "Recommended Actions" section with priorities.

@@ -1,20 +1,20 @@
 # Report Format Reference
 
 ## Structure
-1. **Executive Summary**: 핵심 발견 3-5개 (의사결정자용)
-2. **배경 및 목적**: 이 보고서가 왜 필요한지
-3. **방법론**: 데이터 수집/분석 방법
-4. **핵심 발견** (섹션별): 데이터 → 분석 → 시사점
-5. **권고사항**: 우선순위 포함 액션 아이템
-6. **한계 및 후속 과제**: 정직한 한계 명시
-7. **부록**: 원시 데이터, 참고자료
+1. **Executive Summary**: 3-5 key findings for decision-makers
+2. **Background and Purpose**: Why this report exists
+3. **Methodology**: How data was collected and analyzed
+4. **Key Findings**: Data → analysis → implication per section
+5. **Recommendations**: Prioritized action items
+6. **Limitations and Follow-up**: Honest constraints and next work
+7. **Appendix**: Raw data and references
 
-## 분량
-- 최소 4,000자 / 권장 6,000-10,000자
-- Executive Summary: 500자 이내
+## Length
+- Minimum 4000 words / recommended 6000-10000 words
+- Keep the executive summary concise and high signal
 
-## 필수 요소
-- 모든 주장에 데이터 출처 명시
-- 표/차트 최소 1개 (마크다운 테이블)
-- 권고사항에 우선순위 (High/Medium/Low)
-- 페이지 번호 또는 섹션 번호 체계
+## Required Elements
+- Every major claim cites a data source
+- At least one table or chart, such as a Markdown table
+- Recommendation priorities (High/Medium/Low)
+- Clear section numbering or page structure

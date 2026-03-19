@@ -1,6 +1,6 @@
 ---
 name: research
-description: "Autonomous deep research with iterative web exploration and structured briefs"
+description: "Use when researching a topic through iterative web exploration and synthesis"
 ---
 
 # Research
@@ -10,7 +10,7 @@ Autonomous multi-round web research that produces structured Research Briefs.
 ## When to Use
 
 - User asks to research a topic, trend, or question
-- Another skill (e.g., `/scc:write`, `/scc:analyze`) needs source material
+- Another skill (e.g., `/second-claude-code:write`, `/second-claude-code:analyze`) needs source material
 - User wants competitive intelligence, market data, or literature review
 
 ## Internal Flow
@@ -30,7 +30,7 @@ writer(sonnet) ──[synthesis]──► Research Brief
 
 ### Step-by-Step
 
-1. **Dispatch researcher** (haiku model): Execute 5-10 WebSearch calls across varied query phrasings. Collect raw URLs, snippets, and data points. Never stop at 1 search.
+1. **Dispatch researcher** (haiku model): Execute depth-appropriate WebSearch calls across varied query phrasings. Use 3 searches for `shallow`, 5 for `medium`, and 10 across iterative rounds for `deep`. Collect raw URLs, snippets, and data points.
 2. **Dispatch analyst** (sonnet model): Structure raw findings into categories. Identify gaps, contradictions, and weak evidence areas. Produce a gap list.
 3. **Optional 2nd round**: If analyst finds critical gaps, dispatch researcher again with targeted queries (3-5 additional searches).
 4. **Dispatch writer** (sonnet model): Synthesize all findings into the output brief format.
@@ -45,9 +45,9 @@ writer(sonnet) ──[synthesis]──► Research Brief
 
 ### Depth Behavior
 
-- **shallow** (1 round): Quick scan. 5 searches, no gap analysis. Good for simple factual lookups.
-- **medium** (3 rounds): Standard. Search, analyze gaps, search again. Covers most use cases.
-- **deep** (5 rounds): Exhaustive. Multiple gap-fill cycles. Use for competitive intel or thorough literature review.
+- **shallow** (1 round): Quick scan. 3 searches, no gap analysis. Good for simple factual lookups.
+- **medium** (2 rounds): Standard. 5 searches, gap analysis, then targeted follow-up. Covers most use cases.
+- **deep** (iterative rounds): Exhaustive. At least 10 searches across repeated gap-fill cycles. Use for competitive intel or thorough literature review.
 
 ## Output Format
 
@@ -81,7 +81,7 @@ These failure modes are common. The skill design explicitly counters each one.
 
 | Failure Mode | Mitigation |
 |-------------|------------|
-| Stops after 1 search | researcher subagent MUST execute minimum 5 searches. Prompt enforces loop count. |
+| Stops after 1 search | researcher subagent MUST execute the depth minimum: shallow 3, medium 5, deep 10. |
 | Lists links without analysis | analyst subagent required. Raw link dumps are rejected; every finding needs a synthesis sentence. |
 | Hallucinated sources | Every URL in the brief must come from an actual WebSearch result. writer cannot invent URLs. Fact-check step verifies URL existence. |
 | Duplicate queries | researcher must vary query phrasing. Include synonyms, related terms, different angles. |
@@ -99,7 +99,7 @@ These failure modes are common. The skill design explicitly counters each one.
 researcher:
   model: haiku
   tools: [WebSearch, WebFetch]
-  constraint: "minimum 5 searches per round, varied phrasing"
+  constraint: "meet depth minimums (3/5/10), vary phrasing, collect real sources"
 
 analyst:
   model: sonnet
@@ -114,6 +114,6 @@ writer:
 
 ## Integration
 
-- Called automatically by `/scc:write` before drafting
-- Called optionally by `/scc:analyze` when `--with-research` is set
+- Called automatically by `/second-claude-code:write` before drafting
+- Called optionally by `/second-claude-code:analyze` when `--with-research` is set
 - Output cached per session to avoid redundant searches

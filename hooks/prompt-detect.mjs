@@ -3,65 +3,127 @@
 /**
  * UserPromptSubmit Hook — Auto-routing (Step 0)
  *
- * Detects user intent from natural language and suggests the matching scc:* skill.
+ * Detects user intent from natural language and suggests the matching
+ * second-claude-code:* command.
  * Does NOT force invocation — prints a hint that Claude picks up.
  */
 
-const input = process.env.USER_PROMPT || "";
+const raw = process.env.USER_PROMPT || "";
 
-if (!input || input.startsWith("/")) {
+if (!raw || raw.startsWith("/")) {
   // Already a slash command or empty — skip routing
   process.exit(0);
 }
 
+// Limit scan to first 500 chars to avoid processing very large prompts
+const input = raw.slice(0, 500);
 const lower = input.toLowerCase();
+const ko = {
+  research: [
+    "\uC870\uC0AC\uD574",
+    "\uB9AC\uC11C\uCE58",
+    "\uCC3E\uC544\uBD10",
+    "\uC54C\uC544\uBD10",
+    "\uAC80\uC0C9\uD574",
+    "\uD0D0\uC0C9",
+  ],
+  write: [
+    "\uB274\uC2A4\uB808\uD130",
+    "\uBCF4\uACE0\uC11C",
+    "\uB300\uBCF8",
+    "\uC544\uD2F0\uD074",
+    "\uAE00 \uC368",
+    "\uC368\uC918",
+    "\uC791\uC131\uD574",
+    "\uCE74\uB4DC\uB274\uC2A4",
+  ],
+  analyze: [
+    "\uBD84\uC11D\uD574",
+    "\uC804\uB7B5",
+  ],
+  review: [
+    "\uB9AC\uBDF0",
+    "\uAC80\uD1A0",
+    "\uD488\uC9C8",
+    "\uCCB4\uD06C",
+    "\uD53C\uB4DC\uBC31",
+  ],
+  loop: [
+    "\uAC1C\uC120",
+    "\uBC18\uBCF5",
+    "\uB354 \uC88B\uAC8C",
+    "\uB2E4\uB4EC\uC5B4",
+  ],
+  capture: [
+    "\uC800\uC7A5",
+    "\uCEA1\uCC98",
+    "\uC815\uB9AC\uD574\uB46C",
+    "\uBA54\uBAA8",
+    "\uAE30\uB85D",
+    "\uD074\uB9AC\uD551",
+  ],
+  pipeline: [
+    "\uD30C\uC774\uD504\uB77C\uC778",
+    "\uC790\uB3D9\uD654",
+    "\uC6CC\uD06C\uD50C\uB85C\uC6B0",
+  ],
+  hunt: [
+    "\uC2A4\uD0AC \uC788",
+    "\uC5B4\uB5BB\uAC8C \uD574",
+    "\uD560 \uC218 \uC788",
+    "\uBC29\uBC95",
+    "\uB3C4\uAD6C",
+  ],
+};
 
 // Pattern → skill mapping (order matters — first match wins)
 const routes = [
   {
     patterns: [
-      "조사해",
-      "리서치",
-      "찾아봐",
+      ...ko.research,
       "research",
       "investigate",
-      "알아봐",
-      "검색해",
-      "탐색",
+      "look up",
+      "search",
+      "explore",
     ],
-    skill: "scc:research",
+    skill: "second-claude-code:research",
     label: "research",
   },
   {
     patterns: [
-      "뉴스레터",
+      ...ko.review,
+      "review",
+      "quality",
+      "check",
+      "feedback",
+    ],
+    skill: "second-claude-code:review",
+    label: "review",
+  },
+  {
+    patterns: [
+      ...ko.write,
       "newsletter",
-      "보고서",
       "report",
-      "대본",
       "script",
-      "아티클",
       "article",
-      "글 써",
-      "써줘",
-      "작성해",
       "write",
       "draft",
-      "카드뉴스",
+      "card news",
     ],
-    skill: "scc:write",
+    skill: "second-claude-code:write",
     label: "write",
   },
   {
     patterns: [
+      ...ko.analyze,
       "swot",
       "rice",
       "okr",
       "prd",
       "lean canvas",
-      "분석해",
       "analyze",
-      "전략",
       "strategy",
       "porter",
       "pestle",
@@ -69,77 +131,53 @@ const routes = [
       "journey",
       "pricing",
     ],
-    skill: "scc:analyze",
+    skill: "second-claude-code:analyze",
     label: "analyze",
   },
   {
     patterns: [
-      "리뷰",
-      "review",
-      "검토",
-      "품질",
-      "quality",
-      "체크",
-      "check",
-      "피드백",
-    ],
-    skill: "scc:review",
-    label: "review",
-  },
-  {
-    patterns: [
-      "개선",
+      ...ko.loop,
       "improve",
-      "반복",
       "iterate",
-      "더 좋게",
-      "better",
       "loop",
-      "다듬어",
       "polish",
+      "better",
     ],
-    skill: "scc:loop",
+    skill: "second-claude-code:loop",
     label: "loop",
   },
   {
     patterns: [
-      "저장",
+      ...ko.capture,
       "save",
-      "캡처",
       "capture",
-      "정리해둬",
-      "메모",
-      "기록",
       "note",
-      "클리핑",
+      "record",
+      "clip",
     ],
-    skill: "scc:capture",
+    skill: "second-claude-code:capture",
     label: "capture",
   },
   {
     patterns: [
-      "파이프라인",
+      ...ko.pipeline,
       "pipeline",
-      "자동화",
       "automate",
-      "워크플로우",
       "workflow",
     ],
-    skill: "scc:pipeline",
+    skill: "second-claude-code:pipeline",
     label: "pipeline",
   },
   {
     patterns: [
-      "스킬 있",
+      ...ko.hunt,
       "skill",
-      "어떻게 해",
-      "할 수 있",
-      "방법",
       "hunt",
-      "도구",
+      "how do i",
+      "how can i",
       "tool",
     ],
-    skill: "scc:hunt",
+    skill: "second-claude-code:hunt",
     label: "hunt",
   },
 ];
@@ -147,7 +185,7 @@ const routes = [
 for (const route of routes) {
   if (route.patterns.some((p) => lower.includes(p))) {
     console.log(
-      `[scc:auto-route] Detected intent: ${route.label} → Consider using /${route.skill}`
+      `[second-claude-code:auto-route] Detected intent: ${route.label} → Consider using /${route.skill}`
     );
     break;
   }

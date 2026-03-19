@@ -1,6 +1,6 @@
 # PARA Method
 
-The classification system used by `/scc:capture` to organize captured knowledge into actionable categories.
+The classification system used by `/second-claude-code:capture` to organize captured knowledge into actionable categories.
 
 ---
 

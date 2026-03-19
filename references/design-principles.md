@@ -28,11 +28,11 @@ Every token in a prompt costs money and attention. Skill descriptions must be un
 
 **Implication**: Audit prompt sizes regularly. If a skill prompt exceeds 2000 tokens including injected context, refactor it.
 
-## 5. Zero Dependency (Pi)
+## 5. Zero Dependency Core (Pi)
 
-No external CLI tools, no npm packages, no Python scripts required. Everything runs through Claude Code's built-in capabilities: subagent dispatch, file I/O, web search, and bash. Installation is `git clone` and nothing else.
+The core 8 workflows should run without installing external packages. Optional marketplace discovery may use external CLIs if they are already present, but the plugin must degrade gracefully when they are not. Installation remains `git clone` and nothing else for the core product.
 
-**Implication**: If a feature requires `npm install` or `pip install`, it does not belong in second-claude. Find a way using built-in tools or drop the feature.
+**Implication**: Core skills cannot require `npm install` or `pip install`. Optional integrations such as `/second-claude-code:hunt` must clearly advertise capability gating and continue to provide local-scan-only behavior when external CLIs are unavailable.
 
 ## 6. State in Files (Ars Contexta + Pi)
 
@@ -42,7 +42,7 @@ All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databas
 
 ## 7. Composable (Autoresearch)
 
-The 8 core skills are building blocks, not endpoints. `/scc:write` calls `/scc:research` internally. `/scc:loop` wraps any other skill in an iteration cycle. `/scc:pipeline` chains arbitrary skill sequences. Composition is the primary extension mechanism.
+The 8 core skills are building blocks, not endpoints. `/second-claude-code:write` calls `/second-claude-code:research` internally. `/second-claude-code:loop` wraps any other skill in an iteration cycle. `/second-claude-code:pipeline` chains arbitrary skill sequences. Composition is the primary extension mechanism.
 
 **Implication**: Every skill must accept structured input and produce structured output. A skill that can only be invoked by a human prompt is incomplete -- it must also be callable by another skill.
 
@@ -57,4 +57,4 @@ These principles reinforce each other:
 - **Context-efficient** + **zero dependency** = fast, cheap, portable
 - **State in files** + **zero dependency** = no setup, no infra
 
-When principles conflict, priority order is: zero dependency > context-efficient > few but deep > the rest.
+When principles conflict, priority order is: Zero Dependency Core > context-efficient > few but deep > the rest.

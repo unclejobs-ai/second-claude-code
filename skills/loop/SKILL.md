@@ -1,131 +1,57 @@
 ---
 name: loop
-description: "Iterative improvement engine — repeat until quality target met"
+description: "Use when iteratively improving a draft until it meets a review target"
 ---
 
 # Loop
 
-Keep improving a file or document through repeated review-fix cycles until it meets a quality target. Automatically calls `/scc:review` each iteration to score and provide feedback.
+Run review-fix cycles until a draft meets a target score or verdict, with resumable state on disk.
 
 ## When to Use
 
-- A draft exists but is not yet good enough
-- User wants to polish content to a specific quality bar
-- Another skill (e.g., `/scc:write`) produced output that needs iterative refinement
+- A draft exists but is not good enough yet
+- The user wants a specific quality bar
+- Another skill produced output that needs iterative refinement
 
-## Internal Flow
+## Workflow
 
-```
-read current state ──► /scc:review ──► score + feedback
-                            │
-                    ┌───────┴───────┐
-                    │               │
-              score improved?   score NOT improved?
-                    │               │
-              new baseline       revert to baseline
-                    │               │
-                    └───────┬───────┘
-                            │
-                    target met? ──YES──► done (output final + log)
-                            │
-                           NO
-                            │
-                    next iteration
-```
-
-### Step-by-Step
-
-1. **Read current state**: Load the target file. Compute baseline hash for safe revert.
-2. **Review**: Dispatch `/scc:review` against current content. Receive numeric score + ranked feedback items.
-3. **Edit**: Dispatch editor (opus model) to apply fixes. Limit to top-3 feedback items per iteration -- more causes regression.
-4. **Compare**: Run `/scc:review` again on edited version. If score improved, accept as new baseline. If not, revert via git (not memory).
-5. **Check target**: If target condition is met, stop and output final version. Otherwise, continue to next iteration.
+1. Read the current file and record a baseline hash.
+2. Run `/second-claude-code:review` and collect a verdict plus ranked feedback.
+3. Apply only the top 3 feedback items.
+4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert to the previous baseline.
+5. Stop when the target is met, `--max` is reached, or the verdict plateaus.
+6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a loop option) one final time. If it returns `MUST FIX`, continue the loop. Only exit when the gate passes.
 
 ## Options
 
-| Flag | Values | Default | Effect |
-|------|--------|---------|--------|
-| `--max` | `1-10` | `3` | Maximum iteration count. Always enforced as ceiling. |
-| `--target` | `"condition"` | `/scc:review APPROVED` | Stop condition. Can be a score threshold (e.g., `"4.5+"`) or review verdict. |
-| `--promise` | `"text"` | none | Ralph-style completion promise displayed at end (e.g., "This newsletter is ready to send"). |
+| Flag | Values | Default |
+|------|--------|---------|
+| `--max` | `1-10` | `3` |
+| `--target` | score (e.g., 4.5) or verdict (e.g., APPROVED) | `APPROVED` |
+| `--promise` | text injected into each reviewer's context as a constraint | none |
 
-## State Management
+## State
 
-Loop state persists to `${CLAUDE_PLUGIN_DATA}/state/loop-active.json`:
+Save active state to `${CLAUDE_PLUGIN_DATA}/state/loop-active.json` with:
 
 ```json
-{
-  "goal": "Polish newsletter draft to 4.5+",
-  "file": "output/newsletter-2026-03-19.md",
-  "current_iteration": 2,
-  "max": 3,
-  "scores": [3.8, 4.1],
-  "baseline_hash": "a3f9c2e",
-  "feedback_log": [
-    {"iteration": 1, "top_items": ["weak intro hook", "missing CTA", "inconsistent tone"]},
-    {"iteration": 2, "top_items": ["CTA still vague", "paragraph 3 too long"]}
-  ],
-  "started_at": "2026-03-19T14:30:00Z"
-}
+{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS_WORK","APPROVED"],"baseline_hash":"...","feedback_log":[]}
 ```
-
-### HANDOFF Pattern
-
-If a session ends mid-loop, state file persists on disk. Next session detects `loop-active.json`, displays progress summary, and resumes from the last completed iteration. No work is lost.
 
 ## Output
 
-Final version of the file plus an iteration log:
-
-```
-## Loop Complete: 3 iterations
-
-| Iteration | Score | Delta | Top Changes |
-|-----------|-------|-------|-------------|
-| 0 (start) | 3.2   | --    | (baseline)  |
-| 1         | 3.8   | +0.6  | Tightened intro, added CTA |
-| 2         | 4.1   | +0.3  | Restructured paragraph 3 |
-| 3         | 4.6   | +0.5  | Polished transitions, fixed tone |
-
-Target met: score 4.5+ (actual: 4.6)
-Promise: "This newsletter is ready to send"
-```
+Return the final draft plus an iteration log showing verdict progression and major changes.
 
 ## Gotchas
 
-These failure modes are common. The skill design explicitly counters each one.
+- Do not claim improvement without comparing verdicts between iterations.
+- Revert through git or the recorded baseline hash, not memory.
+- Stop early if the verdict stops improving across iterations.
+- The completion gate is mandatory — never skip the final `/second-claude-code:review --preset quick` check.
 
-| Failure Mode | Mitigation |
-|-------------|------------|
-| Declares "improved" without evidence | Every iteration requires both a diff and a score comparison. No subjective claims accepted. |
-| Too many changes per iteration | Editor limited to top-3 feedback items. Smaller edits are easier to evaluate and revert. |
-| Reverts using memory instead of git | All reverts use `git checkout -- {file}` to restore baseline hash. Memory-based "undo" is unreliable. |
-| Loop runs forever | `--max` is always enforced. Default ceiling is 3. Maximum allowed value is 10. |
-| Score plateaus but target not met | After 2 consecutive iterations with delta < 0.1, stop early and report plateau. |
-| First iteration makes content worse | If iteration 1 score drops, revert immediately and try a different approach (address different feedback items). |
-
-## Patterns Absorbed
-
-- **Karpathy autoresearch**: 5-minute timebox per round, keep/discard decision based on measurable improvement
-- **Ralph Loop**: Completion-promise pattern -- declare what "done" means before starting
-- **Ars Contexta Reweave**: Iterative refinement with structured feedback integration
-- **Tw93 HANDOFF.md**: Session-persistent state for resumable long-running tasks
-
-## Subagent Dispatch
+## Subagents
 
 ```yaml
-reviewer:
-  skill: /scc:review
-  constraint: "must return numeric score + ranked feedback list"
-
-editor:
-  model: opus
-  tools: [Read, Edit]
-  constraint: "apply only top-3 feedback items per iteration, produce clean diff"
+reviewer: { skill: /second-claude-code:review, constraint: "return score plus ranked feedback" }
+editor: { model: opus, tools: [Read, Edit], constraint: "apply only the top 3 feedback items" }
 ```
-
-## Integration
-
-- Called by `/scc:pipeline` as a refinement step
-- Calls `/scc:review` internally each iteration
-- Works on any file type that `/scc:review` can evaluate

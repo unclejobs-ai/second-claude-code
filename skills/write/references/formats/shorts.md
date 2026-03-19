@@ -1,18 +1,18 @@
 # Shorts/Reels Script Format Reference
 
 ## Structure
-1. **Hook** (0-3초): 질문 또는 충격적 사실. "알고 계셨나요?" 금지.
-2. **Problem** (3-15초): 공감할 수 있는 문제/상황 묘사
-3. **Solution** (15-45초): 핵심 인사이트 또는 방법 (3단계 이하)
-4. **CTA** (45-60초): 구체적 행동 유도 ("댓글에 ~ 남겨주세요")
+1. **Hook** (0-3s): A question or surprising fact. Avoid stale openers.
+2. **Problem** (3-15s): Describe a relatable problem or situation
+3. **Solution** (15-45s): Deliver the core insight or method in no more than 3 steps
+4. **CTA** (45-60s): Ask for a specific next action
 
-## 분량
-- 총 300-500자 (60초 기준)
-- Hook: 1-2문장
-- 각 단계 명확한 전환 표시
+## Length
+- Roughly 150-240 words for a 60-second script
+- Keep the hook to 1-2 sentences
+- Make transitions between stages obvious
 
-## 필수 요소
-- 말하기용 구어체 (읽는 글이 아닌 말하는 대본)
-- 자막 텍스트 별도 표기
-- 비주얼 지시 포함 [화면: ...]
-- "여기서 중요한 건요" 같은 전환어
+## Required Elements
+- Write for speech, not for essay-style reading
+- Include caption text separately when useful
+- Include visual direction cues such as `[Visual: ...]`
+- Use transitions that help spoken flow

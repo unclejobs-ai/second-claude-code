@@ -1,23 +1,23 @@
 # Loop Gotchas
 
-## Claude가 반복 개선에서 자주 실패하는 패턴
+## Common failure patterns in iterative improvement
 
-### 1. 증거 없는 "개선"
-**증상**: "개선했습니다" — 점수 비교 없이
-**해결**: 매 이터레이션마다 /scc:review 점수 비교 필수. 점수 하락 시 revert
+### 1. Improvement without evidence
+**Symptom**: "I improved it" with no score comparison
+**Fix**: Compare `/second-claude-code:review` scores every iteration. Revert if the score drops.
 
-### 2. 과도한 변경
-**증상**: 한 이터레이션에 50% 이상 재작성
-**해결**: 이터레이션당 피드백 상위 3개만 반영. 나머지는 다음 라운드
+### 2. Over-editing
+**Symptom**: Rewriting more than half the document in one iteration
+**Fix**: Address only the top 3 feedback items per iteration. Save the rest for the next round.
 
-### 3. 무한 루프
-**증상**: 목표 점수에 도달하지 못하고 계속 반복
-**해결**: --max 강제 적용 (기본 3). 시간 제한도 병행
+### 3. Infinite loops
+**Symptom**: The target score is never reached and the loop continues indefinitely
+**Fix**: Always enforce `--max` and stop on plateau conditions.
 
-### 4. Revert 실패
-**증상**: 악화됐는데 이전 버전으로 돌아가지 못함
-**해결**: git 기반 revert. 매 이터레이션 시작 시 커밋 해시 기록
+### 4. Failed reverts
+**Symptom**: The draft gets worse and cannot be restored cleanly
+**Fix**: Revert through git and record the baseline hash at the start of each iteration.
 
-### 5. 세션 단절
-**증상**: 세션 종료 후 루프 상태 유실
-**해결**: 매 이터레이션 종료 시 상태를 loop-active.json에 저장. 다음 세션에서 복원
+### 5. Session interruption
+**Symptom**: Loop state is lost after the session ends
+**Fix**: Save state to `loop-active.json` after every iteration and restore it next session.

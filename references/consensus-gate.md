@@ -1,6 +1,6 @@
 # Consensus Gate
 
-The multi-perspective review mechanism used by `/scc:review` to ensure quality through independent evaluation.
+The multi-perspective review mechanism used by `/second-claude-code:review` to ensure quality through independent evaluation.
 
 ---
 
@@ -10,21 +10,27 @@ Three reviewer subagents are dispatched in parallel. Each receives the content t
 
 ## Reviewers by Preset
 
-| Preset | Reviewer 1 | Reviewer 2 | Reviewer 3 |
-|--------|-----------|-----------|-----------|
-| content | deep-reviewer | devil-advocate | tone-guardian |
-| strategy | framework-checker | risk-analyst | feasibility-reviewer |
-| code | logic-reviewer | security-reviewer | style-reviewer |
+| Preset | Reviewers | Threshold |
+|--------|-----------|-----------|
+| content | deep-reviewer + devil-advocate + tone-guardian | 2/3 |
+| strategy | deep-reviewer + devil-advocate + fact-checker | 2/3 |
+| code | deep-reviewer + fact-checker + structure-analyst | 2/3 |
+| quick | devil-advocate + fact-checker | 2/2 |
+| full | all 5 reviewers | 3/5 |
 
 ## Consensus Threshold
 
-- **APPROVED**: 2 of 3 reviewers approve (no critical findings from any reviewer)
-- **REVISE**: 1 or more reviewers reject, or consensus met but non-critical issues remain
-- **REJECT**: 2 of 3 reviewers reject
+- **APPROVED**: threshold met and no Critical findings from any reviewer
+- **MINOR FIXES**: threshold met but non-critical issues remain
+- **MUST FIX**: threshold not met, or any Critical finding from any reviewer
 
 ## Critical Finding Override
 
-Any single reviewer can flag a finding as **Critical**. A critical finding triggers mandatory revision regardless of overall consensus. Examples: factual errors, security vulnerabilities, legal risks, missing attribution.
+Any single reviewer can flag a finding as **Critical**. A Critical finding forces `MUST FIX` regardless of overall consensus. Examples: factual errors, security vulnerabilities, legal risks, missing attribution.
+
+## External Voter
+
+When `--external` is set, the review skill detects an installed external CLI (mmbridge, kimi, codex, or gemini) and dispatches a parallel review. The external review counts as one additional voter, increasing the denominator by 1. For example, a `content` preset with an external voter uses a `2/4` threshold instead of `2/3`. If no external CLI is detected, the flag is silently ignored and the gate operates at its default threshold.
 
 ## Conflict Resolution
 
@@ -32,12 +38,14 @@ When reviewers directly contradict each other (one says "add more detail" while 
 
 ## Cost Optimization
 
-Model tier matches review depth to control costs:
+Model tier matches reviewer role to keep review cost proportional:
 
-| Review depth | Model | Use case |
-|-------------|-------|----------|
-| quick | haiku | Typo and format checks |
-| content/strategy | sonnet | Standard review |
-| full | opus | Publication-grade review |
+| Reviewer | Model | Use case |
+|----------|-------|----------|
+| deep-reviewer | opus | Logic, structure, completeness |
+| devil-advocate | sonnet | Adversarial stress test |
+| fact-checker | haiku | Claim verification |
+| tone-guardian | haiku | Tone and audience fit |
+| structure-analyst | haiku | Flow and formatting |
 
-The `--preset quick` option uses haiku for all three reviewers, keeping costs low for drafts and internal documents.
+The `quick` preset keeps cost low by using only `devil-advocate` + `fact-checker`.

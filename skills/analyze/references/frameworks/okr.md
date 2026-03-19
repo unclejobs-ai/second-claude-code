@@ -1,22 +1,23 @@
 # OKR (Objectives and Key Results) Framework
 
-## 구조
-- **Objective**: 정성적, 영감을 주는 목표 (1문장)
-- **Key Results** (3-5개): 정량적, 측정 가능한 결과 지표
+## When to Use
+- When defining motivating goals with measurable outcomes
+- When aligning quarterly execution around a small set of priorities
 
-## 작성 규칙
-- Objective: "~를 달성한다" (동사 시작, 구체적)
-- Key Result: "X를 Y에서 Z로 개선한다" (현재값 → 목표값)
-- 달성률 70%가 적절한 난이도 (100% = 너무 쉬움)
-- 분기 단위 설정, 주간 체크인
+## When NOT to Use
+- When the work is just a task list
+- When no baseline or measurable outcome exists yet
 
-## Good/Bad 예시
-- Good O: "신규 사용자 온보딩 경험을 업계 최고 수준으로 끌어올린다"
-- Bad O: "온보딩 개선" (너무 모호)
-- Good KR: "7일 리텐션을 35%에서 50%로 향상"
-- Bad KR: "리텐션 개선" (측정 불가)
+## Required Sections
+1. Objective
+2. Key Results
+3. Measurement cadence
+4. Owner / scope
+5. Risks or dependencies
 
-## 안티패턴
-- KR을 태스크 목록으로 작성 ("로그인 페이지 리디자인")
-- O에 숫자 넣기 (정성적이어야 함)
-- 5개 이상 OKR 세트 (집중력 분산)
+## Evidence Expectations
+- Objectives stay qualitative and specific
+- Key Results move from a current value to a target value
+
+## Recommended Actions
+- Recommend the 3 strongest OKRs and what should be cut

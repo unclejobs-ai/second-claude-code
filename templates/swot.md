@@ -1,6 +1,6 @@
 # SWOT Analysis Template
 
-Strategic assessment framework for `/scc:analyze swot`.
+Strategic assessment framework for `/second-claude-code:analyze swot`.
 
 ---
 

@@ -1,19 +1,19 @@
 # Article Format Reference
 
 ## Structure
-1. **제목**: SEO 키워드 포함, 호기심 유발
-2. **요약/리드**: 핵심 메시지 1-2문장
-3. **도입**: 배경/맥락 설정, 왜 지금 이 주제인지
-4. **본문 섹션** (3-5개): 각 섹션 = 소제목 + 핵심 주장 + 근거 + 사례
-5. **시사점**: So What? — 독자에게 의미하는 바
-6. **결론**: 요약 + 전망 + CTA
+1. **Title**: Include the SEO keyword and create curiosity
+2. **Lead**: Summarize the core message in 1-2 sentences
+3. **Introduction**: Set the background and explain why the topic matters now
+4. **Body Sections** (3-5): Each section should include a subhead, a core claim, evidence, and an example
+5. **Implications**: The "So what?" for the reader
+6. **Conclusion**: Summary, outlook, and CTA
 
-## 분량
-- 최소 3,000자 / 권장 5,000-8,000자
-- 각 섹션 600-1,500자
+## Length
+- Minimum 3000 words / recommended 5000-8000 words
+- Each section should carry meaningful substance rather than filler
 
-## 필수 요소
-- 데이터/통계 최소 5개
-- 전문가 인용 또는 사례 연구 2개 이상
-- 내부 링크 또는 참고자료 제시
-- 소제목 체계 (H2 → H3)
+## Required Elements
+- At least 5 data points or statistics
+- At least 2 expert quotes or case studies
+- References or supporting links
+- Clear subheading hierarchy (H2 → H3)

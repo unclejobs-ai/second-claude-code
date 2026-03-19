@@ -1,19 +1,19 @@
 # Pipeline Gotchas
 
-## Claude가 파이프라인에서 자주 실패하는 패턴
+## Common failure patterns in pipelines
 
-### 1. 스텝 간 메모리 공유 가정
-**증상**: Step 2가 Step 1의 변수에 접근 시도
-**해결**: 각 스텝은 독립 서브에이전트. 파일로만 데이터 전달
+### 1. Assuming shared memory between steps
+**Symptom**: Step 2 tries to access variables from Step 1
+**Fix**: Each step is an independent subagent. Data moves only through files.
 
-### 2. 에러 시 전체 유실
-**증상**: Step 4 실패 → Step 1-3 결과도 사라짐
-**해결**: 각 스텝 완료 시 중간 결과 파일 저장. on_fail: skip 으로 계속 진행 가능
+### 2. Losing all work on failure
+**Symptom**: Step 4 fails and the outputs from Steps 1-3 disappear
+**Fix**: Save intermediate outputs after every step and allow `on_fail: skip` where appropriate.
 
-### 3. 무한 파이프라인
-**증상**: 10+ 스텝 파이프라인 생성 — 실행 불가능
-**해결**: 최대 10 스텝 제한. 복잡한 워크플로우는 파이프라인의 파이프라인으로 분리
+### 3. Unbounded pipelines
+**Symptom**: A pipeline grows past 10 steps and becomes unmanageable
+**Fix**: Enforce the 10-step limit and split large workflows into smaller pipelines.
 
-### 4. 세션 중단 시 상태 유실
-**증상**: 파이프라인 실행 중 세션 종료 → 어디까지 했는지 모름
-**해결**: pipeline-active.json에 currentStep 저장. 재시작 시 이어서 실행
+### 4. Losing state on interruption
+**Symptom**: The session ends mid-run and no one knows which step completed
+**Fix**: Store `current_step` and `total_steps` in `pipeline-active.json` and resume from there.

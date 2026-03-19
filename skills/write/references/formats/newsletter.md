@@ -1,21 +1,21 @@
 # Newsletter Format Reference
 
-## Structure (6단계)
-1. **제목**: 호기심 유발, 구체적 숫자/이름 포함, 15자 이내
-2. **인트로**: 독자의 현재 상황 공감 → 이 글을 읽어야 하는 이유 (3문장)
-3. **Yes (동의)**: 독자가 이미 아는 사실로 시작, 공감대 형성
-4. **But (전환)**: "그런데..." — 반전/문제 제기/새로운 시각
-5. **Therefore (해결)**: 핵심 인사이트, 데이터 기반 분석, 실행 방법
-6. **결론**: 한 줄 요약 + 구체적 다음 행동(CTA)
+## Structure (6 stages)
+1. **Title**: Create curiosity, include a concrete number or name, keep it concise
+2. **Intro**: Meet the reader in their current situation and explain why this matters now
+3. **Yes**: Start from something the reader already believes
+4. **But**: Introduce the turn, tension, or surprising angle
+5. **Therefore**: Deliver the core insight, analysis, and execution path
+6. **Conclusion**: One-line summary plus a concrete CTA
 
-## 분량
-- 최소 2,000자 / 권장 3,000-4,000자
-- 인트로: 200자 이내
-- Yes+But+Therefore: 전체의 80%
-- 결론: 200자 이내
+## Length
+- Minimum 2000 words / recommended 3000-4000 words
+- Keep the intro tight
+- Yes + But + Therefore should carry most of the draft
+- Keep the conclusion concise
 
-## 필수 요소
-- 구체적 숫자/데이터 최소 3개
-- 실제 사례/케이스 최소 1개
-- 인용구 또는 전문가 의견 1개
-- 소제목으로 스캔 가능한 구조
+## Required Elements
+- At least 3 concrete numbers or data points
+- At least 1 real case or example
+- At least 1 quote or expert view
+- A structure that remains easy to scan with subheads

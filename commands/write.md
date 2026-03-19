@@ -1,14 +1,18 @@
 ---
 description: "Produce content -- newsletter, article, shorts, report, social"
+argument-hint: <format> <topic> [options]
 ---
 
-Invoke the `scc:write` skill to produce content.
+Invoke the `/second-claude-code:write` command to produce content through the `write` skill.
 
 ## Arguments
 - First argument: format (newsletter|article|shorts|report|social|card-news)
 - Second argument: topic
-- `--voice 먼저가본동료|전문가|캐주얼` (default: 먼저가본동료)
+- `--voice peer-mentor|expert|casual` (default: peer-mentor)
 - `--publish notion|file` (default: file)
 
-## Task
-Use the Skill tool to invoke `scc:write` with the provided format, topic, and options.
+## Your task
+Perform the writing task now using the plugin's loaded `write` skill and the provided arguments.
+
+- Return the actual written output directly.
+- Do not say that you are invoking or have invoked a skill.

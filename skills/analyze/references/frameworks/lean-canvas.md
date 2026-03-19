@@ -1,20 +1,27 @@
 # Lean Canvas Framework
 
-## 9칸 구조
-1. **Problem**: 상위 3가지 문제 (기존 대안 포함)
-2. **Customer Segments**: 타겟 고객 + 얼리어답터
-3. **Unique Value Proposition**: 한 문장으로 차별점
-4. **Solution**: 각 문제에 대한 해결책
-5. **Channels**: 고객에게 도달하는 경로
-6. **Revenue Streams**: 수익 모델
-7. **Cost Structure**: 주요 비용 항목
-8. **Key Metrics**: 핵심 지표 (North Star + 3-5개)
-9. **Unfair Advantage**: 쉽게 복사할 수 없는 것
+## When to Use
+- When validating a startup or early product model quickly
+- When product, market, channel, and economics need to be seen together
 
-## 작성 순서
-Problem → Customer → UVP → Solution → Channels → Revenue → Cost → Metrics → Unfair Advantage
+## When NOT to Use
+- When the work is already deep in delivery planning
+- When the problem is a narrow UX or implementation issue
 
-## 안티패턴
-- UVP가 "최고의 X"처럼 추상적
-- Unfair Advantage에 "좋은 팀" (복사 가능)
-- Revenue와 Cost가 숫자 없이 서술
+## Required Sections
+1. Problem
+2. Customer Segments
+3. Unique Value Proposition
+4. Solution
+5. Channels
+6. Revenue Streams
+7. Cost Structure
+8. Key Metrics
+9. Unfair Advantage
+
+## Evidence Expectations
+- Ground each box in concrete signals, constraints, or numbers
+- Keep the UVP and unfair advantage specific, not aspirational
+
+## Recommended Actions
+- Recommend the 3 assumptions that should be tested first

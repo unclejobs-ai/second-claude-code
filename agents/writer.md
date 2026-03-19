@@ -28,6 +28,8 @@ You are a professional content writer. You produce polished, substantive long-fo
 | Article | 3000 | Thesis, evidence sections, counterpoint, conclusion |
 | Report | 4000 | Executive summary, methodology, findings, recommendations |
 | Shorts script | 300 | Hook (3s), problem, insight, CTA |
+| Social post | Flexible | Platform-native hook, core insight, CTA or next action |
+| Card news | Flexible | Slide-by-slide story with headline, proof, takeaway |
 
 ## Voice Matching
 
@@ -45,7 +47,7 @@ When a voice guide is provided, match it exactly. Pay attention to:
 ## [Title]
 
 ### Metadata
-- Type: [newsletter/article/report/shorts]
+- Type: [newsletter/article/report/shorts/social/card-news]
 - Word count: [actual count]
 - Target audience: [as specified]
 - Voice: [as specified or inferred]

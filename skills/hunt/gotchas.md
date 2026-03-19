@@ -1,19 +1,19 @@
 # Hunt Gotchas
 
-## Claude가 스킬 탐색에서 자주 실패하는 패턴
+## Common failure patterns in skill discovery
 
-### 1. 스킬명 날조
-**증상**: "terraform-security-audit라는 스킬이 있습니다" — 실제로 없음
-**해결**: 반드시 실제 검색 결과에서만 추천. 검색 결과 URL/출처 필수
+### 1. Fabricated skill names
+**Symptom**: "There is a skill called terraform-security-audit" when it does not exist
+**Fix**: Recommend only from real search results and include the source for each result.
 
-### 2. 오래된 패키지 추천
-**증상**: 2년 전 마지막 업데이트, 깨진 의존성
-**해결**: last-update 1년 이내만 추천. 오래된 건 경고 표시
+### 2. Outdated packages
+**Symptom**: Recommending packages last updated years ago with broken dependencies
+**Fix**: Prefer packages updated within the last year and flag older results clearly.
 
-### 3. 자동 설치
-**증상**: 사용자 확인 없이 npx skills add 실행
-**해결**: 설치 전 반드시 사용자 승인. 설치 내용 미리보기 제공
+### 3. Installing too eagerly
+**Symptom**: Running `npx skills add` without user approval
+**Fix**: Require explicit approval before installation and show the install target first.
 
-### 4. 너무 넓은 검색
-**증상**: "코딩" 검색 → 5000개 결과
-**해결**: 도메인 특화 키워드로 검색 범위 좁히기. 2-3단어 조합
+### 4. Overly broad queries
+**Symptom**: Searching for "coding" and getting thousands of useless results
+**Fix**: Narrow the query with domain-specific 2-3 word combinations.

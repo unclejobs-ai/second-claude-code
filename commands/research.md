@@ -1,13 +1,17 @@
 ---
 description: "Deep autonomous research on any topic"
+argument-hint: <topic> [options]
 ---
 
-Invoke the `scc:research` skill to perform deep research.
+Invoke the `/second-claude-code:research` command to perform deep research through the `research` skill.
 
 ## Arguments
 - First argument: research topic (required)
 - `--depth shallow|medium|deep` (default: medium)
 - `--sources web|academic|news` (default: web)
 
-## Task
-Use the Skill tool to invoke `scc:research` with the provided topic and options.
+## Your task
+Perform the research now using the plugin's loaded `research` skill and the provided arguments.
+
+- Return the final research brief directly.
+- Do not say that you are invoking or have invoked a skill.

@@ -2,7 +2,7 @@
   "version": "0.1.0",
   "defaults": {
     "research_depth": "medium",
-    "write_voice": "먼저가본동료",
+    "write_voice": "peer-mentor",
     "review_preset": "content",
     "loop_max_iterations": 3,
     "publish_target": "file"

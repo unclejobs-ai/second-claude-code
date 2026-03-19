@@ -1,18 +1,27 @@
 # SWOT Analysis Framework
 
-## 구조
-- **Strengths** (내부, 긍정): 경쟁 우위, 핵심 역량, 차별점
-- **Weaknesses** (내부, 부정): 자원 부족, 기술 격차, 프로세스 문제
-- **Opportunities** (외부, 긍정): 시장 트렌드, 규제 변화, 기술 발전
-- **Threats** (외부, 부정): 경쟁 심화, 시장 축소, 기술 대체
+## When to Use
+- When evaluating a situation through internal and external forces
+- When you need strategy options grounded in current reality
 
-## 분석 규칙
-- 각 사분면 3-5개 항목 (균등 배분 금지 — 현실 반영)
-- 각 항목에 "So What?" (왜 중요한지) 1줄 추가
-- S+O → 공격 전략, W+T → 방어 전략 도출
-- 데이터 기반: "우리가 강하다"가 아닌 "시장 점유율 23%로 1위"
+## When NOT to Use
+- When the issue is pure execution detail
+- When no evidence exists to distinguish internal from external factors
 
-## 안티패턴
-- 모든 칸 동일 개수로 채우기
-- 추상적 표현 ("좋은 팀")
-- 내부/외부 혼동 (경쟁사 행동 = 외부)
+## Required Sections
+1. Strengths
+2. Weaknesses
+3. Opportunities
+4. Threats
+5. Strategic implications
+
+## Evidence Expectations
+- 3-5 items per quadrant
+- Back claims with data or observable facts
+- Avoid abstract phrasing; use concrete language
+- Do not confuse internal factors (S/W) with external factors (O/T)
+- Avoid artificial symmetry across quadrants
+- Add a short "So what?" implication to each major item
+
+## Recommended Actions
+- Recommend 3 moves that exploit S+O or defend against W+T

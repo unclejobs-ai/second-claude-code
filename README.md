@@ -1,9 +1,9 @@
-# Second Claude — Knowledge Work OS
+# Second Claude Code — Knowledge Work OS
 
-> 47개 소스 패턴이 녹아든 8개 킬러 스킬. 지식 작업의 운영체제.
+> 8 deep skills + 10 subagents shaped by 47 source patterns. An operating system for knowledge work.
 
-Second Brain이 앱 200개가 아니라 PARA라는 하나의 시스템인 것처럼,
-Second Claude는 스킬 200개가 아니라 **8개 명령으로 모든 지식 작업을 커버하는 OS**.
+Just as Second Brain is not 200 apps but one PARA system,
+Second Claude is not 200 skills but **an OS that covers knowledge work with 8 commands**.
 
 ## Install
 
@@ -15,60 +15,60 @@ claude plugin add github:parkeungje/second-claude
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/scc:research` | Deep autonomous research | `/scc:research "AI agent 생태계 2026"` |
-| `/scc:write` | Content production | `/scc:write newsletter "바이브코딩의 미래"` |
-| `/scc:analyze` | Strategic framework analysis | `/scc:analyze swot "우리 SaaS 제품"` |
-| `/scc:review` | Multi-perspective quality gate | `/scc:review docs/draft.md --preset content` |
-| `/scc:loop` | Iterative improvement | `/scc:loop "이 뉴스레터를 4.5/5로" --max 3` |
-| `/scc:capture` | Knowledge capture & organize | `/scc:capture https://example.com/article` |
-| `/scc:pipeline` | Custom workflow builder | `/scc:pipeline run "weekly-digest"` |
-| `/scc:hunt` | Skill discovery & install | `/scc:hunt "terraform security audit"` |
+| `/second-claude-code:research` | Deep autonomous research | `/second-claude-code:research "AI agent landscape 2026"` |
+| `/second-claude-code:write` | Content production | `/second-claude-code:write newsletter "The future of vibe coding"` |
+| `/second-claude-code:analyze` | Strategic framework analysis | `/second-claude-code:analyze swot "our SaaS product"` |
+| `/second-claude-code:review` | Multi-perspective quality gate | `/second-claude-code:review docs/draft.md --preset content` |
+| `/second-claude-code:loop` | Iterative improvement | `/second-claude-code:loop "Raise this newsletter to 4.5/5" --max 3` |
+| `/second-claude-code:capture` | Knowledge capture & organize | `/second-claude-code:capture https://example.com/article` |
+| `/second-claude-code:pipeline` | Custom workflow builder | `/second-claude-code:pipeline run "weekly-digest"` |
+| `/second-claude-code:hunt` | Skill discovery & install | `/second-claude-code:hunt "terraform security audit"` |
 
 ## Auto-Routing
 
-명령어를 몰라도 됩니다. 자연어로 말하면 알아서 라우팅합니다:
+You do not need to memorize the commands. Natural language is auto-routed:
 
 ```
-"바이브코딩에 대해 뉴스레터 써줘"  →  /scc:write newsletter "바이브코딩"
-"시장 분석해줘"                    →  /scc:analyze
-"이거 리뷰해"                      →  /scc:review
+"Write a newsletter about vibe coding"  →  /second-claude-code:write newsletter "vibe coding"
+"Analyze this market"                   →  /second-claude-code:analyze
+"Review this draft"                     →  /second-claude-code:review
 ```
 
 ## Skill Composition
 
-8개 스킬은 서로를 호출하며 체이닝됩니다:
+The 8 skills call each other and chain naturally:
 
 ```
-/scc:research → /scc:write → /scc:review → /scc:loop → done
-/scc:research → /scc:analyze → /scc:review → done
-/scc:capture → /scc:research → /scc:write → /scc:pipeline(save)
+/second-claude-code:research → /second-claude-code:write → /second-claude-code:review → /second-claude-code:loop → done
+/second-claude-code:research → /second-claude-code:analyze → /second-claude-code:review → done
+/second-claude-code:capture → /second-claude-code:research → /second-claude-code:write → /second-claude-code:pipeline(save)
 ```
 
-`/scc:write`는 내부적으로 `/scc:research`와 `/scc:review`를 자동 호출합니다.
+`/second-claude-code:write` automatically calls `/second-claude-code:research` and `/second-claude-code:review` internally.
 
 ## Multi-Perspective Review
 
-`/scc:review`는 3-5개 서브에이전트를 병렬 디스패치합니다:
+`/second-claude-code:review` dispatches 3-5 subagents in parallel:
 
 | Reviewer | Model | Role |
 |----------|-------|------|
-| deep-reviewer | opus | 논리/구조/빈틈 심층 분석 |
-| devil-advocate | sonnet | 가장 약한 3개 포인트 공격 |
-| fact-checker | haiku | 수치/출처/사실 검증 |
-| tone-guardian | sonnet | 톤/보이스 일관성 (콘텐츠용) |
-| structure-analyst | haiku | 구조/가독성 (선택) |
+| deep-reviewer | opus | Deep logic, structure, and completeness review |
+| devil-advocate | sonnet | Attacks the weakest 3 points |
+| fact-checker | haiku | Verifies numbers, sources, and claims |
+| tone-guardian | haiku | Tone and voice consistency for content |
+| structure-analyst | haiku | Structure and readability review |
 
-Consensus gate: 2/3 이상 통과 = APPROVED, Critical 1개 = MUST FIX
+Consensus gate: 2/3 passes = APPROVED, any Critical item = MUST FIX
 
 ### Review Presets
 
 | Preset | Reviewers | Use |
 |--------|-----------|-----|
-| `content` | deep + devil + tone | 뉴스레터, 아티클 |
-| `strategy` | deep + devil + fact | PRD, SWOT, 전략 |
-| `code` | deep + fact + structure | 코드 리뷰 |
-| `quick` | devil + fact | 빠른 검증 |
-| `full` | 5명 전원 | 발행 전 최종 |
+| `content` | deep + devil + tone | Newsletters and articles |
+| `strategy` | deep + devil + fact | PRDs, SWOTs, and strategy docs |
+| `code` | deep + fact + structure | Code review |
+| `quick` | devil + fact | Fast validation |
+| `full` | all 5 reviewers | Final pre-publish pass |
 
 ## Architecture
 
@@ -84,7 +84,7 @@ second-claude/
 │   ├── capture/                  # Knowledge capture (PARA)
 │   ├── pipeline/                 # Custom workflow builder
 │   └── hunt/                     # Skill discovery
-├── agents/                       # 8 specialized subagents
+├── agents/                       # 10 specialized subagents
 ├── commands/                     # 8 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection
 ├── references/                   # Shared reference docs
@@ -102,6 +102,12 @@ second-claude/
 5. **Zero dependency** — no external CLI required, subagents only
 6. **State in files** — JSON in `${CLAUDE_PLUGIN_DATA}/`
 7. **Composable** — 8 skills combine into infinite workflows
+
+## Command vs Skill
+
+- Public interface: `/second-claude-code:*` commands
+- Internal skill ids: `research`, `write`, `analyze`, `review`, `loop`, `capture`, `pipeline`, `hunt`
+- Command wrappers route `/second-claude-code:*` invocations into the matching bare skill
 
 ## Lineage
 

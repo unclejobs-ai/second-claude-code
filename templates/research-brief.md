@@ -1,6 +1,6 @@
 # Research Brief Template
 
-Structured output format for `/scc:research` findings.
+Structured output format for `/second-claude-code:research` findings.
 
 ---
 

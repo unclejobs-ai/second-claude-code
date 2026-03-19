@@ -1,8 +1,9 @@
 ---
 description: "Multi-perspective quality review with consensus gate"
+argument-hint: [target] [--preset content|strategy|code|quick|full]
 ---
 
-Invoke the `scc:review` skill for multi-perspective quality review.
+Invoke the `/second-claude-code:review` command for multi-perspective quality review through the `review` skill.
 
 ## Context
 - Current git status: !`git status --short`
@@ -12,5 +13,8 @@ Invoke the `scc:review` skill for multi-perspective quality review.
 - Optional: file path to review (defaults to staged files)
 - `--preset content|strategy|code|quick|full` (default: content)
 
-## Task
-Use the Skill tool to invoke `scc:review` with the provided target and preset.
+## Your task
+Perform the review now using the plugin's loaded `review` skill and the provided arguments.
+
+- Return the actual review report directly.
+- Do not say that you are invoking or have invoked a skill.

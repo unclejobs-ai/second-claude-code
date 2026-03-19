@@ -4,7 +4,7 @@
 
 ---
 
-## 1. 제목 (Title)
+## 1. Title
 
 > [Curiosity-driven title that makes a specific promise or poses a bold question]
 
@@ -13,7 +13,7 @@ Rules:
 - Include a specific detail (number, name, timeframe)
 - Under 15 words
 
-## 2. 인트로 (Intro)
+## 2. Intro
 
 > [2-3 sentences that hook the reader and establish why this topic matters right now]
 
@@ -52,7 +52,7 @@ Rules:
 - Include at least one concrete, actionable step the reader can take
 - 2-3 paragraphs
 
-## 6. 결론 (Conclusion)
+## 6. Conclusion
 
 > [Closing takeaway + clear call to action]
 
@@ -71,5 +71,5 @@ Rules:
 - [ ] But section has at least 2 data points from research
 - [ ] Therefore offers a genuinely new insight
 - [ ] CTA is specific and actionable
-- [ ] Total word count is at least 800 words
+- [ ] Total word count is at least 2000 words
 - [ ] Voice matches the selected tone guide

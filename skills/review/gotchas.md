@@ -1,23 +1,23 @@
 # Review Gotchas
 
-## Claude가 리뷰에서 자주 실패하는 패턴
+## Common failure patterns in review
 
-### 1. 리뷰어끼리 동의
-**증상**: 3명이 모두 "잘 쓰여졌습니다"
-**해결**: 각 리뷰어에게 독립 컨텍스트 제공. 다른 리뷰어 결과 공유 금지
+### 1. Groupthink among reviewers
+**Symptom**: All reviewers respond with "Looks good" and little else
+**Fix**: Give each reviewer independent context and prevent them from seeing other outputs.
 
-### 2. 가짜 팩트체크
-**증상**: "이 통계는 정확합니다" — 실제 검증 없이
-**해결**: fact-checker는 반드시 WebSearch로 검증. 출처 URL 없으면 UNVERIFIED
+### 2. Fake fact-checking
+**Symptom**: "This statistic is correct" with no real verification
+**Fix**: The `fact-checker` must use WebSearch. No source URL means `UNVERIFIED`.
 
-### 3. 제네릭 피드백
-**증상**: "전반적으로 좋지만 일부 개선이 필요합니다"
-**해결**: 구체적 위치 명시 필수 (코드: file:line, 콘텐츠: 섹션/문단)
+### 3. Generic feedback
+**Symptom**: "Overall good, but needs improvement" with no usable detail
+**Fix**: Require exact locations: `file:line` for code and section/paragraph references for content.
 
-### 4. 심각도 인플레이션
-**증상**: 모든 피드백이 Critical
-**해결**: Critical은 발행 불가 수준만. 명확한 심각도 기준 적용
+### 4. Severity inflation
+**Symptom**: Every issue gets marked `Critical`
+**Fix**: Reserve `Critical` for ship-blocking problems only and apply the severity rubric consistently.
 
-### 5. 리뷰 = 재작성
-**증상**: 피드백 대신 전체를 다시 써버림
-**해결**: 리뷰어는 문제 지적만. 수정은 editor 에이전트 역할
+### 5. Rewriting instead of reviewing
+**Symptom**: The reviewer rewrites the entire document instead of identifying issues
+**Fix**: Reviewers identify problems only. The `editor` agent owns revisions.
