@@ -1,0 +1,14 @@
+# Plugin data (user-specific state)
+.data/
+*.local.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+
+# Temp
+*.tmp
+*.log

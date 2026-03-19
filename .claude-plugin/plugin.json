@@ -1,0 +1,22 @@
+{
+  "name": "second-claude",
+  "description": "Knowledge Work OS — 8 killer skills for research, writing, analysis, review, iteration, capture, pipelines, and skill discovery",
+  "version": "0.1.0",
+  "author": {
+    "name": "Park Eungje",
+    "email": "parkeungje@gmail.com"
+  },
+  "homepage": "https://github.com/parkeungje/second-claude",
+  "repository": "https://github.com/parkeungje/second-claude",
+  "license": "MIT",
+  "keywords": [
+    "knowledge-work",
+    "research",
+    "writing",
+    "strategy",
+    "review",
+    "pipeline",
+    "second-brain",
+    "automation"
+  ]
+}

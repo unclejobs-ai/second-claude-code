@@ -1,0 +1,23 @@
+{
+  "version": "0.1.0",
+  "defaults": {
+    "research_depth": "medium",
+    "write_voice": "먼저가본동료",
+    "review_preset": "content",
+    "loop_max_iterations": 3,
+    "publish_target": "file"
+  },
+  "quality_gate": {
+    "default_preset": "content",
+    "consensus_threshold": 0.67,
+    "external_reviewers": []
+  },
+  "knowledge": {
+    "storage_path": "${CLAUDE_PLUGIN_DATA}/knowledge/",
+    "para_enabled": true,
+    "max_entries": 1000
+  },
+  "pipelines": {
+    "storage_path": "${CLAUDE_PLUGIN_DATA}/pipelines/"
+  }
+}
