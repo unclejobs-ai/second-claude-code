@@ -1,0 +1,33 @@
+{
+  "name": "second-claude-code",
+  "id": "second-claude-code",
+  "owner": {
+    "name": "EungjePark"
+  },
+  "metadata": {
+    "description": "Knowledge Work OS — 8 skills + 10 subagents for research, writing, analysis, review, and workflow automation",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "second-claude-code",
+      "source": "./",
+      "description": "Knowledge Work OS — 8 killer skills for research, writing, analysis, review, iteration, capture, pipelines, and skill discovery",
+      "version": "0.2.0",
+      "author": {
+        "name": "EungjePark"
+      },
+      "keywords": [
+        "knowledge-work",
+        "research",
+        "writing",
+        "strategy",
+        "review",
+        "pipeline",
+        "second-brain",
+        "automation"
+      ],
+      "category": "productivity"
+    }
+  ]
+}
