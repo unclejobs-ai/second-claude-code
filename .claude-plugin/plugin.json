@@ -1,13 +1,13 @@
 {
   "name": "second-claude-code",
   "description": "Knowledge Work OS — 8 killer skills for research, writing, analysis, review, iteration, capture, pipelines, and skill discovery",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "Park Eungje",
     "email": "parkeungje@gmail.com"
   },
-  "homepage": "https://github.com/parkeungje/second-claude",
-  "repository": "https://github.com/parkeungje/second-claude",
+  "homepage": "https://github.com/EungjePark/second-claude-code",
+  "repository": "https://github.com/EungjePark/second-claude-code",
   "license": "MIT",
   "keywords": [
     "knowledge-work",
