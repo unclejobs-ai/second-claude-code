@@ -38,6 +38,11 @@ In PDCA terms, that maps to `Plan → Do → Check → Act`.
 | Check | Verify (`review` with 5 parallel reviewers) |
 | Act | Refine (Action Router → `loop` / back to Plan / back to Do) |
 
+![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+<details>
+<summary>Mermaid fallback (for non-SVG renderers)</summary>
+
 ```mermaid
 graph TD
     G[Plan / Gather<br/>Eevee research<br/>+ Alakazam analyze] --> P[Do / Produce<br/>Smeargle write<br/>pure execution]
@@ -50,6 +55,8 @@ graph TD
     R --> V
     K[collect] -.->|accumulate| G
 ```
+
+</details>
 
 **Supporting commands**
 
@@ -119,7 +126,7 @@ Commands use the `/second-claude-code:` prefix.
 |---------|-------------|---------|
 | [`pdca`](docs/skills/pdca.md) | Full PDCA cycle with quality gates and Action Router | `/second-claude-code:pdca "AI agent market report"` |
 
-The `pdca` command auto-detects which phase to enter and chains the right skills. Say "알아보고 보고서 써줘" and it runs the full Plan→Do→Check→Act cycle with gates. Use `--no-questions` for automation.
+The `pdca` command auto-detects which phase to enter and chains the right skills. Say "알아보고 보고서 써줘" (= "research and write a report") and it runs the full Plan→Do→Check→Act cycle with gates. Use `--no-questions` for automation.
 
 ### Gather
 
@@ -157,12 +164,16 @@ You do not need to memorize slash commands. The hook-based auto-router detects i
 
 ```
 "AI 에이전트 알아보고 보고서 써줘"       →  /second-claude-code:pdca (full cycle)
+  (= "Research AI agents and write a report")
 "Research and write about AI agents"   →  /second-claude-code:pdca (full cycle)
 "리뷰하고 개선해줘"                     →  /second-claude-code:pdca (check+act)
+  (= "Review and improve this")
 "Write an article about AI agents"     →  /second-claude-code:write
 "AI 에이전트에 대해 조사해"              →  /second-claude-code:research
+  (= "Research about AI agents")
 "Analyze this market with SWOT"        →  /second-claude-code:analyze
 "이 초안을 리뷰해"                      →  /second-claude-code:review
+  (= "Review this draft")
 "Save this for later"                  →  /second-claude-code:collect
 "How do I run a security audit?"       →  /second-claude-code:hunt
 ```
@@ -208,6 +219,11 @@ Skills call each other and chain naturally. A single prompt can trigger a full P
 
 ### Review Flow
 
+![Review Flow](docs/images/review-flow.svg)
+
+<details>
+<summary>Mermaid fallback (for non-SVG renderers)</summary>
+
 ```mermaid
 graph TD
     U[User] --> D[Dispatch]
@@ -227,6 +243,8 @@ graph TD
     V -->|threshold miss| NI[NEEDS IMPROVEMENT]
     V -->|critical| MU[MUST FIX]
 ```
+
+</details>
 
 **Consensus gate:** 2/3 passes = APPROVED (3/5 for `full` preset). Threshold not met with no Critical findings = NEEDS IMPROVEMENT. Any Critical finding = MUST FIX.
 
@@ -273,6 +291,8 @@ Each framework lives in `skills/analyze/references/frameworks/` as a standalone 
 
 16 Pokemon-themed subagents across 3 model tiers (opus, sonnet, haiku).
 Optional cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex) — works without it.
+
+![Agent Roster](docs/images/agent-roster.svg)
 
 [Full architecture — agent roster, PDCA mapping, Action Router →](docs/architecture.md)
 

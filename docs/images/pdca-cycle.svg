@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
+  <title id="pc-title">PDCA Quality Cycle with Action Router</title>
+  <desc id="pc-desc">Vertical flow diagram showing Plan, Do, Check, Act phases with quality gates, Pokemon agents, and Action Router branching.</desc>
+  <defs>
+    <linearGradient id="pc-bg" x1="0" y1="0" x2="860" y2="540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11161d"/>
+      <stop offset="1" stop-color="#090d12"/>
+    </linearGradient>
+    <marker id="pc-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4a5e6d" stroke-width="1.4" stroke-linecap="round"/>
+    </marker>
+    <marker id="pc-arr-plan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#5b9bd5" stroke-width="1.4" stroke-linecap="round"/>
+    </marker>
+    <marker id="pc-arr-do" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#7fd6c2" stroke-width="1.4" stroke-linecap="round"/>
+    </marker>
+    <marker id="pc-arr-loop" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#b39ddb" stroke-width="1.4" stroke-linecap="round"/>
+    </marker>
+    <marker id="pc-arr-ok" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4caf50" stroke-width="1.4" stroke-linecap="round"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="860" height="540" rx="20" fill="url(#pc-bg)"/>
+
+  <!-- ===== PLAN ===== -->
+  <rect x="200" y="20" width="420" height="72" rx="16" fill="#0f1a28" stroke="#5b9bd5" stroke-width="1.2"/>
+  <text x="230" y="46" fill="#5b9bd5" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, monospace">PLAN</text>
+  <text x="290" y="46" fill="#dce4ed" font-size="14" font-weight="700" font-family="-apple-system, Segoe UI, sans-serif">Gather</text>
+  <text x="230" y="66" fill="#8c9aa8" font-size="11" font-family="-apple-system, sans-serif">Question Protocol → research → analyze</text>
+  <text x="230" y="82" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">Eevee · Alakazam · Mewtwo</text>
+
+  <!-- Gate: Plan → Do -->
+  <line x1="410" y1="92" x2="410" y2="124" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
+  <rect x="320" y="100" width="180" height="22" rx="6" fill="#151e28" stroke="#32414d" stroke-width="0.8"/>
+  <text x="410" y="115" text-anchor="middle" fill="#7a8a9a" font-size="9" font-family="IBM Plex Mono, monospace">Brief + Analysis? Sources ≥ 3?</text>
+
+  <!-- ===== DO ===== -->
+  <rect x="200" y="130" width="420" height="72" rx="16" fill="#0f201a" stroke="#7fd6c2" stroke-width="1.2"/>
+  <text x="230" y="156" fill="#7fd6c2" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">DO</text>
+  <text x="275" y="156" fill="#dce4ed" font-size="14" font-weight="700" font-family="-apple-system, sans-serif">Produce</text>
+  <text x="230" y="176" fill="#8c9aa8" font-size="11" font-family="-apple-system, sans-serif">write --skip-research --skip-review (pure execution)</text>
+  <text x="230" y="192" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">Smeargle</text>
+
+  <!-- Gate: Do → Check -->
+  <line x1="410" y1="202" x2="410" y2="234" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
+  <rect x="310" y="210" width="200" height="22" rx="6" fill="#151e28" stroke="#32414d" stroke-width="0.8"/>
+  <text x="410" y="225" text-anchor="middle" fill="#7a8a9a" font-size="9" font-family="IBM Plex Mono, monospace">Artifact complete? Format OK?</text>
+
+  <!-- ===== CHECK ===== -->
+  <rect x="200" y="240" width="420" height="72" rx="16" fill="#1a1810" stroke="#c9b48f" stroke-width="1.2"/>
+  <text x="230" y="266" fill="#c9b48f" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">CHECK</text>
+  <text x="300" y="266" fill="#dce4ed" font-size="14" font-weight="700" font-family="-apple-system, sans-serif">Verify</text>
+  <text x="230" y="286" fill="#8c9aa8" font-size="11" font-family="-apple-system, sans-serif">5 parallel reviewers → Consensus Gate → Verdict</text>
+  <text x="230" y="302" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">Xatu · Absol · Porygon · Jigglypuff · Unown</text>
+
+  <!-- Check verdict split -->
+  <!-- APPROVED branch (right) -->
+  <line x1="620" y1="276" x2="690" y2="276" stroke="#4caf50" stroke-width="1.5" marker-end="url(#pc-arr-ok)"/>
+  <rect x="698" y="260" width="120" height="32" rx="10" fill="#1a2e1a" stroke="#4caf50" stroke-width="1.2"/>
+  <text x="758" y="281" text-anchor="middle" fill="#81c784" font-size="13" font-weight="700" font-family="-apple-system, sans-serif">APPROVED</text>
+  <text x="758" y="284" text-anchor="middle" fill="#5a7a5a" font-size="10" font-family="IBM Plex Mono, monospace">→ Ship it</text>
+
+  <!-- NOT APPROVED branch (down) -->
+  <line x1="410" y1="312" x2="410" y2="346" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
+  <text x="434" y="335" fill="#7a8a9a" font-size="9" font-family="IBM Plex Mono, monospace">feedback</text>
+
+  <!-- ===== ACT ===== -->
+  <rect x="290" y="350" width="240" height="56" rx="16" fill="#18102a" stroke="#b39ddb" stroke-width="1.2"/>
+  <text x="320" y="374" fill="#b39ddb" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">ACT</text>
+  <text x="365" y="374" fill="#dce4ed" font-size="14" font-weight="700" font-family="-apple-system, sans-serif">Refine</text>
+  <text x="320" y="394" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">Ditto · Action Router</text>
+
+  <!-- Arrow from Act to Action Router -->
+  <line x1="410" y1="406" x2="410" y2="432" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
+
+  <!-- ===== ACTION ROUTER (diamond) ===== -->
+  <polygon points="410,432 460,458 410,484 360,458" fill="#1a1428" stroke="#b39ddb" stroke-width="1.2"/>
+  <text x="410" y="462" text-anchor="middle" fill="#b39ddb" font-size="9" font-weight="600" font-family="IBM Plex Mono, monospace">ACTION</text>
+  <text x="410" y="474" text-anchor="middle" fill="#b39ddb" font-size="9" font-weight="600" font-family="IBM Plex Mono, monospace">ROUTER</text>
+
+  <!-- Route: → Plan (left) -->
+  <line x1="360" y1="458" x2="240" y2="458" stroke="#5b9bd5" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <path d="M240,458 L240,56 L200,56" stroke="#5b9bd5" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#pc-arr-plan)"/>
+  <rect x="100" y="444" width="130" height="28" rx="8" fill="#0f1a28" stroke="#5b9bd5" stroke-width="0.8"/>
+  <text x="165" y="463" text-anchor="middle" fill="#5b9bd5" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ PLAN</text>
+  <text x="165" y="487" text-anchor="middle" fill="#5a7a9a" font-size="9" font-family="-apple-system, sans-serif">source / assumption</text>
+
+  <!-- Route: → Do (center-left) -->
+  <rect x="332" y="496" width="100" height="28" rx="8" fill="#0f201a" stroke="#7fd6c2" stroke-width="0.8"/>
+  <text x="382" y="515" text-anchor="middle" fill="#7fd6c2" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ DO</text>
+  <line x1="398" y1="484" x2="382" y2="496" stroke="#7fd6c2" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#pc-arr-do)"/>
+  <text x="382" y="518" text-anchor="middle" fill="#5a9a7a" font-size="9" font-family="-apple-system, sans-serif">completeness / format</text>
+
+  <!-- → Do return path -->
+  <path d="M332,510 L280,510 L280,166 L200,166" stroke="#7fd6c2" stroke-width="1" stroke-dasharray="3 4" fill="none" marker-end="url(#pc-arr-do)"/>
+
+  <!-- Route: → Loop (right) -->
+  <line x1="460" y1="458" x2="560" y2="458" stroke="#b39ddb" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#pc-arr-loop)"/>
+  <rect x="568" y="444" width="100" height="28" rx="8" fill="#18102a" stroke="#b39ddb" stroke-width="0.8"/>
+  <text x="618" y="463" text-anchor="middle" fill="#b39ddb" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ LOOP</text>
+  <text x="618" y="487" text-anchor="middle" fill="#8a6aaa" font-size="9" font-family="-apple-system, sans-serif">execution quality</text>
+
+  <!-- Loop → re-verify arrow -->
+  <path d="M668,458 L740,458 L740,276 L620,276" stroke="#b39ddb" stroke-width="1" stroke-dasharray="3 4" fill="none" marker-end="url(#pc-arr-loop)"/>
+  <text x="752" y="370" fill="#8a6aaa" font-size="8" font-family="IBM Plex Mono, monospace" transform="rotate(-90 752 370)">re-verify</text>
+</svg>

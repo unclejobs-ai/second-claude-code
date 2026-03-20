@@ -72,9 +72,11 @@ See `references/pipeline-definition.md` for the canonical state schema.
 - Maximum 10 steps per pipeline
 - Every step must declare an `output`
 - Step compatibility is validated through `input_from` and `output`
+- **Circular reference detection**: At create-time, build a dependency graph from `input_from` references. If a cycle is detected (A → B → C → A), abort with an error listing the cycle path. This check runs before any execution.
 - Every `{{variable}}` in the definition must resolve at runtime (from flags, defaults, or built-ins)
 - Variable names must be alphanumeric plus underscores: `[a-zA-Z_][a-zA-Z0-9_]*`
 - Every skill referenced in a step must be a valid `/second-claude-code:*` command. Validate at create-time and abort with an error listing unknown skills.
+- `on_fail: retry` allows up to 2 retry attempts per step (3 total attempts: 1 original + 2 retries). After the retry limit is exhausted, the step is treated as `abort`.
 
 ## Gotchas
 

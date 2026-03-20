@@ -5,14 +5,14 @@
  *
  * Injects core context on session startup:
  * - 9 skills overview + routing rules
- * - Active loop/pipeline state restoration
+ * - Active loop/pipeline/PDCA state restoration
  * - Available environment capabilities
  */
 
-import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
+import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -25,6 +25,7 @@ function getCapabilities() {
     const output = execFileSync("bash", [scriptPath], {
       encoding: "utf8",
       env: process.env,
+      timeout: 5000,
     });
     const parsed = JSON.parse(output);
     return Array.isArray(parsed.capabilities) ? parsed.capabilities : [];
@@ -33,56 +34,32 @@ function getCapabilities() {
   }
 }
 
-function sanitize(val, maxLen = 200) {
-  return String(val || "").replace(/[[\](){}#*`<>]/g, "").slice(0, maxLen);
-}
-
 function getActiveState() {
   const statePath = join(DATA_DIR, "state");
-  if (!existsSync(statePath)) return null;
-
   const parts = [];
 
-  // Check active loops
-  const loopState = join(statePath, "loop-active.json");
-  if (existsSync(loopState)) {
-    try {
-      const loop = JSON.parse(readFileSync(loopState, "utf8"));
-      const goal = sanitize(loop.goal);
-      const cur = Number(loop.current_iteration) || 0;
-      const max = Number(loop.max) || 3;
-      parts.push(`Active loop: "${goal}" (iteration ${cur}/${max})`);
-    } catch {
-      /* ignore corrupt state */
-    }
+  const loop = readJsonSafe(join(statePath, "loop-active.json"));
+  if (loop) {
+    const goal = sanitize(loop.goal);
+    const cur = Number(loop.current_iteration) || 0;
+    const max = Number(loop.max) || 3;
+    parts.push(`Active loop: "${goal}" (iteration ${cur}/${max})`);
   }
 
-  // Check active PDCA cycles
-  const pdcaState = join(statePath, "pdca-active.json");
-  if (existsSync(pdcaState)) {
-    try {
-      const pdca = JSON.parse(readFileSync(pdcaState, "utf8"));
-      const topic = sanitize(pdca.topic);
-      const phase = sanitize(pdca.current_phase);
-      const completed = Array.isArray(pdca.completed) ? pdca.completed.join("→") : "";
-      parts.push(`Active PDCA: "${topic}" — current phase: ${phase} (completed: ${completed || "none"})`);
-    } catch {
-      /* ignore corrupt state */
-    }
+  const pdca = readJsonSafe(join(statePath, "pdca-active.json"));
+  if (pdca) {
+    const topic = sanitize(pdca.topic);
+    const phase = sanitize(pdca.current_phase);
+    const completed = Array.isArray(pdca.completed) ? pdca.completed.join(" → ") : "";
+    parts.push(`Active PDCA: "${topic}" — current phase: ${phase} (completed: ${completed || "none"})`);
   }
 
-  // Check active pipelines
-  const pipelineState = join(statePath, "pipeline-active.json");
-  if (existsSync(pipelineState)) {
-    try {
-      const pipeline = JSON.parse(readFileSync(pipelineState, "utf8"));
-      const name = sanitize(pipeline.name);
-      const step = Number(pipeline.current_step) || 0;
-      const total = Number(pipeline.total_steps) || 0;
-      parts.push(`Active pipeline: "${name}" (step ${step}/${total})`);
-    } catch {
-      /* ignore corrupt state */
-    }
+  const pipeline = readJsonSafe(join(statePath, "pipeline-active.json"));
+  if (pipeline) {
+    const name = sanitize(pipeline.name);
+    const step = Number(pipeline.current_step) || 0;
+    const total = Number(pipeline.total_steps) || 0;
+    parts.push(`Active pipeline: "${name}" (step ${step}/${total})`);
   }
 
   return parts.length > 0 ? parts.join("\n") : null;

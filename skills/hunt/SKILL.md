@@ -58,6 +58,7 @@ Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 ## Safety
 
 - Never auto-install. Pin exact versions (see `references/hunt-scoring.md`).
+- **Postinstall check**: Before recommending any npm package, inspect its `package.json` for `preinstall`, `install`, or `postinstall` scripts. Flag packages with lifecycle scripts and apply a -1 score penalty. Packages with obfuscated or network-calling lifecycle scripts must be rejected entirely.
 - Flag heavy or stale packages.
 - Degrade gracefully to local-scan-only mode if marketplace tooling is missing.
 - Flag repos with no LICENSE file or suspicious content.

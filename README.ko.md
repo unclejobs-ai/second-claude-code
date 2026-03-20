@@ -37,6 +37,11 @@ PDCA로 풀면 `Plan → Do → Check → Act`에 해당합니다.
 | Check | Verify (`review` 5명 병렬 리뷰) |
 | Act | Refine (액션 라우터 → `loop` / Plan 복귀 / Do 복귀) |
 
+![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+<details>
+<summary>Mermaid 폴백 (SVG 미지원 환경용)</summary>
+
 ```mermaid
 graph TD
     G[Plan / Gather<br/>Eevee 리서치<br/>+ Alakazam 분석] --> P[Do / Produce<br/>Smeargle 작성<br/>순수 실행]
@@ -49,6 +54,8 @@ graph TD
     R --> V
     K[collect] -.->|축적| G
 ```
+
+</details>
 
 **보조 명령어**
 
@@ -219,6 +226,11 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 ### 리뷰 흐름
 
+![Review Flow](docs/images/review-flow.svg)
+
+<details>
+<summary>Mermaid 폴백 (SVG 미지원 환경용)</summary>
+
 ```mermaid
 graph TD
     U[User] --> D[Dispatch]
@@ -238,6 +250,8 @@ graph TD
     V -->|threshold miss| NI[NEEDS IMPROVEMENT]
     V -->|critical| MU[MUST FIX]
 ```
+
+</details>
 
 **Consensus gate (합의 게이트):** 2/3 통과 시 APPROVED (full 프리셋은 3/5). 임계값 미달 + Critical 없음 = NEEDS IMPROVEMENT. Critical 발견 시 즉시 MUST FIX.
 
@@ -284,6 +298,8 @@ graph TD
 
 3개 모델 티어(opus, sonnet, haiku)에 걸친 16개 포켓몬 테마 서브에이전트.
 MMBridge를 통한 크로스 모델 리뷰는 선택 사항 (Kimi, Qwen, Gemini, Codex) — 없어도 동작합니다.
+
+![Agent Roster](docs/images/agent-roster.svg)
 
 [전체 아키텍처 — 에이전트 목록, PDCA 매핑, 액션 라우터 →](docs/architecture.md)
 

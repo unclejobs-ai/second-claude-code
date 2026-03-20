@@ -1,0 +1,19 @@
+{
+  "name": "quality-gate",
+  "description": "Post-hoc quality check: review then iterate",
+  "steps": [
+    {
+      "skill": "/second-claude-code:review",
+      "args": "\"{{input_file}}\" --preset content",
+      "output": "review-report.md",
+      "on_fail": "abort"
+    },
+    {
+      "skill": "/second-claude-code:loop",
+      "args": "--file \"{{input_file}}\" --max 2",
+      "input_from": "review-report.md",
+      "output": "{{input_file}}",
+      "on_fail": "continue"
+    }
+  ]
+}

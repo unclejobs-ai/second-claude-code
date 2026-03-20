@@ -30,13 +30,15 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 |--------|-----------|
 | `content` | deep-reviewer + devil-advocate + tone-guardian |
 | `strategy` | deep-reviewer + devil-advocate + fact-checker |
-| `code` | deep-reviewer + fact-checker + structure-analyst |
+| `code` | deep-reviewer + devil-advocate + structure-analyst |
 | `quick` | devil-advocate + fact-checker |
 | `full` | all 5 reviewers |
 
 ## Consensus Gate
 
-- Pass with `2/3` reviewer approvals, or `3/5` for `full`
+- 3-reviewer presets (`content`, `strategy`, `code`): pass with 2/3 approvals
+- 2-reviewer preset (`quick`): pass only with 2/2 unanimous approval
+- 5-reviewer preset (`full`): pass with 3/5 approvals
 - Any `Critical` finding forces `MUST FIX` regardless of threshold
 - Final verdicts: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
 - `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)

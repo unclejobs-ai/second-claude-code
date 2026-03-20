@@ -1,0 +1,19 @@
+{
+  "name": "quick-draft",
+  "description": "Fast first draft: research then write",
+  "steps": [
+    {
+      "skill": "/second-claude-code:research",
+      "args": "\"{{topic}}\" --depth shallow",
+      "output": "research-brief.md",
+      "on_fail": "abort"
+    },
+    {
+      "skill": "/second-claude-code:write",
+      "args": "--format newsletter --skip-review",
+      "input_from": "research-brief.md",
+      "output": "draft-{{topic}}.md",
+      "on_fail": "abort"
+    }
+  ]
+}

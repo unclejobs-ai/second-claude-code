@@ -4,16 +4,14 @@
  * Stop Hook — Second Claude Knowledge Work OS
  *
  * Fires when the session ends. Captures:
- * - Active loop/pipeline state
- * - Session learnings (what was attempted, what succeeded/failed)
+ * - Active loop/pipeline/PDCA state
  * - Creates HANDOFF.md for cross-session continuity
- *
- * Adopted from oh-my-openagent session-end pattern.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "fs";
+import { writeFileSync, existsSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -26,22 +24,9 @@ function ensureDir(dir) {
   }
 }
 
-function readJsonSafe(path) {
-  if (!existsSync(path)) return null;
-  try {
-    return JSON.parse(readFileSync(path, "utf8"));
-  } catch {
-    return null;
-  }
-}
-
-function sanitize(val, maxLen = 200) {
-  return String(val || "").replace(/[[\](){}#*`<>]/g, "").slice(0, maxLen);
-}
-
 function collectActiveState() {
   const statePath = join(DATA_DIR, "state");
-  const result = { loop: null, pipeline: null };
+  const result = { loop: null, pipeline: null, pdca: null };
 
   const loopState = readJsonSafe(join(statePath, "loop-active.json"));
   if (loopState) {
@@ -60,6 +45,15 @@ function collectActiveState() {
       current_step: Number(pipelineState.current_step) || 0,
       total_steps: Number(pipelineState.total_steps) || 0,
       status: sanitize(pipelineState.status),
+    };
+  }
+
+  const pdcaState = readJsonSafe(join(statePath, "pdca-active.json"));
+  if (pdcaState) {
+    result.pdca = {
+      topic: sanitize(pdcaState.topic),
+      current_phase: sanitize(pdcaState.current_phase),
+      completed: Array.isArray(pdcaState.completed) ? pdcaState.completed : [],
     };
   }
 
@@ -101,8 +95,19 @@ function generateHandoff(state) {
     lines.push("");
   }
 
-  if (!state.loop && !state.pipeline) {
-    lines.push("No active loops or pipelines.");
+  if (state.pdca) {
+    lines.push("### PDCA");
+    lines.push(`- Topic: ${state.pdca.topic}`);
+    lines.push(`- Current phase: ${state.pdca.current_phase}`);
+    lines.push(
+      `- Completed: ${state.pdca.completed.length > 0 ? state.pdca.completed.join(" → ") : "none"}`
+    );
+    lines.push("");
+  }
+
+  const hasActiveState = state.loop || state.pipeline || state.pdca;
+  if (!hasActiveState) {
+    lines.push("No active loops, pipelines, or PDCA cycles.");
     lines.push("");
   }
 
@@ -119,7 +124,12 @@ function generateHandoff(state) {
       `- To resume pipeline: \`/second-claude-code:pipeline run ${state.pipeline.name}\` (will resume from step ${state.pipeline.current_step})`
     );
   }
-  if (!state.loop && !state.pipeline) {
+  if (state.pdca) {
+    lines.push(
+      `- To resume PDCA: \`/second-claude-code:pdca\` — auto-detects phase ${state.pdca.current_phase} from saved state`
+    );
+  }
+  if (!hasActiveState) {
     lines.push("No state to resume. Start fresh with any `/second-claude-code:*` command.");
   }
   lines.push("");
@@ -131,15 +141,20 @@ function main() {
   const state = collectActiveState();
 
   // Only create HANDOFF.md if there is active state worth persisting
-  if (state.loop || state.pipeline) {
+  const hasActiveState = state.loop || state.pipeline || state.pdca;
+  if (hasActiveState) {
     ensureDir(DATA_DIR);
     const handoffPath = join(DATA_DIR, "HANDOFF.md");
     const content = generateHandoff(state);
     writeFileSync(handoffPath, content, "utf8");
 
-    // Output for the hook system
+    const parts = [
+      state.loop && "active loop",
+      state.pipeline && "active pipeline",
+      state.pdca && "active PDCA cycle",
+    ].filter(Boolean);
     console.log(
-      `Session ended. HANDOFF.md saved with ${state.loop ? "active loop" : ""}${state.loop && state.pipeline ? " + " : ""}${state.pipeline ? "active pipeline" : ""} state.`
+      `Session ended. HANDOFF.md saved with ${parts.join(" + ")} state.`
     );
   }
 }

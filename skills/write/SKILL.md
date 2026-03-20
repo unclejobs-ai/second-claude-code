@@ -15,7 +15,7 @@ Produce content with automatic research and review unless the caller explicitly 
 ## Workflow
 
 1. Run `/second-claude-code:research` UNLESS `--skip-research` flag is set OR source material is already provided via `--input`.
-2. Load format spec: read `references/formats/{format}.md` if it exists (e.g., `references/formats/shorts.md`, `references/formats/newsletter.md`). Apply voice from the Voices table.
+2. Load format spec AND voice guide: read `references/formats/{format}.md` (required — abort if missing) and `references/voice-guides/{voice}.md` (recommended). If the voice guide file doesn't exist, proceed using the default voice characteristics from the Voices table mapping below.
 3. Draft content following loaded format spec and voice constraints.
 4. Run `/second-claude-code:review --preset quick` UNLESS `--skip-review` flag is set. This step is MANDATORY by default.
 5. Address all Critical and Major review findings. Re-read the review output and apply fixes.
@@ -76,7 +76,7 @@ After the review step (or after drafting if `--skip-review`), save the final con
 - Write the full content using the Write tool. Do NOT skip this step.
 - Tell the user the saved path.
 
-When `--publish notion` is set, publish to Notion AND save the local .md file.
+When `--publish notion` is set: requires a configured Notion MCP connection (`mcp__claude_ai_Notion__notion-create-pages`). Create a Notion page with the content, then save the local .md file. If Notion MCP is not available, warn the user and save to file only.
 
 ## Gotchas
 

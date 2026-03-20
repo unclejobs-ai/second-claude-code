@@ -1,93 +1,113 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" fill="none" role="img" aria-labelledby="title desc">
-  <title id="title">Second Claude Code workflow overview</title>
-  <desc id="desc">A premium hero graphic showing one operating loop for knowledge work, with the core cycle in front and supporting commands below.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" fill="none" role="img" aria-labelledby="h-title h-desc">
+  <title id="h-title">Second Claude Code — PDCA Knowledge Work OS</title>
+  <desc id="h-desc">Premium hero graphic showing the PDCA quality cycle with Pokemon-themed agents, Action Router, and quality gates.</desc>
   <defs>
     <linearGradient id="page-bg" x1="140" y1="36" x2="820" y2="492" gradientUnits="userSpaceOnUse">
       <stop stop-color="#11161d"/>
       <stop offset="1" stop-color="#090d12"/>
     </linearGradient>
-    <linearGradient id="panel-bg" x1="108" y1="126" x2="850" y2="390" gradientUnits="userSpaceOnUse">
+    <linearGradient id="panel-bg" x1="108" y1="106" x2="850" y2="436" gradientUnits="userSpaceOnUse">
       <stop stop-color="#121820"/>
       <stop offset="1" stop-color="#0d1118"/>
     </linearGradient>
-    <linearGradient id="mint-fill" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#87d7c6"/>
-      <stop offset="1" stop-color="#74c8b7"/>
-    </linearGradient>
-    <linearGradient id="card-fill" x1="118" y1="350" x2="868" y2="470" gradientUnits="userSpaceOnUse">
-      <stop stop-color="rgba(255,255,255,0.05)"/>
-      <stop offset="1" stop-color="rgba(255,255,255,0.02)"/>
-    </linearGradient>
-    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
       <feGaussianBlur stdDeviation="18" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.45 0 1 0 0 0.78 0 0 1 0 0.72 0 0 0 0.22 0"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.45 0 1 0 0 0.78 0 0 1 0 0.72 0 0 0 0.18 0"/>
     </filter>
+    <filter id="glow-warm" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14" result="blur"/>
+      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.78 0 1 0 0 0.70 0 0 1 0 0.56 0 0 0 0.12 0"/>
+    </filter>
+    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4a5e6d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
   </defs>
 
+  <!-- Background -->
   <rect width="960" height="520" rx="24" fill="url(#page-bg)"/>
-  <circle cx="216" cy="102" r="140" fill="#7fd6c2" fill-opacity=".05" filter="url(#glow)"/>
-  <circle cx="792" cy="126" r="120" fill="#c9b48f" fill-opacity=".04" filter="url(#glow)"/>
+  <circle cx="200" cy="100" r="150" fill="#5b9bd5" fill-opacity=".04" filter="url(#glow)"/>
+  <circle cx="700" cy="240" r="180" fill="#7fd6c2" fill-opacity=".025" filter="url(#glow)"/>
+  <circle cx="820" cy="390" r="100" fill="#c9b48f" fill-opacity=".025" filter="url(#glow-warm)"/>
 
-  <text x="480" y="58" text-anchor="middle" fill="#f5f7fb" font-size="32" font-weight="700" letter-spacing="-1" font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif">Knowledge Work OS</text>
-  <text x="480" y="86" text-anchor="middle" fill="#97a4b2" font-size="13" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">9 skills · 16 agents · 15 frameworks</text>
+  <!-- Header -->
+  <text x="480" y="56" text-anchor="middle" fill="#f5f7fb" font-size="30" font-weight="700" letter-spacing="-1" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">Knowledge Work OS</text>
+  <text x="480" y="82" text-anchor="middle" fill="#97a4b2" font-size="12.5" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">9 skills · 16 agents · 15 frameworks</text>
 
-  <rect x="92" y="118" width="776" height="318" rx="30" fill="url(#panel-bg)" stroke="#252f3a" stroke-width="1.2"/>
-  <path d="M92 304C158 282 226 276 296 286C367 296 441 320 516 320C604 320 690 284 868 222V436H92V304Z" fill="url(#mint-fill)" fill-opacity=".035"/>
+  <!-- Main panel -->
+  <rect x="92" y="106" width="776" height="330" rx="30" fill="url(#panel-bg)" stroke="#252f3a" stroke-width="1"/>
 
-  <g opacity=".7">
-    <rect x="650" y="154" width="160" height="196" rx="24" transform="rotate(-8 650 154)" fill="#101720" stroke="#42525d"/>
-    <rect x="682" y="144" width="160" height="196" rx="24" transform="rotate(6 682 144)" fill="#11211e" fill-opacity=".9" stroke="#56706b"/>
-    <rect x="708" y="172" width="160" height="196" rx="24" fill="#151d25" stroke="#5d6c78"/>
-    <rect x="734" y="194" width="72" height="8" rx="4" fill="#50606b"/>
-    <rect x="734" y="220" width="108" height="36" rx="12" fill="#1c2730"/>
-    <rect x="734" y="266" width="108" height="36" rx="12" fill="#1c2730"/>
-    <rect x="734" y="314" width="108" height="76" rx="16" fill="#17302b" fill-opacity=".95"/>
+  <!-- Subtle wave -->
+  <path d="M92 320C180 300 280 290 400 302C520 314 640 290 868 240V436H92V320Z" fill="#7fd6c2" fill-opacity=".02"/>
+
+  <!-- Left panel: text -->
+  <rect x="126" y="129" width="22" height="2" rx="1" fill="#7fd6c2"/>
+  <text x="160" y="140" fill="#8c9aa8" font-size="10" letter-spacing="4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">SECOND CLAUDE CODE</text>
+
+  <g font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif" font-weight="700" fill="#f5f7fb">
+    <text x="126" y="184" font-size="38" letter-spacing="-2">One disciplined loop</text>
+    <text x="126" y="224" font-size="38" letter-spacing="-2">for serious knowledge work.</text>
   </g>
+  <text x="126" y="260" fill="#acb7c1" font-size="14.5" font-weight="500" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">Plan, Do, Check, Act — with quality gates</text>
+  <text x="126" y="280" fill="#acb7c1" font-size="14.5" font-weight="500" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">and intelligent Action Router.</text>
 
-  <rect x="92" y="118" width="776" height="318" rx="30" fill="url(#panel-bg)" fill-opacity=".01"/>
-  <path d="M92 118H598C544 160 512 236 512 436H92V118Z" fill="#0c1117" fill-opacity=".88"/>
-  <path d="M92 118H650C598 160 560 236 560 436H92V118Z" fill="url(#panel-bg)" fill-opacity=".48"/>
+  <!-- Right panel: PDCA 2x2 cycle -->
+  <!-- Subtle orbital ring -->
+  <ellipse cx="710" cy="252" rx="118" ry="98" fill="none" stroke="#1c2834" stroke-width="1.5" stroke-dasharray="3 8"/>
 
-  <rect x="126" y="141" width="22" height="2" rx="1" fill="#7fd6c2"/>
-  <text x="160" y="152" fill="#8c9aa8" font-size="10" letter-spacing="4.2" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">SECOND CLAUDE CODE</text>
+  <!-- Phase glow -->
+  <circle cx="648" cy="185" r="40" fill="#5b9bd5" fill-opacity=".04"/>
+  <circle cx="772" cy="185" r="40" fill="#7fd6c2" fill-opacity=".04"/>
+  <circle cx="772" cy="319" r="40" fill="#c9b48f" fill-opacity=".04"/>
+  <circle cx="648" cy="319" r="40" fill="#b39ddb" fill-opacity=".04"/>
 
-  <g font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif" font-weight="700" fill="#f5f7fb">
-    <text x="126" y="194" font-size="43" letter-spacing="-2.4">One disciplined loop</text>
-    <text x="126" y="235" font-size="43" letter-spacing="-2.4">for serious knowledge work.</text>
-  </g>
-  <text x="126" y="272" fill="#acb7c1" font-size="15.5" font-weight="500" letter-spacing=".1" font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif">Research, structure, draft, pressure-test, refine.</text>
+  <!-- Plan card -->
+  <rect x="590" y="152" width="116" height="66" rx="14" fill="#0f1a28" stroke="#5b9bd5" stroke-width="1.2"/>
+  <text x="648" y="176" text-anchor="middle" fill="#5b9bd5" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">PLAN</text>
+  <text x="648" y="194" text-anchor="middle" fill="#dce4ed" font-size="14" font-weight="700" font-family="Satoshi, Avenir Next, -apple-system, sans-serif">Gather</text>
+  <text x="648" y="210" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">Eevee · Alakazam</text>
 
-  <g font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif" font-size="18" font-weight="700">
-    <rect x="126" y="304" width="110" height="48" rx="24" fill="#172028" stroke="#32414d"/>
-    <text x="181" y="334" text-anchor="middle" fill="#f5f7fb">Research</text>
+  <!-- Do card -->
+  <rect x="714" y="152" width="116" height="66" rx="14" fill="#0f201a" stroke="#7fd6c2" stroke-width="1.2"/>
+  <text x="772" y="176" text-anchor="middle" fill="#7fd6c2" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">DO</text>
+  <text x="772" y="194" text-anchor="middle" fill="#dce4ed" font-size="14" font-weight="700" font-family="Satoshi, Avenir Next, -apple-system, sans-serif">Produce</text>
+  <text x="772" y="210" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">Smeargle</text>
 
-    <rect x="246" y="304" width="108" height="48" rx="24" fill="#172028" stroke="#32414d"/>
-    <text x="300" y="334" text-anchor="middle" fill="#f5f7fb">Analyze</text>
+  <!-- Check card -->
+  <rect x="714" y="286" width="116" height="66" rx="14" fill="#1a1810" stroke="#c9b48f" stroke-width="1.2"/>
+  <text x="772" y="310" text-anchor="middle" fill="#c9b48f" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">CHECK</text>
+  <text x="772" y="328" text-anchor="middle" fill="#dce4ed" font-size="14" font-weight="700" font-family="Satoshi, Avenir Next, -apple-system, sans-serif">Verify</text>
+  <text x="772" y="344" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">Xatu · Absol +3</text>
 
-    <rect x="364" y="304" width="92" height="48" rx="24" fill="#172028" stroke="#32414d"/>
-    <text x="410" y="334" text-anchor="middle" fill="#f5f7fb">Write</text>
+  <!-- Act card -->
+  <rect x="590" y="286" width="116" height="66" rx="14" fill="#18102a" stroke="#b39ddb" stroke-width="1.2"/>
+  <text x="648" y="310" text-anchor="middle" fill="#b39ddb" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">ACT</text>
+  <text x="648" y="328" text-anchor="middle" fill="#dce4ed" font-size="14" font-weight="700" font-family="Satoshi, Avenir Next, -apple-system, sans-serif">Refine</text>
+  <text x="648" y="344" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">Ditto · Router</text>
 
-    <rect x="466" y="304" width="102" height="48" rx="24" fill="#172028" stroke="#32414d"/>
-    <text x="517" y="334" text-anchor="middle" fill="#f5f7fb">Review</text>
+  <!-- PDCA center label -->
+  <text x="710" y="258" text-anchor="middle" fill="#2a3a4a" font-size="18" font-weight="800" letter-spacing="5" font-family="Satoshi, Avenir Next, -apple-system, sans-serif">PDCA</text>
 
-    <rect x="578" y="304" width="90" height="48" rx="24" fill="#173129" stroke="#5f8f84"/>
-    <text x="623" y="334" text-anchor="middle" fill="#dbfff6">Loop</text>
-  </g>
+  <!-- Directional arrows -->
+  <line x1="706" y1="178" x2="714" y2="178" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="778" y1="218" x2="778" y2="286" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="714" y1="322" x2="706" y2="322" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
+  <line x1="642" y1="286" x2="642" y2="218" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
 
-  <g font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif">
-    <rect x="118" y="372" width="332" height="52" rx="20" fill="#141b23" stroke="#29343f"/>
-    <text x="138" y="393" fill="#7f909f" font-size="10" letter-spacing="3.4">DISCOVER</text>
-    <text x="138" y="414" fill="#f5f7fb" font-size="21" font-weight="700">Hunt</text>
-    <text x="244" y="414" fill="#98a8b5" font-size="13.5">Find what is missing.</text>
+  <!-- Bottom bar: supporting commands -->
+  <g font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">
+    <rect x="118" y="380" width="280" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
+    <text x="138" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">DISCOVER</text>
+    <text x="138" y="420" fill="#f5f7fb" font-size="19" font-weight="700">Hunt</text>
+    <text x="220" y="420" fill="#98a8b5" font-size="13">Find what is missing.</text>
 
-    <rect x="466" y="372" width="182" height="52" rx="20" fill="#141b23" stroke="#29343f"/>
-    <text x="486" y="393" fill="#7f909f" font-size="10" letter-spacing="3.4">COLLECT</text>
-    <text x="486" y="414" fill="#f5f7fb" font-size="18" font-weight="700">Collect</text>
-    <text x="557" y="414" fill="#98a8b5" font-size="13">Keep source notes.</text>
+    <rect x="414" y="380" width="182" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
+    <text x="434" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">COLLECT</text>
+    <text x="434" y="420" fill="#f5f7fb" font-size="17" font-weight="700">Collect</text>
+    <text x="510" y="420" fill="#98a8b5" font-size="12.5">Keep source notes.</text>
 
-    <rect x="664" y="372" width="196" height="52" rx="20" fill="#141b23" stroke="#29343f"/>
-    <text x="684" y="393" fill="#7f909f" font-size="10" letter-spacing="3.4">PIPELINE</text>
-    <text x="684" y="414" fill="#f5f7fb" font-size="18" font-weight="700">Pipeline</text>
-    <text x="765" y="414" fill="#98a8b5" font-size="13">Repeat proven flows.</text>
+    <rect x="612" y="380" width="196" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
+    <text x="632" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">PIPELINE</text>
+    <text x="632" y="420" fill="#f5f7fb" font-size="17" font-weight="700">Pipeline</text>
+    <text x="718" y="420" fill="#98a8b5" font-size="12.5">Repeat proven flows.</text>
   </g>
 </svg>
