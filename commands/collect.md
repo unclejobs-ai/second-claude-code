@@ -1,5 +1,5 @@
 ---
-description: "Collect knowledge -- URL, text, or file to PARA-classified storage"
+description: "Plan/Gather phase -- collect knowledge into PARA-classified storage"
 argument-hint: <input> [--search "query"]
 ---
 

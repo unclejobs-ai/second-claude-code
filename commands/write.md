@@ -1,5 +1,5 @@
 ---
-description: "Produce content -- newsletter, article, shorts, report, social"
+description: "Do/Produce phase -- newsletter, article, shorts, report, social"
 argument-hint: <format> <topic> [options]
 ---
 

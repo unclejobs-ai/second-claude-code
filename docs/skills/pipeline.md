@@ -1,6 +1,6 @@
 # Pipeline
 
-> Use when chaining multiple /scc commands into a reusable workflow.
+> Use when chaining multiple /scc commands into a reusable PDCA workflow.
 
 ## Quick Example
 
@@ -147,6 +147,7 @@ Run a named preset with `/second-claude-code:pipeline run <preset>`:
 | `quality-gate` | review, loop | Post-hoc quality check on existing content |
 
 All presets accept `--topic` and `--var` flags for runtime parameterization.
+Together they let you automate the full Gather → Produce → Verify → Refine loop.
 
 **autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and loop incorporates feedback. Best for polished deliverables.
 

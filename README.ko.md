@@ -3,7 +3,7 @@
 ![version](https://img.shields.io/badge/version-0.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![skills](https://img.shields.io/badge/skills-8-purple)
-![agents](https://img.shields.io/badge/agents-10-orange)
+![agents](https://img.shields.io/badge/agents-16-orange)
 ![frameworks](https://img.shields.io/badge/frameworks-15-red)
 ![platforms](https://img.shields.io/badge/platforms-4-teal)
 
@@ -15,25 +15,45 @@
 
 Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second Claude Code는 200개 스킬이 아니라 **8개 명령어로 지식 작업을 커버하는 OS**입니다.
 
-지식 노동자는 도구 파편화에 빠지기 쉽습니다. 리서치용 플러그인 따로, 글쓰기용 따로, 리뷰용 따로 — 서로 연결되지 않는 도구들의 늪. Second Claude Code는 이 혼잡함을 **8개의 조합 가능한 킬러 스킬**, **10개의 전문 서브에이전트**, **15개의 전략 프레임워크**로 대체합니다. 넓고 얕은 기능 나열 대신 깊이 있는 분석이 필요한 연구자, 전략가, 콘텐츠 크리에이터를 위해 설계되었습니다.
+지식 노동자는 도구 파편화에 빠지기 쉽습니다. 리서치용 플러그인 따로, 글쓰기용 따로, 리뷰용 따로 — 서로 연결되지 않는 도구들의 늪. Second Claude Code는 이 혼잡함을 **8개의 조합 가능한 킬러 스킬**, **16개의 전문 서브에이전트**, **15개의 전략 프레임워크**로 대체합니다. 넓고 얕은 기능 나열 대신 깊이 있는 분석이 필요한 연구자, 전략가, 콘텐츠 크리에이터를 위해 설계되었습니다.
 
 ---
 
 ## 지식 작업 사이클
 
-이 구조는 두 레이어로 읽히도록 정리했습니다. 먼저 핵심 워크플로를 이해하고, 그다음 보조 명령어를 보게 됩니다.
+**핵심 흐름**: `Research → Analyze → Write → Review → Loop`
 
-**핵심 흐름**
+이 흐름은 **PDCA 품질 원리**를 따릅니다: 모든 산출물은 Verify(리뷰)와
+Refine(반복 개선)을 거쳐야 출하됩니다. 콘텐츠를 만드는 사이클이
+스킬 자체를 개선하는 사이클이기도 합니다.
 
-`Research` → `Analyze` → `Write` → `Review` → `Loop`
+제품 내부 언어로는 이 루프를 `Gather → Produce → Verify → Refine`로 표현합니다.
+PDCA로 풀면 `Plan → Do → Check → Act`에 해당합니다.
+
+| PDCA | Second Claude Code |
+|------|--------------------|
+| Plan | Gather (`research`, `hunt`, `collect`) |
+| Do | Produce (`analyze`, `write`, `pipeline`) |
+| Check | Verify (`review`) |
+| Act | Refine (`loop`) |
+
+```mermaid
+graph TD
+    G[Gather<br/>research + hunt] --> P[Produce<br/>analyze + write + pipeline]
+    P --> V[Verify<br/>review]
+    V -->|APPROVED| Done[Ship]
+    V -->|feedback| R[Refine<br/>loop]
+    R --> P
+    K[collect] -.->|accumulate| G
+```
 
 **보조 명령어**
 
 | 명령어 | 역할 |
 |--------|------|
-| `hunt` | 워크플로 주변에서 필요한 기능을 탐색 |
-| `collect` | 자료와 메모를 PARA 친화적으로 저장 |
-| `pipeline` | 여러 명령어를 반복 가능한 흐름으로 연결 |
+| `hunt` | 새로운 기능으로 사이클을 확장 |
+| `collect` | 사이클 전반에 걸쳐 지식을 축적 |
+| `pipeline` | 반복 가능한 사이클을 자동화 |
 
 ---
 
@@ -88,33 +108,33 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 명령어는 `/second-claude-code:` 접두사를 사용합니다.
 
-### 탐색 (Discover)
+### 수집 (Gather)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
 | [`research`](docs/skills/research.md) | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
 | [`hunt`](docs/skills/hunt.md) | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
+| [`collect`](docs/skills/collect.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
 
-### 생성 (Create)
+### 생산 (Produce)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
 | [`write`](docs/skills/write.md) | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
 | [`analyze`](docs/skills/analyze.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
+| [`pipeline`](docs/skills/pipeline.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
-### 품질 (Quality)
+### 검증 (Verify)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
 | [`review`](docs/skills/review.md) | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
-| [`loop`](docs/skills/loop.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
 
-### 관리 (Manage)
+### 개선 (Refine)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`collect`](docs/skills/collect.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
-| [`pipeline`](docs/skills/pipeline.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
+| [`loop`](docs/skills/loop.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
 
 ---
 
@@ -154,35 +174,16 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 ## 스킬 조합
 
-스킬은 서로를 호출하며 자연스럽게 체이닝됩니다. 하나의 프롬프트로 전체 프로덕션 파이프라인을 실행할 수 있습니다.
+스킬은 서로를 호출하며 자연스럽게 체이닝됩니다. 하나의 프롬프트로 전체 PDCA 사이클을 실행할 수 있습니다.
 
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant R as Research
-    participant A as Analyze
-    participant W as Write
-    participant V as Review
-    participant L as Loop
+**자주 쓰는 패턴:**
 
-    U->>R: "엣지 AI 시장 보고서 작성해줘"
-    R->>A: findings (haiku subagents)
-    A->>W: framework output (sonnet)
-    W->>V: draft
-    V->>V: 3-5 reviewers in parallel (opus + sonnet + haiku)
-    V->>L: verdict: MINOR FIXES
-    L->>W: iterate with feedback
-    W->>V: revised draft
-    V->>U: APPROVED
-```
-
-**자주 쓰는 체인:**
-
-```
-research → write → review → loop → done          # 풀 콘텐츠 파이프라인
-research → analyze → review → done                # 전략 분석
-collect → research → write → pipeline(save)       # 지식 → 콘텐츠 전환
-```
+| 패턴 | 체인 | 용도 |
+|------|------|------|
+| 풀 PDCA | research → analyze → write → review → loop | 엔드투엔드 콘텐츠 |
+| 빠른 검수 | review → loop | 기존 초안 다듬기 |
+| 기획만 | research → analyze | 전략 분석 |
+| 자동 PDCA | `pipeline run autopilot --topic "..."` | 원커맨드 생산 |
 
 `/second-claude-code:write`는 내부적으로 `/second-claude-code:research`와 `/second-claude-code:review`를 자동 호출하므로, 하나의 write 명령어만으로 리서치 기반 + 리뷰 검증된 콘텐츠를 생산할 수 있습니다.
 
@@ -236,7 +237,7 @@ graph TD
 | `quick` | devil-advocate + fact-checker | 빠른 검증 |
 | `full` | 5명 전원 | 최종 퍼블리시 전 검수 |
 
-**외부 리뷰어:** `--external` 플래그로 mmbridge, kimi, codex, gemini를 통한 크로스 모델 리뷰를 추가할 수 있습니다.
+**외부 리뷰어 (선택 사항):** `--external` 플래그로 MMBridge를 통한 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)를 추가할 수 있습니다. MMBridge 별도 설치 필요.
 
 ---
 
@@ -267,37 +268,28 @@ graph TD
 <details>
 <summary><strong>아키텍처</strong></summary>
 
+3개 모델 티어(opus, sonnet, haiku)에 걸친 16개 전문 서브에이전트.
+MMBridge를 통한 크로스 모델 리뷰는 선택 사항 (Kimi, Qwen, Gemini, Codex) — 없어도 동작합니다.
+
+[전체 아키텍처 — 에이전트 목록, PDCA 매핑 →](docs/architecture.md)
+
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # 플러그인 매니페스트 (v0.2.0)
-├── skills/                       # 8개 스킬 (각각 SKILL.md 포함)
-│   ├── research/                 # 자율 심층 리서치
-│   ├── write/                    # 콘텐츠 제작
-│   ├── analyze/                  # 전략 프레임워크 분석 (15개 프레임워크)
-│   ├── review/                   # 다중 관점 품질 게이트
-│   ├── loop/                     # 반복 개선
-│   ├── collect/                  # 지식 수집 (PARA)
-│   ├── pipeline/                 # 커스텀 워크플로우 빌더
-│   └── hunt/                     # 스킬 탐색
-├── agents/                       # 10개 전문 서브에이전트
-├── commands/                     # 8개 슬래시 명령어 래퍼
-├── hooks/                        # 자동 라우팅 + 컨텍스트 주입
-│   ├── hooks.json                # 훅 설정
-│   ├── prompt-detect.mjs         # 자연어 자동 라우터
-│   ├── session-start.mjs         # 세션 배너 + 상태 초기화
-│   └── session-end.mjs           # 정리
-├── references/                   # 설계 원칙, 합의 게이트
-├── templates/                    # 출력 템플릿
-├── scripts/                      # 셸 유틸리티
-└── config/                       # 사용자 설정
+├── skills/     # 8개 스킬 (SKILL.md + references/)
+├── agents/     # 16개 전문 서브에이전트
+├── commands/   # 8개 슬래시 명령어 래퍼
+├── hooks/      # 자동 라우팅 + 컨텍스트 주입
+├── references/ # 설계 원칙, 합의 게이트
+├── templates/  # 출력 템플릿
+└── config/     # 사용자 설정
 ```
 
 | 디렉토리 | 역할 |
 |----------|------|
-| `skills/` | 각 스킬은 `SKILL.md`(짧고 컨텍스트 효율적)와 `references/` 하위 디렉토리(심층 문서)를 가집니다. 점진적 공개(Progressive Disclosure) 적용. |
-| `agents/` | 10개 서브에이전트 정의: 프로덕션 에이전트 5개(researcher, analyst, editor, strategist, writer) + 리뷰어 5개(deep-reviewer, devil-advocate, fact-checker, tone-guardian, structure-analyst). |
-| `commands/` | `/second-claude-code:*` 호출을 해당 스킬로 연결하는 얇은 래퍼. |
-| `hooks/` | 세션 라이프사이클 훅과 자연어를 스킬에 매핑하는 자동 라우팅 엔진. |
+| `skills/` | 각 스킬은 `SKILL.md`(짧고 컨텍스트 효율적)와 `references/` 하위 디렉토리(심층 문서)를 가집니다. |
+| `agents/` | 16개 서브에이전트: 프로덕션 5개 + 리뷰어 5개 + 파이프라인/헌트 6개. |
+| `commands/` | `/second-claude-code:*` 호출을 해당 스킬로 연결하는 래퍼. |
+| `hooks/` | 세션 라이프사이클 훅과 자연어 자동 라우팅 엔진. |
 | `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 메소드. |
 
 </details>
@@ -306,7 +298,7 @@ second-claude/
 
 ## 설계 철학
 
-7가지 원칙이 플러그인 아키텍처를 지배합니다:
+8가지 원칙이 플러그인 아키텍처를 지배합니다:
 
 1. **Few but Deep** — 80개가 아닌 8개 스킬. 각각 내부적으로 깊습니다.
 2. **Gotchas over Instructions** — 행복한 경로뿐 아니라 실패 모드를 문서화합니다.
@@ -315,8 +307,9 @@ second-claude/
 5. **Zero Dependency Core** — `npm install` 불필요. 서브에이전트와 셸 스크립트만 사용.
 6. **State in Files** — 플러그인 데이터 디렉토리에 JSON 상태 영속화.
 7. **Composable** — 스킬이 서로를 호출하여, 8개 프리미티브로 무한한 워크플로우 구성.
+8. **PDCA-Native** — 모든 산출물이 Verify와 Refine을 거칩니다. 스킬이 스킬 자신을 개선하는 데 같은 사이클을 사용합니다.
 
-**원칙 간 상호작용:** Few-but-deep + composable = 작은 표면적, 무한한 조합. Gotchas-first + progressive disclosure = 장문 없이도 안전한 사용. Context-efficient + zero dependency = 빠르고, 저렴하고, 플랫폼 무관.
+**원칙 간 상호작용:** Few-but-deep + composable = 작은 표면적, 무한한 조합. Gotchas-first + progressive disclosure = 장문 없이도 안전한 사용. Context-efficient + zero dependency = 빠르고, 저렴하고, 플랫폼 무관. PDCA-native + composable = 모든 워크플로우에 지속적 품질 개선이 내장.
 
 ---
 

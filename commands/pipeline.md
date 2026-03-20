@@ -1,5 +1,5 @@
 ---
-description: "Build and run custom skill pipelines"
+description: "Do/Produce phase -- build and run PDCA pipelines"
 argument-hint: <subcommand> [name] [options]
 ---
 

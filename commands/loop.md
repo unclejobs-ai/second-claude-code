@@ -1,5 +1,5 @@
 ---
-description: "Iterative improvement -- repeat until quality target met"
+description: "Act/Refine phase -- iterative improvement until quality target met"
 argument-hint: <goal> [options]
 ---
 

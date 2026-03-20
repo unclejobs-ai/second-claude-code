@@ -1,5 +1,5 @@
 ---
-description: "Find and install new skills for tasks beyond the core 8"
+description: "Plan/Gather phase -- find and install new skills beyond the core 8"
 argument-hint: <capability description>
 ---
 

@@ -5,20 +5,21 @@
     "name": "EungjePark"
   },
   "metadata": {
-    "description": "Knowledge Work OS — 8 skills + 10 subagents for research, writing, analysis, review, and workflow automation",
+    "description": "PDCA-native Knowledge Work OS — 8 skills + 16 subagents across Gather, Produce, Verify, and Refine",
     "version": "0.2.0"
   },
   "plugins": [
     {
       "name": "second-claude-code",
       "source": "./",
-      "description": "Knowledge Work OS — 8 killer skills for research, writing, analysis, review, iteration, collection, pipelines, and skill discovery",
+      "description": "PDCA-native Knowledge Work OS — 8 skills + 16 subagents across Gather, Produce, Verify, and Refine",
       "version": "0.2.0",
       "author": {
         "name": "EungjePark"
       },
       "keywords": [
         "knowledge-work",
+        "pdca",
         "research",
         "writing",
         "strategy",

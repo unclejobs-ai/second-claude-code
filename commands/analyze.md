@@ -1,5 +1,5 @@
 ---
-description: "Apply strategic frameworks such as SWOT, RICE, OKR, and Lean Canvas"
+description: "Do/Produce phase -- apply strategic frameworks such as SWOT, RICE, OKR, and Lean Canvas"
 argument-hint: <framework> <subject> [options]
 ---
 

@@ -80,6 +80,8 @@ function main() {
 
   lines.push("# Second Claude Code — Knowledge Work OS");
   lines.push("");
+  lines.push("PDCA loop: Plan/Gather → Do/Produce → Check/Verify → Act/Refine");
+  lines.push("");
   lines.push("8 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
@@ -92,6 +94,8 @@ function main() {
   lines.push("| `/second-claude-code:collect` | Knowledge collection & PARA organization |");
   lines.push("| `/second-claude-code:pipeline` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:hunt` | Dynamic skill discovery & installation |");
+  lines.push("");
+  lines.push("Phase map: Gather = research + hunt + collect | Produce = analyze + write + pipeline | Verify = review | Refine = loop");
   lines.push("");
   lines.push("Skills compose: `/second-claude-code:write` auto-calls `/second-claude-code:research` + `/second-claude-code:review`.");
   lines.push('Or say it naturally — "write a newsletter" routes to the right skill.');

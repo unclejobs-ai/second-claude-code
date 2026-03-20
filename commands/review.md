@@ -1,5 +1,5 @@
 ---
-description: "Multi-perspective quality review with consensus gate"
+description: "Check/Verify phase -- multi-perspective review with consensus gate"
 argument-hint: [target] [--preset content|strategy|code|quick|full]
 ---
 

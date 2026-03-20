@@ -1,5 +1,5 @@
 ---
-description: "Deep autonomous research on any topic"
+description: "Plan/Gather phase -- deep autonomous research on any topic"
 argument-hint: <topic> [options]
 ---
 
