@@ -18,6 +18,8 @@ This is the quality gate that determines whether work ships or iterates.
    - Quick validation → `quick`
    - Pre-publish final pass → `full`
 2. **Dispatch review**: Run `/second-claude-code:review --preset {selected}`.
+   - Reviewers: Xatu (deep-reviewer), Absol (devil-advocate), Porygon (fact-checker), Jigglypuff (tone-guardian), Unown (structure-analyst)
+   - Preset determines which subset is dispatched (see below)
 3. **Read verdict**: The review skill returns one of four verdicts.
 4. **Route based on verdict**: See Gate Checklist below.
 

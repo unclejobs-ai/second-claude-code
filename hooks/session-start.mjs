@@ -4,7 +4,7 @@
  * SessionStart Hook — Second Claude Knowledge Work OS
  *
  * Injects core context on session startup:
- * - 8 killer skills overview + routing rules
+ * - 9 skills overview + routing rules
  * - Active loop/pipeline state restoration
  * - Available environment capabilities
  */
@@ -94,24 +94,25 @@ function main() {
 
   lines.push("# Second Claude Code — Knowledge Work OS");
   lines.push("");
-  lines.push("PDCA loop: Plan/Gather → Do/Produce → Check/Verify → Act/Refine");
+  lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
   lines.push("9 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
-  lines.push("| `/second-claude-code:pdca` | **PDCA orchestrator** — auto-chains Plan→Do→Check→Act with quality gates |");
+  lines.push("| `/second-claude-code:pdca` | **PDCA orchestrator** — Plan→Do→Check→Act with quality gates + Action Router |");
   lines.push("| `/second-claude-code:research` | Deep autonomous research → structured brief |");
   lines.push("| `/second-claude-code:write` | Content production (newsletter, article, shorts, report) |");
   lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
-  lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3 parallel reviewers) |");
+  lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
   lines.push("| `/second-claude-code:loop` | Iterative improvement until quality target met |");
-  lines.push("| `/second-claude-code:collect` | Knowledge collection & PARA organization |");
+  lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
   lines.push("| `/second-claude-code:pipeline` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:hunt` | Dynamic skill discovery & installation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
   lines.push("Or use individual skills: research, write, analyze, review, loop, collect, pipeline, hunt.");
+  lines.push('Action Router: review failures route by root cause (Plan/Do/Loop).');
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");
   lines.push(

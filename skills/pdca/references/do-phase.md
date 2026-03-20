@@ -1,31 +1,59 @@
 # Do Phase (Produce) — Checklist
 
-The Do phase transforms research into a concrete artifact.
-Inputs come from the Plan phase gate; outputs go to the Check phase gate.
+The Do phase is a **pure executor**. It transforms Plan artifacts into a concrete output.
+It does NOT research (Plan did that) and does NOT review (Check will do that).
 
 ## Entry Conditions
 
-- Plan phase gate passed (Research Brief exists and is sufficient)
+- Plan phase gate passed (Research Brief + Analysis exist)
+- OR Act→Do cycle return (review findings provided as constraints)
 - OR user explicitly provides source material and skips Plan
-- Production format decided (article, report, analysis, etc.)
+- Production format decided (from Question Protocol or prompt)
+
+## Pure Execution Principle
+
+Do phase skills run in **stripped mode**:
+- `/scc:write --skip-research --skip-review` — No internal research or review
+- Plan already gathered data; Check will verify quality
+- This prevents duplicate work and keeps phase boundaries clean
+
+On Act→Do return: review findings are passed as constraints to the write prompt, focusing the rewrite on specific issues.
 
 ## Skill Selection
 
-| User Intent | Skill | Notes |
-|-------------|-------|-------|
-| "Write an article/report/newsletter" | `/second-claude-code:write` | Loads format spec from `references/formats/` |
-| "Analyze with SWOT/Porter/RICE" | `/second-claude-code:analyze` | Selects framework from prompt |
-| "Run a multi-step workflow" | `/second-claude-code:pipeline` | Uses predefined or custom pipeline |
-| Multiple outputs needed | Chain skills in sequence | e.g., analyze then write |
+| User Intent | Skill | Mode |
+|-------------|-------|------|
+| Content (article, report, newsletter) | `/scc:write --skip-research --skip-review` | Pure execution |
+| Different framework analysis | `/scc:analyze` | Different from Plan's framework |
+| Multi-step workflow | `/scc:pipeline` | Uses predefined pipeline |
+
+## Pre-Flight Check (Mandatory)
+
+Before any execution, verify Plan artifacts exist:
+
+1. Check for PDCA state file (`pdca-active.json`)
+2. **No state file** → **STOP**: "No active PDCA session found. Run Plan first or provide `--source {file}`."
+3. **State file exists, topic mismatch** (state topic ≠ current request) → **STOP**: "Active session is for '{state.topic}'. Start a new cycle with Plan or provide `--source {file}`."
+4. **State file exists, topic matches, artifacts present** → proceed to Execution Steps
+5. **State file exists, topic matches, artifacts null** → **STOP**: "Plan phase incomplete — artifacts not yet produced. Run Plan first or provide `--source {file}`."
+6. **No state file but `--source {file}` provided** → use provided source, proceed
+
+This prevents producing content from nothing when `--phase do` is used directly, and catches stale state from prior sessions.
 
 ## Execution Steps
 
-1. **Load Plan artifacts**: Read the Research Brief from Plan phase.
-2. **Select skill**: Based on user intent (see table above).
-3. **Pass context**: Feed Research Brief as input to the selected skill.
-4. **Execute**: Run the skill with appropriate options.
-5. **Save artifact**: Ensure output is written to a file, not just printed.
-6. **Assess completeness**: Check against the Gate Checklist below.
+1. **Load Plan artifacts**: Read Research Brief + Analysis from Plan phase (or `--source` file)
+2. **Select skill**: Based on user intent or Plan recommendation
+3. **Pass context**: Feed Plan artifacts as input
+4. **On Act→Do return**: Inject review findings as constraints
+   ```
+   Constraints from review:
+   - [finding 1]: address by...
+   - [finding 2]: fix by...
+   ```
+5. **Execute**: Run skill with `--skip-research --skip-review`
+6. **Save artifact**: Ensure output is written to a file
+7. **Assess completeness**: Check against the Gate Checklist below
 
 ## Gate Checklist (Do → Check)
 
@@ -44,7 +72,7 @@ All items must pass before proceeding to Check:
 |---------|--------|
 | Artifact is incomplete | Complete missing sections before review |
 | Research not used | Re-run write with explicit instruction to cite Plan findings |
-| Format violated | Check format spec in `skills/write/references/formats/` and fix |
+| Format violated | Check format spec and fix |
 | Too short/long | Adjust scope and regenerate |
 
 ## Output to Next Phase
