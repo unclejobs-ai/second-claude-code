@@ -24,7 +24,7 @@ Produce content with automatic research and review unless the caller explicitly 
 
 | Flag | Values | Default |
 |------|--------|---------|
-| `--format` | `newsletter\|article\|shorts\|report\|social\|card-news` | `newsletter` |
+| `--format` | `newsletter\|article\|shorts\|report\|social\|card-news` | `article` |
 | `--voice` | `peer-mentor\|expert\|casual` | format-specific |
 | `--publish` | `notion\|file` | `file` |
 | `--skip-research` | flag | off |
@@ -66,6 +66,17 @@ When user-specified length conflicts with format minimums:
 3. If user insists on short article, respect user intent but note the override in output metadata.
 
 Never silently truncate or silently exceed the user's request.
+
+## Auto-Save
+
+After the review step (or after drafting if `--skip-review`), save the final content:
+
+- Path: `.captures/write-{format}-{slug}-{YYYY-MM-DD}.md`
+- `{slug}` = topic lowercased, spaces to hyphens, max 40 chars
+- Write the full content using the Write tool. Do NOT skip this step.
+- Tell the user the saved path.
+
+When `--publish notion` is set, publish to Notion AND save the local .md file.
 
 ## Gotchas
 

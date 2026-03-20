@@ -97,6 +97,15 @@ When analyzing competitors, products, or external entities:
 3. ...
 ```
 
+## Auto-Save
+
+After producing the final synthesis, save it to a file:
+
+- Path: `.captures/analyze-{framework}-{slug}-{YYYY-MM-DD}.md`
+- `{slug}` = topic lowercased, spaces to hyphens, max 40 chars
+- Write the full analysis using the Write tool. Do NOT skip this step.
+- Tell the user the saved path.
+
 ## Challenge Round
 
 Mandatory at `standard` (1 round) and `deep` (2 rounds). See `references/challenge-round.md` for the full protocol.

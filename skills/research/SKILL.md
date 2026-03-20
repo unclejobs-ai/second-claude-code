@@ -54,6 +54,15 @@ writer(sonnet) --[synthesis]--> Research Brief
 
 Coverage requirements and conflict resolution rules are in `references/research-methodology.md`.
 
+## Auto-Save
+
+After producing the Research Brief, save it to a file:
+
+- Path: `.captures/research-{slug}-{YYYY-MM-DD}.md`
+- `{slug}` = topic lowercased, spaces to hyphens, max 40 chars
+- Write the full brief using the Write tool. Do NOT skip this step.
+- Tell the user the saved path.
+
 ## Output, Gotchas, Subagents & Integration
 
 See `references/research-methodology.md` for output format template, gotchas table, subagent dispatch config, and integration notes.
