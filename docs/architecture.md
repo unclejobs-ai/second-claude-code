@@ -10,13 +10,18 @@ directly to `Plan → Do → Check → Act`.
 | Do | Produce | `analyze`, `write`, `pipeline` |
 | Check | Verify | `review` |
 | Act | Refine | `loop` |
+| **Orchestrator** | **Full Cycle** | **`pdca`** |
+
+The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
+It auto-detects which phase to enter from natural language and chains the appropriate skills.
 
 ## Directory Structure
 
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest (v0.2.0)
-├── skills/                       # 8 skills (SKILL.md each)
+├── skills/                       # 9 skills (SKILL.md each)
+│   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   ├── research/                 # Autonomous deep research
 │   ├── write/                    # Content production
 │   ├── analyze/                  # Strategic framework analysis (15 frameworks)
@@ -41,9 +46,10 @@ second-claude/
 | Directory | Role |
 |-----------|------|
 | `skills/` | Each skill has a `SKILL.md` (short, context-efficient) plus a `references/` subdirectory for deep documentation. Progressive disclosure in action. |
+| `skills/pdca/` | Meta-skill that orchestrates the full PDCA cycle with phase gate checklists in `references/`. |
 | `agents/` | 16 subagent definitions across 3 model tiers. See Agent Roster below. |
 | `commands/` | Thin wrappers that route `/second-claude-code:*` invocations to the matching skill. |
-| `hooks/` | Session lifecycle hooks and the auto-routing engine that maps natural language to skills. |
+| `hooks/` | Session lifecycle hooks and the two-layer auto-routing engine (PDCA compound patterns + single-skill patterns). |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
 ---
@@ -118,9 +124,28 @@ The agents map to the PDCA quality cycle that governs the knowledge work flow:
 
 Supporting commands reinforce the same loop:
 
+- `pdca` orchestrates the full cycle with quality gates between each phase
 - `collect` keeps source material and notes available for the next planning cycle
 - `hunt` expands the system when the current skill set is not enough
 - `pipeline` automates full Gather → Produce → Verify → Refine runs
+
+---
+
+## PDCA Phase Gates
+
+The `pdca` meta-skill enforces quality gates at each phase transition:
+
+```
+Plan ──[Gate: Brief exists? Sources ≥3?]──→ Do
+  Do ──[Gate: Artifact complete? Format OK?]──→ Check
+Check ──[Gate: Verdict routing]──→ Act (or Exit if APPROVED)
+  Act ──[Gate: Target met?]──→ Exit (or Cycle back to Plan)
+```
+
+Phase gate checklists live in `skills/pdca/references/`.
+The `hooks/prompt-detect.mjs` auto-router has a PDCA compound layer that detects
+multi-phase intent (e.g., "알아보고 써줘") and routes to `/second-claude-code:pdca`
+before falling through to single-skill matching.
 
 ---
 

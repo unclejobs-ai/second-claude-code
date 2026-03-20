@@ -2,7 +2,7 @@
 
 ![version](https://img.shields.io/badge/version-0.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![skills](https://img.shields.io/badge/skills-8-purple)
+![skills](https://img.shields.io/badge/skills-9-purple)
 ![agents](https://img.shields.io/badge/agents-16-orange)
 ![frameworks](https://img.shields.io/badge/frameworks-15-red)
 ![platforms](https://img.shields.io/badge/platforms-4-teal)
@@ -13,7 +13,7 @@
 
 ![Skill Wheel](docs/images/hero.svg)
 
-Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second Claude Code는 200개 스킬이 아니라 **8개 명령어로 지식 작업을 커버하는 OS**입니다.
+Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second Claude Code는 200개 스킬이 아니라 **9개 명령어로 지식 작업을 커버하는 OS**입니다.
 
 지식 노동자는 도구 파편화에 빠지기 쉽습니다. 리서치용 플러그인 따로, 글쓰기용 따로, 리뷰용 따로 — 서로 연결되지 않는 도구들의 늪. Second Claude Code는 이 혼잡함을 **8개의 조합 가능한 킬러 스킬**, **16개의 전문 서브에이전트**, **15개의 전략 프레임워크**로 대체합니다. 넓고 얕은 기능 나열 대신 깊이 있는 분석이 필요한 연구자, 전략가, 콘텐츠 크리에이터를 위해 설계되었습니다.
 
@@ -93,6 +93,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 하고 싶은 것 | 사용할 스킬 |
 |-------------|------------|
+| 리서치→작성→리뷰→개선 전체 사이클 | `pdca` |
 | 주제에 대한 정보 조사 | `research` |
 | 전략 프레임워크 적용 (SWOT, Porter 등) | `analyze` |
 | 아티클, 보고서, 뉴스레터 작성 | `write` |
@@ -104,9 +105,17 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 ---
 
-## 8개의 명령어
+## 9개의 명령어
 
 명령어는 `/second-claude-code:` 접두사를 사용합니다.
+
+### 오케스트레이터
+
+| 명령어 | 설명 | 예시 |
+|--------|------|------|
+| [`pdca`](docs/skills/pdca.md) | 페이즈 간 품질 게이트를 갖춘 전체 PDCA 사이클 | `/second-claude-code:pdca "AI 에이전트 시장 보고서"` |
+
+`pdca` 명령어는 자연어에서 어떤 페이즈에 진입할지 감지하고 적절한 스킬을 체이닝합니다. "알아보고 보고서 써줘"라고 말하면 Plan→Do→Check→Act 전체 사이클이 게이트와 함께 실행됩니다.
 
 ### 수집 (Gather)
 
@@ -158,6 +167,8 @@ AI 에이전트 프레임워크 현황을 조사해줘
 ### 라우팅 예시
 
 ```
+"AI 에이전트 알아보고 보고서 써줘"       →  /second-claude-code:pdca (전체 사이클)
+"리뷰하고 개선해줘"                     →  /second-claude-code:pdca (Check+Act)
 "AI 에이전트에 대해 조사해"              →  /second-claude-code:research
 "이 주제로 아티클 작성해"                →  /second-claude-code:write
 "SWOT으로 분석해"                       →  /second-claude-code:analyze

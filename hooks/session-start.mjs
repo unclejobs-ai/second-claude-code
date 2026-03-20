@@ -57,6 +57,20 @@ function getActiveState() {
     }
   }
 
+  // Check active PDCA cycles
+  const pdcaState = join(statePath, "pdca-active.json");
+  if (existsSync(pdcaState)) {
+    try {
+      const pdca = JSON.parse(readFileSync(pdcaState, "utf8"));
+      const topic = sanitize(pdca.topic);
+      const phase = sanitize(pdca.current_phase);
+      const completed = Array.isArray(pdca.completed) ? pdca.completed.join("→") : "";
+      parts.push(`Active PDCA: "${topic}" — current phase: ${phase} (completed: ${completed || "none"})`);
+    } catch {
+      /* ignore corrupt state */
+    }
+  }
+
   // Check active pipelines
   const pipelineState = join(statePath, "pipeline-active.json");
   if (existsSync(pipelineState)) {
@@ -82,10 +96,11 @@ function main() {
   lines.push("");
   lines.push("PDCA loop: Plan/Gather → Do/Produce → Check/Verify → Act/Refine");
   lines.push("");
-  lines.push("8 commands for all knowledge work:");
+  lines.push("9 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
+  lines.push("| `/second-claude-code:pdca` | **PDCA orchestrator** — auto-chains Plan→Do→Check→Act with quality gates |");
   lines.push("| `/second-claude-code:research` | Deep autonomous research → structured brief |");
   lines.push("| `/second-claude-code:write` | Content production (newsletter, article, shorts, report) |");
   lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
@@ -95,10 +110,9 @@ function main() {
   lines.push("| `/second-claude-code:pipeline` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:hunt` | Dynamic skill discovery & installation |");
   lines.push("");
-  lines.push("Phase map: Gather = research + hunt + collect | Produce = analyze + write + pipeline | Verify = review | Refine = loop");
-  lines.push("");
-  lines.push("Skills compose: `/second-claude-code:write` auto-calls `/second-claude-code:research` + `/second-claude-code:review`.");
-  lines.push('Or say it naturally — "write a newsletter" routes to the right skill.');
+  lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
+  lines.push("Or use individual skills: research, write, analyze, review, loop, collect, pipeline, hunt.");
+  lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");
   lines.push(
     `Capabilities: ${capabilities.length > 0 ? capabilities.join(", ") : "none detected"}`

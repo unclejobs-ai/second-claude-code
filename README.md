@@ -2,7 +2,7 @@
 
 ![version](https://img.shields.io/badge/version-0.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![skills](https://img.shields.io/badge/skills-8-purple)
+![skills](https://img.shields.io/badge/skills-9-purple)
 ![agents](https://img.shields.io/badge/agents-16-orange)
 ![frameworks](https://img.shields.io/badge/frameworks-15-red)
 ![platforms](https://img.shields.io/badge/platforms-4-teal)
@@ -14,7 +14,7 @@
 ![Skill Wheel](docs/images/hero.svg)
 
 Just as Second Brain is not 200 apps but one PARA system,
-**Second Claude Code is not 200 skills but an OS that covers knowledge work with 8 commands.**
+**Second Claude Code is not 200 skills but an OS that covers knowledge work with 9 commands.**
 
 Knowledge workers drown in tool fragmentation — a different plugin for research, another for writing, yet another for review, none of them talking to each other. Second Claude Code replaces that sprawl with 8 composable skills backed by 16 specialized subagents and 15 strategic frameworks. Built for researchers, strategists, and content creators who need depth over breadth and multi-model review over single-pass generation.
 
@@ -94,6 +94,7 @@ If auto-routing does not trigger, use the explicit command: `/second-claude-code
 
 | I want to... | Use |
 |--------------|-----|
+| Run a full research→write→review→improve cycle | `pdca` |
 | Find information about a topic | `research` |
 | Apply a strategic framework (SWOT, Porter, etc.) | `analyze` |
 | Produce an article, report, or newsletter | `write` |
@@ -105,9 +106,17 @@ If auto-routing does not trigger, use the explicit command: `/second-claude-code
 
 ---
 
-## The 8 Commands
+## The 9 Commands
 
 Commands use the `/second-claude-code:` prefix.
+
+### Orchestrator
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| [`pdca`](docs/skills/pdca.md) | Full PDCA cycle with quality gates between phases | `/second-claude-code:pdca "AI agent market report"` |
+
+The `pdca` command auto-detects which phase to enter and chains the right skills. Say "알아보고 보고서 써줘" and it runs the full Plan→Do→Check→Act cycle with gates.
 
 ### Gather
 
@@ -144,6 +153,9 @@ Commands use the `/second-claude-code:` prefix.
 You do not need to memorize slash commands. The hook-based auto-router detects intent from natural language in both English and Korean, then dispatches the right skill.
 
 ```
+"AI 에이전트 알아보고 보고서 써줘"       →  /second-claude-code:pdca (full cycle)
+"Research and write about AI agents"   →  /second-claude-code:pdca (full cycle)
+"리뷰하고 개선해줘"                     →  /second-claude-code:pdca (check+act)
 "Write an article about AI agents"     →  /second-claude-code:write
 "AI 에이전트에 대해 조사해"              →  /second-claude-code:research
 "Analyze this market with SWOT"        →  /second-claude-code:analyze
@@ -152,7 +164,11 @@ You do not need to memorize slash commands. The hook-based auto-router detects i
 "How do I run a security audit?"       →  /second-claude-code:hunt
 ```
 
-The router matches against ~58 English and ~41 Korean trigger patterns via `hooks/prompt-detect.mjs` and injects the appropriate skill context before the model responds. When multiple skills match, the pattern that appears earliest in the prompt wins.
+The router uses a two-layer detection system in `hooks/prompt-detect.mjs`:
+1. **PDCA layer** — detects compound patterns ("알아보고 써줘", "research and write") that span multiple phases → routes to `/second-claude-code:pdca`
+2. **Skill layer** — detects single-skill intent → routes to individual skills
+
+PDCA compound patterns take priority. When no compound pattern matches, the earliest single-skill match wins.
 
 ---
 
@@ -164,12 +180,12 @@ Skills call each other and chain naturally. A single prompt can trigger a full P
 
 | Pattern | Chain | Use for |
 |---------|-------|---------|
-| Full PDCA | research → analyze → write → review → loop | End-to-end content |
+| Full PDCA | `/pdca` → research → write → review → loop | End-to-end content with gates |
 | Quick Check | review → loop | Polish existing draft |
 | Plan Only | research → analyze | Strategic analysis |
 | Auto PDCA | `pipeline run autopilot --topic "..."` | One-command production |
 
-`/second-claude-code:write` automatically invokes `/second-claude-code:research` and `/second-claude-code:review` internally, so a single write command can produce research-backed, review-gated content.
+`/second-claude-code:pdca` is the recommended way to run multi-phase work — it enforces quality gates between each transition. `/second-claude-code:write` also auto-invokes research and review internally for single-step convenience.
 
 ---
 

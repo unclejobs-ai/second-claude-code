@@ -3,8 +3,11 @@
 /**
  * UserPromptSubmit Hook — Auto-routing (Step 0)
  *
- * Detects user intent from natural language and suggests the matching
- * second-claude-code:* command.
+ * Two-layer detection:
+ * 1. PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
+ * 2. Skill layer — detects single-skill intent → routes to individual skill
+ *
+ * PDCA layer takes priority when multi-phase patterns match.
  * Does NOT force invocation — prints a hint that Claude picks up.
  */
 
@@ -18,63 +21,126 @@ if (!raw || raw.startsWith("/")) {
 // Limit scan to first 500 chars to avoid processing very large prompts
 const input = raw.slice(0, 500);
 const lower = input.toLowerCase();
+
+// ──────────────────────────────────────────────
+// Layer 1: PDCA multi-phase detection
+// Matches compound requests that span multiple phases.
+// These take priority over single-skill matches.
+// ──────────────────────────────────────────────
+
+const pdcaCompound = [
+  // Korean compound patterns (research + produce)
+  { pattern: "알아보고", phases: "full" },
+  { pattern: "조사하고", phases: "full" },
+  { pattern: "조사해서", phases: "full" },
+  { pattern: "리서치하고", phases: "full" },
+  { pattern: "분석하고 써", phases: "full" },
+  { pattern: "검토하고 고쳐", phases: "check+act" },
+  { pattern: "리뷰하고 개선", phases: "check+act" },
+  { pattern: "알아봐서 정리", phases: "full" },
+  { pattern: "찾아보고 정리", phases: "full" },
+  // English compound patterns
+  { pattern: "research and write", phases: "full" },
+  { pattern: "research and analyze", phases: "plan+do" },
+  { pattern: "investigate and report", phases: "full" },
+  { pattern: "review and improve", phases: "check+act" },
+  { pattern: "review and fix", phases: "check+act" },
+  { pattern: "check and refine", phases: "check+act" },
+  { pattern: "end-to-end", phases: "full" },
+  { pattern: "full report on", phases: "full" },
+  { pattern: "full analysis of", phases: "full" },
+  { pattern: "deep dive on", phases: "full" },
+  { pattern: "comprehensive report", phases: "full" },
+];
+
+// Check for PDCA compound patterns first
+let pdcaMatch = null;
+let pdcaPos = Infinity;
+
+for (const entry of pdcaCompound) {
+  const pos = lower.indexOf(entry.pattern);
+  if (pos !== -1 && pos < pdcaPos) {
+    pdcaPos = pos;
+    pdcaMatch = entry;
+  }
+}
+
+if (pdcaMatch) {
+  const phaseHint =
+    pdcaMatch.phases === "full"
+      ? "full PDCA cycle (Plan→Do→Check→Act)"
+      : pdcaMatch.phases === "check+act"
+        ? "Check→Act cycle"
+        : pdcaMatch.phases === "plan+do"
+          ? "Plan→Do phases"
+          : pdcaMatch.phases;
+  console.log(
+    `[second-claude-code:auto-route] Detected multi-phase intent: ${phaseHint} → Consider using /second-claude-code:pdca`
+  );
+  process.exit(0);
+}
+
+// ──────────────────────────────────────────────
+// Layer 2: Single-skill detection (existing logic)
+// ──────────────────────────────────────────────
+
 const ko = {
   research: [
-    "\uC870\uC0AC\uD574",
-    "\uB9AC\uC11C\uCE58",
-    "\uCC3E\uC544\uBD10",
-    "\uC54C\uC544\uBD10",
-    "\uAC80\uC0C9\uD574",
-    "\uD0D0\uC0C9",
+    "조사해",
+    "리서치",
+    "찾아봐",
+    "알아봐",
+    "검색해",
+    "탐색",
   ],
   write: [
-    "\uB274\uC2A4\uB808\uD130",
-    "\uBCF4\uACE0\uC11C",
-    "\uB300\uBCF8",
-    "\uC544\uD2F0\uD074",
-    "\uAE00 \uC368",
-    "\uC368\uC918",
-    "\uC791\uC131\uD574",
-    "\uCE74\uB4DC\uB274\uC2A4",
+    "뉴스레터",
+    "보고서",
+    "대본",
+    "아티클",
+    "글 써",
+    "써줘",
+    "작성해",
+    "카드뉴스",
   ],
   analyze: [
-    "\uBD84\uC11D\uD574",
-    "\uC804\uB7B5",
+    "분석해",
+    "전략",
   ],
   review: [
-    "\uB9AC\uBDF0",
-    "\uAC80\uD1A0",
-    "\uD488\uC9C8",
-    "\uCCB4\uD06C",
-    "\uD53C\uB4DC\uBC31",
+    "리뷰",
+    "검토",
+    "품질",
+    "체크",
+    "피드백",
   ],
   loop: [
-    "\uAC1C\uC120",
-    "\uBC18\uBCF5",
-    "\uB354 \uC88B\uAC8C",
-    "\uB2E4\uB4EC\uC5B4",
+    "개선",
+    "반복",
+    "더 좋게",
+    "다듬어",
   ],
   collect: [
-    "\uC800\uC7A5",
-    "\uCEA1\uCC98",
-    "\uC815\uB9AC\uD574\uB46C",
-    "\uBA54\uBAA8",
-    "\uAE30\uB85D",
-    "\uD074\uB9AC\uD551",
-    "\uC218\uC9D1",
-    "\uC218\uC9D1\uD574",
+    "저장",
+    "캡처",
+    "정리해줘",
+    "메모",
+    "기록",
+    "클리핑",
+    "수집",
+    "수집해",
   ],
   pipeline: [
-    "\uD30C\uC774\uD504\uB77C\uC778",
-    "\uC790\uB3D9\uD654",
-    "\uC6CC\uD06C\uD50C\uB85C\uC6B0",
+    "파이프라인",
+    "자동화",
+    "워크플로우",
   ],
   hunt: [
-    "\uC2A4\uD0AC \uC788",
-    "\uC5B4\uB5BB\uAC8C \uD574",
-    "\uD560 \uC218 \uC788",
-    "\uBC29\uBC95",
-    "\uB3C4\uAD6C",
+    "스킬 있",
+    "어떻게 해",
+    "할 수 있",
+    "방법",
+    "도구",
   ],
 };
 
