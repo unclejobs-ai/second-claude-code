@@ -1,6 +1,6 @@
 ---
 description: "Plan/Gather phase -- collect knowledge into PARA-classified storage"
-argument-hint: <input> [--search "query"]
+argument-hint: https://example.com or "note to save"
 ---
 
 Invoke the `/second-claude-code:collect` command to collect and organize knowledge through the `collect` skill.

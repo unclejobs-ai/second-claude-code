@@ -1,6 +1,6 @@
 ---
 description: "Do/Produce phase -- apply strategic frameworks such as SWOT, RICE, OKR, and Lean Canvas"
-argument-hint: <framework> <subject> [options]
+argument-hint: swot "our product" or porter "cloud market"
 ---
 
 Invoke the `/second-claude-code:analyze` command to apply a strategic framework through the `analyze` skill.

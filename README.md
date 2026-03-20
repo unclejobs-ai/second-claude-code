@@ -96,7 +96,7 @@ If auto-routing does not trigger, use the explicit command: `/second-claude-code
 |--------------|-----|
 | Find information about a topic | `research` |
 | Apply a strategic framework (SWOT, Porter, etc.) | `analyze` |
-| Produce a newsletter, article, or report | `write` |
+| Produce an article, report, or newsletter | `write` |
 | Get multi-perspective feedback on a draft | `review` |
 | Iteratively improve a draft to a target score | `loop` |
 | Save a URL, note, or excerpt for later | `collect` |
@@ -121,7 +121,7 @@ Commands use the `/second-claude-code:` prefix.
 
 | Command | Description | Example |
 |---------|-------------|---------|
-| [`write`](docs/skills/write.md) | Content production (articles, newsletters, scripts) | `/second-claude-code:write newsletter "The future of vibe coding"` |
+| [`write`](docs/skills/write.md) | Content production (articles, reports, newsletters) | `/second-claude-code:write article "The future of vibe coding"` |
 | [`analyze`](docs/skills/analyze.md) | Strategic framework analysis (15 built-in frameworks) | `/second-claude-code:analyze swot "our SaaS product"` |
 | [`pipeline`](docs/skills/pipeline.md) | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
 
@@ -215,7 +215,7 @@ graph TD
 
 | Preset | Reviewers | Best for |
 |--------|-----------|----------|
-| `content` | deep-reviewer + devil-advocate + tone-guardian | Newsletters and articles |
+| `content` | deep-reviewer + devil-advocate + tone-guardian | Articles, blogs, newsletters |
 | `strategy` | deep-reviewer + devil-advocate + fact-checker | PRDs, SWOTs, strategy docs |
 | `code` | deep-reviewer + fact-checker + structure-analyst | Code review |
 | `quick` | devil-advocate + fact-checker | Fast validation |

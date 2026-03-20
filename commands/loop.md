@@ -1,6 +1,6 @@
 ---
 description: "Act/Refine phase -- iterative improvement until quality target met"
-argument-hint: <goal> [options]
+argument-hint: "raise this to 4.5/5" --max 3
 ---
 
 Invoke the `/second-claude-code:loop` command for iterative improvement through the `loop` skill.

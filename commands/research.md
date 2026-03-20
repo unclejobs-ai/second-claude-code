@@ -1,6 +1,6 @@
 ---
 description: "Plan/Gather phase -- deep autonomous research on any topic"
-argument-hint: <topic> [options]
+argument-hint: "AI agent landscape 2026"
 ---
 
 Invoke the `/second-claude-code:research` command to perform deep research through the `research` skill.

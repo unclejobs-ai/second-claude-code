@@ -1,6 +1,6 @@
 ---
 description: "Do/Produce phase -- build and run PDCA pipelines"
-argument-hint: <subcommand> [name] [options]
+argument-hint: run autopilot --topic "AI trends"
 ---
 
 Invoke the `/second-claude-code:pipeline` command for workflow automation through the `pipeline` skill.

@@ -95,7 +95,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 |-------------|------------|
 | 주제에 대한 정보 조사 | `research` |
 | 전략 프레임워크 적용 (SWOT, Porter 등) | `analyze` |
-| 뉴스레터, 아티클, 보고서 작성 | `write` |
+| 아티클, 보고서, 뉴스레터 작성 | `write` |
 | 초안에 대한 다중 관점 피드백 받기 | `review` |
 | 목표 점수까지 초안 반복 개선 | `loop` |
 | URL, 메모, 발췌를 저장 | `collect` |
@@ -120,7 +120,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`write`](docs/skills/write.md) | 콘텐츠 제작 (아티클, 뉴스레터, 대본 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
+| [`write`](docs/skills/write.md) | 콘텐츠 제작 (아티클, 보고서, 뉴스레터 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
 | [`analyze`](docs/skills/analyze.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
 | [`pipeline`](docs/skills/pipeline.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
@@ -231,7 +231,7 @@ graph TD
 
 | 프리셋 | 리뷰어 | 적합한 용도 |
 |--------|--------|-------------|
-| `content` | deep-reviewer + devil-advocate + tone-guardian | 뉴스레터, 아티클 |
+| `content` | deep-reviewer + devil-advocate + tone-guardian | 아티클, 블로그, 뉴스레터 |
 | `strategy` | deep-reviewer + devil-advocate + fact-checker | PRD, SWOT, 전략 문서 |
 | `code` | deep-reviewer + fact-checker + structure-analyst | 코드 리뷰 |
 | `quick` | devil-advocate + fact-checker | 빠른 검증 |

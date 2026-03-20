@@ -1,6 +1,6 @@
 ---
 description: "Check/Verify phase -- multi-perspective review with consensus gate"
-argument-hint: [target] [--preset content|strategy|code|quick|full]
+argument-hint: draft.md --preset content
 ---
 
 Invoke the `/second-claude-code:review` command for multi-perspective quality review through the `review` skill.

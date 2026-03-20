@@ -1,6 +1,6 @@
 ---
 description: "Do/Produce phase -- newsletter, article, shorts, report, social"
-argument-hint: <format> <topic> [options]
+argument-hint: article "the future of vibe coding"
 ---
 
 Invoke the `/second-claude-code:write` command to produce content through the `write` skill.

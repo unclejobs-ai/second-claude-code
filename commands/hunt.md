@@ -1,6 +1,6 @@
 ---
 description: "Plan/Gather phase -- find and install new skills beyond the core 8"
-argument-hint: <capability description>
+argument-hint: "security audit" or "diagram generation"
 ---
 
 Invoke the `/second-claude-code:hunt` command to discover and install new skills through the `hunt` skill.
