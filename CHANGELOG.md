@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.3.0] - 2026-03-21
+
+### Breaking
+- Agent files renamed from role-based to Pokemon names (e.g., `researcher.md` → `eevee.md`)
+
+### Added
+- PDCA Wrapper v2: Action Router classifies review findings by root cause before routing
+- Question Protocol for Plan phase (max 3 scope-clarifying questions, `--no-questions` flag)
+- Pre-Flight Check in Do phase prevents execution without Plan artifacts
+- `skills/pdca/references/action-router.md` — root cause classification matrix
+- `skills/pdca/references/question-protocol.md` — question budget and skip conditions
+- 9th design principle: Action Router
+- Agent Team Integration section in architecture docs
+
+### Changed
+- Plan phase chains research → analyze (Eevee → Alakazam + Mewtwo)
+- Do phase becomes pure executor (`--skip-research --skip-review`)
+- Act phase uses Action Router: SOURCE/ASSUMPTION → Plan, COMPLETENESS/FORMAT → Do, EXECUTION_QUALITY → Loop
+- Plurality routing replaces 50% threshold; PLAN > DO > LOOP tiebreaker for exact ties
+- `--target` propagated from PDCA to Loop dispatch (no longer hardcoded APPROVED)
+- State schema expanded: `check_report`, `act_final`, `check_verdict`, full gate tracking
+- 16 agents renamed to Pokemon (Eevee, Alakazam, Mewtwo, Smeargle, Ditto, Xatu, Absol, Porygon, Jigglypuff, Unown, Arceus, Machamp, Noctowl, Magnezone, Deoxys, Abra)
+- Version bumped to 0.3.0 across all manifests, READMEs, and badges
+- READMEs updated with Pokemon-themed Mermaid diagrams and Action Router branching
+- Design principles expanded from 7 to 9
+
 ## [0.2.0] - 2026-03-20
 
 ### Breaking

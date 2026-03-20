@@ -1,13 +1,13 @@
 # Design Principles
 
-Seven core principles that govern every decision in second-claude.
+Nine core principles that govern every decision in second-claude.
 
 ---
 
 ## 1. Few but Deep
-Eight skills, not eighty. Each skill internally orchestrates multiple subagents, search rounds, and review passes. The surface area stays small while the depth per skill stays high. Adding a new top-level skill requires justification that it cannot be composed from existing ones.
+Nine skills (8 domain + 1 orchestrator), not eighty. Each skill internally orchestrates multiple subagents, search rounds, and review passes. The surface area stays small while the depth per skill stays high. Adding a new top-level skill requires justification that it cannot be composed from existing ones.
 
-**Implication**: Resist the urge to add narrow single-purpose skills. Instead, add depth to an existing skill or compose a pipeline from the core 8.
+**Implication**: Resist the urge to add narrow single-purpose skills. Instead, add depth to an existing skill or compose a pipeline from the core set.
 
 ## 2. Gotchas over Instructions
 Positive instructions ("do X") are necessary but insufficient. The highest-value documentation is the failure mode table: what goes wrong, why, and how the skill design prevents it. Every SKILL.md must include a Gotchas section with concrete mitigations.
@@ -49,5 +49,27 @@ These principles reinforce each other:
 - **Gotchas** + **progressive disclosure** = safe usage without reading walls of text
 - **Context-efficient** + **zero dependency** = fast, cheap, portable
 - **State in files** + **zero dependency** = no setup, no infra
+
+## 8. PDCA-Native
+
+Every output cycles through Verify (review) and Refine (loop) before shipping. The skills improve themselves through the same cycle they serve. The `pdca` meta-skill orchestrates the full Plan → Do → Check → Act cycle with quality gates between each phase transition.
+
+**Implication**: Never declare work complete without a Check phase verdict. The cycle is the quality guarantee.
+
+## 9. Action Router
+
+Review failures route by root cause: research gaps go back to Plan, execution gaps go back to Do, polish issues go to Loop. Not everything is a Loop problem. The Action Router classifies findings before routing, preventing blind iteration on symptoms.
+
+**Implication**: When Act phase receives findings, classify them before choosing a route. SOURCE_GAP/ASSUMPTION_ERROR → Plan. COMPLETENESS_GAP/FORMAT_VIOLATION → Do. EXECUTION_QUALITY → Loop.
+
+---
+
+## Principle Interactions (updated)
+
+- **Few but deep** + **composable** = small surface, infinite combinations
+- **Gotchas** + **progressive disclosure** = safe usage without reading walls of text
+- **Context-efficient** + **zero dependency** = fast, cheap, portable
+- **State in files** + **zero dependency** = no setup, no infra
+- **PDCA-native** + **action router** = intelligent cycle routing, not blind iteration
 
 When principles conflict, priority order is: Zero Dependency Core > context-efficient > few but deep > the rest.

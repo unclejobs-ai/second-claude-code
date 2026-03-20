@@ -1,21 +1,27 @@
 # Agent Catalog — Future Extension Notes
 
-Current second-claude ships with 10 agents. This document catalogs additional agent roles observed in the oh-my-claudecode ecosystem (22 agents) that users may want to add for specialized workflows.
+Current second-claude ships with 16 Pokemon-themed agents. This document catalogs additional agent roles observed in the oh-my-claudecode ecosystem that users may want to add for specialized workflows.
 
-## Current Agents (10)
+## Current Agents (16)
 
-| Agent | Model | Role |
-|-------|-------|------|
-| researcher | haiku | Web search, source gathering |
-| analyst | sonnet | Data extraction, pattern recognition |
-| writer | opus | Content production |
-| editor | opus | Content refinement |
-| strategist | sonnet | Framework application |
-| deep-reviewer | opus | Logic, structure, completeness review |
-| devil-advocate | sonnet | Weak points, blind spots |
-| fact-checker | haiku | Claims, numbers, source verification |
-| tone-guardian | haiku | Voice and audience fit |
-| structure-analyst | haiku | Organization and readability |
+| Agent | Pokemon | Model | Role |
+|-------|---------|-------|------|
+| researcher | Eevee | haiku | Web search, source gathering |
+| analyst | Alakazam | sonnet | Data extraction, pattern recognition |
+| strategist | Mewtwo | sonnet | Framework application |
+| writer | Smeargle | opus | Content production |
+| editor | Ditto | opus | Content refinement |
+| deep-reviewer | Xatu | opus | Logic, structure, completeness review |
+| devil-advocate | Absol | sonnet | Weak points, blind spots |
+| fact-checker | Porygon | haiku | Claims, numbers, source verification |
+| tone-guardian | Jigglypuff | haiku | Voice and audience fit |
+| structure-analyst | Unown | haiku | Organization and readability |
+| orchestrator | Arceus | sonnet | Pipeline orchestration |
+| step-executor | Machamp | sonnet | Single pipeline step execution |
+| searcher | Noctowl | haiku | External source search |
+| inspector | Magnezone | sonnet | Skill candidate inspection |
+| evaluator | Deoxys | sonnet | Skill candidate scoring |
+| connector | Abra | haiku | Knowledge linking |
 
 ## Potential Extensions
 
@@ -55,7 +61,7 @@ These roles are documented as reference for users who want to customize their ag
 
 ## How to Add an Agent
 
-1. Create `agents/{name}.md` with YAML frontmatter (`description`, `model`, `color`).
+1. Create `agents/{pokemon-name}.md` with YAML frontmatter (`description`, `model`, `color`). Use Pokemon names for filenames (e.g., `eevee.md` not `researcher.md`).
 2. Write a system prompt in the body following the guidance schema.
 3. Reference the agent in the relevant SKILL.md's `Subagents` section.
 4. Update `config.example.json` if the agent needs configuration.

@@ -12,10 +12,10 @@ Three reviewer subagents are dispatched in parallel. Each receives the content t
 
 | Preset | Reviewers | Threshold |
 |--------|-----------|-----------|
-| content | deep-reviewer + devil-advocate + tone-guardian | 2/3 |
-| strategy | deep-reviewer + devil-advocate + fact-checker | 2/3 |
-| code | deep-reviewer + fact-checker + structure-analyst | 2/3 |
-| quick | devil-advocate + fact-checker | 2/2 |
+| content | Xatu (deep-reviewer) + Absol (devil-advocate) + Jigglypuff (tone-guardian) | 2/3 |
+| strategy | Xatu (deep-reviewer) + Absol (devil-advocate) + Porygon (fact-checker) | 2/3 |
+| code | Xatu (deep-reviewer) + Porygon (fact-checker) + Unown (structure-analyst) | 2/3 |
+| quick | Absol (devil-advocate) + Porygon (fact-checker) | 2/2 |
 | full | all 5 reviewers | 3/5 |
 
 ## Consensus Threshold
@@ -53,13 +53,13 @@ Model tier matches reviewer role to keep review cost proportional:
 
 | Reviewer | Model | Use case |
 |----------|-------|----------|
-| deep-reviewer | opus | Logic, structure, completeness |
-| devil-advocate | sonnet | Adversarial stress test |
-| fact-checker | haiku | Claim verification |
-| tone-guardian | haiku | Tone and audience fit |
-| structure-analyst | haiku | Flow and formatting |
+| Xatu (deep-reviewer) | opus | Logic, structure, completeness |
+| Absol (devil-advocate) | sonnet | Adversarial stress test |
+| Porygon (fact-checker) | haiku | Claim verification |
+| Jigglypuff (tone-guardian) | haiku | Tone and audience fit |
+| Unown (structure-analyst) | haiku | Flow and formatting |
 
-The `quick` preset keeps cost low by using only `devil-advocate` + `fact-checker`.
+The `quick` preset keeps cost low by using only Absol (devil-advocate) + Porygon (fact-checker).
 
 ## Deduplication Rules
 
@@ -68,7 +68,7 @@ When multiple reviewers flag the same or overlapping issue:
 1. **Same location, same issue**: Keep the finding with the most specific evidence (exact quote, line number, or data). Credit all agreeing reviewers in the `[reviewers]` tag. Agreeing reviewers still count as individual approvals for the consensus gate.
 2. **Same issue, different locations**: Keep each as a separate finding -- they are distinct occurrences.
 3. **Overlapping but different angles**: Keep both if they suggest different fixes. Merge only if one strictly subsumes the other.
-4. **Severity conflict on the same finding**: Use the higher severity and note the disagreement (e.g., `[deep-reviewer: Critical, tone-guardian: Major]`).
+4. **Severity conflict on the same finding**: Use the higher severity and note the disagreement (e.g., `[Xatu: Critical, Jigglypuff: Major]`).
 
 ## External Reviewer Detection
 

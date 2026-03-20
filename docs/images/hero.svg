@@ -29,7 +29,7 @@
   <circle cx="792" cy="126" r="120" fill="#c9b48f" fill-opacity=".04" filter="url(#glow)"/>
 
   <text x="480" y="58" text-anchor="middle" fill="#f5f7fb" font-size="32" font-weight="700" letter-spacing="-1" font-family="Satoshi, Avenir Next, Segoe UI, Helvetica Neue, sans-serif">Knowledge Work OS</text>
-  <text x="480" y="86" text-anchor="middle" fill="#97a4b2" font-size="13" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">8 skills · 10 agents · 15 frameworks</text>
+  <text x="480" y="86" text-anchor="middle" fill="#97a4b2" font-size="13" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">9 skills · 16 agents · 15 frameworks</text>
 
   <rect x="92" y="118" width="776" height="318" rx="30" fill="url(#panel-bg)" stroke="#252f3a" stroke-width="1.2"/>
   <path d="M92 304C158 282 226 276 296 286C367 296 441 320 516 320C604 320 690 284 868 222V436H92V304Z" fill="url(#mint-fill)" fill-opacity=".035"/>
