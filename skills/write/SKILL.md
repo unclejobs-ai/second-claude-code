@@ -14,10 +14,11 @@ Produce content with automatic research and review unless the caller explicitly 
 
 ## Workflow
 
-1. Run `/second-claude-code:research` unless source material is already provided.
-2. Ask `writer` to draft in the selected format and voice.
-3. Run `/second-claude-code:review` with the `content` preset unless skipped.
-4. Ask `editor` to address all Critical and Major issues.
+1. Run `/second-claude-code:research` UNLESS `--skip-research` flag is set OR source material is already provided via `--input`.
+2. Load format spec: read `references/formats/{format}.md` if it exists (e.g., `references/formats/shorts.md`, `references/formats/newsletter.md`). Apply voice from the Voices table.
+3. Draft content following loaded format spec and voice constraints.
+4. Run `/second-claude-code:review --preset quick` UNLESS `--skip-review` flag is set. This step is MANDATORY by default.
+5. Address all Critical and Major review findings. Re-read the review output and apply fixes.
 
 ## Options
 
@@ -39,7 +40,14 @@ When `--input` is provided (or when called from a pipeline with `input_from`), t
 |-------|-------------|
 | `peer-mentor` | newsletter |
 | `expert` | report, article |
-| `casual` | shorts, social |
+| `casual` | shorts, social, card-news |
+
+## Voice Checklist
+
+Before finalizing, verify:
+- [ ] At least one first-person example (peer-mentor) OR authoritative citation (expert) OR conversational aside (casual)
+- [ ] Tone is consistent throughout — no voice mixing
+- [ ] CTA present for shorts/social formats
 
 ## Format Rules
 
@@ -62,6 +70,8 @@ Never silently truncate or silently exceed the user's request.
 ## Gotchas
 
 - Do not skip research unless real sources are already supplied.
+- Do not start writing before loading the format spec file.
+- Do not output content without running the review step (unless `--skip-review` is explicitly set).
 - Do not miss the CTA in shorts or conclusions.
 - Do not ship the reviewed version without addressing Critical and Major issues.
 

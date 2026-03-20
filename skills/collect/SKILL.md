@@ -15,11 +15,13 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 ## Workflow
 
+0. **Check existing knowledge**: search `${CLAUDE_PLUGIN_DATA}/knowledge/` for items with overlapping tags or titles before creating a new entry. If a duplicate exists, update it instead of creating a new one.
 1. Detect source type: URL, raw text, file path, or search request.
 2. **Dispatch analyst subagent** (extract + reduce): Extract the useful content, strip boilerplate, produce exactly 3 key points and a short summary. This MUST run as a separate subagent, not inline.
 3. **Dispatch connector subagent** (find shared concept): Using only the stored knowledge base (not the analyst's output framing), find a specific shared concept connecting the new item to existing knowledge. This MUST run as a separate subagent to prevent bias from the analyst's framing.
 4. Merge analyst and connector outputs.
 5. Classify it into PARA and save structured JSON + markdown.
+6. **Verify output**: Confirm JSON has all required fields, `key_points` has exactly 3 items, connections pass the quality gate. If any check fails, fix before saving.
 
 ## PARA Criteria
 
@@ -47,20 +49,19 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 ## Dual Output
 
-Each collected item is saved in two formats:
-
-| Format | Purpose | Path |
-|--------|---------|------|
-| `.json` | Machine-readable search index | `${CLAUDE_PLUGIN_DATA}/knowledge/{category}/{slug}.json` |
-| `.md` | Human-readable note | `${CLAUDE_PLUGIN_DATA}/knowledge/{category}/{slug}.md` |
-
-The markdown file uses YAML frontmatter for metadata and renders the same key points and connections as readable prose.
-
-See `references/para-method.md` for the markdown template, connection quality gate, and search ranking weights.
+Each item is saved as `.json` (machine-readable index) and `.md` (YAML frontmatter + readable prose) at the same slug path. See `references/para-method.md` for the markdown template and search ranking weights.
 
 ## Connection Quality Gate
 
-A connection must name a **specific principle, pattern, or concept** -- not a topic or domain. If no specific connection exists, set `connections` to an empty array.
+A connection must name a **specific principle, pattern, or concept** — not a topic or domain.
+
+| PASS | FAIL |
+|------|------|
+| "Applies the Observer pattern — both use event-driven decoupling" | "Related to software design" |
+| "Shares the PARA progressive summarization principle" | "Also about knowledge management" |
+| "Uses the same cold-start mitigation as Netflix recommendations" | "Similar to AI" |
+
+If no specific connection exists, set `connections` to an empty array. Never force a connection.
 
 ## Search
 
@@ -70,6 +71,8 @@ A connection must name a **specific principle, pattern, or concept** -- not a to
 
 - Do not store the source verbatim.
 - Do not create vague connections like "related to AI."
+- Do not create a new entry when an update to an existing entry would suffice.
+- Do not skip the output verification step.
 - When classification is ambiguous, default to `resource`.
 
 ## Subagents

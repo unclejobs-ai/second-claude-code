@@ -1,5 +1,19 @@
 # Review: Detailed Protocols
 
+## Consensus Threshold Formula
+
+Pass requires `ceil(threshold * N)` approvals, where `N` is the number of reviewers and `threshold` defaults to `0.67`.
+
+| Preset | Reviewers (N) | Required Approvals | Formula |
+|--------|---------------|-------------------|---------|
+| `content` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `strategy` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `code` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
+| `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
+
+Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `ceil(0.5 * 3) = 2`.
+
 ## Severity Calibration
 
 | Severity | Criteria | Concrete Examples |

@@ -20,7 +20,7 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 3. Apply only the top 3 feedback items.
 4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert using `git checkout -- <file>` to the committed baseline.
 5. Stop when the target is met, `--max` is reached, or the verdict plateaus.
-6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a loop option) one final time. If it returns `MUST FIX`, continue the loop. Only exit when the gate passes.
+6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a loop option) one final time. Only exit on `APPROVED` or `MINOR FIXES`. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, continue the loop.
 
 ## Options
 
@@ -39,7 +39,7 @@ When called from a pipeline with `input_from`, the first file is the draft (`--f
 Save active state to `${CLAUDE_PLUGIN_DATA}/state/loop-active.json` with:
 
 ```json
-{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS_IMPROVEMENT","APPROVED"],"baseline_hash":"...","feedback_log":[]}
+{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS IMPROVEMENT","APPROVED"],"baseline_hash":"...","feedback_log":[]}
 ```
 
 ## Output

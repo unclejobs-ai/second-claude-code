@@ -35,7 +35,7 @@ Apply a strategic framework to a topic, then stress-test it with a built-in chal
 
 ## Workflow
 
-1. Detect the framework and load `skills/analyze/references/frameworks/{framework}.md`.
+1. Detect the framework and load `references/frameworks/{framework}.md`.
 2. **Gather sources before analyzing.** For each entity being analyzed:
    - Read internal source files (SKILL.md, code, configs) for the subject.
    - For competitors/external entities: use web search, read their docs/repos, or fetch their feature pages. Do not skip this step.
@@ -70,11 +70,11 @@ When analyzing competitors, products, or external entities:
 |-------|-------|-------------|-------------|
 | 1 | `quick` | Apply the template only. No research, no challenge round. | Internal brainstorming, time-boxed sessions |
 | 2 | `standard` | Apply template with evidence-enforcement + one challenge round. | Default for most analyses |
-| 3 | `deep` | Full research pass (web search + source code reading) before applying template. Two challenge rounds. Second round specifically attacks sourcing quality. | Competitive analysis, strategic decisions, publishable artifacts |
+| 3 | `thorough` | Full research pass (web search + source code reading) before applying template. Two challenge rounds. Second round specifically attacks sourcing quality. | Competitive analysis, strategic decisions, publishable artifacts |
 
 - `quick` maps to `--depth quick`
 - `standard` maps to `--depth standard` (default)
-- `deep` maps to `--depth thorough`
+- `thorough` maps to `--depth thorough`
 
 ## Output
 

@@ -15,9 +15,10 @@ Find existing skills first, then search external marketplaces only when needed a
 
 ## Workflow
 
+0. **Check built-in capabilities**: Before searching, check if the requested capability is already available through built-in tools (Read for PDFs, WebFetch for URLs, Bash for shell tasks, etc.). If built-in tools suffice, report that and skip external search.
 1. Scan local skills by name and description.
 2. If no strong match, search external sources in priority order (see Source Prioritization).
-3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. See `references/hunt-scoring.md` for the full inspection workflow.
+3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. If inspection is blocked (private repo, rate limit): (a) search package name + "review"/"tutorial", (b) check npm page for README, (c) note "inspection blocked" and apply a -1 score penalty. See `references/hunt-scoring.md` for the full workflow.
 4. Score candidates on relevance, popularity, recency, dependency weight, and source trust. Show the full weighted breakdown (see `references/hunt-scoring.md`).
 5. Apply the **Build vs Install** threshold. If no candidate scores above 3.0, recommend a custom pipeline instead.
 6. Present ranked options with pinned versions and wait for explicit approval.
@@ -61,9 +62,18 @@ Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 - Degrade gracefully to local-scan-only mode if marketplace tooling is missing.
 - Flag repos with no LICENSE file or suspicious content.
 
-## Output
+## Output Format
 
-Return a short ranked list with: full score breakdown with rationale, inspection notes, update date and source, exact install command with pinned version, and build-vs-install recommendation if below threshold.
+Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/hunts/{query-slug}.json`:
+```json
+{
+  "query": "...",
+  "searched_at": "ISO-8601",
+  "built_in_check": { "capable": false, "reason": "Read tool handles PDFs up to 20 pages but cannot extract tables" },
+  "candidates": [{ "rank": 1, "name": "...", "source": "...", "score": 3.8, "install_cmd": "...", "inspection_notes": "..." }],
+  "recommendation": "install|build-custom|use-builtin"
+}
+```
 
 ## Gotchas
 
@@ -73,6 +83,8 @@ Return a short ranked list with: full score breakdown with rationale, inspection
 - Never recommend a bare repo URL without a pinned version or commit hash.
 - Never rely solely on metadata -- always attempt Candidate Inspection.
 - If marketplace CLI does not exist, skip silently and note the gap.
+- Never search externally when built-in tools already handle the capability.
+- Always persist hunt results to JSON for future reference.
 
 ## Subagents
 

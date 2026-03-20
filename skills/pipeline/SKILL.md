@@ -16,13 +16,13 @@ Create, save, and run reusable multi-step workflows where each step passes files
 
 ## Subcommands
 
-| Command | Purpose |
-|---------|---------|
-| `create` | define a pipeline |
-| `run` | execute a saved pipeline (accepts `--topic`, `--output_dir`, and custom `--var` flags) |
-| `list` | show saved pipelines |
-| `show` | inspect a pipeline (resolves variables if `--topic` provided) |
-| `delete` | remove a pipeline |
+| Command | Purpose | Output |
+|---------|---------|--------|
+| `create` | define a pipeline | Confirmation with definition summary and variable list |
+| `run` | execute a saved pipeline (accepts `--topic`, `--output_dir`, and custom `--var` flags) | Step-by-step progress (Pending/Running/Done/Failed); final summary with output file paths |
+| `list` | show saved pipelines | Table: name, step count, preset flag, last run date. Include all presets. |
+| `show` | inspect a pipeline (resolves variables if `--topic` provided) | Full definition with resolved variables |
+| `delete` | remove a pipeline | Confirmation with name of deleted pipeline |
 
 ## Variables
 
@@ -52,11 +52,9 @@ Run a named preset with `/second-claude-code:pipeline run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|
-| `autopilot` | research -> analyze -> write -> review -> loop | End-to-end content production |
+| `autopilot` | research -> analyze -> write(`--skip-research --skip-review`) -> review -> loop | End-to-end content production |
 | `quick-draft` | research -> write | Fast first draft |
 | `quality-gate` | review -> loop | Post-hoc quality check on existing content |
-
-All presets accept `--topic` and `--var` flags. Definitions are stored in `templates/`. See `references/pipeline-definition.md` for preset details.
 
 ## Definition
 
@@ -76,6 +74,7 @@ See `references/pipeline-definition.md` for the canonical state schema.
 - Step compatibility is validated through `input_from` and `output`
 - Every `{{variable}}` in the definition must resolve at runtime (from flags, defaults, or built-ins)
 - Variable names must be alphanumeric plus underscores: `[a-zA-Z_][a-zA-Z0-9_]*`
+- Every skill referenced in a step must be a valid `/second-claude-code:*` command. Validate at create-time and abort with an error listing unknown skills.
 
 ## Gotchas
 
@@ -85,6 +84,7 @@ See `references/pipeline-definition.md` for the canonical state schema.
 - Always provide `--topic` when running a pipeline that uses `{{topic}}`.
 - Variable resolution happens once at run start. Mid-pipeline changes require a new run.
 - When resuming, the orchestrator reuses `resolved_vars` from saved state -- it does not re-resolve from flags.
+- Do not create a pipeline referencing skills that don't exist.
 
 ## Subagents
 

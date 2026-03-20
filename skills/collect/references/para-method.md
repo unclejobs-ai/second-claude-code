@@ -6,7 +6,7 @@
 ---
 title: "..."
 source: "..."
-source_type: url | text | file
+source_type: url | text | file | search
 category: project | area | resource | archive
 tags: [tag1, tag2, tag3]
 collected_at: "YYYY-MM-DDTHH:mm:ssZ"
