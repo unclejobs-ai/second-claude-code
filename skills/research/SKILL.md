@@ -44,15 +44,21 @@ writer(sonnet) --[synthesis]--> Research Brief
 |------|--------|---------|--------|
 | `--depth` | `shallow\|medium\|deep` | `medium` | HARD limit on search rounds — see Depth Behavior |
 | `--sources` | `web\|academic\|news` | `web` | Constrains search domain |
-| `--lang` | `ko\|en\|auto` | `auto` | Output language |
+| `--lang` | `ko\|en\|auto` | `auto` | Output language. When called from another skill (write, analyze), inherits the caller's `--lang` value. |
 
 ### Depth Behavior
 
 - **shallow**: EXACTLY 3 WebSearch calls. No WebFetch deep reads. No gap analysis round. Violation = restart.
 - **medium**: EXACTLY 5 WebSearch calls + up to 2 WebFetch. One gap analysis round.
-- **deep**: 10+ WebSearch calls. Unlimited WebFetch. Repeated gap-fill cycles until coverage.
+- **deep**: 10+ WebSearch calls. Unlimited WebFetch. Repeated gap-fill cycles until coverage, **max 3 gap-fill rounds**. If gaps remain after 3 rounds, document them in "Gaps & Limitations" and proceed to synthesis.
 
 Coverage requirements and conflict resolution rules are in `references/research-methodology.md`.
+
+### Source Domain (`--sources`)
+
+- **web** (default): General web search. No domain restrictions.
+- **academic**: Prefer Google Scholar, arXiv, PubMed, .edu domains. Add `site:scholar.google.com OR site:arxiv.org` to at least 50% of queries.
+- **news**: Prefer recent news sources. Add `after:{30-days-ago}` filter. Prioritize Reuters, Bloomberg, TechCrunch, The Verge, and similar editorial sources over blog posts.
 
 ## Auto-Save
 

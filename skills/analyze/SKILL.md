@@ -49,11 +49,20 @@ Apply a strategic framework to a topic, then stress-test it with a built-in chal
 
 | Flag | Values | Default |
 |------|--------|---------|
-| `--framework` | listed above | auto-detect |
+| `--framework` | listed above | auto-detect (see below) |
 | `--with-research` | flag | off |
 | `--depth` | `quick\|standard\|thorough` | `standard` |
 | `--skip-challenge` | flag | off |
 | `--lang` | `ko\|en` | `ko` |
+
+### Framework Auto-Detection
+
+When `--framework` is not specified, detect from the prompt using these priority rules:
+
+1. **Explicit name**: "SWOT", "RICE", "OKR" etc. → exact match
+2. **Intent keywords**: "prioritize" → `rice`, "competitors" → `porter` or `battlecard`, "pricing" → `pricing`, "market entry" → `gtm`, "goals" → `okr`, "persona" → `persona`, "journey" → `journey-map`
+3. **Ambiguous** (multiple frameworks could apply): Ask the user — "This could use SWOT or Porter's. Which fits better?" Do NOT silently pick one when 2+ frameworks score equally.
+4. **No match**: Default to `swot` (most general) and state the assumption explicitly.
 
 ## Source Requirements
 
@@ -108,7 +117,7 @@ After producing the final synthesis, save it to a file:
 
 ## Challenge Round
 
-Mandatory at `standard` (1 round) and `deep` (2 rounds). See `references/challenge-round.md` for the full protocol.
+Mandatory at `standard` (1 round) and `thorough` (2 rounds). See `references/challenge-round.md` for the full protocol.
 
 ## Gotchas
 
