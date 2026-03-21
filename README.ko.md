@@ -22,6 +22,43 @@
 
 ---
 
+## 변경 이력
+
+<details>
+<summary><strong>v0.3.0</strong> — PDCA v2, 액션 라우터, 포켓몬 에이전트 (현재)</summary>
+
+- **PDCA v2 오케스트레이터** + 액션 라우터 — 리뷰 실패를 근본원인별로 라우팅 (Plan/Do/Loop), 맹목적 반복 방지
+- **질문 프로토콜** — PDCA가 리서치 전에 명확화 질문을 던짐 (`--no-questions`로 생략 가능)
+- **16마리 포켓몬 서브에이전트** — 3개 모델 티어(opus/sonnet/haiku)
+- **5명 병렬 리뷰어** + 합의 게이트 + 5개 프리셋 (content/strategy/code/quick/full)
+- **훅 기반 자동 라우팅** — 영어 약 77개 + 한국어 약 50개 트리거 패턴으로 자연어 의도 감지
+- **자동 캡처** — research, write, analyze 결과를 `.captures/`에 자동 저장
+- **19개 라우팅 테스트** — false positive 회귀 방지
+
+</details>
+
+<details>
+<summary><strong>v0.2.0</strong> — 보안 강화, 영어 로컬라이제이션</summary>
+
+- 훅·스킬 전반 보안 강화 (13개 감사 소견 해결)
+- 전체 스킬 문서 및 README 영어 번역
+- `claude plugin add` 설치를 위한 마켓플레이스 매니페스트
+- 전 스킬 품질 강화 (8개 도메인 스킬 9/10 목표)
+
+</details>
+
+<details>
+<summary><strong>v0.1.0</strong> — 최초 릴리스</summary>
+
+- 도메인 스킬 8개 + 오케스트레이터 1개 (research, write, analyze, review, loop, collect, pipeline, hunt)
+- `/analyze`용 15개 전략 프레임워크
+- PARA 기반 지식 수집
+- 반복 가능한 워크플로우를 위한 파이프라인 빌더
+
+</details>
+
+---
+
 ## 지식 작업 사이클
 
 **핵심 흐름**: `Research → Analyze → Write → Review → Loop`
@@ -360,6 +397,44 @@ second-claude/
 9. **액션 라우터** — 리뷰 실패를 근본원인으로 분류: 리서치 갭 → Plan, 실행 갭 → Do, 품질 이슈만 Loop으로. 모든 문제를 Loop으로 밀어넣지 않습니다.
 
 **원칙이 맞물리는 방식:** 적지만 깊게 + 조합 가능 = 표면적은 작고 조합은 무한. 함정 먼저 + 단계적 공개 = 장문 없이도 안전. 컨텍스트 절약 + 의존성 제로 = 빠르고 싸고 플랫폼 무관. PDCA 내장 + 액션 라우터 = 맹목적 반복이 아닌 지능적 라우팅.
+
+---
+
+## 설정
+
+`config/config.example.json`을 플러그인 데이터 디렉토리에 복사한 후 커스터마이즈하세요:
+
+```jsonc
+{
+  "defaults": {
+    "research_depth": "medium",     // "shallow" | "medium" | "deep"
+    "write_voice": "peer-mentor",   // 글쓰기 톤
+    "review_preset": "content",     // "content" | "strategy" | "code" | "quick" | "full"
+    "loop_max_iterations": 3,       // 최대 loop 반복 횟수
+    "publish_target": "file"        // "file" | "notion"
+  },
+  "quality_gate": {
+    "consensus_threshold": 0.67,    // 통과에 필요한 리뷰어 비율
+    "external_reviewers": []        // MMBridge 경유: ["kimi", "qwen", "gemini", "codex"]
+  },
+  "knowledge": {
+    "para_enabled": true,           // 수집 항목을 PARA로 자동 분류
+    "max_entries": 1000             // 지식 베이스 최대 항목 수
+  }
+}
+```
+
+모든 설정은 선택 사항입니다 — 설정 파일이 없으면 기본값이 적용됩니다.
+
+---
+
+## 알려진 제한 사항
+
+- **자동 라우팅 오탐** — 자연어 감지가 모호한 프롬프트에서 오작동할 수 있습니다 (예: "이 파일 저장해"가 `collect`를 트리거). 오탐 시 `/second-claude-code:*` 명시적 명령어를 사용하세요.
+- **haiku 에이전트 컨텍스트 제한** — 폴리곤, 푸린, 안농(haiku 티어)은 활성 플러그인이 많으면 "Prompt is too long" 오류가 발생할 수 있습니다. 미사용 플러그인을 비활성화하여 시스템 프롬프트 크기를 줄이세요.
+- **Claude Code 외 플랫폼 미검증** — OpenClaw, Codex, Gemini CLI 지원은 실험적입니다. SKILL.md 호환성은 기대되지만 엣지 케이스가 존재합니다.
+- **스트리밍 출력 미지원** — 서브에이전트 결과는 완료 후 한꺼번에 도착합니다. 긴 리서치나 작성 작업은 완료될 때까지 무음으로 보일 수 있습니다.
+- **리뷰 결과 영어 고정** — 포켓몬 리뷰어들은 입력 언어와 무관하게 영어로 소견을 작성합니다. 한국어 출력은 향후 지원 예정입니다.
 
 ---
 

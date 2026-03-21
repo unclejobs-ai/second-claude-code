@@ -22,6 +22,43 @@ Research plugin here, writing plugin there, review plugin somewhere else — non
 
 ---
 
+## What's New
+
+<details>
+<summary><strong>v0.3.0</strong> — PDCA v2, Action Router, Pokemon agents (current)</summary>
+
+- **PDCA v2 orchestrator** with Action Router — review failures route by root cause (Plan/Do/Loop), not blind iteration
+- **Question Protocol** — PDCA asks clarifying questions before researching, unless `--no-questions` is set
+- **16 Pokemon-themed subagents** across 3 model tiers (opus/sonnet/haiku)
+- **5 parallel reviewers** with consensus gate and 5 presets (content/strategy/code/quick/full)
+- **Hook-based auto-routing** — ~77 English + ~50 Korean trigger patterns detect intent from natural language
+- **Auto-capture** — research, write, and analyze outputs auto-save to `.captures/`
+- **19 routing tests** for false positive regression coverage
+
+</details>
+
+<details>
+<summary><strong>v0.2.0</strong> — Security hardening, English localization</summary>
+
+- Security hardening across hooks and skills (13 audit findings resolved)
+- English localization of all skill docs and README
+- Marketplace manifest for `claude plugin add` install
+- Skill hardening pass (9/10 target across all 8 domain skills)
+
+</details>
+
+<details>
+<summary><strong>v0.1.0</strong> — Initial release</summary>
+
+- 8 domain skills + 1 orchestrator (research, write, analyze, review, loop, collect, pipeline, hunt)
+- 15 strategic frameworks for `/analyze`
+- PARA-based knowledge collection
+- Pipeline builder for repeatable workflows
+
+</details>
+
+---
+
 ## The Knowledge Work Cycle
 
 **Core flow**: `Research → Analyze → Write → Review → Loop`
@@ -347,6 +384,44 @@ Few-but-deep + composable = small surface area, infinite combinations.
 Gotchas-first + progressive disclosure = safe usage without walls of text.
 Context-efficient + zero dependency = fast, cheap, portable across platforms.
 PDCA-native + action router = intelligent cycle routing, not blind iteration.
+
+---
+
+## Configuration
+
+Copy `config/config.example.json` to your plugin data directory and customize:
+
+```jsonc
+{
+  "defaults": {
+    "research_depth": "medium",     // "shallow" | "medium" | "deep"
+    "write_voice": "peer-mentor",   // writing tone
+    "review_preset": "content",     // "content" | "strategy" | "code" | "quick" | "full"
+    "loop_max_iterations": 3,       // max loop rounds before stopping
+    "publish_target": "file"        // "file" | "notion"
+  },
+  "quality_gate": {
+    "consensus_threshold": 0.67,    // fraction of reviewers that must pass
+    "external_reviewers": []        // ["kimi", "qwen", "gemini", "codex"] via MMBridge
+  },
+  "knowledge": {
+    "para_enabled": true,           // auto-classify collected items by PARA
+    "max_entries": 1000             // max knowledge base entries
+  }
+}
+```
+
+All settings are optional — defaults apply when no config file exists.
+
+---
+
+## Known Limitations
+
+- **Auto-routing false positives** — Natural language detection can misfire on ambiguous prompts (e.g., "save this file" triggering `collect`). Use explicit `/second-claude-code:*` commands when auto-routing misbehaves.
+- **Haiku agent context limits** — Porygon, Jigglypuff, and Unown (haiku tier) may fail with "Prompt is too long" if too many plugins are active. Disable unused plugins to reduce system prompt size.
+- **Non-Claude platforms unvalidated** — OpenClaw, Codex, and Gemini CLI support is experimental. Core SKILL.md compatibility is expected but edge cases exist.
+- **No streaming output** — Subagent results arrive after completion, not incrementally. Long research or write operations may appear silent until done.
+- **Single-language review** — Pokemon reviewers produce English-language findings regardless of input language. Korean output support is planned.
 
 ---
 

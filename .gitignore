@@ -9,6 +9,15 @@ Thumbs.db
 # Node
 node_modules/
 
+# Runtime artifacts
+.captures/
+.claude/agent-memory/
+.claude/handoffs/
+.superpowers/
+
+# Test snapshots
+tests/skill-tests/
+
 # Temp
 *.tmp
 *.log
