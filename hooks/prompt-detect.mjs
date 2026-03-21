@@ -150,15 +150,60 @@ for (const route of routes) {
   }
 }
 
+// ──────────────────────────────────────────────
+// Generic skill-check fallback (always included)
+// ──────────────────────────────────────────────
+
+const genericGuide = `<skill-check>
+[MANDATORY] Before responding, scan this request against skill triggers:
+
+**Knowledge Work (second-claude-code — use these FIRST for content/research tasks):**
+- 리서치/조사/알아봐/research → second-claude-code:research
+- 뉴스레터/보고서/글쓰기/아티클/write report → second-claude-code:write
+- 분석/SWOT/RICE/OKR/전략/analyze → second-claude-code:analyze
+- 리뷰/검토/품질/피드백 (비코드) → second-claude-code:review
+- 개선/반복/다듬어/iterate → second-claude-code:loop
+- 저장/캡처/메모/수집/clip → second-claude-code:collect
+- 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:pipeline
+- 스킬 찾기/hunt → second-claude-code:hunt
+- 복합요청 (조사+작성/리뷰+개선) → second-claude-code:pdca
+
+**Development (superpowers — use for coding/engineering tasks):**
+- 기능·컴포넌트·창의적 코드 작업 → brainstorming → 구현 스킬
+- 버그·에러·테스트 실패 → systematic-debugging
+- 3+ 스텝 구현 계획 → writing-plans
+- 계획 실행 → executing-plans
+- 코드 작성 → test-driven-development
+- UI/프론트엔드 구축 → frontend-design
+- 완료 선언 → verification-before-completion
+- 커밋 → commit-commands:commit
+- 코드리뷰 (PR/코드) → coderabbit:code-review
+- 배포 → vercel:deploy
+- 다이어그램 → excalidraw-skill
+- 병렬 작업 → dispatching-parallel-agents
+
+**Priority rule:** Content/research/analysis tasks → second-claude-code. Code/engineering tasks → superpowers.
+Match found? → Invoke Skill tool FIRST, then respond.
+No match? → Proceed normally.
+</skill-check>`;
+
 if (bestMatch) {
-  const ctx = `[ROUTING] This is a knowledge-work request (${bestMatch.label}). ` +
+  const routing = `[ROUTING] This is a knowledge-work request (${bestMatch.label}). ` +
     `You MUST invoke the Skill tool with skill: "${bestMatch.skill}" BEFORE any other response. ` +
     `This is a content/research task — use second-claude-code, not development skills like brainstorming or TDD.`;
 
   console.log(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: ctx,
+      additionalContext: routing + "\n\n" + genericGuide,
+    },
+  }));
+} else {
+  // No specific match — still provide generic guidance
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "UserPromptSubmit",
+      additionalContext: genericGuide,
     },
   }));
 }
