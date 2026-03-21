@@ -320,6 +320,7 @@ second-claude/
 ├── hooks/      # Auto-routing + context injection
 ├── references/ # Design principles, consensus gate
 ├── templates/  # Output templates
+├── scripts/    # Shell utilities
 └── config/     # User configuration
 ```
 

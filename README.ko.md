@@ -123,7 +123,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`pdca`](docs/skills/pdca.md) | 품질 게이트 + 액션 라우터를 갖춘 전체 PDCA 사이클 | `/second-claude-code:pdca "AI 에이전트 시장 보고서"` |
+| [`pdca`](docs/skills/pdca.ko.md) | 품질 게이트 + 액션 라우터를 갖춘 전체 PDCA 사이클 | `/second-claude-code:pdca "AI 에이전트 시장 보고서"` |
 
 `pdca` 명령어는 자연어에서 어떤 페이즈에 진입할지 감지하고 적절한 스킬을 체이닝합니다. "알아보고 보고서 써줘"라고 말하면 Plan→Do→Check→Act 전체 사이클이 게이트와 함께 실행됩니다. `--no-questions` 플래그로 질문 프로토콜을 생략할 수 있습니다.
 
@@ -131,29 +131,29 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`research`](docs/skills/research.md) | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
-| [`hunt`](docs/skills/hunt.md) | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
-| [`collect`](docs/skills/collect.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
+| [`research`](docs/skills/research.ko.md) | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
+| [`hunt`](docs/skills/hunt.ko.md) | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
+| [`collect`](docs/skills/collect.ko.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
 
 ### 생산 (Produce)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`write`](docs/skills/write.md) | 콘텐츠 제작 (아티클, 보고서, 뉴스레터 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
-| [`analyze`](docs/skills/analyze.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
-| [`pipeline`](docs/skills/pipeline.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
+| [`write`](docs/skills/write.ko.md) | 콘텐츠 제작 (아티클, 보고서, 뉴스레터 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
+| [`analyze`](docs/skills/analyze.ko.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
+| [`pipeline`](docs/skills/pipeline.ko.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
 
 ### 검증 (Verify)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`review`](docs/skills/review.md) | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
+| [`review`](docs/skills/review.ko.md) | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
 
 ### 개선 (Refine)
 
 | 명령어 | 설명 | 예시 |
 |--------|------|------|
-| [`loop`](docs/skills/loop.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
+| [`loop`](docs/skills/loop.ko.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
 
 ---
 
@@ -189,7 +189,7 @@ AI 에이전트 프레임워크 현황을 조사해줘
 "보안 감사 스킬 있어?"                   →  /second-claude-code:hunt
 ```
 
-`hooks/prompt-detect.mjs`에서 영어 약 58개, 한국어 약 41개의 트리거 패턴을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다. 여러 스킬이 매칭될 경우, 프롬프트에서 가장 먼저 나타나는 패턴의 스킬이 선택됩니다.
+`hooks/prompt-detect.mjs`에서 영어 약 77개, 한국어 약 50개의 트리거 패턴(복합 패턴 포함)을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다. 여러 스킬이 매칭될 경우, 프롬프트에서 가장 먼저 나타나는 패턴의 스킬이 선택됩니다.
 
 ---
 
@@ -328,6 +328,7 @@ second-claude/
 ├── hooks/      # 자동 라우팅 + 컨텍스트 주입
 ├── references/ # 설계 원칙, 합의 게이트
 ├── templates/  # 출력 템플릿
+├── scripts/    # 셸 유틸리티
 └── config/     # 사용자 설정
 ```
 
