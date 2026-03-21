@@ -13,10 +13,12 @@
 
 ![Skill Wheel](docs/images/hero.svg)
 
-Just as Second Brain is not 200 apps but one PARA system,
-**Second Claude Code is not 200 skills but an OS that covers knowledge work with 9 commands.**
+Most Claude Code plugins add one skill at a time. Second Claude Code adds one quality loop —
+**research, write, review, refine — with 9 commands and 16 specialized agents enforcing standards at every gate.**
 
-Knowledge workers drown in tool fragmentation — a different plugin for research, another for writing, yet another for review, none of them talking to each other. Second Claude Code replaces that sprawl with 9 composable skills backed by 16 Pokemon-themed subagents and 15 strategic frameworks. Built for researchers, strategists, and content creators who need depth over breadth and multi-model review over single-pass generation.
+Research plugin here, writing plugin there, review plugin somewhere else — none of them talk to each other. Second Claude Code replaces that sprawl with 9 composable skills, 16 Pokemon-themed subagents across 3 model tiers, and 15 strategic frameworks. Built for researchers, strategists, and content creators who need depth over breadth and multi-model review over single-pass generation.
+
+> **Scope:** Designed for research-to-publication workflows — investigation, analysis, writing, and quality review. Not a general-purpose coding or data engineering toolkit.
 
 ---
 
@@ -206,13 +208,13 @@ Skills call each other and chain naturally. A single prompt can trigger a full P
 
 ### Reviewers
 
-| Reviewer | Pokemon | Model | Focus |
-|----------|---------|-------|-------|
-| deep-reviewer | Xatu | opus | Logic, structure, and completeness |
-| devil-advocate | Absol | sonnet | Attacks the weakest points and blind spots |
-| fact-checker | Porygon | haiku | Verifies claims, numbers, and sources |
-| tone-guardian | Jigglypuff | haiku | Voice and audience fit |
-| structure-analyst | Unown | haiku | Organization and readability |
+| Reviewer | Pokemon | Model | Focus | Why this Pokemon? |
+|----------|---------|-------|-------|-------------------|
+| deep-reviewer | Xatu | opus | Logic, structure, and completeness | Sees past and future simultaneously — structural flaw detection |
+| devil-advocate | Absol | sonnet | Attacks the weakest points and blind spots | The disaster-sensing Pokemon, warns of danger |
+| fact-checker | Porygon | haiku | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
+| tone-guardian | Jigglypuff | haiku | Voice and audience fit | THE voice Pokemon, sensitive to tone |
+| structure-analyst | Unown | haiku | Organization and readability | Letter-shaped, obsessed with structure |
 
 ### Review Flow
 
@@ -288,6 +290,22 @@ Each framework lives in `skills/analyze/references/frameworks/` as a standalone 
 
 16 Pokemon-themed subagents across 3 model tiers (opus, sonnet, haiku).
 Optional cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex) — works without it.
+
+| Phase | Pokemon | Role | Model |
+|-------|---------|------|-------|
+| **Plan** | Eevee | Researcher — web search, data collection | haiku |
+| | Noctowl | Searcher — search specialist | haiku |
+| **Do** | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
+| | Mewtwo | Strategist — framework analysis | sonnet |
+| | Smeargle | Writer — long-form content production | opus |
+| | Arceus | Master — general-purpose execution | opus |
+| **Check** | Xatu | Deep reviewer — logic, structure, completeness | opus |
+| | Absol | Devil's advocate — attacks weak points | sonnet |
+| | Porygon | Fact checker — verifies claims, numbers | haiku |
+| | Jigglypuff | Tone guardian — voice, audience fit | haiku |
+| | Unown | Structure analyst — readability, organization | haiku |
+| **Act** | Ditto | Editor — content editing, quality improvement | opus |
+| **Infra** | +4 others | Pipeline execution, skill discovery, etc. | mixed |
 
 ![Agent Roster](docs/images/agent-roster.svg)
 
