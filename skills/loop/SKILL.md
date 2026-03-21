@@ -36,6 +36,8 @@ When called from a pipeline with `input_from`, the first file is the draft (`--f
 
 ## State
 
+> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+
 Save active state to `${CLAUDE_PLUGIN_DATA}/state/loop-active.json` with:
 
 ```json

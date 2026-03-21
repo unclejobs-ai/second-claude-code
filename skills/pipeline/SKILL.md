@@ -62,6 +62,8 @@ Store pipeline definitions at `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`. See
 
 ## State
 
+> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+
 - Active state: `${CLAUDE_PLUGIN_DATA}/state/pipeline-active.json`
 - Run log: `${CLAUDE_PLUGIN_DATA}/pipelines/{name}-run.json`
 

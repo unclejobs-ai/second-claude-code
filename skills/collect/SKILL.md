@@ -43,6 +43,8 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 ## Storage
 
+> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+
 - Path: `${CLAUDE_PLUGIN_DATA}/knowledge/{para-category}/{slug}.json`
 - Required fields: `title`, `source`, `source_type`, `collected_at`, `category`, `tags`, `summary`, `key_points`, `connections`
 - `key_points` must contain exactly 3 items
