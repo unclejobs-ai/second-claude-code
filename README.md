@@ -126,7 +126,7 @@ Commands use the `/second-claude-code:` prefix.
 |---------|-------------|---------|
 | [`pdca`](docs/skills/pdca.md) | Full PDCA cycle with quality gates and Action Router | `/second-claude-code:pdca "AI agent market report"` |
 
-The `pdca` command auto-detects which phase to enter and chains the right skills. Say "알아보고 보고서 써줘" (= "research and write a report") and it runs the full Plan→Do→Check→Act cycle with gates. Use `--no-questions` for automation.
+The `pdca` command auto-detects which phase to enter and chains the right skills. Say "research and write a report" and it runs the full Plan→Do→Check→Act cycle with gates. Use `--no-questions` for automation.
 
 ### Gather
 
@@ -160,29 +160,26 @@ The `pdca` command auto-detects which phase to enter and chains the right skills
 
 ## Auto-Routing
 
-You do not need to memorize slash commands. The hook-based auto-router detects intent from natural language in both English and Korean, then dispatches the right skill.
+No slash commands to memorize. The hook-based auto-router detects intent from natural language and dispatches the right skill. Supports both English and Korean input.
 
 ```
-"AI 에이전트 알아보고 보고서 써줘"       →  /second-claude-code:pdca (full cycle)
-  (= "Research AI agents and write a report")
 "Research and write about AI agents"   →  /second-claude-code:pdca (full cycle)
-"리뷰하고 개선해줘"                     →  /second-claude-code:pdca (check+act)
-  (= "Review and improve this")
+"Review and improve this"              →  /second-claude-code:pdca (check+act)
 "Write an article about AI agents"     →  /second-claude-code:write
-"AI 에이전트에 대해 조사해"              →  /second-claude-code:research
-  (= "Research about AI agents")
+"Research the state of AI agents"      →  /second-claude-code:research
 "Analyze this market with SWOT"        →  /second-claude-code:analyze
-"이 초안을 리뷰해"                      →  /second-claude-code:review
-  (= "Review this draft")
+"Review this draft"                    →  /second-claude-code:review
 "Save this for later"                  →  /second-claude-code:collect
 "How do I run a security audit?"       →  /second-claude-code:hunt
 ```
 
 The router uses a two-layer detection system in `hooks/prompt-detect.mjs`:
-1. **PDCA layer** — detects compound patterns ("알아보고 써줘", "research and write") that span multiple phases → routes to `/second-claude-code:pdca`
+1. **PDCA layer** — detects compound patterns ("research and write", "review and improve") that span multiple phases → routes to `/second-claude-code:pdca`
 2. **Skill layer** — detects single-skill intent → routes to individual skills
 
 PDCA compound patterns take priority. When no compound pattern matches, the earliest single-skill match wins.
+
+> Korean auto-routing with ~41 trigger patterns is documented in the [한국어 README](README.ko.md).
 
 ---
 

@@ -13,9 +13,10 @@
 
 ![Skill Wheel](docs/images/hero.svg)
 
-Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second Claude Code는 200개 스킬이 아니라 **9개 명령어로 지식 작업을 커버하는 OS**입니다.
+Second Brain이 앱 200개가 아니라 하나의 PARA 시스템인 것처럼,
+**Second Claude Code는 스킬 200개가 아니라 9개 명령어로 돌아가는 지식 작업 OS입니다.**
 
-지식 노동자는 도구 파편화에 빠지기 쉽습니다. 리서치용 플러그인 따로, 글쓰기용 따로, 리뷰용 따로 — 서로 연결되지 않는 도구들의 늪. Second Claude Code는 이 혼잡함을 **9개의 조합 가능한 스킬**, **16개의 포켓몬 테마 서브에이전트**, **15개의 전략 프레임워크**로 대체합니다. 넓고 얕은 기능 나열 대신 깊이 있는 분석이 필요한 연구자, 전략가, 콘텐츠 크리에이터를 위해 설계되었습니다.
+리서치 플러그인 따로, 글쓰기 따로, 리뷰 따로 — 연결은 안 되고 도구만 늘어나는 악순환. Second Claude Code는 이걸 **9개 스킬 + 16마리 포켓몬 서브에이전트 + 15개 전략 프레임워크**로 끝냅니다. 얕고 넓게가 아니라 깊고 정확하게. 싱글 패스 생성이 아니라 멀티모델 리뷰. 연구자, 전략가, 콘텐츠 크리에이터를 위해 만들었습니다.
 
 ---
 
@@ -23,12 +24,9 @@ Second Brain이 200개 앱이 아니라 하나의 PARA 시스템이듯, Second C
 
 **핵심 흐름**: `Research → Analyze → Write → Review → Loop`
 
-이 흐름은 **PDCA 품질 원리**를 따릅니다: 모든 산출물은 Verify(리뷰)와
-Refine(반복 개선)을 거쳐야 출하됩니다. 콘텐츠를 만드는 사이클이
-스킬 자체를 개선하는 사이클이기도 합니다.
+**PDCA 품질 원리**를 따릅니다. 모든 산출물은 리뷰(Verify)와 반복 개선(Refine)을 거쳐야 출하합니다. 콘텐츠를 만드는 사이클이 스킬 자체를 개선하는 사이클이기도 합니다.
 
-제품 내부 언어로는 이 루프를 `Gather → Produce → Verify → Refine`로 표현합니다.
-PDCA로 풀면 `Plan → Do → Check → Act`에 해당합니다.
+내부적으로는 `Gather → Produce → Verify → Refine`, PDCA로는 `Plan → Do → Check → Act`에 대응합니다.
 
 | PDCA | Second Claude Code |
 |------|--------------------|
@@ -44,13 +42,13 @@ PDCA로 풀면 `Plan → Do → Check → Act`에 해당합니다.
 
 ```mermaid
 graph TD
-    G[Plan / Gather<br/>Eevee 리서치<br/>+ Alakazam 분석] --> P[Do / Produce<br/>Smeargle 작성<br/>순수 실행]
-    P --> V[Check / Verify<br/>Xatu + Absol + Porygon<br/>+ Jigglypuff + Unown]
+    G[Plan / Gather<br/>이브이 리서치<br/>+ 후딘 분석] --> P[Do / Produce<br/>루브도 작성<br/>순수 실행]
+    P --> V[Check / Verify<br/>네이티오 + 앱솔 + 폴리곤<br/>+ 푸린 + 안농]
     V -->|APPROVED| Done[출하]
     V -->|feedback| AR{액션 라우터}
     AR -->|소스/가정 문제| G
     AR -->|완성도/포맷 문제| P
-    AR -->|실행 품질| R[Act / Refine<br/>Ditto loop]
+    AR -->|실행 품질| R[Act / Refine<br/>메타몽 loop]
     R --> V
     K[collect] -.->|축적| G
 ```
@@ -212,17 +210,17 @@ AI 에이전트 프레임워크 현황을 조사해줘
 
 ## 다중 관점 리뷰
 
-`/second-claude-code:review`는 3~5명의 전문 서브에이전트를 병렬로 실행합니다. 각각 다른 모델과 전문 영역을 가집니다.
+`/second-claude-code:review`는 3~5마리의 전문 서브에이전트를 병렬로 투입합니다. 모델도 다르고 전문 영역도 다릅니다.
 
 ### 리뷰어
 
 | 리뷰어 | 포켓몬 | 모델 | 전문 영역 | 왜 이 포켓몬? |
 |--------|--------|------|-----------|--------------|
-| deep-reviewer | Xatu | opus | 논리, 구조, 완결성 | 과거와 미래를 동시에 봄 = 구조적 결함 탐지 |
-| devil-advocate | Absol | sonnet | 약점과 사각지대 공격 | 재앙 감지 포켓몬, 위험을 경고 |
-| fact-checker | Porygon | haiku | 주장, 수치, 출처 검증 | 디지털 네이티브, 데이터 기반 이진 판정 |
-| tone-guardian | Jigglypuff | haiku | 어조와 독자 적합성 | THE 보이스 포켓몬, 톤에 민감 |
-| structure-analyst | Unown | haiku | 구성과 가독성 | 문자 형태, 구조에 집착 |
+| deep-reviewer | 네이티오(Xatu) | opus | 논리, 구조, 완결성 | 과거와 미래를 동시에 봄 = 구조적 결함 탐지 |
+| devil-advocate | 앱솔(Absol) | sonnet | 약점과 사각지대 공격 | 재앙 감지 포켓몬, 위험을 경고 |
+| fact-checker | 폴리곤(Porygon) | haiku | 주장, 수치, 출처 검증 | 디지털 네이티브, 데이터 기반 이진 판정 |
+| tone-guardian | 푸린(Jigglypuff) | haiku | 어조와 독자 적합성 | THE 보이스 포켓몬, 톤에 민감 |
+| structure-analyst | 안농(Unown) | haiku | 구성과 가독성 | 문자 형태, 구조에 집착 |
 
 ### 리뷰 흐름
 
@@ -234,11 +232,11 @@ AI 에이전트 프레임워크 현황을 조사해줘
 ```mermaid
 graph TD
     U[User] --> D[Dispatch]
-    D --> DR[Xatu<br/>deep-reviewer / opus]
-    D --> DA[Absol<br/>devil-advocate / sonnet]
-    D --> FC[Porygon<br/>fact-checker / haiku]
-    D --> TG[Jigglypuff<br/>tone-guardian / haiku]
-    D --> SA[Unown<br/>structure-analyst / haiku]
+    D --> DR[네이티오<br/>deep-reviewer / opus]
+    D --> DA[앱솔<br/>devil-advocate / sonnet]
+    D --> FC[폴리곤<br/>fact-checker / haiku]
+    D --> TG[푸린<br/>tone-guardian / haiku]
+    D --> SA[안농<br/>structure-analyst / haiku]
     DR --> G[Consensus Gate]
     DA --> G
     FC --> G
@@ -253,16 +251,16 @@ graph TD
 
 </details>
 
-**Consensus gate (합의 게이트):** 2/3 통과 시 APPROVED (full 프리셋은 3/5). 임계값 미달 + Critical 없음 = NEEDS IMPROVEMENT. Critical 발견 시 즉시 MUST FIX.
+**합의 게이트:** 2/3 통과 시 APPROVED (`full` 프리셋은 3/5). 임계값 미달인데 Critical 없으면 NEEDS IMPROVEMENT. Critical이 하나라도 있으면 즉시 MUST FIX.
 
 ### 프리셋
 
 | 프리셋 | 리뷰어 | 적합한 용도 |
 |--------|--------|-------------|
-| `content` | Xatu + Absol + Jigglypuff | 아티클, 블로그, 뉴스레터 |
-| `strategy` | Xatu + Absol + Porygon | PRD, SWOT, 전략 문서 |
-| `code` | Xatu + Porygon + Unown | 코드 리뷰 |
-| `quick` | Absol + Porygon | 빠른 검증 |
+| `content` | 네이티오 + 앱솔 + 푸린 | 아티클, 블로그, 뉴스레터 |
+| `strategy` | 네이티오 + 앱솔 + 폴리곤 | PRD, SWOT, 전략 문서 |
+| `code` | 네이티오 + 폴리곤 + 안농 | 코드 리뷰 |
+| `quick` | 앱솔 + 폴리곤 | 빠른 검증 |
 | `full` | 5명 전원 | 최종 퍼블리시 전 검수 |
 
 **외부 리뷰어 (선택 사항):** `--external` 플래그로 MMBridge를 통한 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)를 추가할 수 있습니다. MMBridge 별도 설치 필요.
@@ -296,8 +294,8 @@ graph TD
 <details>
 <summary><strong>아키텍처</strong></summary>
 
-3개 모델 티어(opus, sonnet, haiku)에 걸친 16개 포켓몬 테마 서브에이전트.
-MMBridge를 통한 크로스 모델 리뷰는 선택 사항 (Kimi, Qwen, Gemini, Codex) — 없어도 동작합니다.
+3개 모델 티어(opus, sonnet, haiku)에 걸친 16마리 포켓몬 서브에이전트.
+MMBridge를 통한 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)는 선택 사항 — 없어도 동작합니다.
 
 ![Agent Roster](docs/images/agent-roster.svg)
 
@@ -330,19 +328,19 @@ second-claude/
 
 ## 설계 철학
 
-9가지 원칙이 플러그인 아키텍처를 지배합니다:
+9가지 원칙이 아키텍처를 관통합니다:
 
-1. **Few but Deep** — 80개가 아닌 9개 스킬 (도메인 8 + 오케스트레이터 1). 각각 내부적으로 깊습니다.
-2. **Gotchas over Instructions** — 행복한 경로뿐 아니라 실패 모드를 문서화합니다.
-3. **Progressive Disclosure** — SKILL.md는 짧게, `references/`에서 깊게.
-4. **Context-Efficient** — 스킬 설명 전체가 100 토큰 이내.
-5. **Zero Dependency Core** — `npm install` 불필요. 서브에이전트와 셸 스크립트만 사용.
-6. **State in Files** — 플러그인 데이터 디렉토리에 JSON 상태 영속화.
-7. **Composable** — 스킬이 서로를 호출하여, 9개 프리미티브로 무한한 워크플로우 구성.
-8. **PDCA-Native** — 모든 산출물이 Verify와 Refine을 거칩니다. 스킬이 스킬 자신을 개선하는 데 같은 사이클을 사용합니다.
-9. **Action Router** — 리뷰 실패 시 근본원인으로 라우팅: 리서치 갭은 Plan으로, 실행 갭은 Do로, 품질 이슈만 Loop으로. 모든 것이 Loop 문제는 아닙니다.
+1. **적지만 깊게** — 80개가 아닌 9개 스킬(도메인 8 + 오케스트레이터 1). 하나하나가 깊습니다.
+2. **함정 먼저** — 해피 패스가 아니라 실패 모드를 문서화합니다.
+3. **단계적 공개** — SKILL.md는 짧게, `references/`에서 깊게.
+4. **컨텍스트 절약** — 스킬 설명 전체가 100토큰 이내.
+5. **의존성 제로** — `npm install` 불필요. 서브에이전트와 셸 스크립트만.
+6. **파일 기반 상태** — JSON으로 영속화, 외부 DB 불필요.
+7. **조합 가능** — 스킬이 서로를 호출. 9개 프리미티브로 무한한 워크플로우.
+8. **PDCA 내장** — 모든 산출물이 검증(Verify)과 개선(Refine)을 거침. 스킬이 자기 자신을 같은 사이클로 개선.
+9. **액션 라우터** — 리뷰 실패를 근본원인으로 분류: 리서치 갭 → Plan, 실행 갭 → Do, 품질 이슈만 Loop으로. 모든 문제를 Loop으로 밀어넣지 않습니다.
 
-**원칙 간 상호작용:** Few-but-deep + composable = 작은 표면적, 무한한 조합. Gotchas-first + progressive disclosure = 장문 없이도 안전한 사용. Context-efficient + zero dependency = 빠르고, 저렴하고, 플랫폼 무관. PDCA-native + action router = 지능적 사이클 라우팅, 맹목적 반복이 아닌.
+**원칙이 맞물리는 방식:** 적지만 깊게 + 조합 가능 = 표면적은 작고 조합은 무한. 함정 먼저 + 단계적 공개 = 장문 없이도 안전. 컨텍스트 절약 + 의존성 제로 = 빠르고 싸고 플랫폼 무관. PDCA 내장 + 액션 라우터 = 맹목적 반복이 아닌 지능적 라우팅.
 
 ---
 
