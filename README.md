@@ -2,108 +2,18 @@
 
 ![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![skills](https://img.shields.io/badge/skills-9-purple)
-![agents](https://img.shields.io/badge/agents-16-orange)
-![frameworks](https://img.shields.io/badge/frameworks-15-red)
-![platforms](https://img.shields.io/badge/platforms-4-teal)
 
 ---
 
 # Second Claude Code — Knowledge Work OS
 
+You type *"Research AI agents and write a report."*
+
+Thirty seconds later, an Eevee researcher is crawling the web. An Alakazam analyst is finding patterns in what comes back. A Smeargle writer drafts 3,000 words — and before you even see it, five reviewers are already arguing about your draft. Xatu checks the logic. Absol attacks the weak points. Porygon fact-checks every number.
+
+**One command. Full cycle. No duct tape between plugins.**
+
 ![Skill Wheel](docs/images/hero.svg)
-
-Most Claude Code plugins add one skill at a time. Second Claude Code adds one quality loop —
-**research, write, review, refine — with 9 commands and 16 specialized agents enforcing standards at every gate.**
-
-Research plugin here, writing plugin there, review plugin somewhere else — none of them talk to each other. Second Claude Code replaces that sprawl with 9 composable skills, 16 Pokemon-themed subagents across 3 model tiers, and 15 strategic frameworks. Built for researchers, strategists, and content creators who need depth over breadth and multi-model review over single-pass generation.
-
-> **Scope:** Designed for research-to-publication workflows — investigation, analysis, writing, and quality review. Not a general-purpose coding or data engineering toolkit.
-
----
-
-## What's New
-
-<details>
-<summary><strong>v0.3.0</strong> — PDCA v2, Action Router, Pokemon agents (current)</summary>
-
-- **PDCA v2 orchestrator** with Action Router — review failures route by root cause (Plan/Do/Loop), not blind iteration
-- **Question Protocol** — PDCA asks clarifying questions before researching, unless `--no-questions` is set
-- **16 Pokemon-themed subagents** across 3 model tiers (opus/sonnet/haiku)
-- **5 parallel reviewers** with consensus gate and 5 presets (content/strategy/code/quick/full)
-- **Hook-based auto-routing** — ~77 English + ~50 Korean trigger patterns detect intent from natural language
-- **Auto-capture** — research, write, and analyze outputs auto-save to `.captures/`
-- **19 routing tests** for false positive regression coverage
-
-</details>
-
-<details>
-<summary><strong>v0.2.0</strong> — Security hardening, English localization</summary>
-
-- Security hardening across hooks and skills (13 audit findings resolved)
-- English localization of all skill docs and README
-- Marketplace manifest for `claude plugin add` install
-- Skill hardening pass (9/10 target across all 8 domain skills)
-
-</details>
-
-<details>
-<summary><strong>v0.1.0</strong> — Initial release</summary>
-
-- 8 domain skills + 1 orchestrator (research, write, analyze, review, loop, collect, pipeline, hunt)
-- 15 strategic frameworks for `/analyze`
-- PARA-based knowledge collection
-- Pipeline builder for repeatable workflows
-
-</details>
-
----
-
-## The Knowledge Work Cycle
-
-**Core flow**: `Research → Analyze → Write → Review → Loop`
-
-This flow follows the **PDCA quality principle**: every output passes through
-Verify (review) and Refine (loop) before shipping. The same cycle that
-produces content also improves the skills themselves.
-
-In product language, the loop is expressed as `Gather → Produce → Verify → Refine`.
-In PDCA terms, that maps to `Plan → Do → Check → Act`.
-
-| PDCA | Second Claude Code |
-|------|--------------------|
-| Plan | Gather (`research` → `analyze`, with Question Protocol) |
-| Do | Produce (`write` in pure execution mode) |
-| Check | Verify (`review` with 5 parallel reviewers) |
-| Act | Refine (Action Router → `loop` / back to Plan / back to Do) |
-
-![PDCA Cycle](docs/images/pdca-cycle.svg)
-
-<details>
-<summary>Mermaid fallback (for non-SVG renderers)</summary>
-
-```mermaid
-graph TD
-    G[Plan / Gather<br/>Eevee research<br/>+ Alakazam analyze] --> P[Do / Produce<br/>Smeargle write<br/>pure execution]
-    P --> V[Check / Verify<br/>Xatu + Absol + Porygon<br/>+ Jigglypuff + Unown]
-    V -->|APPROVED| Done[Ship]
-    V -->|feedback| AR{Action Router}
-    AR -->|source/assumption| G
-    AR -->|completeness/format| P
-    AR -->|execution quality| R[Act / Refine<br/>Ditto loop]
-    R --> V
-    K[collect] -.->|accumulate| G
-```
-
-</details>
-
-**Supporting commands**
-
-| Command | Role |
-|---------|------|
-| `hunt` | Extend the cycle with new capabilities |
-| `collect` | Accumulate knowledge across cycles |
-| `pipeline` | Automate repeatable cycles |
 
 ---
 
@@ -115,202 +25,163 @@ graph TD
 claude plugin add github:EungjePark/second-claude-code
 ```
 
-**2. Verify** — start a new Claude Code session and look for the context injection:
+**2. Verify** — start a new session and look for:
 
 ```
 # Second Claude Code — Knowledge Work OS
-
 9 commands for all knowledge work:
-| Command | Purpose |
-...
 ```
 
-If nothing appears, verify the plugin is installed: `claude plugin list`
+Nothing? Run `claude plugin list` to check.
 
-**3. Try it** — just type naturally:
+**3. Just talk**
 
 ```
-Research the current state of AI agent frameworks in 2026
+Research the current state of AI agent frameworks and write a report
 ```
 
-The auto-router picks `/second-claude-code:research` for you. No slash commands to memorize.
+The auto-router picks the right skill. No slash commands to memorize. Korean works too:
 
-If auto-routing does not trigger, use the explicit command: `/second-claude-code:research "AI agent frameworks 2026"`
+```
+AI 에이전트 알아보고 보고서 써줘
+```
+
+---
+
+## What Actually Happens
+
+Most plugins do one thing. Research here, writing there, review somewhere else — none of them talk to each other. You end up being the glue.
+
+Second Claude Code runs a **quality loop** instead. Every piece of content goes through the same cycle that manufacturing figured out decades ago: **Plan → Do → Check → Act.**
+
+Here's what that looks like in practice:
+
+```
+You: "Research AI agents and write a report"
+
+[Plan]  Eevee + Noctowl crawl 20+ sources, Alakazam synthesizes findings
+        ↓ quality gate: research brief reviewed before writing starts
+[Do]    Smeargle writes a full draft using the research
+        ↓ quality gate: draft goes to review, not to you
+[Check] 5 reviewers in parallel — logic, facts, tone, structure, weak points
+        ↓ consensus gate: 2/3 must pass, any Critical = blocked
+[Act]   Action Router reads the feedback:
+        → research gap? Back to Plan.
+        → missing section? Back to Do.
+        → polish issue? Ditto loops and refines.
+
+You get the final draft. Reviewed. Fact-checked. Refined.
+```
+
+![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+Without this plugin, you'd run `/research`, copy the output, paste it into a writing prompt, then manually ask for feedback, then manually apply it. Five context switches. With Second Claude Code, it's one prompt.
 
 ---
 
 ## Choose Your Skill
 
-| I want to... | Use |
-|--------------|-----|
-| Run a full research→write→review→improve cycle | `pdca` |
-| Find information about a topic | `research` |
-| Apply a strategic framework (SWOT, Porter, etc.) | `analyze` |
-| Produce an article, report, or newsletter | `write` |
-| Get multi-perspective feedback on a draft | `review` |
-| Iteratively improve a draft to a target score | `loop` |
-| Save a URL, note, or excerpt for later | `collect` |
-| Chain multiple skills into a repeatable workflow | `pipeline` |
-| Find and install a new skill I do not have | `hunt` |
+| I want to... | Skill | What happens |
+|---|---|---|
+| Full research→write→review→improve cycle | `pdca` | Chains everything with quality gates |
+| Investigate a topic | `research` | Autonomous deep research with source synthesis |
+| Apply 15 strategic frameworks (SWOT, Porter, RICE...) | `analyze` | Strategic analysis with structured output |
+| Write an article, report, or newsletter | `write` | Research + draft + review in one command |
+| Get multi-perspective feedback | `review` | 3-5 parallel reviewers with consensus voting |
+| Iteratively improve to a target score | `loop` | Refine until reviewers pass |
+| Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
+| Chain skills into a reusable workflow | `pipeline` | Custom automation builder |
+| Find a skill you don't have | `hunt` | Discover and install new capabilities |
 
----
-
-## The 9 Commands
-
-Commands use the `/second-claude-code:` prefix.
-
-### Orchestrator
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| [`pdca`](docs/skills/pdca.md) | Full PDCA cycle with quality gates and Action Router | `/second-claude-code:pdca "AI agent market report"` |
-
-The `pdca` command auto-detects which phase to enter and chains the right skills. Say "research and write a report" and it runs the full Plan→Do→Check→Act cycle with gates. Use `--no-questions` for automation.
-
-### Gather
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| [`research`](docs/skills/research.md) | Autonomous deep research with iterative refinement | `/second-claude-code:research "AI agent landscape 2026"` |
-| [`hunt`](docs/skills/hunt.md) | Skill discovery — find and install new capabilities | `/second-claude-code:hunt "terraform security audit"` |
-| [`collect`](docs/skills/collect.md) | Knowledge collection and PARA classification | `/second-claude-code:collect https://example.com/article` |
-
-### Produce
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| [`write`](docs/skills/write.md) | Content production (articles, reports, newsletters) | `/second-claude-code:write article "The future of vibe coding"` |
-| [`analyze`](docs/skills/analyze.md) | Strategic framework analysis (15 built-in frameworks) | `/second-claude-code:analyze swot "our SaaS product"` |
-| [`pipeline`](docs/skills/pipeline.md) | Custom workflow builder and runner | `/second-claude-code:pipeline run "weekly-digest"` |
-
-### Verify
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| [`review`](docs/skills/review.md) | Multi-perspective quality gate with consensus voting | `/second-claude-code:review docs/draft.md --preset content` |
-
-### Refine
-
-| Command | Description | Example |
-|---------|-------------|---------|
-| [`loop`](docs/skills/loop.md) | Iterative improvement toward a target score | `/second-claude-code:loop "Raise this article to 4.5/5" --max 3` |
+Commands use the `/second-claude-code:` prefix. Or just type naturally — the auto-router handles it.
 
 ---
 
 ## Auto-Routing
 
-No slash commands to memorize. The hook-based auto-router detects intent from natural language and dispatches the right skill. Supports both English and Korean input.
+No commands to memorize. Type what you want in English or Korean.
 
 ```
-"Research and write about AI agents"   →  /second-claude-code:pdca (full cycle)
-"Review and improve this"              →  /second-claude-code:pdca (check+act)
-"Write an article about AI agents"     →  /second-claude-code:write
-"Research the state of AI agents"      →  /second-claude-code:research
-"Analyze this market with SWOT"        →  /second-claude-code:analyze
-"Review this draft"                    →  /second-claude-code:review
-"Save this for later"                  →  /second-claude-code:collect
-"How do I run a security audit?"       →  /second-claude-code:hunt
+"Research and write about AI agents"       →  pdca (full cycle)
+"Write an article about vibe coding"       →  write
+"Analyze this market with SWOT"            →  analyze
+"Review this draft"                        →  review
+"더 좋게 다듬어"                            →  loop
+"이 링크 저장해줘"                          →  collect
+"보안 감사 스킬 있어?"                      →  hunt
 ```
 
-The router uses a two-layer detection system in `hooks/prompt-detect.mjs`:
-1. **PDCA layer** — detects compound patterns ("research and write", "review and improve") that span multiple phases → routes to `/second-claude-code:pdca`
-2. **Skill layer** — detects single-skill intent → routes to individual skills
+The router uses two layers: compound patterns ("research **and** write") trigger full PDCA cycles. Single-skill intent goes directly to that skill. Earliest match wins. ~77 English + ~50 Korean trigger patterns total.
 
-PDCA compound patterns take priority. When no compound pattern matches, the earliest single-skill match wins.
+> Full Korean routing examples: see [한국어 README](README.ko.md).
 
-> Korean auto-routing with ~41 trigger patterns is documented in the [한국어 README](README.ko.md).
+---
+
+## The Review System
+
+This is where it gets interesting. Most AI writing tools generate and hand it to you. Second Claude Code generates, then **attacks its own output** before you see it.
+
+`/second-claude-code:review` dispatches 3-5 specialized agents in parallel:
+
+| Reviewer | Pokemon | Model | What they do |
+|---|---|---|---|
+| Deep Reviewer | Xatu | opus | Structural logic, completeness, argument flow |
+| Devil's Advocate | Absol | sonnet | Finds the weakest point and hits it |
+| Fact Checker | Porygon | haiku | Verifies every number, claim, and source |
+| Tone Guardian | Jigglypuff | haiku | Checks voice consistency and audience fit |
+| Structure Analyst | Unown | haiku | Readability, organization, scan-ability |
+
+Why Pokemon? Each one maps to a real trait. Xatu sees past and future (structural foresight). Absol senses disaster (vulnerability detection). Porygon is literally digital (data-native fact checking). It's memorable, and memorable names mean you actually remember what each reviewer does.
+
+**Consensus gate:** 2/3 pass = APPROVED. Any Critical finding = MUST FIX. No exceptions.
+
+![Review Flow](docs/images/review-flow.svg)
+
+<details>
+<summary><strong>Review presets</strong></summary>
+
+| Preset | Reviewers | Best for |
+|---|---|---|
+| `content` | Xatu + Absol + Jigglypuff | Articles, blogs, newsletters |
+| `strategy` | Xatu + Absol + Porygon | PRDs, SWOTs, strategy docs |
+| `code` | Xatu + Porygon + Unown | Code review |
+| `quick` | Absol + Porygon | Fast validation |
+| `full` | all 5 | Final pre-publish pass |
+
+**External reviewers (optional):** `--external` adds cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex). Requires separate MMBridge setup.
+
+</details>
 
 ---
 
 ## Skill Composition
 
-Skills call each other and chain naturally. A single prompt can trigger a full PDCA cycle.
+Skills call each other. A single prompt can trigger a full cycle.
 
-**Common patterns:**
-
-| Pattern | Chain | Use for |
-|---------|-------|---------|
-| Full PDCA | `/pdca` → research → analyze → write → review → loop | End-to-end content with gates |
-| Quick Check | review → loop | Polish existing draft |
+| Pattern | Chain | Use case |
+|---|---|---|
+| Full PDCA | research → analyze → write → review → loop | End-to-end content |
+| Quick Check | review → loop | Polish an existing draft |
 | Plan Only | research → analyze | Strategic analysis |
-| Auto PDCA | `pipeline run autopilot --topic "..."` | One-command production |
+| Autopilot | `pipeline run autopilot --topic "..."` | One-command production |
 
-`/second-claude-code:pdca` is the recommended way to run multi-phase work — it enforces quality gates and uses the Action Router to classify review findings by root cause. `/second-claude-code:write` also auto-invokes research and review internally for single-step convenience.
-
----
-
-## Multi-Perspective Review
-
-`/second-claude-code:review` dispatches 3-5 specialized subagents in parallel, each with a different model and focus area.
-
-### Reviewers
-
-| Reviewer | Pokemon | Model | Focus | Why this Pokemon? |
-|----------|---------|-------|-------|-------------------|
-| deep-reviewer | Xatu | opus | Logic, structure, and completeness | Sees past and future simultaneously — structural flaw detection |
-| devil-advocate | Absol | sonnet | Attacks the weakest points and blind spots | The disaster-sensing Pokemon, warns of danger |
-| fact-checker | Porygon | haiku | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
-| tone-guardian | Jigglypuff | haiku | Voice and audience fit | THE voice Pokemon, sensitive to tone |
-| structure-analyst | Unown | haiku | Organization and readability | Letter-shaped, obsessed with structure |
-
-### Review Flow
-
-![Review Flow](docs/images/review-flow.svg)
-
-<details>
-<summary>Mermaid fallback (for non-SVG renderers)</summary>
-
-```mermaid
-graph TD
-    U[User] --> D[Dispatch]
-    D --> DR[Xatu<br/>deep-reviewer / opus]
-    D --> DA[Absol<br/>devil-advocate / sonnet]
-    D --> FC[Porygon<br/>fact-checker / haiku]
-    D --> TG[Jigglypuff<br/>tone-guardian / haiku]
-    D --> SA[Unown<br/>structure-analyst / haiku]
-    DR --> G[Consensus Gate]
-    DA --> G
-    FC --> G
-    TG --> G
-    SA --> G
-    G --> V{Verdict}
-    V -->|pass| AP[APPROVED]
-    V -->|issues| MF[MINOR FIXES]
-    V -->|threshold miss| NI[NEEDS IMPROVEMENT]
-    V -->|critical| MU[MUST FIX]
-```
-
-</details>
-
-**Consensus gate:** 2/3 passes = APPROVED (3/5 for `full` preset). Threshold not met with no Critical findings = NEEDS IMPROVEMENT. Any Critical finding = MUST FIX.
-
-### Presets
-
-| Preset | Reviewers | Best for |
-|--------|-----------|----------|
-| `content` | Xatu + Absol + Jigglypuff | Articles, blogs, newsletters |
-| `strategy` | Xatu + Absol + Porygon | PRDs, SWOTs, strategy docs |
-| `code` | Xatu + Porygon + Unown | Code review |
-| `quick` | Absol + Porygon | Fast validation |
-| `full` | all 5 reviewers | Final pre-publish pass |
-
-**External reviewers (optional):** Pass `--external` to add cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex). Requires MMBridge installed separately.
+`/second-claude-code:write` auto-invokes research and review internally. One command, research-backed, review-verified output.
 
 ---
 
 <details>
 <summary><strong>15 Strategic Frameworks</strong></summary>
 
-`/second-claude-code:analyze` supports 15 built-in frameworks, grouped by use case:
+`/second-claude-code:analyze` supports 15 built-in frameworks:
 
 | Category | Frameworks |
-|----------|------------|
+|---|---|
 | **Strategy** | ansoff, porter, pestle, north-star, value-prop |
 | **Planning** | prd, okr, lean-canvas, gtm, battlecard |
 | **Prioritization** | rice, pricing |
 | **Analysis** | swot, persona, journey-map |
 
-Each framework lives in `skills/analyze/references/frameworks/` as a standalone reference document. The analyze skill selects the right framework from your prompt or you can specify one directly:
+Each framework is a standalone reference doc in `skills/analyze/references/frameworks/`. The skill auto-selects based on your prompt, or you can specify directly:
 
 ```bash
 /second-claude-code:analyze porter "cloud infrastructure market"
@@ -320,33 +191,31 @@ Each framework lives in `skills/analyze/references/frameworks/` as a standalone 
 
 </details>
 
----
-
 <details>
-<summary><strong>Architecture</strong></summary>
-
-16 Pokemon-themed subagents across 3 model tiers (opus, sonnet, haiku).
-Optional cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex) — works without it.
+<summary><strong>Architecture — 16 Pokemon agents across 3 model tiers</strong></summary>
 
 | Phase | Pokemon | Role | Model |
-|-------|---------|------|-------|
+|---|---|---|---|
 | **Plan** | Eevee | Researcher — web search, data collection | haiku |
-| | Noctowl | Searcher — search specialist | haiku |
+| | Noctowl | Search specialist | haiku |
 | **Do** | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
 | | Mewtwo | Strategist — framework analysis | sonnet |
-| | Smeargle | Writer — long-form content production | opus |
-| | Arceus | Master — general-purpose execution | opus |
-| **Check** | Xatu | Deep reviewer — logic, structure, completeness | opus |
+| | Smeargle | Writer — long-form content | opus |
+| | Arceus | Master — general-purpose execution | sonnet |
+| **Check** | Xatu | Deep reviewer — logic, structure | opus |
 | | Absol | Devil's advocate — attacks weak points | sonnet |
-| | Porygon | Fact checker — verifies claims, numbers | haiku |
-| | Jigglypuff | Tone guardian — voice, audience fit | haiku |
-| | Unown | Structure analyst — readability, organization | haiku |
-| **Act** | Ditto | Editor — content editing, quality improvement | opus |
-| **Infra** | +4 others | Pipeline execution, skill discovery, etc. | mixed |
+| | Porygon | Fact checker — numbers, sources | haiku |
+| | Jigglypuff | Tone guardian — voice, audience | haiku |
+| | Unown | Structure analyst — readability | haiku |
+| **Act** | Ditto | Editor — content refinement | opus |
+| **Infra** | Machamp | Pipeline step executor | sonnet |
+| | Magnezone | Skill candidate inspector | sonnet |
+| | Deoxys | Skill candidate scorer | sonnet |
+| | Abra | Knowledge connector | haiku |
+
+Optional cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex) — works without it.
 
 ![Agent Roster](docs/images/agent-roster.svg)
-
-[Full architecture — agent roster, PDCA mapping, Action Router →](docs/architecture.md)
 
 ```
 second-claude/
@@ -361,29 +230,24 @@ second-claude/
 └── config/     # User configuration
 ```
 
+[Full architecture docs →](docs/architecture.md)
+
 </details>
 
----
+<details>
+<summary><strong>Design Philosophy</strong></summary>
 
-## Design Philosophy
+Three principles that matter:
 
-Nine principles govern the plugin's architecture:
+1. **Few but Deep** — 9 skills, not 80. Each one is internally rich with references, gotchas, and quality gates. Small surface area, infinite combinations through composition.
 
-1. **Few but Deep** — 9 skills (8 domain + 1 orchestrator), not 80. Each one internally rich.
-2. **Gotchas over Instructions** — Document failure modes, not just happy paths.
-3. **Progressive Disclosure** — SKILL.md is short; `references/` goes deep.
-4. **Context-Efficient** — All skill descriptions fit under 100 tokens total.
-5. **Zero Dependency Core** — No `npm install`. Subagents and shell scripts only.
-6. **State in Files** — JSON state persisted in the plugin data directory.
-7. **Composable** — Skills call each other; 9 primitives yield infinite workflows.
-8. **PDCA-Native** — Every output cycles through Verify and Refine. The skills improve themselves through the same cycle they serve.
-9. **Action Router** — Review failures route by root cause: research gaps go back to Plan, execution gaps go back to Do, polish issues go to Loop. Not everything is a Loop problem.
+2. **PDCA-Native** — Every output cycles through Verify and Refine before shipping. The same cycle that produces content also improves the skills themselves. This is not a suggestion — it's enforced by quality gates.
 
-**How the principles interact:**
-Few-but-deep + composable = small surface area, infinite combinations.
-Gotchas-first + progressive disclosure = safe usage without walls of text.
-Context-efficient + zero dependency = fast, cheap, portable across platforms.
-PDCA-native + action router = intelligent cycle routing, not blind iteration.
+3. **Action Router** — When review fails, the system doesn't blindly loop. It classifies the root cause: research gap → back to Plan. Missing section → back to Do. Polish issue → Loop. Not everything is a Loop problem.
+
+Six more principles (context-efficient, zero-dependency, progressive disclosure, gotchas-first, state-in-files, composable) are documented in [docs/architecture.md](docs/architecture.md).
+
+</details>
 
 ---
 
@@ -397,16 +261,12 @@ Copy `config/config.example.json` to your plugin data directory and customize:
     "research_depth": "medium",     // "shallow" | "medium" | "deep"
     "write_voice": "peer-mentor",   // writing tone
     "review_preset": "content",     // "content" | "strategy" | "code" | "quick" | "full"
-    "loop_max_iterations": 3,       // max loop rounds before stopping
+    "loop_max_iterations": 3,       // max rounds before stopping
     "publish_target": "file"        // "file" | "notion"
   },
   "quality_gate": {
     "consensus_threshold": 0.67,    // fraction of reviewers that must pass
     "external_reviewers": []        // ["kimi", "qwen", "gemini", "codex"] via MMBridge
-  },
-  "knowledge": {
-    "para_enabled": true,           // auto-classify collected items by PARA
-    "max_entries": 1000             // max knowledge base entries
   }
 }
 ```
@@ -417,29 +277,58 @@ All settings are optional — defaults apply when no config file exists.
 
 ## Known Limitations
 
-- **Auto-routing false positives** — Natural language detection can misfire on ambiguous prompts (e.g., "save this file" triggering `collect`). Use explicit `/second-claude-code:*` commands when auto-routing misbehaves.
-- **Haiku agent context limits** — Porygon, Jigglypuff, and Unown (haiku tier) may fail with "Prompt is too long" if too many plugins are active. Disable unused plugins to reduce system prompt size.
-- **Non-Claude platforms unvalidated** — OpenClaw, Codex, and Gemini CLI support is experimental. Core SKILL.md compatibility is expected but edge cases exist.
-- **No streaming output** — Subagent results arrive after completion, not incrementally. Long research or write operations may appear silent until done.
-- **Single-language review** — Pokemon reviewers produce English-language findings regardless of input language. Korean output support is planned.
+- **Auto-routing false positives** — Ambiguous prompts can misfire ("save this file" → `collect`). Use explicit `/second-claude-code:*` commands when needed.
+- **Haiku context limits** — Porygon, Jigglypuff, Unown may hit "Prompt is too long" with many plugins active. Disable unused plugins to reduce system prompt size.
+- **Non-Claude platforms experimental** — OpenClaw, Codex, Gemini CLI support exists but isn't fully validated.
+- **No streaming** — Subagent results arrive after completion. Long operations may appear silent until done.
+- **Review output in English** — Reviewers produce English findings regardless of input language. Korean output planned.
 
 ---
 
 ## Compatibility
 
 | Platform | Install | Status |
-|----------|---------|--------|
+|---|---|---|
 | **Claude Code** (primary) | `claude plugin add github:EungjePark/second-claude-code` | Tested |
 | **OpenClaw** | Standard ACP protocol — auto-detected | Experimental |
-| **Codex** | SKILL.md standard compatible | Experimental |
-| **Gemini CLI** | SKILL.md standard compatible | Experimental |
+| **Codex** | SKILL.md compatible | Experimental |
+| **Gemini CLI** | SKILL.md compatible | Experimental |
 
-> Non-Claude platforms are expected to work via the SKILL.md standard but have not been fully validated. Please report issues if you encounter compatibility problems.
+---
 
 ## Contributing
 
 Issues and pull requests welcome at [github.com/EungjePark/second-claude-code](https://github.com/EungjePark/second-claude-code).
 
-## License
+Built by [Park Eungje](https://github.com/EungjePark). MIT License.
 
-[MIT](LICENSE) — Park Eungje
+---
+
+<details>
+<summary><strong>Changelog</strong></summary>
+
+### v0.3.0 — PDCA v2, Action Router, Pokemon agents (current)
+
+- **PDCA v2 orchestrator** with Action Router — review failures route by root cause (Plan/Do/Loop), not blind iteration
+- **Question Protocol** — PDCA asks clarifying questions before researching, unless `--no-questions` is set
+- **16 Pokemon-themed subagents** across 3 model tiers (opus/sonnet/haiku)
+- **5 parallel reviewers** with consensus gate and 5 presets (content/strategy/code/quick/full)
+- **Hook-based auto-routing** — ~77 English + ~50 Korean trigger patterns
+- **Auto-capture** — research, write, and analyze outputs auto-save to `.captures/`
+- **19 routing tests** for false positive regression coverage
+
+### v0.2.0 — Security hardening, English localization
+
+- Security hardening across hooks and skills (13 audit findings resolved)
+- English localization of all skill docs and README
+- Marketplace manifest for `claude plugin add` install
+- Skill hardening pass (9/10 target across all 8 domain skills; pdca promoted to 9th in v0.3.0)
+
+### v0.1.0 — Initial release
+
+- 8 domain skills + 1 orchestrator (research, write, analyze, review, loop, collect, pipeline, hunt)
+- 15 strategic frameworks for `/analyze`
+- PARA-based knowledge collection
+- Pipeline builder for repeatable workflows
+
+</details>

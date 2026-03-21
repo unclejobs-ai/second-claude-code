@@ -2,105 +2,18 @@
 
 ![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
-![skills](https://img.shields.io/badge/skills-9-purple)
-![agents](https://img.shields.io/badge/agents-16-orange)
-![frameworks](https://img.shields.io/badge/frameworks-15-red)
-![platforms](https://img.shields.io/badge/platforms-4-teal)
 
 ---
 
 # Second Claude Code — 지식 작업 OS
 
-![Skill Wheel](docs/images/hero.svg)
+"AI 에이전트 알아보고 보고서 써줘"라고 치면 이런 일이 벌어진다.
 
-대부분의 Claude Code 플러그인은 스킬을 하나씩 추가합니다. Second Claude Code는 품질 루프 하나를 추가합니다 —
-**조사하고, 쓰고, 검증하고, 다듬는다. 9개 명령어와 16마리 전문 에이전트가 모든 게이트에서 품질을 강제합니다.**
+이브이가 웹을 뒤진다. 후딘이 패턴을 찾는다. 루브도가 3,000자를 쓴다 — 그리고 당신이 보기도 전에 다섯 마리 리뷰어가 이미 초안을 뜯고 있다. 네이티오는 논리를 본다. 앱솔은 약점을 공격한다. 폴리곤은 숫자를 검증한다.
 
-리서치 플러그인 따로, 글쓰기 따로, 리뷰 따로 — 연결은 안 되고 도구만 늘어나는 악순환. Second Claude Code는 이걸 **9개 스킬 + 16마리 포켓몬 서브에이전트 + 15개 전략 프레임워크**로 끝냅니다. 얕고 넓게가 아니라 깊고 정확하게. 싱글 패스 생성이 아니라 멀티모델 리뷰. 연구자, 전략가, 콘텐츠 크리에이터를 위해 만들었습니다.
+**한 줄 입력. 전체 사이클. 플러그인 세 개 붙여놓고 기도하는 거 아님.**
 
-> **범위:** 리서치에서 퍼블리케이션까지의 워크플로우를 위해 설계되었습니다 — 조사, 분석, 작성, 품질 검증. 범용 코딩이나 데이터 엔지니어링 툴킷이 아닙니다.
-
----
-
-## 변경 이력
-
-<details>
-<summary><strong>v0.3.0</strong> — PDCA v2, 액션 라우터, 포켓몬 에이전트 (현재)</summary>
-
-- **PDCA v2 오케스트레이터** + 액션 라우터 — 리뷰 실패를 근본원인별로 라우팅 (Plan/Do/Loop), 맹목적 반복 방지
-- **질문 프로토콜** — PDCA가 리서치 전에 명확화 질문을 던짐 (`--no-questions`로 생략 가능)
-- **16마리 포켓몬 서브에이전트** — 3개 모델 티어(opus/sonnet/haiku)
-- **5명 병렬 리뷰어** + 합의 게이트 + 5개 프리셋 (content/strategy/code/quick/full)
-- **훅 기반 자동 라우팅** — 영어 약 77개 + 한국어 약 50개 트리거 패턴으로 자연어 의도 감지
-- **자동 캡처** — research, write, analyze 결과를 `.captures/`에 자동 저장
-- **19개 라우팅 테스트** — false positive 회귀 방지
-
-</details>
-
-<details>
-<summary><strong>v0.2.0</strong> — 보안 강화, 영어 로컬라이제이션</summary>
-
-- 훅·스킬 전반 보안 강화 (13개 감사 소견 해결)
-- 전체 스킬 문서 및 README 영어 번역
-- `claude plugin add` 설치를 위한 마켓플레이스 매니페스트
-- 전 스킬 품질 강화 (8개 도메인 스킬 9/10 목표)
-
-</details>
-
-<details>
-<summary><strong>v0.1.0</strong> — 최초 릴리스</summary>
-
-- 도메인 스킬 8개 + 오케스트레이터 1개 (research, write, analyze, review, loop, collect, pipeline, hunt)
-- `/analyze`용 15개 전략 프레임워크
-- PARA 기반 지식 수집
-- 반복 가능한 워크플로우를 위한 파이프라인 빌더
-
-</details>
-
----
-
-## 지식 작업 사이클
-
-**핵심 흐름**: `Research → Analyze → Write → Review → Loop`
-
-**PDCA 품질 원리**를 따릅니다. 모든 산출물은 리뷰(Verify)와 반복 개선(Refine)을 거쳐야 출하합니다. 콘텐츠를 만드는 사이클이 스킬 자체를 개선하는 사이클이기도 합니다.
-
-내부적으로는 `Gather → Produce → Verify → Refine`, PDCA로는 `Plan → Do → Check → Act`에 대응합니다.
-
-| PDCA | Second Claude Code |
-|------|--------------------|
-| Plan | Gather (`research` → `analyze`, 질문 프로토콜 포함) |
-| Do | Produce (`write` 순수 실행 모드) |
-| Check | Verify (`review` 5명 병렬 리뷰) |
-| Act | Refine (액션 라우터 → `loop` / Plan 복귀 / Do 복귀) |
-
-![PDCA Cycle](docs/images/pdca-cycle.svg)
-
-<details>
-<summary>Mermaid 폴백 (SVG 미지원 환경용)</summary>
-
-```mermaid
-graph TD
-    G[Plan / Gather<br/>이브이 리서치<br/>+ 후딘 분석] --> P[Do / Produce<br/>루브도 작성<br/>순수 실행]
-    P --> V[Check / Verify<br/>네이티오 + 앱솔 + 폴리곤<br/>+ 푸린 + 안농]
-    V -->|APPROVED| Done[출하]
-    V -->|feedback| AR{액션 라우터}
-    AR -->|소스/가정 문제| G
-    AR -->|완성도/포맷 문제| P
-    AR -->|실행 품질| R[Act / Refine<br/>메타몽 loop]
-    R --> V
-    K[collect] -.->|축적| G
-```
-
-</details>
-
-**보조 명령어**
-
-| 명령어 | 역할 |
-|--------|------|
-| `hunt` | 새로운 기능으로 사이클을 확장 |
-| `collect` | 사이클 전반에 걸쳐 지식을 축적 |
-| `pipeline` | 반복 가능한 사이클을 자동화 |
+![Skill Wheel](docs/images/hero.ko.svg)
 
 ---
 
@@ -112,213 +25,159 @@ graph TD
 claude plugin add github:EungjePark/second-claude-code
 ```
 
-**2. 확인** — 새 Claude Code 세션을 시작하면 컨텍스트가 주입됩니다:
+**2. 확인** — 새 세션을 시작하면 이게 보여야 한다:
 
 ```
 # Second Claude Code — Knowledge Work OS
-
 9 commands for all knowledge work:
-| Command | Purpose |
-...
 ```
 
-아무것도 표시되지 않으면 플러그인 설치를 확인하세요: `claude plugin list`
+안 보이면? `claude plugin list`로 확인.
 
-**3. 바로 사용** — 자연어로 입력하세요:
+**3. 그냥 말해**
 
 ```
-AI 에이전트 프레임워크 현황을 조사해줘
+AI 에이전트 프레임워크 현황을 조사하고 보고서를 써줘
 ```
 
-자동 라우터가 `/second-claude-code:research`를 자동으로 선택합니다. 슬래시 명령어를 외울 필요가 없습니다.
+자동 라우터가 알아서 맞는 스킬을 고른다. 슬래시 명령어 외울 필요 없다. 영어도 된다:
 
-자동 라우팅이 작동하지 않으면 명시적 명령어를 사용하세요: `/second-claude-code:research "AI 에이전트 프레임워크 2026"`
+```
+Research AI agent frameworks and write a report
+```
+
+---
+
+## 실제로 무슨 일이 일어나는가
+
+대부분의 플러그인은 하나만 한다. 리서치 따로, 글쓰기 따로, 리뷰 따로 — 연결은 안 되고 당신이 접착제 역할을 한다. 결과물을 복사해서 다음 프롬프트에 붙여넣고, 피드백을 직접 요청하고, 수정 사항을 손으로 반영한다. 다섯 번의 컨텍스트 스위칭.
+
+Second Claude Code는 **품질 루프**를 돌린다. 제조업이 수십 년 전에 알아낸 사이클: **Plan → Do → Check → Act.**
+
+```
+당신: "AI 에이전트 알아보고 보고서 써줘"
+
+[Plan]  이브이 + 부엉 20개 이상 소스를 크롤링, 후딘이 합성
+        ↓ 품질 게이트: 리서치 브리프가 검증된 후에야 집필 시작
+[Do]    루브도가 리서치 기반으로 전체 초안 작성
+        ↓ 품질 게이트: 초안은 당신이 아니라 리뷰로 간다
+[Check] 5마리 리뷰어가 병렬로 — 논리, 팩트, 톤, 구조, 약점
+        ↓ 합의 게이트: 2/3 통과해야 승인, Critical 하나라도 있으면 차단
+[Act]   액션 라우터가 피드백을 읽는다:
+        → 리서치 부족? Plan으로 복귀.
+        → 누락 섹션? Do로 복귀.
+        → 다듬기 이슈? 메타몽이 loop 돌려서 개선.
+
+당신은 최종본을 받는다. 리뷰 완료. 팩트체크 완료. 정제 완료.
+```
+
+![PDCA Cycle](docs/images/pdca-cycle.ko.svg)
 
 ---
 
 ## 스킬 선택 가이드
 
-| 하고 싶은 것 | 사용할 스킬 |
-|-------------|------------|
-| 리서치→작성→리뷰→개선 전체 사이클 | `pdca` |
-| 주제에 대한 정보 조사 | `research` |
-| 전략 프레임워크 적용 (SWOT, Porter 등) | `analyze` |
-| 아티클, 보고서, 뉴스레터 작성 | `write` |
-| 초안에 대한 다중 관점 피드백 받기 | `review` |
-| 목표 점수까지 초안 반복 개선 | `loop` |
-| URL, 메모, 발췌를 저장 | `collect` |
-| 여러 스킬을 반복 가능한 워크플로우로 연결 | `pipeline` |
-| 없는 스킬을 찾아 설치 | `hunt` |
+| 하고 싶은 것 | 스킬 | 일어나는 일 |
+|---|---|---|
+| 리서치→작성→리뷰→개선 전체 사이클 | `pdca` | 품질 게이트 포함 전체 체이닝 |
+| 주제에 대한 정보 조사 | `research` | 소스 합성을 거치는 자율 심층 리서치 |
+| SWOT, Porter, RICE 등 15개 프레임워크 적용 | `analyze` | 구조화된 전략 분석 출력 |
+| 아티클, 보고서, 뉴스레터 작성 | `write` | 리서치 + 초안 + 리뷰를 한 명령어로 |
+| 다중 관점 피드백 받기 | `review` | 3~5명 병렬 리뷰어 + 합의 투표 |
+| 목표 점수까지 반복 개선 | `loop` | 리뷰어가 통과할 때까지 반복 |
+| URL, 메모, 발췌 저장 | `collect` | PARA 분류 기반 지식 캡처 |
+| 여러 스킬을 워크플로우로 연결 | `pipeline` | 커스텀 자동화 빌더 |
+| 없는 스킬 찾아 설치 | `hunt` | 새 기능 탐색 및 설치 |
 
----
-
-## 9개의 명령어
-
-명령어는 `/second-claude-code:` 접두사를 사용합니다.
-
-### 오케스트레이터
-
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| [`pdca`](docs/skills/pdca.ko.md) | 품질 게이트 + 액션 라우터를 갖춘 전체 PDCA 사이클 | `/second-claude-code:pdca "AI 에이전트 시장 보고서"` |
-
-`pdca` 명령어는 자연어에서 어떤 페이즈에 진입할지 감지하고 적절한 스킬을 체이닝합니다. "알아보고 보고서 써줘"라고 말하면 Plan→Do→Check→Act 전체 사이클이 게이트와 함께 실행됩니다. `--no-questions` 플래그로 질문 프로토콜을 생략할 수 있습니다.
-
-### 수집 (Gather)
-
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| [`research`](docs/skills/research.ko.md) | 반복 정제를 거치는 자율 심층 리서치 | `/second-claude-code:research "AI 에이전트 동향 2026"` |
-| [`hunt`](docs/skills/hunt.ko.md) | 스킬 탐색 — 새로운 기능을 찾아 설치 | `/second-claude-code:hunt "terraform 보안 감사"` |
-| [`collect`](docs/skills/collect.ko.md) | 지식 수집 및 PARA 분류 | `/second-claude-code:collect https://example.com/article` |
-
-### 생산 (Produce)
-
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| [`write`](docs/skills/write.ko.md) | 콘텐츠 제작 (아티클, 보고서, 뉴스레터 등) | `/second-claude-code:write article "바이브 코딩의 미래"` |
-| [`analyze`](docs/skills/analyze.ko.md) | 전략 프레임워크 분석 (15개 내장 프레임워크) | `/second-claude-code:analyze swot "우리 SaaS 제품"` |
-| [`pipeline`](docs/skills/pipeline.ko.md) | 커스텀 워크플로우 빌더 및 실행기 | `/second-claude-code:pipeline run "weekly-digest"` |
-
-### 검증 (Verify)
-
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| [`review`](docs/skills/review.ko.md) | 다중 관점 품질 게이트 + 합의 투표 | `/second-claude-code:review docs/draft.md --preset content` |
-
-### 개선 (Refine)
-
-| 명령어 | 설명 | 예시 |
-|--------|------|------|
-| [`loop`](docs/skills/loop.ko.md) | 목표 점수를 향한 반복 개선 | `/second-claude-code:loop "이 아티클을 4.5/5로 올려" --max 3` |
+명령어는 `/second-claude-code:` 접두사. 또는 그냥 자연어로 — 자동 라우터가 처리한다.
 
 ---
 
 ## 자동 라우팅
 
-슬래시 명령어를 외울 필요 없습니다. 훅 기반 자동 라우터가 한국어와 영어 자연어에서 의도를 감지하고 적절한 스킬을 실행합니다.
-
-### 한국어 트리거 키워드
-
-| 스킬 | 키워드 |
-|------|--------|
-| **research** (조사) | `조사해`, `리서치`, `찾아봐`, `알아봐`, `검색해`, `탐색` |
-| **write** (작성) | `뉴스레터`, `보고서`, `대본`, `아티클`, `글 써`, `써줘`, `작성해`, `카드뉴스` |
-| **analyze** (분석) | `분석해`, `전략` |
-| **review** (리뷰) | `리뷰`, `검토`, `품질`, `체크`, `피드백` |
-| **loop** (반복) | `개선`, `반복`, `더 좋게`, `다듬어` |
-| **collect** (수집) | `저장`, `캡처`, `정리해줘`, `메모`, `기록`, `클리핑`, `수집`, `수집해` |
-| **pipeline** (파이프라인) | `파이프라인`, `자동화`, `워크플로우` |
-| **hunt** (탐색) | `스킬 있`, `어떻게 해`, `할 수 있`, `방법`, `도구` |
-
-### 라우팅 예시
+명령어를 외울 필요 없다. 하고 싶은 걸 한국어든 영어든 그냥 치면 된다.
 
 ```
-"AI 에이전트 알아보고 보고서 써줘"       →  /second-claude-code:pdca (전체 사이클)
-"리뷰하고 개선해줘"                     →  /second-claude-code:pdca (Check+Act)
-"AI 에이전트에 대해 조사해"              →  /second-claude-code:research
-"이 주제로 아티클 작성해"                →  /second-claude-code:write
-"SWOT으로 분석해"                       →  /second-claude-code:analyze
-"이 초안을 리뷰해"                      →  /second-claude-code:review
-"더 좋게 다듬어"                        →  /second-claude-code:loop
-"이 링크 저장해줘"                      →  /second-claude-code:collect
-"주간 워크플로우 자동화"                 →  /second-claude-code:pipeline
-"보안 감사 스킬 있어?"                   →  /second-claude-code:hunt
+"AI 에이전트 알아보고 보고서 써줘"       →  pdca (전체 사이클)
+"이 주제로 아티클 작성해"                →  write
+"SWOT으로 분석해"                       →  analyze
+"이 초안을 리뷰해"                      →  review
+"더 좋게 다듬어"                        →  loop
+"이 링크 저장해줘"                      →  collect
+"보안 감사 스킬 있어?"                   →  hunt
 ```
 
-`hooks/prompt-detect.mjs`에서 영어 약 77개, 한국어 약 50개의 트리거 패턴(복합 패턴 포함)을 매칭하여 모델 응답 전에 적절한 스킬 컨텍스트를 주입합니다. 여러 스킬이 매칭될 경우, 프롬프트에서 가장 먼저 나타나는 패턴의 스킬이 선택됩니다.
+라우터는 두 레이어로 동작한다. 복합 패턴("알아보고 **써줘**")은 전체 PDCA 사이클을 트리거. 단일 스킬 의도는 해당 스킬로 직행. 여러 개가 매칭되면 프롬프트에서 가장 먼저 나타나는 패턴이 이긴다. 영어 ~77개 + 한국어 ~50개, 총 ~127개 트리거 패턴.
+
+> 영어 라우팅 예시: [English README](README.md) 참조.
+
+---
+
+## 리뷰 시스템
+
+여기가 진짜다. 대부분의 AI 글쓰기 도구는 생성하고 바로 넘긴다. Second Claude Code는 생성한 다음, **자기 결과물을 공격한 후에** 넘긴다.
+
+`/second-claude-code:review`는 3~5마리 전문 에이전트를 병렬로 투입한다:
+
+| 리뷰어 | 포켓몬 | 모델 | 하는 일 |
+|---|---|---|---|
+| 딥리뷰어 | 네이티오 (Xatu) | opus | 구조적 논리, 완결성, 논증 흐름 |
+| 데빌어드보킷 | 앱솔 (Absol) | sonnet | 가장 약한 지점을 찾아서 때린다 |
+| 팩트체커 | 폴리곤 (Porygon) | haiku | 모든 숫자, 주장, 출처를 검증 |
+| 톤가디언 | 푸린 (Jigglypuff) | haiku | 어조 일관성과 독자 적합성 |
+| 구조분석가 | 안농 (Unown) | haiku | 가독성, 구성, 스캔 용이성 |
+
+왜 포켓몬이냐고? 각자의 특성이 역할과 맞아떨어진다. 네이티오는 과거와 미래를 동시에 본다 (구조적 결함 감지). 앱솔은 재앙을 감지한다 (취약점 탐지). 폴리곤은 디지털 네이티브다 (데이터 기반 팩트체크). 기억하기 쉽고, 기억하기 쉬우면 각 리뷰어가 뭘 하는지 실제로 기억하게 된다.
+
+**합의 게이트:** 2/3 통과 = APPROVED. Critical이 하나라도 있으면 = MUST FIX. 예외 없음.
+
+![Review Flow](docs/images/review-flow.ko.svg)
+
+<details>
+<summary><strong>리뷰 프리셋</strong></summary>
+
+| 프리셋 | 리뷰어 | 적합한 용도 |
+|---|---|---|
+| `content` | 네이티오 + 앱솔 + 푸린 | 아티클, 블로그, 뉴스레터 |
+| `strategy` | 네이티오 + 앱솔 + 폴리곤 | PRD, SWOT, 전략 문서 |
+| `code` | 네이티오 + 폴리곤 + 안농 | 코드 리뷰 |
+| `quick` | 앱솔 + 폴리곤 | 빠른 검증 |
+| `full` | 5마리 전원 | 최종 퍼블리시 전 검수 |
+
+**외부 리뷰어 (선택):** `--external` 플래그로 MMBridge 경유 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex) 추가 가능. MMBridge 별도 설치 필요.
+
+</details>
 
 ---
 
 ## 스킬 조합
 
-스킬은 서로를 호출하며 자연스럽게 체이닝됩니다. 하나의 프롬프트로 전체 PDCA 사이클을 실행할 수 있습니다.
-
-**자주 쓰는 패턴:**
+스킬은 서로를 호출한다. 하나의 프롬프트로 전체 사이클이 돌아간다.
 
 | 패턴 | 체인 | 용도 |
-|------|------|------|
+|---|---|---|
 | 풀 PDCA | research → analyze → write → review → loop | 엔드투엔드 콘텐츠 |
 | 빠른 검수 | review → loop | 기존 초안 다듬기 |
 | 기획만 | research → analyze | 전략 분석 |
 | 자동 PDCA | `pipeline run autopilot --topic "..."` | 원커맨드 생산 |
 
-`/second-claude-code:pdca`는 다단계 작업의 권장 방법입니다 — 품질 게이트를 강제하고 액션 라우터로 리뷰 소견을 근본원인별로 분류합니다. `/second-claude-code:write`도 내부적으로 research와 review를 자동 호출하므로, 하나의 write 명령어만으로 리서치 기반 + 리뷰 검증된 콘텐츠를 생산할 수 있습니다.
-
----
-
-## 다중 관점 리뷰
-
-`/second-claude-code:review`는 3~5마리의 전문 서브에이전트를 병렬로 투입합니다. 모델도 다르고 전문 영역도 다릅니다.
-
-### 리뷰어
-
-| 리뷰어 | 포켓몬 | 모델 | 전문 영역 | 왜 이 포켓몬? |
-|--------|--------|------|-----------|--------------|
-| deep-reviewer | 네이티오(Xatu) | opus | 논리, 구조, 완결성 | 과거와 미래를 동시에 봄 = 구조적 결함 탐지 |
-| devil-advocate | 앱솔(Absol) | sonnet | 약점과 사각지대 공격 | 재앙 감지 포켓몬, 위험을 경고 |
-| fact-checker | 폴리곤(Porygon) | haiku | 주장, 수치, 출처 검증 | 디지털 네이티브, 데이터 기반 이진 판정 |
-| tone-guardian | 푸린(Jigglypuff) | haiku | 어조와 독자 적합성 | THE 보이스 포켓몬, 톤에 민감 |
-| structure-analyst | 안농(Unown) | haiku | 구성과 가독성 | 문자 형태, 구조에 집착 |
-
-### 리뷰 흐름
-
-![Review Flow](docs/images/review-flow.svg)
-
-<details>
-<summary>Mermaid 폴백 (SVG 미지원 환경용)</summary>
-
-```mermaid
-graph TD
-    U[User] --> D[Dispatch]
-    D --> DR[네이티오<br/>deep-reviewer / opus]
-    D --> DA[앱솔<br/>devil-advocate / sonnet]
-    D --> FC[폴리곤<br/>fact-checker / haiku]
-    D --> TG[푸린<br/>tone-guardian / haiku]
-    D --> SA[안농<br/>structure-analyst / haiku]
-    DR --> G[Consensus Gate]
-    DA --> G
-    FC --> G
-    TG --> G
-    SA --> G
-    G --> V{Verdict}
-    V -->|pass| AP[APPROVED]
-    V -->|issues| MF[MINOR FIXES]
-    V -->|threshold miss| NI[NEEDS IMPROVEMENT]
-    V -->|critical| MU[MUST FIX]
-```
-
-</details>
-
-**합의 게이트:** 2/3 통과 시 APPROVED (`full` 프리셋은 3/5). 임계값 미달인데 Critical 없으면 NEEDS IMPROVEMENT. Critical이 하나라도 있으면 즉시 MUST FIX.
-
-### 프리셋
-
-| 프리셋 | 리뷰어 | 적합한 용도 |
-|--------|--------|-------------|
-| `content` | 네이티오 + 앱솔 + 푸린 | 아티클, 블로그, 뉴스레터 |
-| `strategy` | 네이티오 + 앱솔 + 폴리곤 | PRD, SWOT, 전략 문서 |
-| `code` | 네이티오 + 폴리곤 + 안농 | 코드 리뷰 |
-| `quick` | 앱솔 + 폴리곤 | 빠른 검증 |
-| `full` | 5명 전원 | 최종 퍼블리시 전 검수 |
-
-**외부 리뷰어 (선택 사항):** `--external` 플래그로 MMBridge를 통한 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)를 추가할 수 있습니다. MMBridge 별도 설치 필요.
+`/second-claude-code:write`는 내부적으로 research와 review를 자동 호출한다. 한 명령어로 리서치 기반 + 리뷰 검증된 결과물.
 
 ---
 
 <details>
 <summary><strong>15개 전략 프레임워크</strong></summary>
 
-`/second-claude-code:analyze`는 용도별로 분류된 15개의 내장 프레임워크를 지원합니다:
+`/second-claude-code:analyze`는 15개 내장 프레임워크를 지원한다:
 
 | 카테고리 | 프레임워크 |
-|----------|------------|
-| **전략 (Strategy)** | ansoff, porter, pestle, north-star, value-prop |
-| **기획 (Planning)** | prd, okr, lean-canvas, gtm, battlecard |
-| **우선순위 (Prioritization)** | rice, pricing |
-| **분석 (Analysis)** | swot, persona, journey-map |
+|---|---|
+| **전략** | ansoff, porter, pestle, north-star, value-prop |
+| **기획** | prd, okr, lean-canvas, gtm, battlecard |
+| **우선순위** | rice, pricing |
+| **분석** | swot, persona, journey-map |
 
-각 프레임워크는 `skills/analyze/references/frameworks/`에 독립 레퍼런스 문서로 존재합니다. 프롬프트에서 자동으로 적절한 프레임워크를 선택하거나, 직접 지정할 수도 있습니다:
+각 프레임워크는 `skills/analyze/references/frameworks/`에 독립 문서로 존재한다. 프롬프트에서 자동 선택되거나 직접 지정 가능:
 
 ```bash
 /second-claude-code:analyze porter "클라우드 인프라 시장"
@@ -328,39 +187,37 @@ graph TD
 
 </details>
 
----
-
 <details>
-<summary><strong>아키텍처</strong></summary>
-
-3개 모델 티어(opus, sonnet, haiku)에 걸친 16마리 포켓몬 서브에이전트.
-MMBridge를 통한 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)는 선택 사항 — 없어도 동작합니다.
+<summary><strong>아키텍처 — 3개 모델 티어에 걸친 16마리 포켓몬</strong></summary>
 
 | 페이즈 | 포켓몬 | 역할 | 모델 |
-|--------|--------|------|------|
-| **Plan** | 이브이(Eevee) | 리서처 — 웹 검색, 데이터 수집 | haiku |
-| | 부엉(Noctowl) | 서처 — 검색 전문 | haiku |
-| **Do** | 후딘(Alakazam) | 애널리스트 — 패턴 인식, 데이터 합성 | sonnet |
-| | 뮤츠(Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
-| | 루브도(Smeargle) | 라이터 — 장문 콘텐츠 생산 | opus |
-| | 아르세우스(Arceus) | 마스터 — 범용 실행 | opus |
-| **Check** | 네이티오(Xatu) | 딥리뷰어 — 논리, 구조, 완결성 | opus |
-| | 앱솔(Absol) | 데빌어드보킷 — 약점 공격 | sonnet |
-| | 폴리곤(Porygon) | 팩트체커 — 수치, 출처 검증 | haiku |
-| | 푸린(Jigglypuff) | 톤가디언 — 어조, 독자 적합성 | haiku |
-| | 안농(Unown) | 구조분석가 — 가독성, 구성 | haiku |
-| **Act** | 메타몽(Ditto) | 에디터 — 콘텐츠 편집, 품질 개선 | opus |
-| **인프라** | +4마리 | 파이프라인 실행, 스킬 탐색 등 | 혼합 |
+|---|---|---|---|
+| **Plan** | 이브이 (Eevee) | 리서처 — 웹 검색, 데이터 수집 | haiku |
+| | 부엉 (Noctowl) | 검색 전문 | haiku |
+| **Do** | 후딘 (Alakazam) | 애널리스트 — 패턴 인식, 합성 | sonnet |
+| | 뮤츠 (Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
+| | 루브도 (Smeargle) | 라이터 — 장문 콘텐츠 | opus |
+| | 아르세우스 (Arceus) | 마스터 — 범용 실행 | sonnet |
+| **Check** | 네이티오 (Xatu) | 딥리뷰어 — 논리, 구조 | opus |
+| | 앱솔 (Absol) | 데빌어드보킷 — 약점 공격 | sonnet |
+| | 폴리곤 (Porygon) | 팩트체커 — 숫자, 출처 | haiku |
+| | 푸린 (Jigglypuff) | 톤가디언 — 어조, 독자 | haiku |
+| | 안농 (Unown) | 구조분석가 — 가독성 | haiku |
+| **Act** | 메타몽 (Ditto) | 에디터 — 콘텐츠 정제 | opus |
+| **인프라** | 괴력몬 (Machamp) | 스텝 실행기 — 개별 단계 수행 | sonnet |
+| | 자포코일 (Magnezone) | 인스펙터 — 스킬 후보 검사 | sonnet |
+| | 테오키스 (Deoxys) | 평가자 — 스킬 점수 산정 | sonnet |
+| | 캐이시 (Abra) | 커넥터 — 지식 연결 | haiku |
 
-![Agent Roster](docs/images/agent-roster.svg)
+MMBridge 경유 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)는 선택 사항 — 없어도 동작한다.
 
-[전체 아키텍처 — 에이전트 목록, PDCA 매핑, 액션 라우터 →](docs/architecture.md)
+![Agent Roster](docs/images/agent-roster.ko.svg)
 
 ```
 second-claude/
 ├── skills/     # 9개 스킬 (SKILL.md + references/)
 │   └── pdca/   # 오케스트레이터 (액션 라우터 + 질문 프로토콜)
-├── agents/     # 16개 포켓몬 테마 서브에이전트
+├── agents/     # 16마리 포켓몬 서브에이전트
 ├── commands/   # 9개 슬래시 명령어 래퍼
 ├── hooks/      # 자동 라우팅 + 컨텍스트 주입
 ├── references/ # 설계 원칙, 합의 게이트
@@ -369,40 +226,30 @@ second-claude/
 └── config/     # 사용자 설정
 ```
 
-| 디렉토리 | 역할 |
-|----------|------|
-| `skills/` | 각 스킬은 `SKILL.md`(짧고 컨텍스트 효율적)와 `references/` 하위 디렉토리(심층 문서)를 가집니다. |
-| `skills/pdca/` | 메타 스킬: 페이즈 게이트, 액션 라우터, 질문 프로토콜이 `references/`에 있습니다. |
-| `agents/` | 16개 포켓몬 서브에이전트: 프로덕션 5개 + 리뷰어 5개 + 파이프라인/헌트 6개. |
-| `commands/` | `/second-claude-code:*` 호출을 해당 스킬로 연결하는 래퍼. |
-| `hooks/` | 세션 라이프사이클 훅과 자연어 자동 라우팅 엔진. |
-| `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 메소드. |
+[전체 아키텍처 문서 →](docs/architecture.md)
+
+</details>
+
+<details>
+<summary><strong>설계 철학</strong></summary>
+
+세 가지 원칙이 핵심이다:
+
+1. **적지만 깊게** — 80개가 아니라 9개. 각 스킬이 references, gotchas, 품질 게이트를 내장한다. 표면적은 작고, 조합을 통해 무한한 워크플로우.
+
+2. **PDCA 내장** — 모든 산출물이 검증(Verify)과 개선(Refine)을 거쳐야 출하된다. 콘텐츠를 만드는 사이클이 스킬 자체를 개선하는 사이클이기도 하다. 제안이 아니라 게이트로 강제한다.
+
+3. **액션 라우터** — 리뷰가 실패하면 맹목적으로 loop을 돌리지 않는다. 근본 원인을 분류한다: 리서치 부족 → Plan으로 복귀. 누락 섹션 → Do로 복귀. 다듬기 이슈만 Loop으로. 모든 문제를 Loop에 밀어넣지 않는다.
+
+나머지 6개 원칙 (컨텍스트 절약, 의존성 제로, 단계적 공개, 함정 우선, 파일 기반 상태, 조합 가능)은 [docs/architecture.md](docs/architecture.md)에 있다.
 
 </details>
 
 ---
 
-## 설계 철학
-
-9가지 원칙이 아키텍처를 관통합니다:
-
-1. **적지만 깊게** — 80개가 아닌 9개 스킬(도메인 8 + 오케스트레이터 1). 하나하나가 깊습니다.
-2. **함정 먼저** — 해피 패스가 아니라 실패 모드를 문서화합니다.
-3. **단계적 공개** — SKILL.md는 짧게, `references/`에서 깊게.
-4. **컨텍스트 절약** — 스킬 설명 전체가 100토큰 이내.
-5. **의존성 제로** — `npm install` 불필요. 서브에이전트와 셸 스크립트만.
-6. **파일 기반 상태** — JSON으로 영속화, 외부 DB 불필요.
-7. **조합 가능** — 스킬이 서로를 호출. 9개 프리미티브로 무한한 워크플로우.
-8. **PDCA 내장** — 모든 산출물이 검증(Verify)과 개선(Refine)을 거침. 스킬이 자기 자신을 같은 사이클로 개선.
-9. **액션 라우터** — 리뷰 실패를 근본원인으로 분류: 리서치 갭 → Plan, 실행 갭 → Do, 품질 이슈만 Loop으로. 모든 문제를 Loop으로 밀어넣지 않습니다.
-
-**원칙이 맞물리는 방식:** 적지만 깊게 + 조합 가능 = 표면적은 작고 조합은 무한. 함정 먼저 + 단계적 공개 = 장문 없이도 안전. 컨텍스트 절약 + 의존성 제로 = 빠르고 싸고 플랫폼 무관. PDCA 내장 + 액션 라우터 = 맹목적 반복이 아닌 지능적 라우팅.
-
----
-
 ## 설정
 
-`config/config.example.json`을 플러그인 데이터 디렉토리에 복사한 후 커스터마이즈하세요:
+`config/config.example.json`을 플러그인 데이터 디렉토리에 복사하고 커스터마이즈:
 
 ```jsonc
 {
@@ -416,39 +263,68 @@ second-claude/
   "quality_gate": {
     "consensus_threshold": 0.67,    // 통과에 필요한 리뷰어 비율
     "external_reviewers": []        // MMBridge 경유: ["kimi", "qwen", "gemini", "codex"]
-  },
-  "knowledge": {
-    "para_enabled": true,           // 수집 항목을 PARA로 자동 분류
-    "max_entries": 1000             // 지식 베이스 최대 항목 수
   }
 }
 ```
 
-모든 설정은 선택 사항입니다 — 설정 파일이 없으면 기본값이 적용됩니다.
+모든 설정은 선택 사항 — 설정 파일이 없으면 기본값 적용.
 
 ---
 
 ## 알려진 제한 사항
 
-- **자동 라우팅 오탐** — 자연어 감지가 모호한 프롬프트에서 오작동할 수 있습니다 (예: "이 파일 저장해"가 `collect`를 트리거). 오탐 시 `/second-claude-code:*` 명시적 명령어를 사용하세요.
-- **haiku 에이전트 컨텍스트 제한** — 폴리곤, 푸린, 안농(haiku 티어)은 활성 플러그인이 많으면 "Prompt is too long" 오류가 발생할 수 있습니다. 미사용 플러그인을 비활성화하여 시스템 프롬프트 크기를 줄이세요.
-- **Claude Code 외 플랫폼 미검증** — OpenClaw, Codex, Gemini CLI 지원은 실험적입니다. SKILL.md 호환성은 기대되지만 엣지 케이스가 존재합니다.
-- **스트리밍 출력 미지원** — 서브에이전트 결과는 완료 후 한꺼번에 도착합니다. 긴 리서치나 작성 작업은 완료될 때까지 무음으로 보일 수 있습니다.
-- **리뷰 결과 영어 고정** — 포켓몬 리뷰어들은 입력 언어와 무관하게 영어로 소견을 작성합니다. 한국어 출력은 향후 지원 예정입니다.
+- **자동 라우팅 오탐** — 모호한 프롬프트에서 오작동 가능 ("이 파일 저장해" → `collect`). 오탐 시 `/second-claude-code:*` 명시적 명령어 사용.
+- **haiku 컨텍스트 제한** — 폴리곤, 푸린, 안농은 활성 플러그인이 많으면 "Prompt is too long" 에러. 미사용 플러그인 비활성화로 해결.
+- **Claude Code 외 플랫폼 미검증** — OpenClaw, Codex, Gemini CLI 지원은 실험적.
+- **스트리밍 미지원** — 서브에이전트 결과는 완료 후 한꺼번에 도착. 긴 작업은 완료까지 무음.
+- **리뷰 결과 영어 고정** — 리뷰어는 입력 언어와 무관하게 영어로 소견 작성. 한국어 출력 향후 지원 예정.
 
 ---
 
 ## 호환성
 
-| 플랫폼 | 설치 방법 | 상태 |
-|--------|-----------|------|
+| 플랫폼 | 설치 | 상태 |
+|---|---|---|
 | **Claude Code** (주력) | `claude plugin add github:EungjePark/second-claude-code` | 검증 완료 |
 | **OpenClaw** | 표준 ACP 프로토콜 — 자동 감지 | 실험적 |
-| **Codex** | SKILL.md 표준 호환 | 실험적 |
-| **Gemini CLI** | SKILL.md 표준 호환 | 실험적 |
+| **Codex** | SKILL.md 호환 | 실험적 |
+| **Gemini CLI** | SKILL.md 호환 | 실험적 |
 
-> Claude Code 이외 플랫폼은 SKILL.md 표준을 통해 동작할 것으로 기대되지만, 아직 완전히 검증되지 않았습니다. 호환성 문제를 발견하면 이슈로 알려주세요.
+---
 
 ## 기여 및 라이선스
 
-이슈와 PR은 [github.com/EungjePark/second-claude-code](https://github.com/EungjePark/second-claude-code)에서 환영합니다. [MIT](LICENSE) — Park Eungje
+이슈와 PR: [github.com/EungjePark/second-claude-code](https://github.com/EungjePark/second-claude-code)
+
+만든 사람: [Park Eungje](https://github.com/EungjePark). MIT 라이선스.
+
+---
+
+<details>
+<summary><strong>변경 이력</strong></summary>
+
+### v0.3.0 — PDCA v2, 액션 라우터, 포켓몬 에이전트 (현재)
+
+- **PDCA v2 오케스트레이터** + 액션 라우터 — 리뷰 실패를 근본원인별로 라우팅
+- **질문 프로토콜** — PDCA가 리서치 전에 명확화 질문 (`--no-questions`로 생략 가능)
+- **16마리 포켓몬 서브에이전트** — 3개 모델 티어(opus/sonnet/haiku)
+- **5명 병렬 리뷰어** + 합의 게이트 + 5개 프리셋
+- **훅 기반 자동 라우팅** — 영어 ~77개 + 한국어 ~50개 트리거 패턴
+- **자동 캡처** — research, write, analyze 결과를 `.captures/`에 자동 저장
+- **19개 라우팅 테스트** — false positive 회귀 방지
+
+### v0.2.0 — 보안 강화, 영어 로컬라이제이션
+
+- 훅·스킬 전반 보안 강화 (13개 감사 소견 해결)
+- 전체 스킬 문서 및 README 영어 번역
+- `claude plugin add` 설치를 위한 마켓플레이스 매니페스트
+- 전 스킬 품질 강화 (8개 도메인 스킬 9/10 목표; v0.3.0에서 pdca를 9번째 스킬로 승격)
+
+### v0.1.0 — 최초 릴리스
+
+- 도메인 스킬 8개 + 오케스트레이터 1개
+- `/analyze`용 15개 전략 프레임워크
+- PARA 기반 지식 수집
+- 반복 가능한 워크플로우를 위한 파이프라인 빌더
+
+</details>

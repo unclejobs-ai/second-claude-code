@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 480" fill="none" role="img" aria-labelledby="ar-title ar-desc">
+  <title id="ar-title">에이전트 로스터 — 16마리 포켓몬 서브에이전트</title>
+  <desc id="ar-desc">생산, 리뷰, 파이프라인 3개 컬럼으로 PDCA 페이즈별 에이전트를 모델 티어와 함께 표시.</desc>
+  <defs>
+    <linearGradient id="ar-bg" x1="0" y1="0" x2="860" y2="460" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#11161d"/>
+      <stop offset="1" stop-color="#090d12"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="860" height="480" rx="20" fill="url(#ar-bg)"/>
+
+  <!-- Title -->
+  <text x="430" y="32" text-anchor="middle" fill="#f5f7fb" font-size="16" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">에이전트 로스터 — 16마리 포켓몬 서브에이전트</text>
+
+  <!-- Legend -->
+  <circle cx="260" cy="50" r="5" fill="#e57373"/>
+  <text x="272" y="54" fill="#97a4b2" font-size="10" font-family="IBM Plex Mono, monospace">opus (3마리)</text>
+  <circle cx="380" cy="50" r="5" fill="#64b5f6"/>
+  <text x="392" y="54" fill="#97a4b2" font-size="10" font-family="IBM Plex Mono, monospace">sonnet (7마리)</text>
+  <circle cx="510" cy="50" r="5" fill="#81c784"/>
+  <text x="522" y="54" fill="#97a4b2" font-size="10" font-family="IBM Plex Mono, monospace">haiku (6마리)</text>
+
+  <!-- ===== Column 1: Production (Plan / Do) ===== -->
+  <rect x="20" y="70" width="264" height="24" rx="6" fill="#151e28"/>
+  <text x="32" y="87" fill="#7fd6c2" font-size="11" letter-spacing="2" font-weight="600" font-family="IBM Plex Mono, monospace">생산</text>
+  <text x="70" y="87" fill="#6b7a8a" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Plan / Do 단계</text>
+
+  <!-- 이브이 Eevee -->
+  <rect x="20" y="102" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="40" cy="130" r="5" fill="#81c784"/>
+  <text x="54" y="122" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">이브이</text>
+  <text x="110" y="122" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="54" y="140" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서처 — 웹 검색, 데이터 수집</text>
+
+  <!-- 후딘 Alakazam -->
+  <rect x="20" y="166" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="40" cy="194" r="5" fill="#64b5f6"/>
+  <text x="54" y="186" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">후딘</text>
+  <text x="94" y="186" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="54" y="204" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">애널리스트 — 패턴 인식, 데이터 합성</text>
+
+  <!-- 뮤츠 Mewtwo -->
+  <rect x="20" y="230" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="40" cy="258" r="5" fill="#64b5f6"/>
+  <text x="54" y="250" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">뮤츠</text>
+  <text x="102" y="250" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="54" y="268" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">전략가 — 프레임워크 분석</text>
+
+  <!-- 루브도 Smeargle -->
+  <rect x="20" y="294" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="40" cy="322" r="5" fill="#e57373"/>
+  <text x="54" y="314" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">루브도</text>
+  <text x="110" y="314" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">opus</text>
+  <text x="54" y="332" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">라이터 — 장문 콘텐츠 생산</text>
+
+  <!-- 메타몽 Ditto -->
+  <rect x="20" y="358" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="40" cy="386" r="5" fill="#e57373"/>
+  <text x="54" y="378" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">메타몽</text>
+  <text x="116" y="378" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">opus</text>
+  <text x="54" y="396" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">에디터 — 콘텐츠 편집, 품질 개선</text>
+
+  <!-- ===== Column 2: Review (Check) ===== -->
+  <rect x="298" y="70" width="264" height="24" rx="6" fill="#1a1810"/>
+  <text x="310" y="87" fill="#c9b48f" font-size="11" letter-spacing="2" font-weight="600" font-family="IBM Plex Mono, monospace">리뷰</text>
+  <text x="350" y="87" fill="#6b7a8a" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Check 단계</text>
+
+  <!-- 네이티오 Xatu -->
+  <rect x="298" y="102" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="318" cy="130" r="5" fill="#e57373"/>
+  <text x="332" y="122" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">네이티오</text>
+  <text x="402" y="122" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">opus</text>
+  <text x="332" y="140" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">딥 리뷰어 — 논리, 구조, 완결성</text>
+
+  <!-- 앱솔 Absol -->
+  <rect x="298" y="166" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="318" cy="194" r="5" fill="#64b5f6"/>
+  <text x="332" y="186" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">앱솔</text>
+  <text x="378" y="186" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="332" y="204" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">데빌 어드보킷 — 약점, 사각지대</text>
+
+  <!-- 폴리곤 Porygon -->
+  <rect x="298" y="230" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="318" cy="258" r="5" fill="#81c784"/>
+  <text x="332" y="250" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">폴리곤</text>
+  <text x="398" y="250" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="332" y="268" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">팩트 체커 — 수치, 출처 검증</text>
+
+  <!-- 푸린 Jigglypuff -->
+  <rect x="298" y="294" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="318" cy="322" r="5" fill="#81c784"/>
+  <text x="332" y="314" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">푸린</text>
+  <text x="378" y="314" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="332" y="332" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">톤 가디언 — 어조, 독자 적합성</text>
+
+  <!-- 안농 Unown -->
+  <rect x="298" y="358" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="318" cy="386" r="5" fill="#81c784"/>
+  <text x="332" y="378" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">안농</text>
+  <text x="378" y="378" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="332" y="396" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">구조 분석가 — 구성, 가독성</text>
+
+  <!-- ===== Column 3: Pipeline & Hunt ===== -->
+  <rect x="576" y="70" width="264" height="24" rx="6" fill="#151e28"/>
+  <text x="588" y="87" fill="#97a4b2" font-size="11" letter-spacing="2" font-weight="600" font-family="IBM Plex Mono, monospace">파이프라인</text>
+  <text x="680" y="87" fill="#6b7a8a" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">인프라</text>
+
+  <!-- 아르세우스 Arceus -->
+  <rect x="576" y="102" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="130" r="5" fill="#64b5f6"/>
+  <text x="610" y="122" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">아르세우스</text>
+  <text x="698" y="122" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="610" y="140" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">오케스트레이터 — 파이프라인 조율</text>
+
+  <!-- 괴력몬 Machamp -->
+  <rect x="576" y="166" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="194" r="5" fill="#64b5f6"/>
+  <text x="610" y="186" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">괴력몬</text>
+  <text x="676" y="186" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="610" y="204" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">스텝 실행기 — 개별 단계 수행</text>
+
+  <!-- 부엉 Noctowl -->
+  <rect x="576" y="230" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="258" r="5" fill="#81c784"/>
+  <text x="610" y="250" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">부엉</text>
+  <text x="650" y="250" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="610" y="268" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">서처 — 외부 소스 검색</text>
+
+  <!-- 자포코일 Magnezone -->
+  <rect x="576" y="294" width="264" height="56" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="322" r="5" fill="#64b5f6"/>
+  <text x="610" y="314" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">자포코일</text>
+  <text x="686" y="314" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="610" y="332" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">인스펙터 — 스킬 후보 검사</text>
+
+  <!-- 테오키스 Deoxys -->
+  <rect x="576" y="358" width="264" height="42" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="379" r="5" fill="#64b5f6"/>
+  <text x="610" y="375" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">테오키스</text>
+  <text x="686" y="375" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">sonnet</text>
+  <text x="610" y="393" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">평가자 — 스킬 점수 산정</text>
+
+  <!-- 캐이시 Abra -->
+  <rect x="576" y="408" width="264" height="42" rx="10" fill="#121820" stroke="#252f3a" stroke-width="0.8"/>
+  <circle cx="596" cy="429" r="5" fill="#81c784"/>
+  <text x="610" y="425" fill="#f5f7fb" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">캐이시</text>
+  <text x="670" y="425" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">haiku</text>
+  <text x="610" y="443" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">커넥터 — 지식 연결</text>
+</svg>
