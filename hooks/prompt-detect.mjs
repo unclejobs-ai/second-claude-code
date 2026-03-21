@@ -229,8 +229,8 @@ const routes = [
   {
     patterns: [
       ...ko.collect,
-      "save this",
       "save this link",
+      "save this url",
       "save for later",
       "collect this",
       "take a note",
@@ -247,8 +247,8 @@ const routes = [
       "run a pipeline",
       "create a pipeline",
       "run pipeline",
-      "automate this",
-      "automate the",
+      "automate this workflow",
+      "automate this process",
       "build a workflow",
       "create a workflow",
     ],
