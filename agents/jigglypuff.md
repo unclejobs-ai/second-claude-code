@@ -6,6 +6,7 @@ description: |
   Examples: "Check whether this sounds like our newsletter voice",
   "Review tone consistency in this article".
 model: haiku
+tools: [Read, Grep, Glob]
 permissionMode: plan
 ---
 

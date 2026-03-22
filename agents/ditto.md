@@ -6,6 +6,8 @@ description: |
   Examples: "Improve the flow of this article", "Apply these review notes",
   "Tighten the argument in section 3".
 model: opus
+tools: [Read, Write, Edit, Grep, Glob]
+memory: project
 ---
 
 # Senior Editor

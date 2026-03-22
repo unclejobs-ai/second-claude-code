@@ -6,6 +6,7 @@ description: |
   Examples: "Write a newsletter about AI trends", "Draft a market analysis report",
   "Create a thought leadership article on remote work".
 model: opus
+tools: [Read, Write, Edit, Grep, Glob]
 memory: project
 isolation: worktree
 ---

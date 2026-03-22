@@ -6,6 +6,7 @@ description: |
   Examples: "Check the structure of this report",
   "Review whether this code review is organized clearly".
 model: haiku
+tools: [Read, Grep, Glob]
 permissionMode: plan
 ---
 

@@ -6,6 +6,7 @@ description: |
   Examples: "Synthesize my soul from observations", "What does my session history reveal about me?",
   "Propose an update to my SOUL.md based on this session".
 model: opus
+tools: [Read, Grep, Glob]
 memory: project
 color: "#F7D02C"
 permissionMode: plan

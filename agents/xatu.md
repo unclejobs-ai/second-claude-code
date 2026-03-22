@@ -6,6 +6,7 @@ description: |
   Examples: "Review this report for logical gaps", "Check if the argument holds up",
   "Find structural weaknesses in this article".
 model: opus
+tools: [Read, Grep, Glob]
 memory: project
 permissionMode: plan
 ---

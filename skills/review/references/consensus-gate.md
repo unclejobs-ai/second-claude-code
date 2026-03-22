@@ -73,14 +73,56 @@ When multiple reviewers flag the same or overlapping issue:
 
 ## External Reviewers
 
-When `--external` is set, the review skill detects installed external CLIs and dispatches a review to the first available one. This provides a cross-model perspective.
+When `--external` is set, the review skill detects the first available external CLI and dispatches a parallel cross-model review.
 
-Detection order:
-1. `mmbridge` — multi-model bridge (preferred)
-2. `kimi` — Kimi reviewer
+### Detection Order
+
+1. `mmbridge` — multi-model bridge (preferred, runs kimi/qwen/codex/gemini internally)
+2. `kimi` — standalone Kimi CLI
 3. `codex` — OpenAI Codex CLI
 4. `gemini` — Google Gemini CLI
 
-The external review runs in parallel with internal reviewers. Its findings are merged into the consensus gate as an additional voter. Configure available reviewers in `config.example.json` under `quality_gate.external_reviewers`.
+Detection method: `which <cli>` via Bash. If none is found, `--external` is silently ignored.
 
-If no external CLI is detected, `--external` is silently ignored.
+### Vote Weight
+
+The external review counts as **1 additional voter**, increasing the denominator by 1:
+
+| Preset | Without `--external` | With `--external` |
+|--------|---------------------|-------------------|
+| `content` | 2/3 pass | 2/4 pass |
+| `strategy` | 2/3 pass | 2/4 pass |
+| `code` | 2/3 pass | 2/4 pass |
+| `quick` | 2/2 pass | 2/3 pass |
+| `full` | 4/5 pass | 4/6 pass |
+
+### MMBridge Invocation
+
+When mmbridge is the detected CLI:
+
+```bash
+mmbridge review --tool kimi --mode review --stream --export /tmp/mmbridge-review-${RUN_ID}.md
+```
+
+- Use `--tool kimi` as default (most reliable single-model mode).
+- `--tool all` has a known race condition (concurrent file rename ENOENT) — avoid until upstream fix.
+- If mmbridge exits non-zero, proceed without the external vote. Do not block the gate on external failure.
+
+### Severity Mapping
+
+MMBridge findings use different severity labels. Map them to internal severities:
+
+| MMBridge | Internal |
+|----------|----------|
+| `CRITICAL` | Critical |
+| `WARNING` | Major |
+| `INFO` | Minor |
+| `REFACTOR` | Minor |
+
+### Score Handling
+
+If mmbridge provides a numeric score (from its consensus output), include it in the average score calculation. If no score is available, the external reviewer participates only in the vote-count gate.
+
+### Finding Merge
+
+External findings are deduplicated against internal findings using the standard deduplication rules (section above). External-only findings are added to the report with `[external: mmbridge]` tag.

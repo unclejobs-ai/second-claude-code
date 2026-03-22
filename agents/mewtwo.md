@@ -6,6 +6,8 @@ description: |
   Examples: "SWOT analysis of our product", "Porter's Five Forces for the market",
   "Jobs-to-be-Done analysis for our users".
 model: sonnet
+tools: [Read, Grep, Glob, WebSearch, WebFetch]
+memory: project
 ---
 
 # Strategic Analyst

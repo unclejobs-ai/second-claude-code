@@ -134,7 +134,41 @@ When `--team-review` is set, the standard parallel dispatch is replaced by an Ag
 
 ## External Reviewers
 
-When `--external` is set, detects installed external CLIs and dispatches a cross-model review in parallel. See `references/consensus-gate.md` for detection order and configuration. Silently ignored if no CLI is found.
+When `--external` is set, dispatch a cross-model review in parallel with internal reviewers. The external review counts as 1 additional voter in the consensus gate.
+
+### Detection
+
+Check for installed CLIs in this order. Use the first one found:
+
+1. `mmbridge` — preferred. Runs multiple models itself.
+2. `kimi` — Kimi CLI standalone
+3. `codex` — OpenAI Codex CLI
+4. `gemini` — Google Gemini CLI
+
+Detection: run `which <cli>` via Bash. If none is found, silently skip `--external`.
+
+### Dispatch (mmbridge)
+
+When mmbridge is detected, run via Bash in parallel with internal reviewer dispatch:
+
+```bash
+mmbridge review --tool kimi --mode review --stream --export /tmp/mmbridge-review-${RUN_ID}.md
+```
+
+Use `--tool kimi` (most reliable). Avoid `--tool all` (known race condition in concurrent writes).
+
+If mmbridge exits non-zero, log the error and proceed without the external vote — do not block the gate.
+
+### Dispatch (standalone CLI)
+
+For kimi/codex/gemini without mmbridge, the review skill delegates to the corresponding agent definition (e.g., `kimi-reviewer`, `codex-reviewer`). These agents are dispatched as subagents and their output feeds into the SubagentStop hook like any internal reviewer.
+
+### Merging External Findings
+
+1. Parse the mmbridge export file for findings with severity markers (`CRITICAL`, `WARNING`, `INFO`).
+2. Map severities: `CRITICAL` → Critical, `WARNING` → Major, `INFO` → Minor.
+3. Add the external review as 1 voter. A 3-reviewer preset becomes 4 voters with `--external`.
+4. External findings are deduplicated against internal findings using the same rules in `references/consensus-gate.md`.
 
 ## Gotchas
 

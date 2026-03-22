@@ -6,6 +6,7 @@ description: |
   Examples: "Attack this proposal", "What would a skeptic say about this?",
   "Find the holes in this argument".
 model: sonnet
+tools: [Read, Grep, Glob]
 permissionMode: plan
 ---
 

@@ -6,6 +6,8 @@ description: |
   Examples: "Analyze these research findings", "Find patterns in this data",
   "Identify contradictions across these sources".
 model: sonnet
+tools: [Read, Grep, Glob]
+memory: project
 ---
 
 # Data Analyst

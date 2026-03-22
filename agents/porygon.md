@@ -6,6 +6,7 @@ description: |
   Examples: "Verify the stats in this article", "Check all claims in this report",
   "Are these numbers accurate?".
 model: haiku
+tools: [Read, Grep, Glob, WebSearch, WebFetch]
 permissionMode: plan
 ---
 
