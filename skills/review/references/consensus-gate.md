@@ -24,6 +24,7 @@ Applied only when score-based condition is met (no Critical findings, score `>= 
 | `content` | 3 | 2 | `ceil(0.67 * 3) = 2` |
 | `strategy` | 3 | 2 | `ceil(0.67 * 3) = 2` |
 | `code` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `security` | 3 | 2 | `ceil(0.67 * 3) = 2` |
 | `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
 | `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
 
@@ -75,14 +76,7 @@ When multiple reviewers flag the same or overlapping issue:
 
 When `--external` is set, the review skill detects the first available external CLI and dispatches a parallel cross-model review.
 
-### Detection Order
-
-1. `mmbridge` — multi-model bridge (preferred, runs kimi/qwen/codex/gemini internally)
-2. `kimi` — standalone Kimi CLI
-3. `codex` — OpenAI Codex CLI
-4. `gemini` — Google Gemini CLI
-
-Detection method: `which <cli>` via Bash. If none is found, `--external` is silently ignored.
+For detection order, invocation pattern, error handling, and severity mapping, see `references/mmbridge-integration.md`.
 
 ### Vote Weight
 
@@ -93,31 +87,9 @@ The external review counts as **1 additional voter**, increasing the denominator
 | `content` | 2/3 pass | 2/4 pass |
 | `strategy` | 2/3 pass | 2/4 pass |
 | `code` | 2/3 pass | 2/4 pass |
+| `security` | 2/3 pass | 2/4 pass |
 | `quick` | 2/2 pass | 2/3 pass |
 | `full` | 4/5 pass | 4/6 pass |
-
-### MMBridge Invocation
-
-When mmbridge is the detected CLI:
-
-```bash
-mmbridge review --tool kimi --mode review --stream --export /tmp/mmbridge-review-${RUN_ID}.md
-```
-
-- Use `--tool kimi` as default (most reliable single-model mode).
-- `--tool all` has a known race condition (concurrent file rename ENOENT) — avoid until upstream fix.
-- If mmbridge exits non-zero, proceed without the external vote. Do not block the gate on external failure.
-
-### Severity Mapping
-
-MMBridge findings use different severity labels. Map them to internal severities:
-
-| MMBridge | Internal |
-|----------|----------|
-| `CRITICAL` | Critical |
-| `WARNING` | Major |
-| `INFO` | Minor |
-| `REFACTOR` | Minor |
 
 ### Score Handling
 

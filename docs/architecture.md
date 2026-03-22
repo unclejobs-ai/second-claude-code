@@ -241,10 +241,24 @@ phases:
 
 ---
 
-## Cross-Model Review (MMBridge) — Optional
+## MMBridge Integration — Optional
 
-The `--external` flag on `/second-claude-code:review` adds cross-model review via MMBridge.
-**This is entirely optional** — the review skill works fully without MMBridge installed.
+MMBridge CLI provides multi-model AI capabilities across multiple PDCA phases.
+When installed, it auto-enhances research, review, and phase gates.
+**Entirely optional** — all skills work fully without MMBridge.
+
+For detection, invocation, and error handling rules, see `references/mmbridge-integration.md`.
+
+### Integration Points
+
+| PDCA Phase | MMBridge Command | Skill | Behavior |
+|-----------|-----------------|-------|----------|
+| **Plan** | `mmbridge research` | `/scc:research` | Parallel multi-model research, merged into analyst input |
+| **Check** | `mmbridge review` | `/scc:review --external` | Cross-model code review, +1 consensus voter |
+| **Check** | `mmbridge security` | `/scc:review --preset security --external` | CWE-classified security audit |
+| **Check→Act** | `mmbridge gate` | `/scc:pdca` | Advisory coverage check at phase transition |
+
+### External Reviewers
 
 | Reviewer | Provider | Strength |
 |----------|----------|----------|
@@ -253,30 +267,45 @@ The `--external` flag on `/second-claude-code:review` adds cross-model review vi
 | gemini-reviewer | Gemini | Design and visual review |
 | codex-reviewer | Codex | Code-focused one-shot review |
 
-Each external reviewer operates through MMBridge's context-aware multi-turn protocol. Results are merged into the consensus gate alongside internal reviewers.
-
-### MMBridge Flow
+### Review Flow
 
 ```
 Review Dispatch
 ├── Internal (always)
 │   ├── Xatu / deep-reviewer (opus)
 │   ├── Absol / devil-advocate (sonnet)
-│   ├── Porygon / fact-checker (haiku)
+│   ├── Porygon / fact-checker (sonnet)
 │   ├── Jigglypuff / tone-guardian (haiku)
 │   └── Unown / structure-analyst (haiku)
 │
-├── External (--external flag)
-│   ├── kimi-reviewer (via mmbridge)
-│   ├── qwen-reviewer (via mmbridge)
-│   ├── gemini-reviewer (via mmbridge)
-│   └── codex-reviewer (via mmbridge)
+├── External — review (--external flag)
+│   └── mmbridge review --tool kimi
+│
+├── External — security (--preset security --external)
+│   └── mmbridge security --scope all
 │
 └── Consensus Gate
     ├── Merge internal + external findings
     ├── Deduplicate overlapping issues
     ├── Apply severity calibration
+    ├── mmbridge gate advisory (if available)
     └── Emit verdict: APPROVED | MINOR FIXES | NEEDS IMPROVEMENT | MUST FIX
+```
+
+### Research Flow
+
+```
+Research Dispatch
+├── Internal (always)
+│   └── researcher(sonnet) → WebSearch x5-10
+│
+├── External (mmbridge detected, depth medium+)
+│   └── mmbridge research --type code-aware
+│
+└── Analyst Merge
+    ├── Internal findings + mmbridge findings
+    ├── Gap analysis
+    └── Writer synthesis → Research Brief
 ```
 
 ---

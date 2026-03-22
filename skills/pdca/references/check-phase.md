@@ -41,6 +41,7 @@ This is the quality gate that determines whether work ships or iterates.
 - [ ] **Verdict is clear** — One of the four standard verdicts
 - [ ] **Findings are actionable** — Each finding has location + severity + fix suggestion
 - [ ] **No false consensus** — Reviewers were independent (not converged)
+- [ ] **MMBridge gate advisory** (optional) — If mmbridge available, coverage check logged
 
 ### On APPROVED
 
@@ -83,3 +84,42 @@ Pass to Act phase (if not APPROVED):
   - MINOR FIXES → `--max 1`
   - NEEDS IMPROVEMENT → `--max 3`
   - MUST FIX → `--max 5`
+
+## MMBridge Gate Advisory
+
+When mmbridge is detected (see `references/mmbridge-integration.md`), run a coverage check
+after the internal consensus gate completes.
+
+### Execution
+
+After internal consensus gate produces a verdict:
+
+```bash
+mmbridge gate --mode <mode> --format json --export /tmp/mmbridge-gate-${RUN_ID}.json
+```
+
+- `--mode review`: for content/strategy/code presets
+- `--mode security`: for security preset
+- `--mode architecture`: for structural reviews
+
+The mode is determined by the `review_preset` field in the CheckOutput schema.
+
+### Interpretation
+
+The gate result is **advisory only** — it does NOT override the consensus verdict.
+
+| Gate Output | Action |
+|------------|--------|
+| Coverage adequate | Log: "mmbridge gate: coverage OK" |
+| Coverage gaps found | Warn: "mmbridge gate: {n} files uncovered — {file list}" |
+| Gate command failed | Log error, proceed with internal verdict only |
+
+### Recording
+
+If PDCA state MCP is available, record the gate result as metadata on the Check→Act transition:
+
+```
+pdca_transition({ phase: "act", metadata: { mmbridge_gate: { coverage: score, uncovered: [...] } } })
+```
+
+If MCP is not available, include the gate result in the review report output as an appendix.

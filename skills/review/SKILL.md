@@ -27,13 +27,46 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 
 ## Presets
 
-| Preset | Reviewers |
-|--------|-----------|
-| `content` | deep-reviewer + devil-advocate + tone-guardian |
-| `strategy` | deep-reviewer + devil-advocate + fact-checker |
-| `code` | deep-reviewer + fact-checker + structure-analyst |
-| `quick` | devil-advocate + fact-checker |
-| `full` | all 5 reviewers |
+| Preset | Reviewers | MMBridge |
+|--------|-----------|----------|
+| `content` | deep-reviewer + devil-advocate + tone-guardian | — |
+| `strategy` | deep-reviewer + devil-advocate + fact-checker | — |
+| `code` | deep-reviewer + fact-checker + structure-analyst | — |
+| `security` | deep-reviewer + fact-checker + structure-analyst | `mmbridge security` (via `--external`) |
+| `quick` | devil-advocate + fact-checker | — |
+| `full` | all 5 reviewers | — |
+
+## Security Preset
+
+The `security` preset activates security-focused review with optional mmbridge security integration.
+
+### Internal reviewers (security mode)
+
+- **deep-reviewer** (opus): Architecture security analysis — auth flows, data boundaries, privilege escalation paths
+- **fact-checker** (sonnet): Known CVE checks, dependency vulnerability scanning, OWASP Top 10 verification
+- **structure-analyst** (haiku): Configuration audit — secrets exposure, permission models, environment isolation
+
+### MMBridge Security (via --external)
+
+When `--external` is set and mmbridge is detected, `mmbridge security` runs in parallel with internal reviewers. Consistent with all other presets — `--external` is always opt-in.
+
+```bash
+mmbridge security --scope <scope> --stream --export /tmp/mmbridge-security-${RUN_ID}.md
+```
+
+**Option passthrough**:
+- `--scope`: `/scc:review --preset security --scope auth` → `mmbridge security --scope auth` (default: `all`)
+- `--compliance`: `/scc:review --preset security --compliance GDPR,SOC2` → `mmbridge security --compliance GDPR,SOC2`
+
+### CWE Severity Mapping
+
+mmbridge security uses CWE classification. Map to internal severities per `references/mmbridge-integration.md` § Severity Mapping.
+
+### Consensus gate
+
+mmbridge security counts as 1 additional voter (same as `--external` for other presets):
+- Without mmbridge: 2/3 pass (3 internal reviewers)
+- With mmbridge: 2/4 pass (3 internal + 1 mmbridge)
 
 ## Critic Output Format
 
@@ -112,13 +145,15 @@ Consensus: {X}/{Y}
 
 ## Options
 
-| Flag | Values | Default |
-|------|--------|---------|
-| `--preset` | `content\|strategy\|code\|quick\|full` | `content` |
-| `--threshold` | number | `0.67` |
-| `--strict` | flag | off |
-| `--external` | flag | off |
-| `--team-review` | flag | off |
+| Flag | Values | Default | Description |
+|------|--------|---------|-------------|
+| `--preset` | `content\|strategy\|code\|security\|quick\|full` | `content` | |
+| `--threshold` | number | `0.67` | |
+| `--strict` | flag | off | |
+| `--external` | flag | off | |
+| `--team-review` | flag | off | |
+| `--scope` | `auth\|api\|infra\|all` | `all` | Security audit scope (security preset only) |
+| `--compliance` | `GDPR,SOC2,HIPAA,PCI-DSS` | — | Compliance frameworks (security preset only) |
 
 ## Team Review Workflow
 
@@ -136,20 +171,11 @@ When `--team-review` is set, the standard parallel dispatch is replaced by an Ag
 
 When `--external` is set, dispatch a cross-model review in parallel with internal reviewers. The external review counts as 1 additional voter in the consensus gate.
 
-### Detection
+For mmbridge detection, invocation, error handling, and timeout rules, see `references/mmbridge-integration.md`.
 
-Check for installed CLIs in this order. Use the first one found:
+### Dispatch
 
-1. `mmbridge` — preferred. Runs multiple models itself.
-2. `kimi` — Kimi CLI standalone
-3. `codex` — OpenAI Codex CLI
-4. `gemini` — Google Gemini CLI
-
-Detection: run `which <cli>` via Bash. If none is found, silently skip `--external`.
-
-### Dispatch (mmbridge)
-
-When mmbridge is detected, run via Bash in parallel with internal reviewer dispatch:
+When mmbridge is detected:
 
 ```bash
 mmbridge review --tool kimi --mode review --stream --export /tmp/mmbridge-review-${RUN_ID}.md
@@ -157,18 +183,14 @@ mmbridge review --tool kimi --mode review --stream --export /tmp/mmbridge-review
 
 Use `--tool kimi` (most reliable). Avoid `--tool all` (known race condition in concurrent writes).
 
-If mmbridge exits non-zero, log the error and proceed without the external vote — do not block the gate.
-
-### Dispatch (standalone CLI)
-
-For kimi/codex/gemini without mmbridge, the review skill delegates to the corresponding agent definition (e.g., `kimi-reviewer`, `codex-reviewer`). These agents are dispatched as subagents and their output feeds into the SubagentStop hook like any internal reviewer.
+When mmbridge is not found, check for standalone CLIs (`kimi`, `codex`, `gemini`). If found, delegate to the corresponding agent definition (e.g., `kimi-reviewer`). If none found, silently skip `--external`.
 
 ### Merging External Findings
 
-1. Parse the mmbridge export file for findings with severity markers (`CRITICAL`, `WARNING`, `INFO`).
-2. Map severities: `CRITICAL` → Critical, `WARNING` → Major, `INFO` → Minor.
+1. Parse the mmbridge export file for findings with severity markers.
+2. Map severities per `references/mmbridge-integration.md` § Severity Mapping.
 3. Add the external review as 1 voter. A 3-reviewer preset becomes 4 voters with `--external`.
-4. External findings are deduplicated against internal findings using the same rules in `references/consensus-gate.md`.
+4. Deduplicate against internal findings per `references/consensus-gate.md`.
 
 ## Gotchas
 

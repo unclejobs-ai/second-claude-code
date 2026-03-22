@@ -100,7 +100,8 @@ Produced at the end of the Check phase, passed to Act.
     }
   ],
   "critical_findings": ["string"],
-  "top_improvements": ["string (max 5)"]
+  "top_improvements": ["string (max 5)"],
+  "review_preset": "string (content|strategy|code|security|quick|full)"
 }
 ```
 
@@ -116,6 +117,7 @@ Produced at the end of the Check phase, passed to Act.
 | `reviewers[].score` | number | yes | Float in range `[0.0, 1.0]` |
 | `critical_findings` | string[] | yes | May be empty array `[]` if none |
 | `top_improvements` | string[] | yes | Maximum 5 items; may be empty if `APPROVED` |
+| `review_preset` | string | no | One of the preset values; used by mmbridge gate for `--mode` mapping |
 
 ### Validation Failure Actions
 

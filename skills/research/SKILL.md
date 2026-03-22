@@ -17,11 +17,10 @@ Autonomous multi-round web research that produces structured Research Briefs.
 ## Internal Flow
 
 ```
-researcher(sonnet) --[WebSearch x5-10]--> raw findings
-        |
-        v
-analyst(sonnet) --[structure + gap analysis]--> gap list
-        |                                        (shallow: skip gap-fill)
+researcher(sonnet) --[WebSearch x5-10]--> raw findings ─┐
+                                                         ├─→ analyst(sonnet) --[merge + gap analysis]
+mmbridge research (parallel, if detected) ──────────────┘        |
+                                                          (shallow: skip gap-fill)
         v  (medium/deep only, if gaps found)
 researcher(sonnet) --[WebSearch x3-5]--> supplemental findings
         |
@@ -29,12 +28,45 @@ researcher(sonnet) --[WebSearch x3-5]--> supplemental findings
 writer(sonnet) --[synthesis]--> Research Brief
 ```
 
+## MMBridge Enhancement
+
+When mmbridge is detected (see `references/mmbridge-integration.md`), the research skill dispatches
+`mmbridge research` in **parallel** with the internal researcher for multi-model perspective.
+
+### Enhanced Flow
+
+```
+┌─ researcher(sonnet): WebSearch ────────────────┐
+│                                                 ├─→ analyst: merge + gap analysis
+└─ mmbridge research "<topic>" --type code-aware ─┘
+```
+
+### Dispatch
+
+At Step 1 (Dispatch researcher), also run via Bash:
+
+```bash
+mmbridge research "<topic>" --type <type> --stream --export /tmp/mmbridge-research-${RUN_ID}.md
+```
+
+- `--type code-aware`: when topic relates to the current codebase
+- `--type open`: for general topics unrelated to code
+- `--depth shallow`: **skip mmbridge** (cost vs value too low)
+- `--depth medium|deep`: mmbridge enabled
+
+### Merge
+
+At Step 3 (Dispatch analyst), provide the mmbridge export file as supplemental source material:
+- Analyst treats mmbridge findings as additional sources alongside internal researcher findings
+- mmbridge sources count toward the `sources_count` gate requirement (Plan→Do needs ≥3). Count each distinct cited URL from mmbridge export as 1 source
+- If mmbridge produced duplicate findings, analyst deduplicates during gap analysis
+
 ### Step-by-Step
 
 0. **Auto-load template**: Read `references/research-methodology.md` for output format template BEFORE starting any searches.
-1. **Dispatch researcher** (sonnet): Execute depth-appropriate WebSearch calls across varied query phrasings. Counts are HARD CAPS — see Depth Behavior.
+1. **Dispatch researcher** (sonnet): Execute depth-appropriate WebSearch calls across varied query phrasings. Counts are HARD CAPS — see Depth Behavior. If mmbridge detected and depth is medium or deep, dispatch `mmbridge research` in parallel (see MMBridge Enhancement above).
 2. **Validate sources**: Verify content is readable — not minified JS, login walls, or error pages. If WebFetch returns empty/error on a URL, fall back to Playwright MCP (`browser_navigate` + `browser_snapshot`) when available. See `references/playwright-guide.md`. Discard and replace sources that remain unreadable after fallback.
-3. **Dispatch analyst** (sonnet): Structure findings, identify gaps and contradictions. Apply Data Conflict Resolution rules (see `references/research-methodology.md`).
+3. **Dispatch analyst** (sonnet): Structure findings from internal researcher AND mmbridge (if available). Identify gaps and contradictions. Apply Data Conflict Resolution rules (see `references/research-methodology.md`).
 4. **Optional 2nd round**: If analyst finds critical gaps, dispatch researcher again only when depth allows (see Depth Behavior). Shallow depth: skip this step entirely.
 5. **Dispatch writer** (sonnet): Synthesize into the output brief format with conflict annotations.
 6. **Verification**: Before outputting the brief, count actual WebSearch calls. If count exceeds depth limit, discard excess results and re-synthesize from the capped set.
