@@ -69,8 +69,10 @@ Load `references/plan-phase.md` for the full checklist. Key requirements:
 - Research Brief exists with 3+ sources
 - Analysis artifact exists (structured framework output)
 - Gaps documented
+- **Plan Mode briefing completed** — user reviewed and approved via EnterPlanMode/ExitPlanMode
 
 **Fail action**: Re-run research with `--depth deep` or target specific gaps.
+**Rejected in Plan Mode**: Re-run Plan with user feedback as explicit constraints.
 
 ### Do → Check
 
@@ -100,8 +102,8 @@ Load `references/act-phase.md` for the full checklist. The Action Router classif
 
 ## Workflow (Full PDCA)
 
-1. **Plan**: Question Protocol → Dispatch research (Eevee). Then analyze (Alakazam + Mewtwo).
-2. **Plan→Do Gate**: Verify brief + analysis quality.
+1. **Plan**: Question Protocol → Dispatch research (Eevee). Then analyze (Alakazam + Mewtwo). Then **EnterPlanMode** to brief the user — write plan file with research summary + analysis highlights + proposed Do approach. **ExitPlanMode** to get approval. On rejection: re-run Plan with feedback.
+2. **Plan→Do Gate**: Verify brief + analysis quality + Plan Mode approval received.
 3. **Do**: Dispatch write (Smeargle) with `--skip-research --skip-review`. Pure execution using Plan artifacts.
 4. **Do→Check Gate**: Verify artifact completeness.
 5. **Check**: Dispatch review (Xatu, Absol, Porygon, Jigglypuff, Unown) with appropriate preset.
@@ -173,3 +175,5 @@ At cycle end:
 - If user says "just write it" — that's Do only. Don't force full PDCA.
 - Single-phase invocation pauses at the next gate for user decision.
 - `--no-questions` skips the Question Protocol entirely — useful for automation.
+- **Auto-routing via prompt-detect**: when entering PDCA from natural conversation (not explicit `/scc:pdca`), announce: "이건 리서치→작성→리뷰 전체 사이클이 필요하니 PDCA로 진행한다." Then start with Question Protocol as normal.
+- **Plan Mode in automation (`--no-questions`)**: skip Plan Mode briefing — approval flow doesn't apply when running headless.

@@ -27,6 +27,17 @@ Before dispatching research, run the Question Protocol (see `references/question
    - Pass Research Brief as input context
    - Framework auto-selected from topic or defaults to "structured synthesis"
 5. **Verify Analysis**: Confirm structured framework output exists
+6. **Plan Mode Briefing**: Enter Plan Mode and write a plan file containing:
+   - Research summary (3-5 key findings)
+   - Analysis highlights (top insights from the framework)
+   - Proposed Do phase approach (skill, format, estimated scope)
+   - Assumptions made during Plan (if any)
+   - Known gaps or constraints
+   Exit Plan Mode. Wait for user approval.
+   - On approval → proceed to Do phase
+   - On rejection → capture user feedback as explicit constraints → re-run Plan from step 2
+
+   **Skip condition**: `--no-questions` flag is set (automation mode — skip Plan Mode briefing entirely)
 
 ## Skill Chain: research → analyze
 

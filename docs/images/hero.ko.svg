@@ -1,113 +1,85 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" fill="none" role="img" aria-labelledby="h-title h-desc">
-  <title id="h-title">Second Claude Code — 두 번째 클로드</title>
+  <title id="h-title">Second Claude Code — 제2의 클로드</title>
   <desc id="h-desc">PDCA 품질 사이클, 포켓몬 에이전트, 품질 게이트를 보여주는 히어로 그래픽.</desc>
   <defs>
-    <linearGradient id="page-bg" x1="140" y1="36" x2="820" y2="492" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#11161d"/>
-      <stop offset="1" stop-color="#090d12"/>
-    </linearGradient>
-    <linearGradient id="panel-bg" x1="108" y1="106" x2="850" y2="436" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#121820"/>
-      <stop offset="1" stop-color="#0d1118"/>
-    </linearGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="18" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.45 0 1 0 0 0.78 0 0 1 0 0.72 0 0 0 0.18 0"/>
-    </filter>
-    <filter id="glow-warm" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="14" result="blur"/>
-      <feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.78 0 1 0 0 0.70 0 0 1 0 0.56 0 0 0 0.12 0"/>
-    </filter>
-    <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4a5e6d" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
 
   <!-- Background -->
-  <rect width="960" height="520" rx="24" fill="url(#page-bg)"/>
-  <circle cx="200" cy="100" r="150" fill="#5b9bd5" fill-opacity=".04" filter="url(#glow)"/>
-  <circle cx="700" cy="240" r="180" fill="#7fd6c2" fill-opacity=".025" filter="url(#glow)"/>
-  <circle cx="820" cy="390" r="100" fill="#c9b48f" fill-opacity=".025" filter="url(#glow-warm)"/>
+  <rect width="960" height="520" rx="12" fill="#0d1117"/>
 
   <!-- Header -->
-  <text x="480" y="56" text-anchor="middle" fill="#f5f7fb" font-size="30" font-weight="700" letter-spacing="-1" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">두 번째 클로드</text>
-  <text x="480" y="82" text-anchor="middle" fill="#97a4b2" font-size="12.5" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">9개 스킬 · 16개 에이전트 · 15개 프레임워크</text>
+  <text x="480" y="46" text-anchor="middle" fill="#e6edf3" font-size="26" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">제2의 클로드</text>
+  <text x="480" y="68" text-anchor="middle" fill="#8b949e" font-size="11" font-family="SF Mono, Consolas, monospace">9개 스킬 · 16개 에이전트 · 15개 프레임워크</text>
 
-  <!-- Main panel -->
-  <rect x="92" y="106" width="776" height="330" rx="30" fill="url(#panel-bg)" stroke="#252f3a" stroke-width="1"/>
+  <!-- Divider -->
+  <line x1="40" y1="84" x2="920" y2="84" stroke="#30363d" stroke-width="0.5"/>
 
-  <!-- Subtle wave -->
-  <path d="M92 320C180 300 280 290 400 302C520 314 640 290 868 240V436H92V320Z" fill="#7fd6c2" fill-opacity=".02"/>
+  <!-- Left panel -->
+  <text x="56" y="140" fill="#e6edf3" font-size="30" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">조사하고, 쓰고,</text>
+  <text x="56" y="178" fill="#e6edf3" font-size="30" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증까지 알아서.</text>
+  <text x="56" y="218" fill="#8b949e" font-size="13" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">프롬프트 하나 치면 리서치부터 리뷰까지.</text>
+  <text x="56" y="238" fill="#8b949e" font-size="13" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">품질 게이트가 매 단계를 잡는다.</text>
 
-  <!-- Left panel: text -->
-  <rect x="126" y="129" width="22" height="2" rx="1" fill="#7fd6c2"/>
-  <text x="160" y="140" fill="#8c9aa8" font-size="10" letter-spacing="4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">SECOND CLAUDE CODE</text>
+  <!-- Vertical divider -->
+  <line x1="520" y1="96" x2="520" y2="400" stroke="#30363d" stroke-width="0.5"/>
 
-  <g font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif" font-weight="700" fill="#f5f7fb">
-    <text x="126" y="184" font-size="36" letter-spacing="-1">혼자 알아서 돌아가는</text>
-    <text x="126" y="226" font-size="36" letter-spacing="-1">두 번째 클로드.</text>
-  </g>
-  <text x="126" y="264" fill="#acb7c1" font-size="14" font-weight="500" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Plan, Do, Check, Act — 품질 게이트와</text>
-  <text x="126" y="284" fill="#acb7c1" font-size="14" font-weight="500" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">지능적 액션 라우터가 매 단계를 관리합니다.</text>
+  <!-- PDCA 2x2 grid -->
+  <!-- PLAN card (수집) -->
+  <rect x="556" y="108" width="168" height="86" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="0.5"/>
+  <text x="572" y="128" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
+  <text x="572" y="150" fill="#e6edf3" font-size="18" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집</text>
+  <text x="572" y="170" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">이브이 · 후딘 · 뮤츠</text>
+  <text x="572" y="186" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">haiku · sonnet · sonnet</text>
 
-  <!-- Right panel: PDCA 2x2 cycle -->
-  <!-- Subtle orbital ring -->
-  <ellipse cx="710" cy="252" rx="118" ry="98" fill="none" stroke="#1c2834" stroke-width="1.5" stroke-dasharray="3 8"/>
+  <!-- DO card (생산) -->
+  <rect x="742" y="108" width="168" height="86" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
+  <text x="758" y="128" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
+  <text x="758" y="150" fill="#e6edf3" font-size="18" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">생산</text>
+  <text x="758" y="170" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">루브도</text>
+  <text x="758" y="186" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">opus</text>
 
-  <!-- Phase glow -->
-  <circle cx="648" cy="185" r="40" fill="#5b9bd5" fill-opacity=".04"/>
-  <circle cx="772" cy="185" r="40" fill="#7fd6c2" fill-opacity=".04"/>
-  <circle cx="772" cy="319" r="40" fill="#c9b48f" fill-opacity=".04"/>
-  <circle cx="648" cy="319" r="40" fill="#b39ddb" fill-opacity=".04"/>
+  <!-- CHECK card (검증) -->
+  <rect x="742" y="214" width="168" height="86" rx="6" fill="#161b22" stroke="#d29922" stroke-width="0.5"/>
+  <text x="758" y="234" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
+  <text x="758" y="256" fill="#e6edf3" font-size="18" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증</text>
+  <text x="758" y="276" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">네이티오 · 앱솔 +3</text>
+  <text x="758" y="292" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">opus · sonnet · haiku</text>
 
-  <!-- Plan card -->
-  <rect x="590" y="152" width="116" height="66" rx="14" fill="#0f1a28" stroke="#5b9bd5" stroke-width="1.2"/>
-  <text x="648" y="176" text-anchor="middle" fill="#5b9bd5" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">PLAN</text>
-  <text x="648" y="194" text-anchor="middle" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집</text>
-  <text x="648" y="210" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">이브이 · 후딘</text>
+  <!-- ACT card (개선) -->
+  <rect x="556" y="214" width="168" height="86" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="0.5"/>
+  <text x="572" y="234" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
+  <text x="572" y="256" fill="#e6edf3" font-size="18" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">개선</text>
+  <text x="572" y="276" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">메타몽 · 라우터</text>
+  <text x="572" y="292" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">opus</text>
 
-  <!-- Do card -->
-  <rect x="714" y="152" width="116" height="66" rx="14" fill="#0f201a" stroke="#7fd6c2" stroke-width="1.2"/>
-  <text x="772" y="176" text-anchor="middle" fill="#7fd6c2" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">DO</text>
-  <text x="772" y="194" text-anchor="middle" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">생산</text>
-  <text x="772" y="210" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">루브도</text>
-
-  <!-- Check card -->
-  <rect x="714" y="286" width="116" height="66" rx="14" fill="#1a1810" stroke="#c9b48f" stroke-width="1.2"/>
-  <text x="772" y="310" text-anchor="middle" fill="#c9b48f" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">CHECK</text>
-  <text x="772" y="328" text-anchor="middle" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증</text>
-  <text x="772" y="344" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">네이티오 · 앱솔 +3</text>
-
-  <!-- Act card -->
-  <rect x="590" y="286" width="116" height="66" rx="14" fill="#18102a" stroke="#b39ddb" stroke-width="1.2"/>
-  <text x="648" y="310" text-anchor="middle" fill="#b39ddb" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">ACT</text>
-  <text x="648" y="328" text-anchor="middle" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">개선</text>
-  <text x="648" y="344" text-anchor="middle" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">메타몽 · 라우터</text>
+  <!-- PDCA flow arrows (clockwise) -->
+  <line x1="724" y1="151" x2="742" y2="151" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="826" y1="194" x2="826" y2="214" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="742" y1="257" x2="724" y2="257" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
+  <line x1="640" y1="214" x2="640" y2="194" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
 
   <!-- PDCA center label -->
-  <text x="710" y="258" text-anchor="middle" fill="#2a3a4a" font-size="18" font-weight="800" letter-spacing="5" font-family="IBM Plex Mono, monospace">PDCA</text>
+  <text x="683" y="163" text-anchor="middle" fill="#30363d" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">PDCA</text>
 
-  <!-- Directional arrows -->
-  <line x1="706" y1="178" x2="714" y2="178" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="778" y1="218" x2="778" y2="286" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="714" y1="322" x2="706" y2="322" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
-  <line x1="642" y1="286" x2="642" y2="218" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#arr)"/>
+  <!-- Horizontal divider before bottom bar -->
+  <line x1="40" y1="406" x2="920" y2="406" stroke="#30363d" stroke-width="0.5"/>
 
-  <!-- Bottom bar: supporting commands -->
-  <g font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">
-    <rect x="118" y="380" width="280" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
-    <text x="138" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, monospace">DISCOVER</text>
-    <text x="138" y="420" fill="#f5f7fb" font-size="19" font-weight="700">Hunt</text>
-    <text x="220" y="420" fill="#98a8b5" font-size="13">부족한 기능을 찾아 설치.</text>
+  <!-- Bottom bar -->
+  <rect x="56" y="422" width="244" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <text x="72" y="442" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">DISCOVER</text>
+  <text x="72" y="466" fill="#e6edf3" font-size="17" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Hunt</text>
+  <text x="72" y="484" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">부족한 기능을 찾아 설치.</text>
 
-    <rect x="414" y="380" width="182" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
-    <text x="434" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, monospace">COLLECT</text>
-    <text x="434" y="420" fill="#f5f7fb" font-size="17" font-weight="700">Collect</text>
-    <text x="510" y="420" fill="#98a8b5" font-size="12.5">소스를 축적.</text>
+  <rect x="320" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <text x="336" y="442" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">COLLECT</text>
+  <text x="336" y="466" fill="#e6edf3" font-size="17" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Collect</text>
+  <text x="336" y="484" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">소스를 축적.</text>
 
-    <rect x="612" y="380" width="196" height="48" rx="18" fill="#141b23" stroke="#29343f"/>
-    <text x="632" y="400" fill="#7f909f" font-size="10" letter-spacing="3.4" font-family="IBM Plex Mono, monospace">PIPELINE</text>
-    <text x="632" y="420" fill="#f5f7fb" font-size="17" font-weight="700">Pipeline</text>
-    <text x="718" y="420" fill="#98a8b5" font-size="12.5">검증된 흐름을 반복.</text>
-  </g>
+  <rect x="540" y="422" width="364" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <text x="556" y="442" fill="#484f58" font-size="9" font-family="SF Mono, Consolas, monospace">PIPELINE</text>
+  <text x="556" y="466" fill="#e6edf3" font-size="17" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Pipeline</text>
+  <text x="556" y="484" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증된 흐름을 반복.</text>
 </svg>
