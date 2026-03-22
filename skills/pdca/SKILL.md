@@ -148,3 +148,38 @@ the notification payload pattern used by `hooks/session-end.mjs`.
 - Full PDCA with deep research = significant token cost. Warn user at start.
 
 See `gotchas.md` for extended gotchas (stuck detection, worktree lifecycle, permission transitions, session resume, automation mode).
+
+## MMBridge Session Handoff
+
+When mmbridge is detected (see `references/mmbridge-integration.md`) and the PDCA cycle exits with `APPROVED`, generate a handoff artifact.
+
+### When to Trigger
+
+- PDCA cycle reaches EXIT (APPROVED verdict from Check phase)
+- mmbridge is installed
+- Do NOT trigger on partial cycles or early exits
+
+### Command
+
+```bash
+mmbridge handoff --write .captures/pdca-handoff-${RUN_ID}.md
+```
+
+### Output
+
+The handoff artifact summarizes:
+- What was researched (Plan phase sources and findings)
+- What was produced (Do phase artifact path and type)
+- What reviewers found (Check phase verdict and key findings)
+- What was refined (Act phase changes, if any)
+
+Present the handoff path to the user:
+> "PDCA cycle complete. Handoff artifact saved to `.captures/pdca-handoff-${RUN_ID}.md`"
+
+### Usage
+
+The handoff artifact serves two purposes:
+1. **New session briefing**: Load into a fresh Claude session for continuity
+2. **Team communication**: Share with colleagues as a work summary
+
+This is an **optional convenience** — the PDCA cycle is complete regardless of whether the handoff succeeds.

@@ -19,6 +19,32 @@ Before dispatching research, run the Question Protocol (see `references/question
 3. If user doesn't respond: save assumptions to state and proceed
 4. If Act→Plan return: skip questions — the research gap is already identified
 
+## MMBridge Cross-Session Context
+
+When mmbridge is detected (see `references/mmbridge-integration.md`), query project memory at the start of the Plan phase for relevant prior work.
+
+### When to Query
+
+- At Plan phase entry, before dispatching the researcher
+- Only if the topic has potential overlap with prior PDCA cycles
+
+### Command
+
+```bash
+mmbridge memory search "<topic keywords>" --format json
+```
+
+### Integration
+
+If relevant prior findings are returned:
+1. Include them as "Prior Context" in the researcher's input — this prevents re-researching already-settled questions
+2. Flag any prior decisions that may need re-evaluation (e.g., "Last analyzed 2024-01-15 — market conditions may have changed")
+3. Prior findings do NOT count toward the `sources_count` gate (they are context, not fresh research)
+
+### No Results
+
+If `mmbridge memory search` returns no results or fails, proceed normally. This is a **context enhancement only** — the Plan phase works identically without it.
+
 ## Execution Steps
 
 1. **Question Protocol**: Check scope clarity → ask or skip (see `references/question-protocol.md`)

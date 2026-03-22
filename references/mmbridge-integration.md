@@ -44,6 +44,9 @@ mmbridge <command> [command-specific-options] --stream --export /tmp/mmbridge-<c
 | `debate` | 300s |
 | `followup` | 120s |
 | `gate` | 60s |
+| `diff` | 60s |
+| `handoff` | 60s |
+| `memory search` | 30s |
 
 Kill the process and proceed on timeout.
 
@@ -72,6 +75,9 @@ mmbridge results are merged as "external source" at each skill's merge point:
 - **Gate**: mmbridge gate → advisory signal (logged, not blocking)
 - **Debate**: mmbridge debate → challenge round input (adversarial perspectives from multiple models)
 - **Followup**: mmbridge followup → refine iteration input (reviewer clarifications on specific findings)
+- **Diff**: mmbridge diff → review output visualization (annotated git diff with findings)
+- **Handoff**: mmbridge handoff → session export artifact (PDCA exit summary)
+- **Memory**: mmbridge memory search → cross-session context retrieval (prior decisions and findings)
 
 ## Severity Mapping
 

@@ -260,6 +260,9 @@ For detection, invocation, and error handling rules, see `references/mmbridge-in
 | **Check→Act** | `mmbridge gate` | `/scc:pdca` | Advisory coverage check at phase transition |
 | **Act** | `mmbridge followup` | `/scc:refine` | Clarify ambiguous external review findings |
 | **Act** | `mmbridge resume` | `/scc:refine` | External re-assessment after fixes |
+| **Check** | `mmbridge diff` | `/scc:review` | Annotated diff view for code/security presets |
+| **Plan** | `mmbridge memory` | `/scc:pdca` | Cross-session context from prior cycles |
+| **Exit** | `mmbridge handoff` | `/scc:pdca` | Session summary artifact on APPROVED exit |
 
 ### External Reviewers
 

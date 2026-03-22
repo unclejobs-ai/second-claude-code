@@ -221,12 +221,35 @@ Leverages mmbridge's session continuity for smarter refine iterations:
 
 ---
 
-## Non-Goals (Phase 1-2)
+## Phase 3: Diff + Handoff + Memory (implemented)
 
-- `diff` annotated view (Phase 3)
-- `handoff` session export (Phase 3)
-- `memory` cross-session (Phase 3)
+### 8. Diff Visualization
+
+**Skill**: `/scc:review`
+**MMBridge command**: `mmbridge diff`
+
+After review completes on `code` or `security` presets, offer annotated diff view. Display enhancement only — does not affect consensus gate.
+
+### 9. Session Handoff
+
+**Skill**: `/scc:pdca`
+**MMBridge command**: `mmbridge handoff`
+
+On PDCA APPROVED exit, generate a handoff artifact summarizing the full cycle. Saved to `.captures/pdca-handoff-${RUN_ID}.md`.
+
+### 10. Cross-Session Memory
+
+**Skill**: `/scc:pdca` (Plan phase)
+**MMBridge command**: `mmbridge memory search`
+
+At Plan phase entry, query prior PDCA findings for relevant context. Results are "Prior Context" for the researcher — not counted as fresh sources.
+
+---
+
+## Non-Goals
+
 - Any mmbridge configuration UI or settings
+- Automatic mmbridge installation or updates
 
 ---
 

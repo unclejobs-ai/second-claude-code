@@ -143,6 +143,31 @@ Consensus: {X}/{Y}
 - Fix suggestion must be a concrete action ("Change X to Y", "Add Z after line N"), never vague ("improve this", "consider revising").
 - If multiple reviewers flagged the same finding, list all in the `[reviewer(s)]` tag.
 
+## MMBridge Diff Visualization
+
+When mmbridge is detected (see `references/mmbridge-integration.md`) and the review has completed, offer the user an annotated diff view.
+
+### When to Offer
+
+- After the Review Report is generated
+- Only for `code` and `security` presets (diff annotation is most useful for code)
+- Do not offer for `content`, `strategy`, or `quick` presets
+
+### Command
+
+```bash
+mmbridge diff --base-ref <base> --export /tmp/mmbridge-diff-${RUN_ID}.md
+```
+
+- `--base-ref`: use the same base ref as the review (default: `HEAD~1`)
+- `--tool kimi`: filter to show only findings from a specific tool (optional)
+
+### Output
+
+Present the annotated diff to the user as supplementary output after the Review Report. The diff shows exactly which lines each finding maps to, making it easier to act on review feedback.
+
+This is a **display enhancement only** — it does not affect the consensus gate or verdict.
+
 ## Options
 
 | Flag | Values | Default | Description |
