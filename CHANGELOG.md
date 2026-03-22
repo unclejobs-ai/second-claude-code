@@ -12,6 +12,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **STYLE.md**: bilingual voice guide template at `.data/soul/templates/STYLE.md`
 - **effort frontmatter**: skill-level effort hints (`low | medium | high`) injected into context
 - **Dynamic context injection**: SOUL.md Tone Rules + Anti-Patterns fed into tone-guardian (Jigglypuff) and write skill voice resolution
+- **Playwright MCP**: optional `@playwright/mcp` server registered in `.claude-plugin/plugin.json`. Researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree) when `WebFetch` fails on JS-heavy or dynamic URLs. Gracefully degrades when not installed.
+- **`--interactive` flag on research skill**: forces Playwright for all URL fetches (useful for SPAs and dashboards)
+- **`playwright-guide.md`**: quick-reference for Playwright MCP tools and research usage patterns (`skills/research/references/`)
+- **Playwright Fallback section**: decision tree + cost controls added to `skills/research/references/research-methodology.md`
 
 ### Fixed
 - SubagentStop Critic Score aggregation dropping reviewers on partial output

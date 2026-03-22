@@ -1,12 +1,19 @@
 # Architecture
 
+## What's New in 0.5.0
+
+Two additions shipped in this release (on top of 0.4.0):
+
+1. **Soul System** — 10th skill (`/scc:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
+2. **Playwright MCP** — Optional browser automation server added to `.claude-plugin/plugin.json`. When `WebFetch` fails on a JavaScript-heavy or dynamic URL, the researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree extraction). Gracefully degrades if the server is not installed.
+
 ## What's New in 0.4.0
 
 Five major additions shipped in this release:
 
 1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
 2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
-3. **Six Lifecycle Hooks** — Hook count expanded from 3 to 6: SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. The two new compaction hooks preserve PDCA state across context compression; Stop blocks exit when Check phase is incomplete.
+3. **Six Lifecycle Hooks** — Hook count expanded from 3 to 6: SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. The two new compaction hooks preserve PDCA state across context compression; Stop hook (`hooks/stop.mjs`) blocks exit when Check phase is incomplete.
 4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
 5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
 
@@ -34,11 +41,12 @@ It auto-detects which phase to enter from natural language and chains the approp
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # Plugin manifest (v0.2.0)
+├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state, playwright (optional)
 ├── skills/                       # 11 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
-│   ├── research/                 # Autonomous deep research
+│   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
+│   │   └── references/           # research-methodology.md, playwright-guide.md
 │   ├── write/                    # Content production
 │   ├── analyze/                  # Strategic framework analysis (15 frameworks)
 │   ├── review/                   # Multi-perspective quality gate
@@ -270,3 +278,35 @@ Review Dispatch
     ├── Apply severity calibration
     └── Emit verdict: APPROVED | MINOR FIXES | NEEDS IMPROVEMENT | MUST FIX
 ```
+
+---
+
+## Playwright MCP — Optional Browser Research
+
+The `playwright` MCP server is registered in `.claude-plugin/plugin.json` as an optional dependency. It provides a real Chromium browser to the researcher agent (Eevee) for URLs that `WebFetch` cannot read.
+
+**This is entirely optional** — the research skill works fully without Playwright installed.
+
+### When it activates
+
+```
+researcher: WebFetch(url) → empty / error
+                 │
+                 └─ Playwright available?
+                      ├─ yes → browser_navigate(url)
+                      │         browser_snapshot()   ← accessibility tree
+                      │         parse + extract content
+                      └─ no  → log in Gaps & Limitations, continue
+```
+
+The `--interactive` flag on `/second-claude-code:research` forces Playwright for every URL, bypassing WebFetch entirely. Useful for SPA dashboards or news sites with heavy JavaScript rendering.
+
+### Cost control
+
+Max **3 Playwright navigations per research round**. Exceeding the cap triggers a hard stop on further navigations; remaining URLs are noted in Gaps & Limitations.
+
+### Accessibility tree advantage
+
+`browser_snapshot()` returns a structured accessibility tree rather than raw HTML. Token cost is 80-90% lower than equivalent HTML for the same information. The researcher extracts headings, paragraphs, and table cells directly from the tree — navigation chrome and ads are structurally excluded.
+
+See `skills/research/references/playwright-guide.md` for full tool reference and patterns.

@@ -7,12 +7,14 @@
  * Replaces direct JSON file manipulation with a proper MCP tool interface.
  *
  * Tools:
- *   pdca_get_state         — Returns current active run state or null
- *   pdca_start_run         — Initializes a new PDCA run
- *   pdca_transition        — Transitions to the next phase with validation
- *   pdca_check_gate        — Validates a phase gate before transition
- *   pdca_end_run           — Completes the run and archives final state
+ *   pdca_get_state          — Returns current active run state or null
+ *   pdca_start_run          — Initializes a new PDCA run
+ *   pdca_transition         — Transitions to the next phase with validation
+ *   pdca_check_gate         — Validates a phase gate before transition
+ *   pdca_end_run            — Completes the run and archives final state
  *   pdca_update_stuck_flags — Appends stuck detection flags
+ *   pdca_get_events         — Query event log with optional filters
+ *   pdca_get_analytics      — Cycle analytics: duration, gate rates, stuck frequency
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -34,6 +36,7 @@ import {
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { logEvent, readEvents, getEventStats, listRunIds } from "../hooks/lib/event-log.mjs";
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -227,6 +230,13 @@ function handleStartRun({ topic, max_cycles = 3 }) {
 
   const state = buildInitialState(topic.trim(), max_cycles);
   writeJsonAtomic(ACTIVE_FILE, state);
+
+  logEvent(DATA_DIR, state.run_id, {
+    type: "cycle_start",
+    phase: "plan",
+    data: { topic: state.topic, max_cycles: state.max_cycles },
+  });
+
   return state;
 }
 
@@ -279,9 +289,23 @@ function handleTransition({ target_phase, artifacts = {} }) {
     }
   }
 
+  const previousPhase = current;
   state.current_phase = target_phase;
 
   writeJsonAtomic(ACTIVE_FILE, state);
+
+  logEvent(DATA_DIR, state.run_id, {
+    type: "phase_end",
+    phase: previousPhase,
+    data: { artifacts_set: Object.keys(state.artifacts).filter((k) => state.artifacts[k] !== null) },
+  });
+
+  logEvent(DATA_DIR, state.run_id, {
+    type: "phase_start",
+    phase: target_phase,
+    data: { cycle_count: state.cycle_count },
+  });
+
   return state;
 }
 
@@ -299,7 +323,23 @@ function handleCheckGate({ gate }) {
     throw new Error("No active PDCA run. Start one with pdca_start_run.");
   }
 
-  return evaluateGate(gate, state);
+  const result = evaluateGate(gate, state);
+
+  logEvent(DATA_DIR, state.run_id, {
+    type: "gate_check",
+    phase: state.current_phase,
+    action: gate,
+    data: { passed: result.passed, missing: result.missing },
+  });
+
+  logEvent(DATA_DIR, state.run_id, {
+    type: result.passed ? "gate_pass" : "gate_fail",
+    phase: state.current_phase,
+    action: gate,
+    data: result.passed ? undefined : { missing: result.missing },
+  });
+
+  return result;
 }
 
 /** pdca_end_run */
@@ -309,6 +349,8 @@ function handleEndRun() {
     throw new Error("No active PDCA run to end.");
   }
 
+  const endedAt = new Date().toISOString();
+
   const summary = {
     run_id: state.run_id,
     topic: state.topic,
@@ -317,10 +359,25 @@ function handleEndRun() {
     artifacts: state.artifacts,
     check_verdict: state.check_verdict,
     stuck_flags: state.stuck_flags,
-    ended_at: new Date().toISOString(),
+    ended_at: endedAt,
   };
 
-  writeJsonAtomic(COMPLETED_FILE, { ...state, ended_at: summary.ended_at });
+  // Log cycle_end before archiving so the event lands in the run's log
+  const stats = getEventStats(DATA_DIR, state.run_id);
+  logEvent(DATA_DIR, state.run_id, {
+    type: "cycle_end",
+    phase: state.current_phase,
+    data: {
+      completed_phases: state.completed,
+      cycle_count: state.cycle_count,
+      check_verdict: state.check_verdict,
+      stuck_flags: state.stuck_flags,
+      event_stats: stats,
+      ended_at: endedAt,
+    },
+  });
+
+  writeJsonAtomic(COMPLETED_FILE, { ...state, ended_at: endedAt });
 
   // Remove active file after archiving
   if (existsSync(ACTIVE_FILE)) {
@@ -347,13 +404,124 @@ function handleUpdateStuckFlags({ flags }) {
   }
 
   const existing = new Set(state.stuck_flags ?? []);
+  const newFlags = flags.filter((f) => !existing.has(f));
   for (const f of flags) {
     existing.add(f);
   }
   state.stuck_flags = Array.from(existing);
 
   writeJsonAtomic(ACTIVE_FILE, state);
+
+  if (newFlags.length > 0) {
+    logEvent(DATA_DIR, state.run_id, {
+      type: "stuck_detected",
+      phase: state.current_phase,
+      data: { new_flags: newFlags, all_flags: state.stuck_flags },
+    });
+  }
+
   return state;
+}
+
+// ---------------------------------------------------------------------------
+// Event query tool handlers
+// ---------------------------------------------------------------------------
+
+/**
+ * pdca_get_events
+ * Query events for a specific run with optional filters.
+ */
+function handleGetEvents({ run_id, type, phase, limit = 100 }) {
+  if (typeof run_id !== "string" || run_id.trim() === "") {
+    throw new Error("run_id must be a non-empty string");
+  }
+
+  const filters = {};
+  if (type) filters.type = type;
+  if (phase) filters.phase = phase;
+
+  const events = readEvents(DATA_DIR, run_id, filters);
+  const limitNum = Math.max(1, Number(limit) || 100);
+  const limited = events.slice(-limitNum); // most recent N
+
+  return { run_id, total: events.length, returned: limited.length, events: limited };
+}
+
+/**
+ * pdca_get_analytics
+ * Return cycle analytics for a run (or the most recent run if no run_id given).
+ */
+function handleGetAnalytics({ run_id } = {}) {
+  let resolvedRunId = run_id;
+
+  // Fall back to the most recently active or completed run
+  if (!resolvedRunId) {
+    const active = readJson(ACTIVE_FILE);
+    if (active) {
+      resolvedRunId = active.run_id;
+    } else {
+      const completed = readJson(COMPLETED_FILE);
+      if (completed) {
+        resolvedRunId = completed.run_id;
+      }
+    }
+  }
+
+  if (!resolvedRunId) {
+    throw new Error("No run_id provided and no active or completed run found.");
+  }
+
+  const stats = getEventStats(DATA_DIR, resolvedRunId);
+  const allEvents = readEvents(DATA_DIR, resolvedRunId);
+
+  // Phase durations: find phase_start / phase_end pairs
+  /** @type {Record<string, { start: number | null, durations: number[] }>} */
+  const phaseTracker = {};
+
+  for (const e of allEvents) {
+    if (e.type === "phase_start" && e.phase) {
+      if (!phaseTracker[e.phase]) phaseTracker[e.phase] = { start: null, durations: [] };
+      phaseTracker[e.phase].start = new Date(e.ts).getTime();
+    }
+    if (e.type === "phase_end" && e.phase) {
+      if (!phaseTracker[e.phase]) phaseTracker[e.phase] = { start: null, durations: [] };
+      const tracker = phaseTracker[e.phase];
+      if (tracker.start !== null) {
+        tracker.durations.push(new Date(e.ts).getTime() - tracker.start);
+        tracker.start = null;
+      }
+    }
+  }
+
+  /** @type {Record<string, { count: number, avg_duration_ms: number | null }>} */
+  const phase_durations = {};
+  for (const [phase, tracker] of Object.entries(phaseTracker)) {
+    const count = tracker.durations.length;
+    const avg = count > 0 ? Math.round(tracker.durations.reduce((a, b) => a + b, 0) / count) : null;
+    phase_durations[phase] = { count, avg_duration_ms: avg };
+  }
+
+  // Gate pass rate per gate
+  const gateEvents = allEvents.filter((e) => e.type === "gate_pass" || e.type === "gate_fail");
+  /** @type {Record<string, { pass: number, fail: number, pass_rate: number }>} */
+  const gate_stats = {};
+  for (const e of gateEvents) {
+    const gate = e.action ?? "unknown";
+    if (!gate_stats[gate]) gate_stats[gate] = { pass: 0, fail: 0, pass_rate: 0 };
+    if (e.type === "gate_pass") gate_stats[gate].pass++;
+    else gate_stats[gate].fail++;
+  }
+  for (const gs of Object.values(gate_stats)) {
+    const total = gs.pass + gs.fail;
+    gs.pass_rate = total > 0 ? Math.round((gs.pass / total) * 100) / 100 : 0;
+  }
+
+  return {
+    run_id: resolvedRunId,
+    summary: stats,
+    phase_durations,
+    gate_stats,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -562,6 +730,51 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "pdca_get_events",
+    description:
+      "Query the event log for a PDCA run. Returns typed events (phase_start, gate_pass, stuck_detected, etc.) with optional filtering by type, phase, and limit.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        run_id: {
+          type: "string",
+          description: "The UUID of the PDCA run to query.",
+        },
+        type: {
+          type: "string",
+          description:
+            "Filter by event type: cycle_start, cycle_end, phase_start, phase_end, gate_check, gate_pass, gate_fail, artifact_created, review_started, review_completed, stuck_detected, error.",
+        },
+        phase: {
+          type: "string",
+          enum: ["plan", "do", "check", "act"],
+          description: "Filter events to a specific PDCA phase.",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of events to return (most recent first, default: 100).",
+        },
+      },
+      required: ["run_id"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "pdca_get_analytics",
+    description:
+      "Return cycle analytics for a PDCA run: total duration, per-phase durations, gate pass rates, and stuck frequency. Defaults to the currently active or last completed run if no run_id is provided.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        run_id: {
+          type: "string",
+          description: "UUID of the run to analyze. Omit to use the active or most recently completed run.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
     name: "soul_get_profile",
     description:
       "Read the current SOUL.md content and soul-active.json metadata. Returns { profile: string | null, metadata: object | null }. Profile is null when SOUL.md does not exist.",
@@ -666,6 +879,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "pdca_update_stuck_flags":
         result = handleUpdateStuckFlags(input);
+        break;
+      case "pdca_get_events":
+        result = handleGetEvents(input);
+        break;
+      case "pdca_get_analytics":
+        result = handleGetAnalytics(input);
         break;
       case "soul_get_profile":
         result = handleSoulGetProfile();

@@ -33,7 +33,7 @@ writer(sonnet) --[synthesis]--> Research Brief
 
 0. **Auto-load template**: Read `references/research-methodology.md` for output format template BEFORE starting any searches.
 1. **Dispatch researcher** (haiku): Execute depth-appropriate WebSearch calls across varied query phrasings. Counts are HARD CAPS — see Depth Behavior.
-2. **Validate sources**: Verify content is readable — not minified JS, login walls, or error pages. Discard and replace invalid sources.
+2. **Validate sources**: Verify content is readable — not minified JS, login walls, or error pages. If WebFetch returns empty/error on a URL, fall back to Playwright MCP (`browser_navigate` + `browser_snapshot`) when available. See `references/playwright-guide.md`. Discard and replace sources that remain unreadable after fallback.
 3. **Dispatch analyst** (sonnet): Structure findings, identify gaps and contradictions. Apply Data Conflict Resolution rules (see `references/research-methodology.md`).
 4. **Optional 2nd round**: If analyst finds critical gaps, dispatch researcher again only when depth allows (see Depth Behavior). Shallow depth: skip this step entirely.
 5. **Dispatch writer** (sonnet): Synthesize into the output brief format with conflict annotations.
@@ -46,6 +46,7 @@ writer(sonnet) --[synthesis]--> Research Brief
 | `--depth` | `shallow\|medium\|deep` | `medium` | HARD limit on search rounds — see Depth Behavior |
 | `--sources` | `web\|academic\|news` | `web` | Constrains search domain |
 | `--lang` | `ko\|en\|auto` | `auto` | Output language. When called from another skill (write, analyze), inherits the caller's `--lang` value. |
+| `--interactive` | flag | off | Force Playwright for all URL fetches (useful for SPAs, dashboards) |
 
 ### Depth Behavior
 
@@ -60,6 +61,23 @@ Coverage requirements and conflict resolution rules are in `references/research-
 - **web** (default): General web search. No domain restrictions.
 - **academic**: Prefer Google Scholar, arXiv, PubMed, .edu domains. Add `site:scholar.google.com OR site:arxiv.org` to at least 50% of queries.
 - **news**: Prefer recent news sources. Add `after:{30-days-ago}` filter. Prioritize Reuters, Bloomberg, TechCrunch, The Verge, and similar editorial sources over blog posts.
+
+## Dynamic Web Research (Playwright Fallback)
+
+When `WebFetch` fails on a URL (JavaScript-heavy site, login wall, dynamic content):
+
+1. Detect failure: empty response body, HTTP error, or minified JS blob with no readable text.
+2. Fall back to Playwright MCP tools in order:
+   - `browser_navigate(url)` — load the page in a real browser
+   - `browser_snapshot()` — capture an accessibility tree (compact structured data, far more token-efficient than raw HTML)
+3. Parse the accessibility tree for headings, paragraphs, and data cells relevant to the query.
+4. If `--interactive` flag is set, skip WebFetch entirely and use Playwright for every URL.
+
+**Cost controls**: Max 3 Playwright navigations per research round. Count them. Exceeding the cap = skip remaining Playwright fetches and note in Gaps & Limitations.
+
+**Graceful degradation**: Playwright MCP is optional. If the `playwright` MCP server is not configured or unavailable, research proceeds with WebFetch only — no error, no retry. Note unreachable URLs in Gaps & Limitations.
+
+See `references/playwright-guide.md` for tool reference and usage patterns.
 
 ## Auto-Save
 
@@ -82,7 +100,7 @@ After producing the Research Brief, save it to a file:
 ## Subagents
 
 ```yaml
-researcher: { model: haiku, tools: [WebSearch, WebFetch], constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness" }
+researcher: { model: haiku, tools: [WebSearch, WebFetch, browser_navigate, browser_snapshot], constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness; Playwright tools optional — use only when WebFetch fails or --interactive set; max 3 Playwright navigations per round" }
 analyst: { model: sonnet, tools: [], constraint: "produce gap list, flag data conflicts, verify coverage requirements" }
 writer: { model: sonnet, tools: [], constraint: "every claim needs a source, no invented URLs, include conflict annotations" }
 ```

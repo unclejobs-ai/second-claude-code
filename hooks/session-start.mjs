@@ -35,6 +35,18 @@ function getCapabilities() {
   }
 }
 
+function getCrashRecovery() {
+  const recoveryPath = join(DATA_DIR, "state", "pdca-crash-recovery.json");
+  const recovery = readJsonSafe(recoveryPath);
+  if (!recovery) return null;
+
+  const topic = sanitize(recovery.topic ?? "unknown");
+  const phase = sanitize(recovery.current_phase ?? "unknown");
+  const crashedAt = sanitize(recovery.crashed_at ?? "unknown");
+
+  return `PDCA crash recovery available: "${topic}" was in ${phase} phase at ${crashedAt}. Run \`/second-claude-code:pdca\` to resume or delete ${recoveryPath} to discard.`;
+}
+
 function getActiveState() {
   const statePath = join(DATA_DIR, "state");
   const parts = [];
@@ -106,6 +118,14 @@ function main() {
   lines.push(
     `Capabilities: ${capabilities.length > 0 ? capabilities.join(", ") : "none detected"}`
   );
+
+  // Crash recovery notice (takes priority over normal state resume)
+  const crashRecovery = getCrashRecovery();
+  if (crashRecovery) {
+    lines.push("");
+    lines.push("## Crash Recovery");
+    lines.push(crashRecovery);
+  }
 
   // Restore active state if any
   const state = getActiveState();
