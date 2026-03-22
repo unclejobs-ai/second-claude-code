@@ -279,9 +279,9 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 |---|---|---|---|
 | **Plan** | Eevee | Researcher — web search, data collection | haiku |
 | | Noctowl | Search specialist | haiku |
-| **Do** | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
+| | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
 | | Mewtwo | Strategist — framework analysis | sonnet |
-| | Smeargle | Writer — long-form content | opus |
+| **Do** | Smeargle | Writer — long-form content | opus |
 | | Arceus | Master — general-purpose execution | sonnet |
 | **Check** | Xatu | Deep reviewer — logic, structure | opus |
 | | Absol | Devil's advocate — attacks weak points | sonnet |

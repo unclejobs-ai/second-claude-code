@@ -277,9 +277,9 @@ Claude Code용으로 만들었다. SKILL.md를 읽거나 ACP를 쓰는 플랫폼
 |---|---|---|---|
 | **Plan** | 이브이 (Eevee) | 리서처 — 웹 검색, 데이터 수집 | haiku |
 | | 부엉 (Noctowl) | 검색 전문 | haiku |
-| **Do** | 후딘 (Alakazam) | 애널리스트 — 패턴 인식, 합성 | sonnet |
+| | 후딘 (Alakazam) | 애널리스트 — 패턴 인식, 합성 | sonnet |
 | | 뮤츠 (Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
-| | 루브도 (Smeargle) | 라이터 — 장문 콘텐츠 | opus |
+| **Do** | 루브도 (Smeargle) | 라이터 — 장문 콘텐츠 | opus |
 | | 아르세우스 (Arceus) | 마스터 — 범용 실행 | sonnet |
 | **Check** | 네이티오 (Xatu) | 딥리뷰어 — 논리, 구조 | opus |
 | | 앱솔 (Absol) | 데빌어드보킷 — 약점 공격 | sonnet |

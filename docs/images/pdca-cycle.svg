@@ -46,7 +46,7 @@
   <text x="170" y="222" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
   <text x="228" y="222" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Verify</text>
   <text x="170" y="242" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">5 parallel reviewers → Consensus Gate → Verdict</text>
-  <text x="375" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Xatu(opus) · Absol(sonnet) · Porygon · Jigglypuff · Unown(haiku)</text>
+  <text x="375" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Xatu(opus) · Absol(sonnet) · Porygon(haiku) · Jigglypuff(haiku) · Unown(haiku)</text>
 
   <!-- APPROVED branch (right) -->
   <line x1="590" y1="232" x2="626" y2="232" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>

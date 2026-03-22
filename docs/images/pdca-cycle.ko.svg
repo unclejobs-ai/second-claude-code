@@ -46,12 +46,12 @@
   <text x="170" y="222" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
   <text x="228" y="222" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증</text>
   <text x="170" y="242" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명 병렬 리뷰 → 합의 게이트 → 판정</text>
-  <text x="360" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">네이티오(opus) · 앱솔(sonnet) · 폴리곤 · 푸린 · 안농(haiku)</text>
+  <text x="360" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">네이티오(opus) · 앱솔(sonnet) · 폴리곤(haiku) · 푸린(haiku) · 안농(haiku)</text>
 
   <!-- APPROVED branch (right) -->
   <line x1="590" y1="232" x2="626" y2="232" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>
   <rect x="630" y="218" width="112" height="28" rx="4" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
-  <text x="686" y="236" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="600" font-family="SF Mono, Consolas, monospace">PASS</text>
+  <text x="686" y="236" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="600" font-family="SF Mono, Consolas, monospace">승인</text>
 
   <!-- feedback line + label -->
   <line x1="370" y1="264" x2="370" y2="284" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
