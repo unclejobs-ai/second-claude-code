@@ -5,7 +5,7 @@
  *
  * Injects core context on session startup:
  * - 9 skills overview + routing rules
- * - Active loop/pipeline/PDCA state restoration
+ * - Active refine/pipeline/PDCA state restoration
  * - Available environment capabilities
  */
 
@@ -38,12 +38,12 @@ function getActiveState() {
   const statePath = join(DATA_DIR, "state");
   const parts = [];
 
-  const loop = readJsonSafe(join(statePath, "loop-active.json"));
-  if (loop) {
-    const goal = sanitize(loop.goal);
-    const cur = Number(loop.current_iteration) || 0;
-    const max = Number(loop.max) || 3;
-    parts.push(`Active loop: "${goal}" (iteration ${cur}/${max})`);
+  const refine = readJsonSafe(join(statePath, "refine-active.json"));
+  if (refine) {
+    const goal = sanitize(refine.goal);
+    const cur = Number(refine.current_iteration) || 0;
+    const max = Number(refine.max) || 3;
+    parts.push(`Active refine: "${goal}" (iteration ${cur}/${max})`);
   }
 
   const pdca = readJsonSafe(join(statePath, "pdca-active.json"));
@@ -52,6 +52,16 @@ function getActiveState() {
     const phase = sanitize(pdca.current_phase);
     const completed = Array.isArray(pdca.completed) ? pdca.completed.join(" → ") : "";
     parts.push(`Active PDCA: "${topic}" — current phase: ${phase} (completed: ${completed || "none"})`);
+
+    // Session resume hint — offered when a prior session ID is on record
+    const priorSessionId = pdca.session_id
+      ? sanitize(String(pdca.session_id))
+      : null;
+    if (priorSessionId) {
+      parts.push(
+        `Previous PDCA session: ${priorSessionId}. Use \`claude --resume ${priorSessionId}\` for full context, or continue with compressed state above.`
+      );
+    }
   }
 
   const pipeline = readJsonSafe(join(statePath, "pipeline-active.json"));
@@ -82,13 +92,13 @@ function main() {
   lines.push("| `/second-claude-code:write` | Content production (newsletter, article, shorts, report) |");
   lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
   lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
-  lines.push("| `/second-claude-code:loop` | Iterative improvement until quality target met |");
+  lines.push("| `/second-claude-code:refine` | Iterative improvement until quality target met |");
   lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
   lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, loop, collect, pipeline, discover.");
+  lines.push("Or use individual skills: research, write, analyze, review, refine, collect, pipeline, discover.");
   lines.push('Action Router: review failures route by root cause (Plan/Do/Loop).');
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

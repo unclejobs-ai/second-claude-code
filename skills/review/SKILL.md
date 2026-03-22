@@ -117,6 +117,19 @@ Consensus: {X}/{Y}
 | `--threshold` | number | `0.67` |
 | `--strict` | flag | off |
 | `--external` | flag | off |
+| `--team-review` | flag | off |
+
+## Team Review Workflow
+
+When `--team-review` is set, the standard parallel dispatch is replaced by an Agent Team with deliberation:
+
+1. Team lead creates a team with the 5 reviewer teammates (Xatu, Absol, Porygon, Jigglypuff, Unown).
+2. Each reviewer independently reviews the artifact — no shared context at this stage (same isolation guarantee as standard mode).
+3. All findings are shared across the team.
+4. **Challenge round** (2 minutes max): each reviewer may dispute or reinforce other reviewers' findings. A dispute requires citing a specific counter-finding with evidence. A reinforcement counts as corroboration and raises that finding's weight.
+5. Team lead aggregates the challenged findings: disputed findings are downgraded one severity level unless a third reviewer sides with the original; reinforced findings are locked at their current severity.
+6. Consensus is computed from challenge-adjusted findings using the standard gate (`average score >= 0.7`, no Critical findings).
+7. Team is shut down. Output conforms to the standard Review Report format.
 
 ## External Reviewers
 
@@ -127,6 +140,7 @@ When `--external` is set, detects installed external CLIs and dispatches a cross
 - Keep reviewers independent so they do not converge too easily.
 - Require exact locations for findings.
 - `fact-checker` cannot claim verification without source URLs.
+- **Team review costs ~2–3x more than standard review** due to the challenge round. Use only for high-stakes content: `--depth deep` PDCA cycles or final-pass `full` preset reviews. Standard review is the default for all other cases.
 
 ## Subagents
 

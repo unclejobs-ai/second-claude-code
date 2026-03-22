@@ -3,7 +3,7 @@ description: "Act/Refine phase -- iterative improvement until quality target met
 argument-hint: "raise this to 4.5/5" --max 3
 ---
 
-Invoke the `/second-claude-code:loop` command for iterative improvement through the `loop` skill.
+Invoke the `/second-claude-code:refine` command for iterative improvement through the `refine` skill.
 
 ## Arguments
 - First argument: improvement goal (quoted string)
@@ -12,7 +12,7 @@ Invoke the `/second-claude-code:loop` command for iterative improvement through 
 - `--promise "text"` (completion promise for each iteration)
 
 ## Your task
-Perform the iterative improvement now using the plugin's loaded `loop` skill and the provided arguments.
+Perform the iterative improvement now using the plugin's loaded `refine` skill and the provided arguments.
 
-- Return the actual loop result, not a plan to run it.
+- Return the actual refine result, not a plan to run it.
 - Do not say that you are invoking or have invoked a skill.

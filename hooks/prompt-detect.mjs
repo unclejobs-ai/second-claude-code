@@ -88,7 +88,7 @@ const ko = {
   write: ["뉴스레터", "보고서", "대본", "아티클", "글 써", "써줘", "작성해", "카드뉴스"],
   analyze: ["분석해", "전략"],
   review: ["리뷰", "검토", "품질", "체크", "피드백"],
-  loop: ["개선", "반복", "더 좋게", "다듬어"],
+  refine: ["개선", "반복", "더 좋게", "다듬어", "다듬"],
   collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해"],
   workflow: ["파이프라인", "자동화", "워크플로우"],
   discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
@@ -116,9 +116,9 @@ const routes = [
     label: "analyze",
   },
   {
-    patterns: [...ko.loop, "improve this", "improve my", "improve the", "iterate on", "iterate this", "loop this", "loop until", "polish this", "make this better", "raise the score", "raise this to"],
-    skill: "second-claude-code:loop",
-    label: "loop",
+    patterns: [...ko.refine, "improve this", "improve my", "improve the", "iterate on", "iterate this", "loop this", "loop until", "polish this", "refine this", "refine my", "refine the", "make this better", "raise the score", "raise this to"],
+    skill: "second-claude-code:refine",
+    label: "refine",
   },
   {
     patterns: [...ko.collect, "save this link", "save this url", "save for later", "collect this", "take a note", "clip this", "save to knowledge"],
@@ -162,7 +162,7 @@ const genericGuide = `<skill-check>
 - 뉴스레터/보고서/글쓰기/아티클/write report → second-claude-code:write
 - 분석/SWOT/RICE/OKR/전략/analyze → second-claude-code:analyze
 - 리뷰/검토/품질/피드백 (비코드) → second-claude-code:review
-- 개선/반복/다듬어/iterate → second-claude-code:loop
+- 개선/반복/다듬어/다듬/iterate/refine/polish → second-claude-code:refine
 - 저장/캡처/메모/수집/clip → second-claude-code:collect
 - 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:workflow
 - 스킬 찾기/discover → second-claude-code:discover

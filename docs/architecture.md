@@ -9,7 +9,7 @@ directly to `Plan → Do → Check → Act`.
 | Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
 | Do | Produce | `analyze`*, `write`, `pipeline` |
 | Check | Verify | `review` |
-| Act | Refine | `loop` |
+| Act | Refine | `refine` |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 
 The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
@@ -29,7 +29,7 @@ second-claude/
 │   ├── write/                    # Content production
 │   ├── analyze/                  # Strategic framework analysis (15 frameworks)
 │   ├── review/                   # Multi-perspective quality gate
-│   ├── loop/                     # Iterative improvement
+│   ├── refine/                   # Iterative improvement
 │   ├── collect/                  # Knowledge collection (PARA)
 │   ├── pipeline/                 # Custom workflow builder
 │   └── discover/                  # Skill discovery
@@ -126,7 +126,7 @@ The agents map to the PDCA quality cycle with the Action Router in Act phase:
 │                       (structure-analyst)                    │
 │                                                              │
 │  Refine (Act)      → Ditto (editor)                          │
-│    Action Router:     Route to Plan, Do, or Loop             │
+│    Action Router:     Route to Plan, Do, or Refine           │
 │                                                              │
 └──────────────────────────────────────────────────────────────┘
 ```
@@ -148,8 +148,8 @@ The `pdca` meta-skill enforces quality gates at each phase transition:
 Plan ──[Gate: Brief exists? Analysis exists? Sources ≥3?]──→ Do
   Do ──[Gate: Artifact complete? Format OK? Research used?]──→ Check
 Check ──[Gate: Verdict routing]──→ Act (or Exit if APPROVED)
-  Act ──[Action Router: classify root cause]──→ Plan / Do / Loop
-Loop ──[Gate: Target met?]──→ Exit (or present options)
+  Act ──[Action Router: classify root cause]──→ Plan / Do / Refine
+Refine ──[Gate: Target met?]──→ Exit (or present options)
 ```
 
 ### Action Router (Act Phase)

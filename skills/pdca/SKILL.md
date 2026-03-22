@@ -196,6 +196,38 @@ phase boundaries (earlier and more targeted); `max_cycles` is a hard ceiling
 across all cycles. If both trigger simultaneously, report both and exit with
 the best artifact.
 
+## State Management via MCP
+
+When the `pdca-state` MCP server is available, use its tools instead of reading
+and writing `pdca-active.json` directly. The MCP tools handle atomic writes and
+enforce the single-active-run constraint server-side.
+
+| Operation | MCP Tool | Direct fallback |
+|-----------|----------|----------------|
+| Read active state | `mcp__pdca-state__pdca_get_state` | read `pdca-active.json` |
+| Start a new run | `mcp__pdca-state__pdca_start_run` | write `pdca-active.json` |
+| Move to next phase | `mcp__pdca-state__pdca_transition` | update `current_phase` + `completed` |
+| Validate a gate | `mcp__pdca-state__pdca_check_gate` | manual checklist |
+| Record stuck flags | `mcp__pdca-state__pdca_update_stuck_flags` | append to `stuck_flags` |
+| End the run | `mcp__pdca-state__pdca_end_run` | write completed, delete active |
+
+`pdca_transition` accepts an `artifacts` object — pass any artifact paths
+produced in the current phase so the state stays in sync:
+
+```json
+{
+  "target_phase": "do",
+  "artifacts": {
+    "plan_research": ".captures/research-topic-2026-03-20.md",
+    "plan_analysis": ".captures/analyze-topic-2026-03-20.md"
+  }
+}
+```
+
+`pdca_check_gate` returns `{ "passed": true/false, "missing": [...] }`.
+A non-empty `missing` array means the gate has failed — resolve each item
+before calling `pdca_transition`.
+
 ## State
 
 Save cycle state to `${CLAUDE_PLUGIN_DATA}/state/pdca-active.json`:
@@ -205,6 +237,10 @@ Save cycle state to `${CLAUDE_PLUGIN_DATA}/state/pdca-active.json`:
 ```json
 {
   "run_id": "uuid-v4-generated-at-run-start",
+  "session_id": "claude-session-id-of-the-session-that-last-wrote-this-file",
+  "session_history": [
+    { "session_id": "...", "phase_completed": "plan", "timestamp": "2026-03-22T10:00:00Z" }
+  ],
   "topic": "...",
   "current_phase": "do",
   "completed": ["plan"],
@@ -234,6 +270,13 @@ Save cycle state to `${CLAUDE_PLUGIN_DATA}/state/pdca-active.json`:
   }
 }
 ```
+
+### Session Fields
+
+| Field | Type | Purpose |
+|-------|------|---------|
+| `session_id` | `string \| null` | Claude Code session ID (`CLAUDE_SESSION_ID`) of the session that last wrote this file. Set by the session-end hook. |
+| `session_history` | `Array<{ session_id, phase_completed, timestamp }>` | Ordered record of every session that advanced the cycle. Appended (never overwritten) by the session-end hook. |
 
 ## Output
 
@@ -269,3 +312,4 @@ At cycle end:
 - **Scope Creep requires a user decision**: do NOT auto-accept divergence or auto-revert. Present the comparison and wait for user decision. If no response, continue waiting — do not auto-accept or auto-revert. Log the user's decision in the Check phase context.
 - **stuck_flags are additive**: a run can accumulate multiple flags (e.g., `["plan_churn", "scope_creep"]`). Each flag fires at most once per run — do not re-evaluate a flag already set.
 - **Do phase worktree lifecycle**: the `worktree-pdca-do` branch is auto-cleaned if Do produces no file changes. If changes exist and Check returns MUST FIX, the orchestrator discards the worktree (`git worktree remove --force worktree-pdca-do`) for a clean restart — no stale artifacts carry forward.
+- **Session resume vs. HANDOFF.md**: `claude --resume {session_id}` restores the full conversation context of a prior session — richer than the compressed HANDOFF.md summary. For complex cycles spanning 3+ sessions, session resume is strongly recommended over relying on the summary alone. The HANDOFF.md "Session Resume" section always lists the exact command.

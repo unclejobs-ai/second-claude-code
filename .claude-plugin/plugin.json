@@ -19,5 +19,12 @@
     "pipeline",
     "second-brain",
     "automation"
-  ]
+  ],
+  "mcpServers": {
+    "pdca-state": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/pdca-state-server.mjs"]
+    }
+  }
 }

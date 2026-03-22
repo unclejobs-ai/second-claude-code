@@ -22,6 +22,7 @@ This is the quality gate that determines whether work ships or iterates.
 2. **Dispatch review**: Run `/second-claude-code:review --preset {selected}`.
    - Reviewers: Xatu (deep-reviewer), Absol (devil-advocate), Porygon (fact-checker), Jigglypuff (tone-guardian), Unown (structure-analyst)
    - Preset determines which subset is dispatched (see below)
+   - For `--depth deep` PDCA cycles, add `--team-review` to enable interactive deliberation. In team review, reviewers complete independent assessments first, then enter a challenge round where they dispute or reinforce each other's findings. This catches issues that independent parallel reviews miss — particularly contradictory findings where one reviewer's blind spot cancels another's valid concern.
 3. **Read verdict**: The review skill returns one of four verdicts.
 4. **Route based on verdict**: See Gate Checklist below.
 

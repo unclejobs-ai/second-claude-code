@@ -23,6 +23,7 @@ import {
   chmodSync,
   unlinkSync,
   statSync,
+  readFileSync,
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -118,15 +119,15 @@ function pdcaBlockReason(pdcaState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function collectActiveState() {
-  const result = { loop: null, pipeline: null, pdca: null };
+  const result = { refine: null, pipeline: null, pdca: null };
 
-  const loopState = readJsonSafe(join(STATE_DIR, "loop-active.json"));
-  if (loopState) {
-    result.loop = {
-      goal: sanitize(loopState.goal),
-      iteration: Number(loopState.current_iteration) || 0,
-      max: Number(loopState.max) || 3,
-      scores: Array.isArray(loopState.scores) ? loopState.scores : [],
+  const refineState = readJsonSafe(join(STATE_DIR, "refine-active.json"));
+  if (refineState) {
+    result.refine = {
+      goal: sanitize(refineState.goal),
+      iteration: Number(refineState.current_iteration) || 0,
+      max: Number(refineState.max) || 3,
+      scores: Array.isArray(refineState.scores) ? refineState.scores : [],
     };
   }
 
@@ -150,6 +151,12 @@ function collectActiveState() {
       check_verdict: pdcaState.check_verdict
         ? sanitize(String(pdcaState.check_verdict))
         : null,
+      session_id: pdcaState.session_id
+        ? sanitize(String(pdcaState.session_id))
+        : null,
+      session_history: Array.isArray(pdcaState.session_history)
+        ? pdcaState.session_history
+        : [],
     };
   }
 
@@ -169,20 +176,20 @@ function generateHandoff(state) {
   lines.push(`Generated: ${now}`);
   lines.push("");
 
-  const hasActiveState = state.loop || state.pipeline || state.pdca;
+  const hasActiveState = state.refine || state.pipeline || state.pdca;
 
   // ── Active state ──────────────────────────────────────────────────────────
   lines.push("## Active State");
   lines.push("");
 
-  if (state.loop) {
-    lines.push("### Loop");
-    lines.push(`- Goal: ${state.loop.goal}`);
+  if (state.refine) {
+    lines.push("### Refine");
+    lines.push(`- Goal: ${state.refine.goal}`);
     lines.push(
-      `- Progress: iteration ${state.loop.iteration}/${state.loop.max}`
+      `- Progress: iteration ${state.refine.iteration}/${state.refine.max}`
     );
-    if (state.loop.scores.length > 0) {
-      lines.push(`- Scores: ${state.loop.scores.join(" → ")}`);
+    if (state.refine.scores.length > 0) {
+      lines.push(`- Scores: ${state.refine.scores.join(" → ")}`);
     }
     lines.push("");
   }
@@ -211,10 +218,37 @@ function generateHandoff(state) {
       lines.push(`- Last check verdict: ${state.pdca.check_verdict}`);
     }
     lines.push("");
+
+    // Session Resume section — only when session history exists
+    const sessionHistory = state.pdca.session_history;
+    if (sessionHistory.length > 0) {
+      lines.push("### Session Resume");
+      lines.push("");
+      lines.push(
+        "Sessions that contributed to this cycle (most recent last):"
+      );
+      for (const entry of sessionHistory) {
+        const sid = sanitize(String(entry.session_id || ""));
+        const phase = sanitize(String(entry.phase_completed || ""));
+        const ts = sanitize(String(entry.timestamp || ""));
+        lines.push(`- \`${sid}\` — completed: ${phase} at ${ts}`);
+      }
+      lines.push("");
+      const latestSessionId = sanitize(
+        String(sessionHistory[sessionHistory.length - 1].session_id || "")
+      );
+      lines.push(
+        `**Recommended**: \`claude --resume ${latestSessionId}\` for full context of the most recent session.`
+      );
+      lines.push(
+        "For complex cycles spanning 3+ sessions, resume is strongly preferred over the compressed summary above."
+      );
+      lines.push("");
+    }
   }
 
   if (!hasActiveState) {
-    lines.push("No active loops, pipelines, or PDCA cycles.");
+    lines.push("No active refine, pipelines, or PDCA cycles.");
     lines.push("");
 
     // ── Last completed cycle summary ────────────────────────────────────────
@@ -245,9 +279,9 @@ function generateHandoff(state) {
   // ── Resumption hints ──────────────────────────────────────────────────────
   lines.push("## Resumption");
   lines.push("");
-  if (state.loop) {
+  if (state.refine) {
     lines.push(
-      `- To resume loop: re-run \`/second-claude-code:loop\` with the same file — it reads saved state from iteration ${state.loop.iteration}`
+      `- To resume refine: re-run \`/second-claude-code:refine\` with the same file — it reads saved state from iteration ${state.refine.iteration}`
     );
   }
   if (state.pipeline) {
@@ -259,6 +293,15 @@ function generateHandoff(state) {
     lines.push(
       `- To resume PDCA: \`/second-claude-code:pdca\` — auto-detects phase ${state.pdca.current_phase} from saved state`
     );
+    const sessionHistory = state.pdca.session_history;
+    if (sessionHistory.length > 0) {
+      const latestSessionId = sanitize(
+        String(sessionHistory[sessionHistory.length - 1].session_id || "")
+      );
+      lines.push(
+        `- For full context: \`claude --resume ${latestSessionId}\``
+      );
+    }
   }
   if (!hasActiveState) {
     lines.push(
@@ -309,15 +352,61 @@ function main() {
     }
   }
 
+  // ── PDCA session tracking (before HANDOFF generation) ────────────────────
+  // Record the current session ID into pdca-active.json so the next session
+  // can offer `claude --resume` for full context restoration.
+  const currentSessionId = process.env.CLAUDE_SESSION_ID || null;
+  if (currentSessionId) {
+    const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
+    const rawPdca = readJsonSafe(pdcaActivePath);
+    if (rawPdca) {
+      const sessionHistory = Array.isArray(rawPdca.session_history)
+        ? rawPdca.session_history
+        : [];
+
+      // Append an entry for every phase completed in the current session
+      // (phases not yet recorded in session_history).
+      const recordedPhases = new Set(
+        sessionHistory.map((e) => String(e.phase_completed || ""))
+      );
+      const allCompleted = Array.isArray(rawPdca.completed)
+        ? rawPdca.completed
+        : [];
+      const newPhases = allCompleted.filter((p) => !recordedPhases.has(p));
+
+      if (newPhases.length > 0) {
+        const ts = new Date().toISOString();
+        for (const phase of newPhases) {
+          sessionHistory.push({
+            session_id: currentSessionId,
+            phase_completed: phase,
+            timestamp: ts,
+          });
+        }
+      }
+
+      // Always stamp session_id as the last-writer, even if no new phases.
+      rawPdca.session_id = currentSessionId;
+      rawPdca.session_history = sessionHistory;
+
+      try {
+        ensureDir(STATE_DIR);
+        writeFileSync(pdcaActivePath, JSON.stringify(rawPdca, null, 2), "utf8");
+      } catch {
+        // Non-fatal — HANDOFF generation continues.
+      }
+    }
+  }
+
   // ── HANDOFF.md (always written) ───────────────────────────────────────────
   const state = collectActiveState();
   const content = generateHandoff(state);
   writeHandoff(content);
 
-  const hasActiveState = state.loop || state.pipeline || state.pdca;
+  const hasActiveState = state.refine || state.pipeline || state.pdca;
   if (hasActiveState) {
     const parts = [
-      state.loop && "active loop",
+      state.refine && "active refine",
       state.pipeline && "active pipeline",
       state.pdca && "active PDCA cycle",
     ].filter(Boolean);
