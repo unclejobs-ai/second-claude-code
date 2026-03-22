@@ -38,7 +38,7 @@ if (!enabled) {
       "/second-claude-code:write",
       "/second-claude-code:analyze",
       "/second-claude-code:review",
-      "/second-claude-code:loop",
+      "/second-claude-code:refine",
       "/second-claude-code:collect",
       "/second-claude-code:workflow",
       "/second-claude-code:discover",

@@ -9,7 +9,7 @@
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:loop",
+      "skill": "/second-claude-code:refine",
       "args": "--file \"{{input_file}}\" --max 2",
       "input_from": "review-report.md",
       "output": "{{input_file}}",

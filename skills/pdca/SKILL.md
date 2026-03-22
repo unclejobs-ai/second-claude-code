@@ -49,12 +49,12 @@ PDCA Orchestrator
 │   └── Xatu + Absol + Porygon + Jigglypuff + Unown: /scc:review
 │       └── Gate: Verdict routing
 │
-└── ACT (action router → loop)
+└── ACT (action router → refine)
     ├── Action Router (root cause classification)
     │   ├── SOURCE/ASSUMPTION/FRAMEWORK → PLAN
     │   ├── COMPLETENESS/FORMAT → DO
-    │   └── EXECUTION_QUALITY → LOOP
-    └── Ditto (editor): /scc:loop
+    │   └── EXECUTION_QUALITY → REFINE
+    └── Ditto (editor): /scc:refine
         └── Gate: Target met? → EXIT
 ```
 

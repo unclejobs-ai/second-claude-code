@@ -60,19 +60,19 @@ test("state manager supports a full read/write/list/exists/clear roundtrip", () 
 
   const writeOutput = execFileSync(
     "bash",
-    [scriptPath, "write", "loop-active", '{"goal":"Ship smoke tests","current_iteration":1,"max":3}'],
+    [scriptPath, "write", "refine-active", '{"goal":"Ship smoke tests","current_iteration":1,"max":3}'],
     { cwd: root, env, encoding: "utf8" }
   );
   assert.match(writeOutput, /"ok":true/);
 
-  const existsOutput = execFileSync("bash", [scriptPath, "exists", "loop-active"], {
+  const existsOutput = execFileSync("bash", [scriptPath, "exists", "refine-active"], {
     cwd: root,
     env,
     encoding: "utf8",
   });
   assert.match(existsOutput, /"exists":true/);
 
-  const readOutput = execFileSync("bash", [scriptPath, "read", "loop-active"], {
+  const readOutput = execFileSync("bash", [scriptPath, "read", "refine-active"], {
     cwd: root,
     env,
     encoding: "utf8",
@@ -84,16 +84,16 @@ test("state manager supports a full read/write/list/exists/clear roundtrip", () 
     env,
     encoding: "utf8",
   });
-  assert.match(listOutput, /loop-active/);
+  assert.match(listOutput, /refine-active/);
 
-  const clearOutput = execFileSync("bash", [scriptPath, "clear", "loop-active"], {
+  const clearOutput = execFileSync("bash", [scriptPath, "clear", "refine-active"], {
     cwd: root,
     env,
     encoding: "utf8",
   });
   assert.match(clearOutput, /"deleted":true/);
 
-  const readAfterClear = execFileSync("bash", [scriptPath, "read", "loop-active"], {
+  const readAfterClear = execFileSync("bash", [scriptPath, "read", "refine-active"], {
     cwd: root,
     env,
     encoding: "utf8",
@@ -108,7 +108,7 @@ test("autopilot preset only uses supported commands, frameworks, and file handof
     "/second-claude-code:write",
     "/second-claude-code:analyze",
     "/second-claude-code:review",
-    "/second-claude-code:loop",
+    "/second-claude-code:refine",
     "/second-claude-code:collect",
     "/second-claude-code:workflow",
     "/second-claude-code:discover",

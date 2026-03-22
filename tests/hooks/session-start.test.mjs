@@ -14,7 +14,7 @@ test("session start renders active state with canonical keys and capability summ
 
   mkdirSync(stateDir, { recursive: true });
   writeFileSync(
-    path.join(stateDir, "loop-active.json"),
+    path.join(stateDir, "refine-active.json"),
     JSON.stringify({
       goal: "Polish newsletter draft to 4.5+",
       current_iteration: 2,
@@ -39,7 +39,7 @@ test("session start renders active state with canonical keys and capability summ
     encoding: "utf8",
   });
 
-  assert.match(output, /Active loop: "Polish newsletter draft to 4\.5\+" \(iteration 2\/3\)/);
+  assert.match(output, /Active refine: "Polish newsletter draft to 4\.5\+" \(iteration 2\/3\)/);
   assert.match(output, /Active pipeline: "weekly-digest" \(step 2\/4\)/);
   assert.match(output, /Capabilities/i);
   assert.match(output, /git/);

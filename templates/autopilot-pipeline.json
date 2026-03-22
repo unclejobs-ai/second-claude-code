@@ -1,6 +1,6 @@
 {
   "name": "autopilot",
-  "description": "End-to-end workflow: research → analyze → write → review → loop. Adopted from oh-my-codex autopilot pattern.",
+  "description": "End-to-end workflow: research → analyze → write → review → refine. Adopted from oh-my-codex autopilot pattern.",
   "steps": [
     {
       "skill": "/second-claude-code:research",
@@ -30,7 +30,7 @@
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:loop",
+      "skill": "/second-claude-code:refine",
       "args": "--max 3 --target APPROVED",
       "input_from": ["draft.md", "review-report.md"],
       "output": "final.md",

@@ -35,7 +35,7 @@ All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databas
 **Implication**: Use `$CLAUDE_PLUGIN_DATA/state.json` for plugin state. Use `$CLAUDE_PLUGIN_DATA/knowledge/` for knowledge base. Never rely on in-memory state across session boundaries.
 
 ## 7. Composable
-The 8 core skills are building blocks, not endpoints. `/second-claude-code:write` calls `/second-claude-code:research` internally. `/second-claude-code:loop` wraps any other skill in an iteration cycle. `/second-claude-code:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
+The 8 core skills are building blocks, not endpoints. `/second-claude-code:write` calls `/second-claude-code:research` internally. `/second-claude-code:refine` wraps any other skill in an iteration cycle. `/second-claude-code:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
 
 **Implication**: Every skill must accept structured input and produce structured output. A skill that can only be invoked by a human prompt is incomplete -- it must also be callable by another skill.
 

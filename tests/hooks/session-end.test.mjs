@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdtempSync,
@@ -20,7 +20,7 @@ test("session end persists a handoff from canonical state files", () => {
 
   mkdirSync(stateDir, { recursive: true });
   writeFileSync(
-    path.join(stateDir, "loop-active.json"),
+    path.join(stateDir, "refine-active.json"),
     JSON.stringify({
       goal: "Raise the draft to APPROVED",
       current_iteration: 2,
@@ -38,7 +38,7 @@ test("session end persists a handoff from canonical state files", () => {
     })
   );
 
-  const output = execFileSync(process.execPath, [hookPath], {
+  const result = spawnSync(process.execPath, [hookPath], {
     cwd: root,
     env: {
       ...process.env,
@@ -47,9 +47,12 @@ test("session end persists a handoff from canonical state files", () => {
     encoding: "utf8",
   });
 
+  // session-end.mjs writes the status message to stderr
+  const stderr = result.stderr || "";
+
   const handoffPath = path.join(tempDir, "HANDOFF.md");
   assert.equal(existsSync(handoffPath), true, "HANDOFF.md should be created");
-  assert.match(output, /HANDOFF\.md saved/i);
+  assert.match(stderr, /HANDOFF\.md saved/i);
 
   const handoff = readFileSync(handoffPath, "utf8");
   assert.match(handoff, /Goal: Raise the draft to APPROVED/);
@@ -58,6 +61,6 @@ test("session end persists a handoff from canonical state files", () => {
   assert.match(handoff, /Name: weekly-digest/);
   assert.match(handoff, /Progress: step 3\/5/);
   assert.match(handoff, /Status: running/);
-  assert.match(handoff, /re-run.*\/second-claude-code:loop/);
+  assert.match(handoff, /re-run.*\/second-claude-code:refine/);
   assert.match(handoff, /\/second-claude-code:workflow run weekly-digest/);
 });
