@@ -31,6 +31,9 @@ Produce content with automatic research and review unless the caller explicitly 
 | `--skip-review` | flag | off |
 | `--lang` | `ko\|en` | `ko` |
 | `--input` | file path | none |
+| `--constraints` | comma-separated strings | none |
+
+`--constraints`: Review findings injected as hard requirements for this draft. Each entry is enforced as a non-negotiable rule during drafting and is not open to negotiation with the user. Passed automatically by the PDCA Act→Do route; can also be supplied manually.
 
 When `--input` is provided (or when called from a pipeline with `input_from`), the file content is injected as source context and `--skip-research` is implied.
 

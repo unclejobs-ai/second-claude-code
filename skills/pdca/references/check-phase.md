@@ -1,5 +1,7 @@
 # Check Phase (Verify) — Checklist
 
+**Permission Mode**: `plan` (read-only). Reviewers must NOT modify the artifact under review. Read-only access is a structural guarantee of review independence — a reviewer who can edit cannot be truly independent.
+
 The Check phase validates the Do phase artifact through multi-perspective review.
 This is the quality gate that determines whether work ships or iterates.
 
@@ -64,8 +66,16 @@ Proceed to Act phase with:
 
 ## Output to Next Phase
 
+Output must conform to the **CheckOutput schema** (see `references/phase-schemas.md`).
+The orchestrator validates all fields before passing the gate.
+
 Pass to Act phase (if not APPROVED):
-- Path to artifact file
+- Consensus verdict → `verdict` (one of: `APPROVED|MINOR FIXES|NEEDS IMPROVEMENT|MUST FIX`)
+- Mean reviewer score → `average_score` (float in [0.0, 1.0])
+- Each reviewer's name, individual verdict, and score → `reviewers` (at least 2 required)
+- Critical-severity findings → `critical_findings`
+- Top improvement suggestions (max 5) → `top_improvements`
+- Path to artifact file (for Act phase context)
 - Review report (full text or file path)
 - Priority-ordered list of findings to address
 - Recommended `--max` for loop iterations:

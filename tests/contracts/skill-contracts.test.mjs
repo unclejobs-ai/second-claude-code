@@ -141,7 +141,7 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
     "loop",
     "collect",
     "pipeline",
-    "hunt",
+    "discover",
   ];
 
   for (const name of commandNames) {

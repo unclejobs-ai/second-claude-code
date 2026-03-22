@@ -1,6 +1,6 @@
-[English](hunt.md) | **한국어**
+[English](discover.md) | **한국어**
 
-# Hunt
+# Discover
 
 > 현재 스킬로 처리할 수 없는 작업이 있을 때 새로운 스킬을 탐색하는 스킬입니다.
 
@@ -92,6 +92,6 @@ graph TD
 
 | 스킬 | 관계 |
 |------|------|
-| `pipeline` | 파이프라인이 누락된 스킬을 참조할 때 hunt를 트리거 |
+| `pipeline` | 파이프라인이 누락된 스킬을 참조할 때 discover를 트리거 |
 | `collect` | 발견한 스킬의 메타데이터를 지식 베이스에 저장 |
-| `research` | hunt는 스킬 탐색에 집중; research는 일반 정보 수집 담당 |
+| `research` | discover는 스킬 탐색에 집중; research는 일반 정보 수집 담당 |

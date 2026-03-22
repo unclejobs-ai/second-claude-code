@@ -59,4 +59,4 @@ writer:
 
 - Called automatically by `/second-claude-code:write` before drafting
 - Called optionally by `/second-claude-code:analyze` when `--with-research` is set
-- Output cached per session to avoid redundant searches
+- Research results are saved to `.captures/` but not deduplicated across calls within a session. Callers should check for existing `.captures/research-{slug}*.md` files before re-running to avoid redundant searches.

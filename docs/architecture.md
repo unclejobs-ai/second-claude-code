@@ -6,7 +6,7 @@ directly to `Plan → Do → Check → Act`.
 
 | PDCA | Product Phase | Primary Skills |
 |------|---------------|----------------|
-| Plan | Gather | `research`, `analyze`*, `hunt`, `collect` |
+| Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
 | Do | Produce | `analyze`*, `write`, `pipeline` |
 | Check | Verify | `review` |
 | Act | Refine | `loop` |
@@ -32,7 +32,7 @@ second-claude/
 │   ├── loop/                     # Iterative improvement
 │   ├── collect/                  # Knowledge collection (PARA)
 │   ├── pipeline/                 # Custom workflow builder
-│   └── hunt/                     # Skill discovery
+│   └── discover/                  # Skill discovery
 ├── agents/                       # 16 specialized subagents (Pokemon-themed)
 ├── commands/                     # 9 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection
@@ -82,7 +82,7 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 | tone-guardian | **Jigglypuff** | haiku | Verify | Voice and audience fit | THE voice Pokemon, sensitive to tone |
 | structure-analyst | **Unown** | haiku | Verify | Organization and readability | Letter-shaped, obsessed with structure |
 
-### Pipeline & Hunt Agents
+### Pipeline & Discover Agents
 
 | Agent | Pokemon | Model | PDCA Phase | Role | Why This Pokemon |
 |-------|---------|-------|------------|------|------------------|
@@ -135,7 +135,7 @@ Supporting commands reinforce the same loop:
 
 - `pdca` orchestrates the full cycle with quality gates and the Action Router
 - `collect` keeps source material and notes available for the next planning cycle
-- `hunt` expands the system when the current skill set is not enough
+- `discover` expands the system when the current skill set is not enough
 - `pipeline` automates full Gather → Produce → Verify → Refine runs
 
 ---

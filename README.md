@@ -13,7 +13,7 @@ Thirty seconds later, Eevee is crawling the web. Alakazam finds patterns in what
 
 What just happened? **One prompt. Full cycle. No duct tape between plugins.**
 
-![Skill Wheel](docs/images/hero.svg)
+![One prompt to finished output](docs/images/hero.svg)
 
 Want to try it?
 
@@ -102,10 +102,10 @@ Which skill fits your next task?
 | Get 3-5 perspectives on a draft | `review` | Parallel review with consensus voting |
 | Polish a draft to a target score | `loop` | Iterative improvement until reviewers pass |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
-| Chain skills into a reusable workflow | `pipeline` | Custom automation |
-| Find a skill you don't have | `hunt` | Discover and install new skills |
+| Chain skills into a reusable workflow | `workflow` | Custom automation |
+| Discover a skill you don't have | `discover` | Discover and install new skills |
 
-Every skill responds to natural language. If you want precision, slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, etc. I type in Korean half the time — the router handles both without any config. ~127 trigger patterns total.
+Every skill responds to natural language. If you want precision, slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:workflow`, `/second-claude-code:discover`, etc. I type in Korean half the time — the router handles both without any config. ~127 trigger patterns total.
 
 ```
 "Research and write about AI agents"       →  pdca (full cycle)
@@ -182,7 +182,7 @@ Skills call each other. That's where things get interesting.
 | Full PDCA | research → analyze → write → review → loop | Research a topic and publish a reviewed article |
 | Quick Check | review → loop | Polish an existing draft |
 | Plan Only | research → analyze | Understand a market before committing |
-| Autopilot | `pipeline run autopilot --topic "..."` | Set it, go get coffee, come back to a finished piece |
+| Autopilot | `workflow run autopilot --topic "..."` | Set it, go get coffee, come back to a finished piece |
 
 I use Full PDCA for anything external-facing. For internal notes, `write` alone is enough — it still runs research and review internally.
 
@@ -273,7 +273,7 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 </details>
 
 <details>
-<summary><strong>Architecture — 16 Pokemon agents across 3 model tiers</strong></summary>
+<summary><strong>Meet the Team — 16 agents across 3 model tiers</strong></summary>
 
 | Phase | Pokemon | Role | Model |
 |---|---|---|---|

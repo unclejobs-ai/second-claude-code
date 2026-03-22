@@ -6,6 +6,7 @@ description: |
   Examples: "Research competitor pricing", "Find recent stats on AI adoption",
   "Collect expert opinions on remote work trends".
 model: haiku
+memory: project
 ---
 
 # Research Specialist

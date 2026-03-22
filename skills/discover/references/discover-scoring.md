@@ -1,4 +1,4 @@
-# Hunt: Evaluation, Scoring & Decision Framework
+# Discover: Evaluation, Scoring & Decision Framework
 
 ## Candidate Inspection
 

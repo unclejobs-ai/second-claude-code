@@ -17,7 +17,7 @@ Key sources that shaped second-claude's design and what was absorbed from each.
 ## Ars Contexta -- Knowledge Work Framework
 
 **Source**: 6Rs framework, 3 spaces model, queue-based orchestration
-**Absorbed**: Record-Reduce-Recombine patterns power the capture and knowledge synthesis flow. Queue orchestration concepts inform how `/second-claude-code:pipeline` sequences skill invocations. The 3-spaces model (personal, shared, public) guides output destination logic.
+**Absorbed**: Record-Reduce-Recombine patterns power the capture and knowledge synthesis flow. Queue orchestration concepts inform how `/second-claude-code:workflow` sequences skill invocations. The 3-spaces model (personal, shared, public) guides output destination logic.
 
 ## Claude Octopus -- Multi-Agent Review
 

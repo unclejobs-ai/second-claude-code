@@ -65,9 +65,12 @@ A connection must name a **specific principle, pattern, or concept** — not a t
 
 If no specific connection exists, set `connections` to an empty array. Never force a connection.
 
-## Search
+## Search Mode
 
-`/second-claude-code:collect --search "query"` scans stored JSON and returns ranked matches. See `references/para-method.md` for search ranking weights.
+Trigger: pass `--search "query"` instead of a source to retrieve rather than save.
+Invocation: `/second-claude-code:collect --search "query"`
+What it does: scans all stored JSON under `${CLAUDE_PLUGIN_DATA}/knowledge/`, ranks results by tag overlap and title similarity, and returns the top matches with their summary and PARA category.
+See `references/para-method.md` for full ranking weights.
 
 ## Gotchas
 

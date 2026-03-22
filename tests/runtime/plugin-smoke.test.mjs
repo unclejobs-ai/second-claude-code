@@ -110,8 +110,8 @@ test("autopilot preset only uses supported commands, frameworks, and file handof
     "/second-claude-code:review",
     "/second-claude-code:loop",
     "/second-claude-code:collect",
-    "/second-claude-code:pipeline",
-    "/second-claude-code:hunt",
+    "/second-claude-code:workflow",
+    "/second-claude-code:discover",
   ]);
   const supportedFrameworks = new Set([
     "swot",

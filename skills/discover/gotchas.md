@@ -1,4 +1,4 @@
-# Hunt Gotchas
+# Discover Gotchas
 
 ## Common failure patterns in skill discovery
 

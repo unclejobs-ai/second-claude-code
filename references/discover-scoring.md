@@ -1,6 +1,6 @@
-# Hunt Scoring & Inspection Reference
+# Discover Scoring & Inspection Reference
 
-Detailed scoring methodology, candidate inspection workflow, and version pinning rules for the hunt skill.
+Detailed scoring methodology, candidate inspection workflow, and version pinning rules for the discover skill.
 
 ---
 

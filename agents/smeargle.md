@@ -6,6 +6,8 @@ description: |
   Examples: "Write a newsletter about AI trends", "Draft a market analysis report",
   "Create a thought leadership article on remote work".
 model: opus
+memory: project
+isolation: worktree
 ---
 
 # Professional Content Writer

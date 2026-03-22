@@ -59,5 +59,5 @@ test("session end persists a handoff from canonical state files", () => {
   assert.match(handoff, /Progress: step 3\/5/);
   assert.match(handoff, /Status: running/);
   assert.match(handoff, /re-run.*\/second-claude-code:loop/);
-  assert.match(handoff, /\/second-claude-code:pipeline run weekly-digest/);
+  assert.match(handoff, /\/second-claude-code:workflow run weekly-digest/);
 });

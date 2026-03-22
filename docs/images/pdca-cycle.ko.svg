@@ -1,100 +1,101 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 600" fill="none" role="img" aria-labelledby="pc-title pc-desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA 품질 사이클</title>
-  <desc id="pc-desc">수직 흐름: 수집 → 게이트 → 생산 → 게이트 → 검증 → 승인 또는 피드백 → 개선 → 액션 라우터 → 근본원인별 3가지 경로.</desc>
+  <desc id="pc-desc">모든 결과물이 수집, 집필, 검증, 개선을 거친다. 문제가 생기면 원인이 있는 단계로 돌아간다.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arr-blue" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#58a6ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
     <marker id="arr-green" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#3fb950" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arr-purple" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+    <marker id="arr-blue" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#58a6ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arr-act" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#bc8cff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
 
   <!-- Background -->
-  <rect width="780" height="600" rx="12" fill="#0d1117"/>
+  <rect width="780" height="540" rx="12" fill="#0d1117"/>
+
+  <!-- Philosophy header -->
+  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">모든 결과물은 검증을 통과해야 나간다.</text>
+  <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집, 집필, 검증, 개선 &#x2014; 단계마다 통과 기준이 있다.</text>
+
+  <!-- Divider -->
+  <line x1="30" y1="74" x2="750" y2="74" stroke="#30363d" stroke-width="0.5"/>
 
   <!-- ===== PLAN / 수집 ===== -->
-  <rect x="150" y="24" width="440" height="64" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="0.5"/>
-  <text x="170" y="46" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
-  <text x="218" y="46" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집</text>
-  <text x="170" y="64" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">질문 프로토콜 → 리서치 → 분석</text>
-  <text x="390" y="64" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">이브이(haiku) · 후딘(sonnet) · 뮤츠(sonnet)</text>
+  <rect x="170" y="94" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="94" width="3" height="58" rx="1.5" fill="#58a6ff"/>
+  <text x="186" y="114" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
+  <text x="230" y="114" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">쓰기 전에 근거부터 모은다</text>
+  <text x="186" y="134" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">주제를 조사하고, 소스를 찾고, 패턴을 분석한다</text>
 
-  <!-- Gate line + label -->
-  <line x1="370" y1="88" x2="370" y2="108" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="102" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">브리프 완료? 소스 ≥ 3?</text>
+  <!-- Gate 1 -->
+  <line x1="390" y1="152" x2="390" y2="170" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="166" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">근거 충분?</text>
 
-  <!-- ===== DO / 생산 ===== -->
-  <rect x="150" y="112" width="440" height="64" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
-  <text x="170" y="134" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
-  <text x="200" y="134" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">생산</text>
-  <text x="170" y="154" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Plan 결과물 기반 순수 집필. 리서치·리뷰 없이 쓰기만.</text>
-  <text x="476" y="154" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">루브도(opus)</text>
+  <!-- ===== DO / 집필 ===== -->
+  <rect x="170" y="174" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="174" width="3" height="58" rx="1.5" fill="#3fb950"/>
+  <text x="186" y="194" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
+  <text x="214" y="194" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서치를 바탕으로 초안을 쓴다</text>
+  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">한 명이 리서치 결과만으로 전체 초안 작성</text>
 
-  <!-- Gate line + label -->
-  <line x1="370" y1="176" x2="370" y2="196" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="190" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">산출물 완성?</text>
+  <!-- Gate 2 -->
+  <line x1="390" y1="232" x2="390" y2="250" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="246" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">초안 완성?</text>
 
   <!-- ===== CHECK / 검증 ===== -->
-  <rect x="150" y="200" width="440" height="64" rx="6" fill="#161b22" stroke="#d29922" stroke-width="0.5"/>
-  <text x="170" y="222" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
-  <text x="228" y="222" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증</text>
-  <text x="170" y="242" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명 병렬 리뷰 → 합의 게이트 → 판정</text>
-  <text x="360" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">네이티오(opus) · 앱솔(sonnet) · 폴리곤(haiku) · 푸린(haiku) · 안농(haiku)</text>
+  <rect x="170" y="254" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="254" width="3" height="58" rx="1.5" fill="#d29922"/>
+  <text x="186" y="274" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
+  <text x="242" y="274" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명이 동시에 초안을 뜯는다</text>
+  <text x="186" y="294" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">논리 &#xB7; 팩트 &#xB7; 톤 &#xB7; 구조 &#xB7; 약점</text>
 
-  <!-- APPROVED branch (right) -->
-  <line x1="590" y1="232" x2="626" y2="232" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>
-  <rect x="630" y="218" width="112" height="28" rx="4" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
-  <text x="686" y="236" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="600" font-family="SF Mono, Consolas, monospace">승인</text>
+  <!-- Done branch (right) -->
+  <line x1="610" y1="274" x2="632" y2="274" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>
+  <rect x="636" y="260" width="108" height="28" rx="4" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
+  <text x="690" y="278" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">&#x2713; 완료</text>
 
-  <!-- feedback line + label -->
-  <line x1="370" y1="264" x2="370" y2="284" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="278" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">피드백</text>
+  <!-- Gate 3 -->
+  <line x1="390" y1="312" x2="390" y2="330" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="326" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수정 필요</text>
 
   <!-- ===== ACT / 개선 ===== -->
-  <rect x="150" y="288" width="440" height="64" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="0.5"/>
-  <text x="170" y="310" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
-  <text x="206" y="310" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">개선</text>
-  <text x="170" y="330" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">피드백을 근본원인별로 분류 → 해당 단계로 재투입</text>
-  <text x="490" y="330" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">메타몽(opus) · 액션 라우터</text>
+  <rect x="170" y="334" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="334" width="3" height="58" rx="1.5" fill="#bc8cff"/>
+  <text x="186" y="354" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
+  <text x="220" y="354" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">원인을 찾아서 해당 단계로 돌린다</text>
+  <text x="186" y="374" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">문제가 뭔지에 따라 돌아갈 곳이 다르다</text>
 
-  <!-- Transition to router -->
-  <line x1="370" y1="352" x2="370" y2="382" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-purple)"/>
+  <!-- Transition arrows to routing cards -->
+  <line x1="260" y1="392" x2="170" y2="418" stroke="#58a6ff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-blue)"/>
+  <line x1="390" y1="392" x2="390" y2="418" stroke="#3fb950" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-green)"/>
+  <line x1="520" y1="392" x2="610" y2="418" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-act)"/>
 
-  <!-- ===== ACTION ROUTER / 액션 라우터 ===== -->
-  <circle cx="370" cy="416" r="36" fill="#161b22" stroke="#bc8cff" stroke-width="0.5"/>
-  <text x="370" y="412" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACTION</text>
-  <text x="370" y="426" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ROUTER</text>
+  <!-- ===== 3 Routing cards ===== -->
 
-  <!-- ===== THREE ROUTES ===== -->
+  <!-- ↻ PLAN -->
+  <rect x="70" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="70" y="422" width="3" height="72" rx="1.5" fill="#58a6ff"/>
+  <text x="86" y="446" fill="#58a6ff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; PLAN</text>
+  <text x="86" y="464" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서치 부족</text>
+  <text x="86" y="480" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">근거를 다시 모은다</text>
 
-  <!-- LEFT → PLAN (수집으로) -->
-  <line x1="334" y1="416" x2="196" y2="416" stroke="#58a6ff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-blue)"/>
-  <rect x="20" y="388" width="170" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="20" y="388" width="3" height="76" rx="1.5" fill="#58a6ff"/>
-  <text x="36" y="412" fill="#58a6ff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ PLAN</text>
-  <text x="36" y="430" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">소스 / 가정 오류</text>
-  <text x="36" y="450" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서치를 다시 수행</text>
+  <!-- ↻ DO -->
+  <rect x="290" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="290" y="422" width="3" height="72" rx="1.5" fill="#3fb950"/>
+  <text x="306" y="446" fill="#3fb950" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; DO</text>
+  <text x="306" y="464" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">빠진 내용</text>
+  <text x="306" y="480" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">누락 섹션 재작성</text>
 
-  <!-- DOWN → DO (생산으로) -->
-  <line x1="370" y1="452" x2="370" y2="490" stroke="#3fb950" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-green)"/>
-  <rect x="285" y="494" width="170" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="285" y="494" width="3" height="76" rx="1.5" fill="#3fb950"/>
-  <text x="301" y="518" fill="#3fb950" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ DO</text>
-  <text x="301" y="536" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">완성도 / 포맷 문제</text>
-  <text x="301" y="556" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">누락 섹션 재작성</text>
-
-  <!-- RIGHT → LOOP CHECK (검증으로 재시작) -->
-  <line x1="406" y1="416" x2="568" y2="416" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-purple)"/>
-  <rect x="572" y="388" width="186" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="755" y="388" width="3" height="76" rx="1.5" fill="#bc8cff"/>
-  <text x="588" y="412" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ LOOP→CHECK</text>
-  <text x="588" y="430" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">실행 품질 미달</text>
-  <text x="588" y="450" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다듬고 재검증</text>
+  <!-- ↻ LOOP -->
+  <rect x="510" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="510" y="422" width="3" height="72" rx="1.5" fill="#bc8cff"/>
+  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; LOOP</text>
+  <text x="526" y="464" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다듬기 필요</text>
+  <text x="526" y="480" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다듬고 재검증</text>
 </svg>

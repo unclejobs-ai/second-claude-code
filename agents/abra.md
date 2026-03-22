@@ -1,5 +1,7 @@
 ---
+name: knowledge-connector
 model: haiku
+color: magenta
 description: "Find specific shared concepts between new items and existing knowledge"
 tools: [Glob, Read]
 ---

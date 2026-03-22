@@ -1,5 +1,7 @@
 # Act Phase (Refine) — Checklist
 
+**Permission Mode**: `acceptEdits`. Applying corrections to the artifact requires file access — the orchestrator must switch from `plan` mode (used in Check) before dispatching Act phase agents.
+
 The Act phase uses an **Action Router** to classify review findings by root cause
 and route to the appropriate phase — not always Loop.
 
@@ -35,24 +37,29 @@ See `references/action-router.md` for the full classification matrix.
 
 1. Snapshot artifact as `{filename}-v{N}.md`
 2. Extract specific research gaps from findings
-3. Formulate targeted research questions
-4. Re-enter Plan with gap-focused research (Question Protocol skipped — gap is known)
-5. Update state: `current_phase: "plan"`, increment `cycle_count`
+3. **Discard worktree**: `git worktree remove --force worktree-pdca-do` — the artifact is rejected at root; start clean
+4. Formulate targeted research questions
+5. Re-enter Plan with gap-focused research (Question Protocol skipped — gap is known)
+6. Update state: `current_phase: "plan"`, increment `cycle_count`
 
 ## Route: Act → DO
 
 1. Compile findings as constraints list
-2. Re-execute: `/scc:write --skip-research --skip-review --constraints {findings}`
-3. Proceed directly to Check after Do (skip Plan and Loop)
+2. **Discard worktree**: `git worktree remove --force worktree-pdca-do` — a fresh Do pass requires a clean branch
+3. Re-execute: `/scc:write --skip-research --skip-review --constraints {findings}` (creates a new `worktree-pdca-do`)
+4. Proceed directly to Check after Do (skip Plan and Loop)
 
-## Route: Act → LOOP
+## Route: Act → LOOP (MINOR FIXES or NEEDS IMPROVEMENT)
 
 1. Set loop parameters based on verdict (use `--target` from PDCA invocation, default: APPROVED):
    - MINOR FIXES: `--max 1 --target {pdca_target}`
    - NEEDS IMPROVEMENT: `--max 3 --target {pdca_target}`
    - MUST FIX: `--max 5 --target {pdca_target}`
-2. Dispatch: `/scc:loop --file {artifact} --review {report} --max {N} --target {pdca_target}`
-3. Loop runs review-fix cycles internally
+2. **Keep worktree** — fixes are applied in place inside `worktree-pdca-do`
+3. Dispatch: `/scc:loop --file {artifact} --review {report} --max {N} --target {pdca_target}`
+4. Loop runs review-fix cycles internally
+5. On loop exit with APPROVED or MINOR FIXES: merge worktree → `git merge --no-ff worktree-pdca-do`, then `git worktree remove worktree-pdca-do`
+6. On loop exit with MUST FIX: discard worktree, re-enter Do with full constraints
 
 ## Gate Checklist (Act → Exit or Cycle)
 
@@ -65,6 +72,7 @@ See `references/action-router.md` for the full classification matrix.
 Note: When `--target APPROVED` (default), only APPROVED triggers exit. MINOR FIXES exits only when `--target` is explicitly set to `MINOR FIXES` or lower.
 
 **Action**: **EXIT**. Ship the final artifact.
+**Worktree**: Merge and clean up — `git merge --no-ff worktree-pdca-do` then `git worktree remove worktree-pdca-do`.
 
 Report:
 - Iteration count and verdict progression
@@ -78,9 +86,9 @@ Report:
 - [ ] No regression
 
 **Action**: Present options:
-1. **Continue** — Increase iterations and keep going
-2. **Pivot** — Return to Plan with new research angle
-3. **Accept** — Ship at current quality with gaps documented
+1. **Continue** — Increase iterations and keep going (keep worktree)
+2. **Pivot** — Return to Plan with new research angle (discard worktree: `git worktree remove --force worktree-pdca-do`)
+3. **Accept** — Ship at current quality with gaps documented (merge worktree: `git merge --no-ff worktree-pdca-do` then `git worktree remove worktree-pdca-do`)
 
 ### Outcome 3: Target Not Met, No Progress
 
@@ -92,13 +100,16 @@ Report:
 - Why fixes aren't resolving the issues
 - Recommended pivot based on dominant finding category
 
+**Worktree**: Discard — `git worktree remove --force worktree-pdca-do`. No usable artifact to preserve.
+
 ## Cycle Reset (Act → Plan)
 
 1. Save current artifact as `{filename}-v{N}.md`
 2. Summarize what worked and what didn't
 3. Identify the specific research gap
-4. Re-enter Plan with targeted research question
-5. Update state: increment `cycle_count`
+4. **Discard worktree**: `git worktree remove --force worktree-pdca-do`
+5. Re-enter Plan with targeted research question
+6. Update state: increment `cycle_count`
 
 ## Anti-Patterns
 
@@ -109,6 +120,17 @@ Report:
 | Skipping Action Router | Misses fundamental issues | Always classify before routing |
 | Cycling back to Plan without diagnosis | Repeats the same mistake | Must identify what was missing |
 | Fixing Minor issues when Critical exists | Critical findings block shipping | Address Critical first |
+
+## Output to Orchestrator
+
+Output must conform to the **ActOutput schema** (see `references/phase-schemas.md`).
+The orchestrator validates all fields before executing the routing decision.
+
+Produce before exiting the Act phase:
+- Routing decision → `decision` (one of: `exit|plan|do|loop`)
+- Action Router classification result → `root_cause_category` (non-empty)
+- Summary of changes applied in this Act pass → `improvements_applied` (non-empty when `decision != "exit"`)
+- Constraints to carry forward into next cycle → `next_cycle_constraints` (may be empty when exiting)
 
 ## Output
 

@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 460" fill="none" role="img" aria-labelledby="ar-title ar-desc">
-  <title id="ar-title">에이전트 로스터 — 16개 포켓몬 서브에이전트</title>
+  <title id="ar-title">팀 소개 — 16개 에이전트</title>
   <desc id="ar-desc">생산(Plan/Do), 리뷰(Check), 인프라 3개 열로 모델 티어 표시와 함께 에이전트를 정리.</desc>
 
   <!-- Background -->
   <rect width="860" height="460" rx="12" fill="#0d1117"/>
 
   <!-- Title -->
-  <text x="430" y="28" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">에이전트 로스터 — 16개 포켓몬 서브에이전트</text>
+  <text x="430" y="28" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">팀 소개 — 16개 에이전트</text>
 
   <!-- Legend -->
   <circle cx="248" cy="46" r="4" fill="#f85149"/>

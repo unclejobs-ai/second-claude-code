@@ -1,5 +1,7 @@
 ---
+name: pipeline-step-executor
 model: sonnet
+color: green
 description: "Execute a single pipeline step by reading input and writing output"
 tools: [Read, Write, Bash]
 ---

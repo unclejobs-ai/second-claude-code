@@ -5,16 +5,16 @@
 ## Quick Example
 
 ```
-/second-claude-code:pipeline create "weekly-report" --steps research,analyze,write
+/second-claude-code:workflow create "weekly-report" --steps research,analyze,write
 ```
 
-**What happens:** The skill creates a JSON definition with 3 sequential steps, validates that each step declares an output and that `input_from` references are compatible, then saves the pipeline for reuse. Running `/second-claude-code:pipeline run "weekly-report" --topic "edge computing"` executes each step as a fresh subagent, passing data through files. All `{{variable}}` placeholders are resolved before execution begins.
+**What happens:** The skill creates a JSON definition with 3 sequential steps, validates that each step declares an output and that `input_from` references are compatible, then saves the pipeline for reuse. Running `/second-claude-code:workflow run "weekly-report" --topic "edge computing"` executes each step as a fresh subagent, passing data through files. All `{{variable}}` placeholders are resolved before execution begins.
 
 ## Real-World Example
 
 **Input:**
 ```
-/second-claude-code:pipeline run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
+/second-claude-code:workflow run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 **Process:**
@@ -138,7 +138,7 @@ graph TD
 
 ## Presets
 
-Run a named preset with `/second-claude-code:pipeline run <preset>`:
+Run a named preset with `/second-claude-code:workflow run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|

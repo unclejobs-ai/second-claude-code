@@ -1,5 +1,7 @@
 ---
+name: pipeline-orchestrator
 model: sonnet
+color: blue
 description: "Execute pipeline steps sequentially with state persistence"
 tools: [Read, Write, Bash]
 ---

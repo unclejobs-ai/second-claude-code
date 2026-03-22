@@ -1,11 +1,11 @@
-# Hunt
+# Discover
 
 > Use when the current skills cannot handle a task and new skills are needed.
 
 ## Quick Example
 
 ```
-/second-claude-code:hunt "terraform security audit"
+/second-claude-code:discover "terraform security audit"
 ```
 
 **What happens:** The skill scans local skills first for a match. If none is found, it searches up to 4 external sources (npx, npm, gh, web), scores each candidate on a weighted rubric (relevance, popularity, recency, dependencies, source trust), and presents ranked recommendations. Nothing is installed without explicit approval.
@@ -97,6 +97,6 @@ graph TD
 
 | Skill | Relationship |
 |-------|-------------|
-| `pipeline` | A pipeline may reference a missing skill, triggering hunt |
+| `pipeline` | A pipeline may reference a missing skill, triggering discover |
 | `collect` | Save metadata about discovered skills to the knowledge base |
-| `research` | Hunt focuses on skill discovery; research handles general information gathering |
+| `research` | Discover focuses on skill discovery; research handles general information gathering |

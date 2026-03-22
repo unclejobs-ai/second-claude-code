@@ -7,12 +7,12 @@ This replaces the previous flat "loop everything" approach with intelligent tria
 
 | Category | Signal Keywords | Route |
 |----------|----------------|-------|
-| `SOURCE_GAP` | "missing data", "unsupported claim", "no evidence", "needs citation" | PLAN |
-| `ASSUMPTION_ERROR` | "wrong premise", "flawed assumption", "incorrect basis" | PLAN |
-| `FRAMEWORK_MISMATCH` | "wrong approach", "format doesn't fit", "methodology mismatch" | PLAN |
+| `SOURCE_GAP` | "missing data", "unsupported claim", "no evidence", "needs citation", "출처 없음", "근거 부족", "데이터 누락", "증거 불충분" | PLAN |
+| `ASSUMPTION_ERROR` | "wrong premise", "flawed assumption", "incorrect basis", "전제 오류", "잘못된 가정", "관점 편향" | PLAN |
+| `FRAMEWORK_MISMATCH` | "wrong approach", "format doesn't fit", "methodology mismatch", "프레임워크 부적합" | PLAN |
 | `COMPLETENESS_GAP` | "missing section", "incomplete", "too short", "gaps in coverage" | DO |
-| `FORMAT_VIOLATION` | "wrong format", "tone mismatch", "style inconsistent" | DO |
-| `EXECUTION_QUALITY` | "weak argument", "unclear", "could be better", "needs polish" | LOOP |
+| `FORMAT_VIOLATION` | "wrong format", "tone mismatch", "style inconsistent", "톤 불일치" | DO |
+| `EXECUTION_QUALITY` | "weak argument", "unclear", "could be better", "needs polish", "표현력 부족", "문체 불일치", "구조 혼란", "가독성 낮음" | LOOP |
 
 ## Classification Algorithm
 
@@ -72,6 +72,18 @@ When the top two categories are within 5 percentage points of each other (near-t
 4. On exact tie: apply tiebreaker order **PLAN > DO > LOOP** (most conservative wins)
 
 When there is a clear plurality winner (>5pt gap): route directly, no questions needed.
+
+## Confidence Threshold
+
+"Keyword match count" = number of unique keywords matched for the top-scoring category.
+
+Keyword matching confidence affects routing decisiveness:
+
+- **1 keyword match** (low confidence): treat as a near-tie regardless of percentage gap — route through the user-ask path (present breakdown, ask for direction, max 2 questions). **Exception**: if the top category advantage is 15+ percentage points over the next highest, route directly without asking.
+- **2 keyword matches** (medium confidence): apply normal near-tie rule (ask only if top two are within 5 percentage points).
+- **3+ keyword matches** (high confidence): route directly without asking, even if the gap is narrow (i.e., within 5 percentage points — see near-tie threshold above).
+
+> **Integration note**: This confidence check runs as step 5a, between step 5 (multi-category routing) and step 6 (narrow gap handling).
 
 ## Iteration Ceiling
 

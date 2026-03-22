@@ -35,7 +35,7 @@ test("natural-language prompts resolve to command docs and backing skills", () =
     { prompt: "iterate until this is better", command: "loop" },
     { prompt: "save this URL to my notes", command: "collect" },
     { prompt: "automate this workflow as a pipeline", command: "pipeline" },
-    { prompt: "find a skill for terraform security audit", command: "hunt" },
+    { prompt: "find a skill for terraform security audit", command: "discover" },
   ];
 
   for (const testCase of cases) {
@@ -126,5 +126,5 @@ test("state-manager written state flows through session start and session end ho
   assert.match(handoff, /Goal: Polish the brief/);
   assert.match(handoff, /Progress: step 2\/5/);
   assert.match(handoff, /re-run.*\/second-claude-code:loop/);
-  assert.match(handoff, /\/second-claude-code:pipeline run autopilot/);
+  assert.match(handoff, /\/second-claude-code:workflow run autopilot/);
 });

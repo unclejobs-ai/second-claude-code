@@ -69,6 +69,23 @@ After producing the Research Brief, save it to a file:
 - Write the full brief using the Write tool. Do NOT skip this step.
 - Tell the user the saved path.
 
-## Output, Gotchas, Subagents & Integration
+## Gotchas
 
-See `references/research-methodology.md` for output format template, gotchas table, subagent dispatch config, and integration notes.
+| Failure Mode | Mitigation |
+|-------------|------------|
+| Stops after 1 search | researcher MUST meet depth minimums: shallow=3, medium=5, deep=10. Fewer = restart. |
+| Lists links without analysis | analyst step is required. Raw link dumps are rejected. |
+| Hallucinated sources | Every URL must come from an actual WebSearch result. writer cannot invent URLs. |
+| Duplicate queries | researcher must vary phrasing with synonyms and different angles per query. |
+
+## Subagents
+
+```yaml
+researcher: { model: haiku, tools: [WebSearch, WebFetch], constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness" }
+analyst: { model: sonnet, tools: [], constraint: "produce gap list, flag data conflicts, verify coverage requirements" }
+writer: { model: sonnet, tools: [], constraint: "every claim needs a source, no invented URLs, include conflict annotations" }
+```
+
+## Output & Integration
+
+See `references/research-methodology.md` for output format template, extended gotchas table, and integration notes.

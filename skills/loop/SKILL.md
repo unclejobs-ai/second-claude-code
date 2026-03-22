@@ -18,7 +18,11 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 1. Read the current file and record a baseline hash.
 2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass.
 3. Apply only the top 3 feedback items.
-4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert. Revert strategy: for git-tracked files, use `git checkout -- <file>`; for non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`), restore from the saved baseline content in `loop-active.json`.
+4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert. Revert strategy:
+   - **Before reverting a git-tracked file**: run `git diff --name-only <file>`. If the file shows uncommitted user changes that are NOT from this loop iteration (i.e., changes that predate `baseline_hash`), **warn the user and abort the revert** unless they explicitly confirm. Never silently overwrite uncommitted work.
+   - **Path validation**: confirm the file path resolves within the project root — reject any path containing `../` traversal or resolving outside the working directory.
+   - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
+   - For non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`): restore from `baseline_content` in `loop-active.json`.
 5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction).
 6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a loop option) one final time. Only exit on `APPROVED` or `MINOR FIXES`. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, continue the loop.
 
@@ -54,7 +58,8 @@ Return the final draft plus an iteration log showing verdict progression and maj
 ## Gotchas
 
 - Do not claim improvement without comparing verdicts between iterations.
-- Revert through `git checkout -- <file>` for git-tracked files, or restore from `baseline_content` for non-git files. Never rely on memory alone.
+- Revert through `git checkout -- <file>` for git-tracked files, or restore from `baseline_content` for non-git files. Never rely on memory alone. Always check `git diff --name-only <file>` before reverting — abort with a warning if uncommitted user changes are detected outside this loop's own edits.
+- Never revert a file whose path contains `../` or resolves outside the project root.
 - Do not simulate review inline — always dispatch through `/second-claude-code:review`.
 - Stop early if the verdict stops improving across iterations.
 - The completion gate is mandatory — never skip the final `/second-claude-code:review --preset quick` check.

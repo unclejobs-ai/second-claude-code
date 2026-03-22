@@ -1,8 +1,23 @@
 # Review: Detailed Protocols
 
-## Consensus Threshold Formula
+## Verdict Definitions
 
-Pass requires `ceil(threshold * N)` approvals, where `N` is the number of reviewers and `threshold` defaults to `0.67`.
+The consensus gate applies two conditions in order: score-based gate first, vote-count gate second.
+
+**Score-based gate (primary)**:
+
+| Verdict | Score Condition | Finding Condition |
+|---------|----------------|-------------------|
+| `APPROVED` | average score `>= 0.7` | No Critical findings, no Major findings, vote threshold met |
+| `MINOR FIXES` | average score `>= 0.7` | No Critical findings, Minor findings only, vote threshold met |
+| `NEEDS IMPROVEMENT` | average score `< 0.7` OR vote threshold not met | No Critical findings |
+| `MUST FIX` | any value | Any Critical finding from any reviewer |
+
+Any single Critical finding forces `MUST FIX` regardless of average score or vote threshold.
+
+**Vote-count gate (secondary)**:
+
+Applied only when score-based condition is met (no Critical findings, score `>= 0.7`):
 
 | Preset | Reviewers (N) | Required Approvals | Formula |
 |--------|---------------|-------------------|---------|
@@ -13,6 +28,29 @@ Pass requires `ceil(threshold * N)` approvals, where `N` is the number of review
 | `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
 
 Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `ceil(0.5 * 3) = 2`.
+
+## Score Aggregation
+
+Each reviewer emits a numeric score `0.0–1.0` per `references/critic-schema.md`. After all reviewers complete, compute:
+
+```
+average_score = sum(scores) / count(reviewers)
+```
+
+Store per-reviewer scores in the review aggregation block for cross-cycle comparison:
+
+```markdown
+## Score Aggregation
+
+| Reviewer | Score | Verdict |
+|----------|-------|---------|
+| deep-reviewer | 0.00 | APPROVED |
+| devil-advocate | 0.00 | MINOR FIXES |
+| fact-checker | 0.00 | NEEDS IMPROVEMENT |
+| **Average** | **0.00** | — |
+```
+
+This block is appended to the final Review Report before the overall Verdict is declared. Tracking scores across review cycles enables measurement of quality improvement over iterations.
 
 ## Severity Calibration
 

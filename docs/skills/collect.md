@@ -87,6 +87,6 @@ graph TD
 | Skill | Relationship |
 |-------|-------------|
 | `research` | Archive findings from a research session |
-| `hunt` | Save metadata about discovered skills |
+| `discover` | Save metadata about discovered skills |
 | `loop` | Collect the final approved draft |
 | `pipeline` | Can be a step that persists upstream output to the knowledge base |

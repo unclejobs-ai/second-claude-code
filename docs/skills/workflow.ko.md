@@ -7,7 +7,7 @@
 ## 빠른 예시
 
 ```
-/second-claude-code:pipeline create "weekly-report" --steps research,analyze,write
+/second-claude-code:workflow create "weekly-report" --steps research,analyze,write
 ```
 
 **동작 방식:** 스킬이 3단계 순차 실행의 JSON 정의를 생성하고, 각 단계의 출력 선언과 `input_from` 참조의 호환성을 검증한 뒤 파이프라인을 저장합니다. `/scc:pipeline run "weekly-report" --topic "edge computing"`을 실행하면 모든 `{{variable}}` 플레이스홀더를 먼저 해석한 후, 각 단계를 새로운 서브에이전트로 실행하며 데이터를 파일을 통해 전달합니다.
@@ -16,7 +16,7 @@
 
 **입력:**
 ```
-/second-claude-code:pipeline run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
+/second-claude-code:workflow run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 **진행 과정:**
@@ -140,7 +140,7 @@ graph TD
 
 ## 프리셋
 
-`/second-claude-code:pipeline run <preset>`으로 프리셋을 실행합니다:
+`/second-claude-code:workflow run <preset>`으로 프리셋을 실행합니다:
 
 | 프리셋 | 단계 | 용도 |
 |--------|------|------|

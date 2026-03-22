@@ -1,5 +1,7 @@
 # Do Phase (Produce) — Checklist
 
+**Permission Mode**: `acceptEdits`. Writing the artifact requires file access — the orchestrator must switch from `plan` mode before dispatching Do phase agents.
+
 The Do phase is a **pure executor**. It transforms Plan artifacts into a concrete output.
 It does NOT research (Plan did that) and does NOT review (Check will do that).
 
@@ -75,11 +77,35 @@ All items must pass before proceeding to Check:
 | Format violated | Check format spec and fix |
 | Too short/long | Adjust scope and regenerate |
 
+## Worktree Isolation
+
+The Do phase writes artifacts in an isolated git worktree branch (`worktree-pdca-do`). This keeps the main branch clean until the artifact is approved.
+
+**Branch lifecycle**:
+
+| Check verdict | Action |
+|---------------|--------|
+| APPROVED | Act phase merges: `git merge worktree-pdca-do` |
+| MINOR FIXES | Act phase merges after applying fixes in the same worktree |
+| NEEDS IMPROVEMENT | Keep worktree; apply fixes in place, then re-Check |
+| MUST FIX | Discard worktree (`git worktree remove --force`) for a clean rollback; re-enter Do |
+
+**Merge strategy** (Act phase, after approval): from the main branch, run `git merge --no-ff worktree-pdca-do` to preserve the Do phase commit history, then `git worktree remove worktree-pdca-do` to clean up.
+
+**Auto-clean rule**: if the Do phase completes without writing any file changes (empty diff), the worktree is removed automatically — no manual cleanup needed.
+
 ## Output to Next Phase
 
+Output must conform to the **DoOutput schema** (see `references/phase-schemas.md`).
+The orchestrator validates all fields before passing the gate.
+
 Pass to Check phase:
-- Path to artifact file
-- Artifact type (article, report, analysis, etc.)
+- Path to artifact file → `artifact_path`
+- Format of artifact → `format` (one of: `newsletter|article|report|shorts|social|card-news`)
+- Word count of artifact → `word_count`
+- Whether Plan findings were used → `plan_findings_integrated` (must be `true`)
+- Whether all sections are complete → `sections_complete` (must be `true`)
+- Worktree branch name (`worktree-pdca-do`) — the Act phase needs this to merge or discard
 - Recommended review preset:
   - Article/newsletter → `content`
   - Strategy/analysis → `strategy`

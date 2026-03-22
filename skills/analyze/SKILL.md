@@ -128,9 +128,19 @@ Mandatory at `standard` (1 round) and `thorough` (2 rounds). See `references/cha
 - Do not conflate "widely believed" with "true." Popular opinion about a product's strengths/weaknesses may be outdated or wrong. Verify against current sources.
 - When comparing two products, apply the same evidentiary standard to both. Do not rigorously source your own product's strengths while hand-waving the competitor's.
 
+## When Called from PDCA
+
+`analyze` spans both Plan and Do phases and behaves differently in each:
+
+- **Plan phase**: synthesizes research findings into a structured framework (e.g., SWOT over collected sources). Use `--with-research` when no prior brief exists.
+- **Do phase**: applies a production-oriented framework (e.g., `prd`, `lean-canvas`, `value-prop`) to shape the artifact being built. Pass `--context do` to signal this mode explicitly.
+
+Add `--context plan|do` to override auto-detected PDCA phase.
+
 ## Subagents
 
 ```yaml
+analyst: { model: sonnet, constraint: "pre-process raw research data into structured patterns before framework application" }
 strategist: { model: sonnet, constraint: "apply framework, cite evidence, fill required sections" }
 devil-advocate: { model: sonnet, constraint: "attack weakest 3 points, surface blind spots" }
 ```

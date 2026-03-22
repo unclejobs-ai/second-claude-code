@@ -1,8 +1,8 @@
-# Pipeline: Definition Schema & Examples
+# Workflow: Definition Schema & Examples
 
 ## Step Definition
 
-Each step in a pipeline definition is a JSON object with the following fields:
+Each step in a workflow definition is a JSON object with the following fields:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -19,17 +19,35 @@ Each step in a pipeline definition is a JSON object with the following fields:
 Variables in `args` and `output` fields are resolved **once at run start** in this order:
 
 1. **Runtime flags** — `--topic`, `--output_dir`, `--var key=value` from the `run` command
-2. **Definition defaults** — `defaults` object in the pipeline JSON
+2. **Definition defaults** — `defaults` object in the workflow JSON
 3. **Built-in variables** — `{{date}}` (YYYY-MM-DD), `{{run_id}}` (name-timestamp)
 
-If any `{{variable}}` remains unresolved after all three passes, the pipeline aborts with an error listing the unresolved tokens.
+If any `{{variable}}` remains unresolved after all three passes, the workflow aborts with an error listing the unresolved tokens.
 
-## Pipeline JSON Schema
+## Variable Value Safety Constraint
+
+Variable values are **positional content strings**. They are interpolated literally into the `args` string as a single value unit — they must not contain embedded flag sequences that alter the command's argument structure.
+
+**Validation rule**: Before interpolation, every resolved variable value is checked against the pattern `--[a-zA-Z][-a-zA-Z0-9_]*`. If a match is found, the workflow run is aborted immediately with an error identifying the offending variable and value.
+
+**Rationale**: A value like `"AI trends --publish notion"` would expand `{{topic}} --depth medium` into `AI trends --publish notion --depth medium`, injecting an unintended `--publish` flag into the step. This constraint closes that injection vector.
+
+**Correct usage**: Pass flag-like intent as separate named variables, not embedded in topic or value strings.
+
+```json
+// WRONG — injects --publish flag into write step's args
+{ "run": "workflow run autopilot --topic \"AI trends --publish notion\"" }
+
+// CORRECT — keep flags and topic content separate
+{ "run": "workflow run autopilot --topic \"AI trends\" --var publish_target=notion" }
+```
+
+## Workflow JSON Schema
 
 ```json
 {
-  "name": "my-pipeline",
-  "description": "What this pipeline does",
+  "name": "my-workflow",
+  "description": "What this workflow does",
   "steps": [
     {
       "name": "research",
@@ -74,7 +92,7 @@ If any `{{variable}}` remains unresolved after all three passes, the pipeline ab
 }
 ```
 
-Note: The `write` step passes `--skip-research` and `--skip-review` because research and review are handled as separate pipeline steps.
+Note: The `write` step passes `--skip-research` and `--skip-review` because research and review are handled as separate workflow steps.
 
 ### quick-draft
 
@@ -100,12 +118,12 @@ Note: The `write` step passes `--skip-research` and `--skip-review` because rese
 
 ## State Schema
 
-Active pipeline state is saved at `${CLAUDE_PLUGIN_DATA}/state/pipeline-active.json`:
+Active workflow state is saved at `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`:
 
 ```json
 {
-  "pipeline_name": "my-pipeline",
-  "run_id": "my-pipeline-20260320T120000",
+  "workflow_name": "my-workflow",
+  "run_id": "my-workflow-20260320T120000",
   "started_at": "2026-03-20T12:00:00Z",
   "resolved_vars": { "topic": "AI agents", "date": "2026-03-20", "output_dir": "./output" },
   "steps": [

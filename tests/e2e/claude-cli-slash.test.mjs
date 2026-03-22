@@ -40,8 +40,8 @@ if (!enabled) {
       "/second-claude-code:review",
       "/second-claude-code:loop",
       "/second-claude-code:collect",
-      "/second-claude-code:pipeline",
-      "/second-claude-code:hunt",
+      "/second-claude-code:workflow",
+      "/second-claude-code:discover",
     ]) {
       assert.match(output, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }

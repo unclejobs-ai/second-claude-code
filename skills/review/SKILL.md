@@ -30,18 +30,36 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 |--------|-----------|
 | `content` | deep-reviewer + devil-advocate + tone-guardian |
 | `strategy` | deep-reviewer + devil-advocate + fact-checker |
-| `code` | deep-reviewer + devil-advocate + structure-analyst |
+| `code` | deep-reviewer + fact-checker + structure-analyst |
 | `quick` | devil-advocate + fact-checker |
 | `full` | all 5 reviewers |
 
+## Critic Output Format
+
+Every reviewer MUST structure their output according to `references/critic-schema.md`. Each review must include:
+
+1. **Verdict** — `APPROVED | MINOR FIXES | NEEDS IMPROVEMENT | MUST FIX`
+2. **Score** — float `0.0` to `1.0` per the scale in `references/critic-schema.md`
+3. **Findings** — structured table with severity, category, location, description, and suggestion for each issue
+4. **Summary** — one sentence overall assessment
+
+Unstructured prose output is not accepted. Each reviewer emits the `## Critic Output` block defined in `references/critic-schema.md`.
+
 ## Consensus Gate
 
+**Score-based consensus** (primary gate):
+- Pass condition: average score across reviewers `>= 0.7` AND no Critical findings from any reviewer
+- Any Critical finding forces `MUST FIX` regardless of average score or threshold count
+
+**Vote-count gate** (secondary gate, used when score-based gate passes):
 - 3-reviewer presets (`content`, `strategy`, `code`): pass with 2/3 approvals
 - 2-reviewer preset (`quick`): pass only with 2/2 unanimous approval
 - 5-reviewer preset (`full`): pass with 3/5 approvals
-- Any `Critical` finding forces `MUST FIX` regardless of threshold
-- Final verdicts: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
+
+**Final verdicts**: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
 - `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)
+
+**Score tracking**: store per-reviewer scores in the review aggregation block for cycle comparison. See `references/consensus-gate.md` for the aggregation format.
 
 ## Severity Calibration
 
@@ -66,6 +84,13 @@ Each finding MUST include all four fields: location, severity, description, and 
 # Review Report
 ## Verdict: {APPROVED | MINOR FIXES | NEEDS IMPROVEMENT | MUST FIX}
 Consensus: {X}/{Y}
+
+## Score Aggregation
+
+| Reviewer | Score | Verdict |
+|----------|-------|---------|
+| {reviewer-name} | {0.00} | {APPROVED \| MINOR FIXES \| NEEDS IMPROVEMENT \| MUST FIX} |
+| **Average** | **{0.00}** | — |
 
 ## Findings
 

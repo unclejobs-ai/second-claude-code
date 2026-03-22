@@ -90,8 +90,8 @@ const ko = {
   review: ["리뷰", "검토", "품질", "체크", "피드백"],
   loop: ["개선", "반복", "더 좋게", "다듬어"],
   collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해"],
-  pipeline: ["파이프라인", "자동화", "워크플로우"],
-  hunt: ["스킬 있", "어떻게 해", "할 수 있", "방법", "도구"],
+  workflow: ["파이프라인", "자동화", "워크플로우"],
+  discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
 };
 
 const routes = [
@@ -126,14 +126,14 @@ const routes = [
     label: "collect",
   },
   {
-    patterns: [...ko.pipeline, "build a pipeline", "run a pipeline", "create a pipeline", "run pipeline", "automate this workflow", "automate this process", "build a workflow", "create a workflow"],
-    skill: "second-claude-code:pipeline",
-    label: "pipeline",
+    patterns: [...ko.workflow, "build a pipeline", "run a pipeline", "create a pipeline", "run pipeline", "pipeline", "automate this workflow", "automate this process", "build a workflow", "run a workflow", "create a workflow", "run workflow"],
+    skill: "second-claude-code:workflow",
+    label: "workflow",
   },
   {
-    patterns: [...ko.hunt, "find a skill", "skill for", "hunt", "how do i", "how can i", "is there a skill", "find a tool for"],
-    skill: "second-claude-code:hunt",
-    label: "hunt",
+    patterns: [...ko.discover, "find a skill", "skill for", "discover", "how do i", "how can i", "is there a skill", "find a tool for"],
+    skill: "second-claude-code:discover",
+    label: "discover",
   },
 ];
 
@@ -164,8 +164,8 @@ const genericGuide = `<skill-check>
 - 리뷰/검토/품질/피드백 (비코드) → second-claude-code:review
 - 개선/반복/다듬어/iterate → second-claude-code:loop
 - 저장/캡처/메모/수집/clip → second-claude-code:collect
-- 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:pipeline
-- 스킬 찾기/hunt → second-claude-code:hunt
+- 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:workflow
+- 스킬 찾기/discover → second-claude-code:discover
 - 복합요청 (조사+작성/리뷰+개선) → second-claude-code:pdca
 
 **Development (superpowers — use for coding/engineering tasks):**
@@ -187,6 +187,10 @@ Match found? → Invoke Skill tool FIRST, then respond.
 No match? → Proceed normally.
 </skill-check>`;
 
+// Only inject genericGuide for substantive prompts (> 10 chars).
+// Short follow-ups like "ok", "yes", "고마워" don't benefit from ~400-token routing context.
+const shouldInjectGuide = input.trim().length > 10;
+
 if (bestMatch) {
   const routing = `[ROUTING] This is a knowledge-work request (${bestMatch.label}). ` +
     `You MUST invoke the Skill tool with skill: "${bestMatch.skill}" BEFORE any other response. ` +
@@ -195,11 +199,11 @@ if (bestMatch) {
   console.log(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: routing + "\n\n" + genericGuide,
+      additionalContext: shouldInjectGuide ? routing + "\n\n" + genericGuide : routing,
     },
   }));
-} else {
-  // No specific match — still provide generic guidance
+} else if (shouldInjectGuide) {
+  // No specific match — still provide generic guidance for substantive prompts
   console.log(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",

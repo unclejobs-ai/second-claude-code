@@ -1,5 +1,7 @@
 # Plan Phase (Gather) — Checklist
 
+**Permission Mode**: `plan` (read-only). Research agents must NOT write or modify artifact files during this phase. State file updates (pdca-active.json) are the only writes permitted.
+
 The Plan phase ensures sufficient information exists before production begins.
 This is the "measure twice" that prevents "cut wrong" in later phases.
 
@@ -48,7 +50,7 @@ The Plan phase chains two skills internally:
 | 1 | `/scc:research` | Eevee (researcher) | Data collection and source gathering |
 | 2 | `/scc:analyze --skip-challenge` | Alakazam (analyst) + Mewtwo (strategist) | Structure findings into actionable framework |
 
-The `--skip-challenge` flag on analyze bypasses the devil's advocate challenge round, since Check phase handles adversarial review.
+The `--skip-challenge` flag on analyze bypasses the devil's advocate challenge round. This is intentional: adversarial pressure is applied in the Check phase on Do output, not on Plan artifacts. Running a challenge round during Plan would waste a full analysis pass on a brief that has not yet been turned into a deliverable.
 
 ## Gate Checklist (Plan → Do)
 
@@ -72,11 +74,22 @@ All items must pass before proceeding to Do:
 | Scope drifted | Re-scope with user and re-research |
 | Analysis missing | Run analyze with explicit framework selection |
 
+## Gotchas
+
+- Plan analysis has no challenge round by default. For high-stakes topics (`--depth deep`), consider running `/second-claude-code:analyze --challenge` manually before approving the Plan→Do gate.
+
 ## Output to Next Phase
 
+Output must conform to the **PlanOutput schema** (see `references/phase-schemas.md`).
+The orchestrator validates all fields before passing the gate.
+
 Pass to Do phase:
-- Path to Research Brief file (`.captures/research-*.md`)
-- Path to Analysis artifact (`.captures/analyze-*.md`)
-- Summary of key findings (3-5 bullet points)
+- Path to Research Brief file (`.captures/research-*.md`) → `research_brief_path`
+- Path to Analysis artifact (`.captures/analyze-*.md`) → `analysis_path`
+- Count of distinct sources cited → `sources_count` (must be `>= 3`)
+- Known unknowns → `gaps`
+- Saved assumptions from Question Protocol → `assumptions`
+- Definition of Done criteria extracted from scope → `dod`
+- Summary of key findings (3-5 bullet points, for Do phase context only)
 - Recommended Do skill: `write` (for content) or `analyze` (for deeper strategic analysis)
 - Constraints from Question Protocol answers (if any)

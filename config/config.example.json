@@ -1,4 +1,5 @@
 {
+  "_note": "This file documents default values for reference. Settings are currently embedded inline in each skill. A future version may load these at runtime.",
   "version": "0.3.0",
   "defaults": {
     "research_depth": "medium",

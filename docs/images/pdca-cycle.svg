@@ -1,100 +1,101 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 600" fill="none" role="img" aria-labelledby="pc-title pc-desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA Quality Cycle</title>
-  <desc id="pc-desc">Vertical flow: PLAN → gate → DO → gate → CHECK → APPROVED or feedback → ACT → ACTION ROUTER → 3 routes by root cause.</desc>
+  <desc id="pc-desc">Every output passes through Plan, Do, Check, Act with quality gates. Problems route back to the phase that caused them.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arr-blue" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
-      <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#58a6ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-    </marker>
     <marker id="arr-green" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#3fb950" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
-    <marker id="arr-purple" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+    <marker id="arr-blue" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#58a6ff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arr-act" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#bc8cff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
     </marker>
   </defs>
 
   <!-- Background -->
-  <rect width="780" height="600" rx="12" fill="#0d1117"/>
+  <rect width="780" height="540" rx="12" fill="#0d1117"/>
+
+  <!-- Philosophy header -->
+  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Every output earns its way out.</text>
+  <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Plan, Do, Check, Act &#x2014; with quality gates between phases.</text>
+
+  <!-- Divider -->
+  <line x1="30" y1="74" x2="750" y2="74" stroke="#30363d" stroke-width="0.5"/>
 
   <!-- ===== PLAN ===== -->
-  <rect x="150" y="24" width="440" height="64" rx="6" fill="#161b22" stroke="#58a6ff" stroke-width="0.5"/>
-  <text x="170" y="46" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
-  <text x="218" y="46" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Gather</text>
-  <text x="170" y="64" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Question Protocol → research → analyze</text>
-  <text x="395" y="64" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Eevee(haiku) · Alakazam(sonnet) · Mewtwo(sonnet)</text>
+  <rect x="170" y="94" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="94" width="3" height="58" rx="1.5" fill="#58a6ff"/>
+  <text x="186" y="114" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
+  <text x="230" y="114" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Gather evidence first</text>
+  <text x="186" y="134" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Research the topic, find sources before writing</text>
 
-  <!-- Gate line + label -->
-  <line x1="370" y1="88" x2="370" y2="108" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="102" fill="#484f58" font-size="8" font-family="SF Mono, Consolas, monospace">Brief + Analysis? Sources ≥ 3?</text>
+  <!-- Gate 1 -->
+  <line x1="390" y1="152" x2="390" y2="170" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="166" fill="#484f58" font-size="8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">enough evidence?</text>
 
   <!-- ===== DO ===== -->
-  <rect x="150" y="112" width="440" height="64" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
-  <text x="170" y="134" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
-  <text x="200" y="134" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Produce</text>
-  <text x="170" y="154" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Pure execution from Plan artifacts. No research, no review.</text>
-  <text x="464" y="154" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Smeargle(opus)</text>
+  <rect x="170" y="174" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="174" width="3" height="58" rx="1.5" fill="#3fb950"/>
+  <text x="186" y="194" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
+  <text x="214" y="194" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Write from what you found</text>
+  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">One writer, one full draft from the research</text>
 
-  <!-- Gate line + label -->
-  <line x1="370" y1="176" x2="370" y2="196" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="190" fill="#484f58" font-size="8" font-family="SF Mono, Consolas, monospace">Artifact complete?</text>
+  <!-- Gate 2 -->
+  <line x1="390" y1="232" x2="390" y2="250" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="246" fill="#484f58" font-size="8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">draft complete?</text>
 
   <!-- ===== CHECK ===== -->
-  <rect x="150" y="200" width="440" height="64" rx="6" fill="#161b22" stroke="#d29922" stroke-width="0.5"/>
-  <text x="170" y="222" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
-  <text x="228" y="222" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Verify</text>
-  <text x="170" y="242" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">5 parallel reviewers → Consensus Gate → Verdict</text>
-  <text x="375" y="242" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Xatu(opus) · Absol(sonnet) · Porygon(haiku) · Jigglypuff(haiku) · Unown(haiku)</text>
+  <rect x="170" y="254" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="254" width="3" height="58" rx="1.5" fill="#d29922"/>
+  <text x="186" y="274" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
+  <text x="242" y="274" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">5 reviewers attack your draft</text>
+  <text x="186" y="294" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Logic &#xB7; Facts &#xB7; Tone &#xB7; Structure &#xB7; Weak points</text>
 
-  <!-- APPROVED branch (right) -->
-  <line x1="590" y1="232" x2="626" y2="232" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>
-  <rect x="630" y="218" width="112" height="28" rx="4" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
-  <text x="686" y="236" text-anchor="middle" fill="#3fb950" font-size="10" font-weight="600" font-family="SF Mono, Consolas, monospace">APPROVED</text>
+  <!-- Done branch (right) -->
+  <line x1="610" y1="274" x2="632" y2="274" stroke="#3fb950" stroke-width="0.5" opacity="0.6" marker-end="url(#arr-green)"/>
+  <rect x="636" y="260" width="108" height="28" rx="4" fill="#161b22" stroke="#3fb950" stroke-width="0.5"/>
+  <text x="690" y="278" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">Done &#x2713;</text>
 
-  <!-- feedback line + label -->
-  <line x1="370" y1="264" x2="370" y2="284" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
-  <text x="378" y="278" fill="#484f58" font-size="8" font-family="SF Mono, Consolas, monospace">feedback</text>
+  <!-- Gate 3 -->
+  <line x1="390" y1="312" x2="390" y2="330" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
+  <text x="398" y="326" fill="#484f58" font-size="8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">needs work</text>
 
   <!-- ===== ACT ===== -->
-  <rect x="150" y="288" width="440" height="64" rx="6" fill="#161b22" stroke="#bc8cff" stroke-width="0.5"/>
-  <text x="170" y="310" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
-  <text x="206" y="310" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Refine</text>
-  <text x="170" y="330" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Classify feedback by root cause → route to source phase</text>
-  <text x="480" y="330" fill="#484f58" font-size="8.5" font-family="SF Mono, Consolas, monospace">Ditto(opus) · Action Router</text>
+  <rect x="170" y="334" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="170" y="334" width="3" height="58" rx="1.5" fill="#bc8cff"/>
+  <text x="186" y="354" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
+  <text x="220" y="354" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Fix the root cause</text>
+  <text x="186" y="374" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Route each problem to the phase that caused it</text>
 
-  <!-- Transition to router -->
-  <line x1="370" y1="352" x2="370" y2="382" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-purple)"/>
+  <!-- Transition arrows to routing cards -->
+  <line x1="260" y1="392" x2="170" y2="418" stroke="#58a6ff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-blue)"/>
+  <line x1="390" y1="392" x2="390" y2="418" stroke="#3fb950" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-green)"/>
+  <line x1="520" y1="392" x2="610" y2="418" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-act)"/>
 
-  <!-- ===== ACTION ROUTER ===== -->
-  <circle cx="370" cy="416" r="36" fill="#161b22" stroke="#bc8cff" stroke-width="0.5"/>
-  <text x="370" y="412" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACTION</text>
-  <text x="370" y="426" text-anchor="middle" fill="#e6edf3" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ROUTER</text>
+  <!-- ===== 3 Routing cards ===== -->
 
-  <!-- ===== THREE ROUTES ===== -->
+  <!-- ↻ PLAN -->
+  <rect x="70" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="70" y="422" width="3" height="72" rx="1.5" fill="#58a6ff"/>
+  <text x="86" y="446" fill="#58a6ff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; PLAN</text>
+  <text x="86" y="464" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Research gap</text>
+  <text x="86" y="480" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Re-gather evidence</text>
 
-  <!-- LEFT → PLAN -->
-  <line x1="334" y1="416" x2="196" y2="416" stroke="#58a6ff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-blue)"/>
-  <rect x="20" y="388" width="170" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="20" y="388" width="3" height="76" rx="1.5" fill="#58a6ff"/>
-  <text x="36" y="412" fill="#58a6ff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ PLAN</text>
-  <text x="36" y="430" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">source / assumption error</text>
-  <text x="36" y="450" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">re-run research</text>
+  <!-- ↻ DO -->
+  <rect x="290" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="290" y="422" width="3" height="72" rx="1.5" fill="#3fb950"/>
+  <text x="306" y="446" fill="#3fb950" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; DO</text>
+  <text x="306" y="464" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Missing section</text>
+  <text x="306" y="480" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Rewrite from plan</text>
 
-  <!-- DOWN → DO -->
-  <line x1="370" y1="452" x2="370" y2="490" stroke="#3fb950" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-green)"/>
-  <rect x="285" y="494" width="170" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="285" y="494" width="3" height="76" rx="1.5" fill="#3fb950"/>
-  <text x="301" y="518" fill="#3fb950" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ DO</text>
-  <text x="301" y="536" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">completeness / format</text>
-  <text x="301" y="556" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">rewrite missing sections</text>
-
-  <!-- RIGHT → LOOP CHECK -->
-  <line x1="406" y1="416" x2="568" y2="416" stroke="#bc8cff" stroke-width="0.5" opacity="0.5" marker-end="url(#arr-purple)"/>
-  <rect x="572" y="388" width="186" height="76" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <rect x="755" y="388" width="3" height="76" rx="1.5" fill="#bc8cff"/>
-  <text x="588" y="412" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">↻ LOOP→CHECK</text>
-  <text x="588" y="430" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">execution quality</text>
-  <text x="588" y="450" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">refine and re-verify</text>
+  <!-- ↻ LOOP -->
+  <rect x="510" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
+  <rect x="510" y="422" width="3" height="72" rx="1.5" fill="#bc8cff"/>
+  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; LOOP</text>
+  <text x="526" y="464" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Polish needed</text>
+  <text x="526" y="480" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Refine and re-check</text>
 </svg>

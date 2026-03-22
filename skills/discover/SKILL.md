@@ -1,9 +1,9 @@
 ---
-name: hunt
+name: discover
 description: "Use when the current skills cannot handle a task and new skills are needed"
 ---
 
-# Hunt
+# Discover
 
 Find existing skills first, then search external marketplaces only when needed and safe.
 
@@ -18,8 +18,8 @@ Find existing skills first, then search external marketplaces only when needed a
 0. **Check built-in capabilities**: Before searching, check if the requested capability is already available through built-in tools (Read for PDFs, WebFetch for URLs, Bash for shell tasks, etc.). If built-in tools suffice, report that and skip external search.
 1. Scan local skills by name and description.
 2. If no strong match, search external sources in priority order (see Source Prioritization).
-3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. If inspection is blocked (private repo, rate limit): (a) search package name + "review"/"tutorial", (b) check npm page for README, (c) note "inspection blocked" and apply a -1 score penalty. See `references/hunt-scoring.md` for the full workflow.
-4. Score candidates on relevance, popularity, recency, dependency weight, and source trust. Show the full weighted breakdown (see `references/hunt-scoring.md`).
+3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. If inspection is blocked (private repo, rate limit): (a) search package name + "review"/"tutorial", (b) check npm page for README, (c) note "inspection blocked" and apply a -1 score penalty. See `references/discover-scoring.md` for the full workflow.
+4. Score candidates on relevance, popularity, recency, dependency weight, and source trust. Show the full weighted breakdown (see `references/discover-scoring.md`).
 5. Apply the **Build vs Install** threshold. If no candidate scores above 3.0, recommend a custom pipeline instead.
 6. Present ranked options with pinned versions and wait for explicit approval.
 7. Install only with approval and only when the environment supports it.
@@ -57,7 +57,7 @@ Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 
 ## Safety
 
-- Never auto-install. Pin exact versions (see `references/hunt-scoring.md`).
+- Never auto-install. Pin exact versions (see `references/discover-scoring.md`).
 - **Postinstall check**: Before recommending any npm package, inspect its `package.json` for `preinstall`, `install`, or `postinstall` scripts. Flag packages with lifecycle scripts and apply a -1 score penalty. Packages with obfuscated or network-calling lifecycle scripts must be rejected entirely.
 - Flag heavy or stale packages.
 - Degrade gracefully to local-scan-only mode if marketplace tooling is missing.
@@ -65,7 +65,7 @@ Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 
 ## Output Format
 
-Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/hunts/{query-slug}.json`:
+Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/discovers/{query-slug}.json`:
 ```json
 {
   "query": "...",
@@ -85,7 +85,7 @@ Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/hunts/{query-slu
 - Never rely solely on metadata -- always attempt Candidate Inspection.
 - If marketplace CLI does not exist, skip silently and note the gap.
 - Never search externally when built-in tools already handle the capability.
-- Always persist hunt results to JSON for future reference.
+- Always persist discover results to JSON for future reference.
 
 ## Subagents
 

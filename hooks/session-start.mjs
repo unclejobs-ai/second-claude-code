@@ -84,11 +84,11 @@ function main() {
   lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
   lines.push("| `/second-claude-code:loop` | Iterative improvement until quality target met |");
   lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
-  lines.push("| `/second-claude-code:pipeline` | Custom workflow builder (chain any skills) |");
-  lines.push("| `/second-claude-code:hunt` | Dynamic skill discovery & installation |");
+  lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
+  lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, loop, collect, pipeline, hunt.");
+  lines.push("Or use individual skills: research, write, analyze, review, loop, collect, pipeline, discover.");
   lines.push('Action Router: review failures route by root cause (Plan/Do/Loop).');
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

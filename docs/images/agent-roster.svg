@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 460" fill="none" role="img" aria-labelledby="ar-title ar-desc">
-  <title id="ar-title">Agent Roster — 16 Pokemon-themed Subagents</title>
+  <title id="ar-title">Meet the Team — 16 Agents</title>
   <desc id="ar-desc">Three columns: Production (Plan/Do), Review (Check), and Infra (Pipeline/Hunt) agents with model tier indicators.</desc>
 
   <!-- Background -->
   <rect width="860" height="460" rx="12" fill="#0d1117"/>
 
   <!-- Title -->
-  <text x="430" y="28" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Agent Roster — 16 Pokemon-themed Subagents</text>
+  <text x="430" y="28" text-anchor="middle" fill="#e6edf3" font-size="14" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Meet the Team — 16 Agents</text>
 
   <!-- Legend -->
   <circle cx="248" cy="46" r="4" fill="#f85149"/>
