@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.0-blue)
+![version](https://img.shields.io/badge/version-0.5.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -14,6 +14,8 @@ You type one prompt. Researchers crawl 20+ sources. An analyst finds patterns. A
 This isn't a coding assistant. It's a work OS — it runs the full knowledge-work cycle autonomously: **Plan → Do → Check → Act.** Research, analysis, writing, and quality assurance in a single automated loop.
 
 ![One prompt to finished output](docs/images/hero.svg)
+
+[Docs](docs/architecture.md) · [한국어 문서](docs/architecture.ko.md) · [User Manual](docs/notion-manual.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [Skill Guides](docs/skills/) · [GitHub Issues](https://github.com/unclejobs-ai/second-claude-code/issues) · [한국어 README](README.ko.md)
 
 ---
 
@@ -56,7 +58,9 @@ Second Claude Code eliminates the handoffs. You state the goal once, and the sys
 
 ---
 
-## How PDCA Works
+## How It Works
+
+### PDCA Execution Model
 
 PDCA (Plan-Do-Check-Act) is the execution model. It's not a metaphor — every prompt runs through these four phases with hard gates between them.
 
@@ -68,7 +72,7 @@ You: "Research AI agents and write a report"
 [Do]    Write a full draft grounded in the research
         ↓ gate: draft goes to review, not to you
 [Check] 3-5 specialized reviewers run in parallel
-        ↓ gate: 2/3 must pass. Any Critical finding = blocked.
+        ↓ gate: average score >= 0.7 AND no Critical findings = approved
 [Act]   Action Router reads the review feedback:
         → research gap? Back to Plan.
         → missing section? Back to Do.
@@ -79,9 +83,100 @@ You get the final output. Reviewed. Fact-checked. Refined.
 
 The key is the Action Router. When review finds problems, it classifies the root cause and routes back to the right phase. A research gap goes back to research, not to a generic "try again." That's why the second pass through PDCA is dramatically better than the first.
 
-Under the hood, 17 specialized agents handle each phase — researchers, analysts, writers, reviewers, editors — each assigned to the model tier that matches its job. ([Full roster below.](#agent-roster))
-
 ![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+---
+
+### Agent System
+
+17 specialized agents handle each PDCA phase. Each agent has a focused system prompt and limited tool access — a writer doesn't have access to web search, a reviewer doesn't write.
+
+**3 model tiers — cost-optimized, not all opus:**
+
+| Tier | Agents | Assigned work |
+|---|---|---|
+| **opus** (4 agents) | Xatu, Smeargle, Ditto, Pikachu | Deep reasoning, long-form writing, editing, memory synthesis |
+| **sonnet** (9 agents) | Eevee, Alakazam, Mewtwo, Arceus, Absol, Porygon, Machamp, Magnezone, Deoxys | Analysis, strategy, research, review, infrastructure |
+| **haiku** (4 agents) | Noctowl, Jigglypuff, Unown, Abra | Search, tone checks, structure, knowledge routing |
+
+Pokemon names are deliberate — when you're reading logs, "Xatu found a logic gap" is easier to track than "reviewer-3 found issue."
+
+**Agent dispatch flow:**
+
+```
+User prompt
+  ↓
+Auto-router (hook: prompt-detect.mjs)
+  ↓
+PDCA Orchestrator
+  ├── Plan: Eevee (sonnet) researches → Alakazam (sonnet) analyzes
+  ├── Do:   Smeargle (opus) writes the full draft
+  ├── Check: 5 reviewers in parallel
+  │          Xatu (opus) ─── logic + completeness
+  │          Absol (sonnet) ─ weak points
+  │          Porygon (sonnet) fact-check
+  │          Jigglypuff (haiku) tone
+  │          Unown (haiku) ─── structure
+  └── Act:  Action Router → Ditto (opus) edits
+```
+
+---
+
+### Quality Gates
+
+Every phase transition is gated. Outputs don't reach you until they've cleared the gate.
+
+Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagged by severity — **Critical**, **Warning**, or **Nitpick**.
+
+**Consensus logic:**
+- Average score >= 0.7 AND no Critical findings → **APPROVED**
+- Average score >= 0.7 but Critical findings present → **MUST FIX**
+- Average score 0.5–0.7 → **NEEDS IMPROVEMENT** (routes back to Do)
+- Average score < 0.5 → **MINOR FIXES** (routes to refine)
+
+A Critical finding blocks the output regardless of score. The Action Router reads the severity distribution to determine which phase to re-enter — not just "try again from scratch."
+
+---
+
+### Hook System
+
+8 lifecycle hooks run automatically. You don't call them; they fire at the right moment.
+
+| Hook | When it fires | What it does |
+|---|---|---|
+| **SessionStart** | Session opens | Banner display, PDCA state initialization |
+| **UserPromptSubmit** | Every prompt | Auto-router: 2-layer pattern matching (~130 EN+KR triggers) |
+| **SubagentStart** | Agent spawns | Review session context injection into agent system prompt |
+| **SubagentStop** | Agent completes | Reviewer consensus aggregation, score accumulation |
+| **Stop** | Session ends | State cleanup, output save |
+| **StopFailure** | Check phase gate fails | Quality gate enforcement — blocks output delivery |
+| **PreCompact** | Before context compression | PDCA state serialization |
+| **PostCompact** | After context compression | PDCA state restoration, mid-cycle resume |
+
+The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound patterns (prompts that request research + writing + review together), then falls back to single-skill patterns. This ordering matters — "research and write" should route to `pdca`, not to `research` alone.
+
+---
+
+### MCP State Layer
+
+A dedicated `pdca-state` MCP server (stdio transport) manages persistent state across the session.
+
+**6 tools:**
+
+| Tool | Purpose |
+|---|---|
+| `get` | Read current PDCA state |
+| `start` | Initialize a new cycle |
+| `transition` | Advance to next phase |
+| `check_gate` | Evaluate gate conditions |
+| `end` | Complete the cycle |
+| `update_stuck` | Record a stuck/failed cycle |
+
+**Event sourcing:** Every PDCA cycle is logged — phase transitions, gate decisions, review scores, action routes. You can query run history and spot recurring failure patterns.
+
+**Crash recovery:** If the session restarts mid-cycle (context compression, network drop), `PostCompact` restores the last known state and resumes from where it stopped — not from the beginning.
+
+**Playwright MCP** (optional): enables browser automation for JavaScript-heavy research targets. Separate setup required.
 
 ---
 
@@ -105,7 +200,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Let the system learn your preferences | `soul` | Adaptive personalization across sessions |
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
 
-Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, etc. ~127 trigger patterns across English and Korean.
+Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, etc. ~130 trigger patterns across English and Korean.
 
 ```
 "Research and write about AI agents"       →  pdca (full cycle)
@@ -130,7 +225,7 @@ Most AI tools generate and hand it to you. Second Claude Code generates, then **
 | **Tone Guardian** (Jigglypuff) | Voice consistency, audience fit |
 | **Structure Analyst** (Unown) | Readability, organization, flow |
 
-**Consensus gate:** 2/3 pass = approved. Any Critical finding = must fix. No exceptions, even if you're in a hurry.
+**Consensus gate:** average score >= 0.7 AND no Critical findings = approved. Any Critical finding = must fix. No exceptions, even if you're in a hurry.
 
 I run `full` before publishing anything externally. For internal drafts, `quick` is enough — the advocate and fact checker catch the worst problems in under a minute.
 
@@ -144,6 +239,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 | `content` | Deep + Advocate + Tone | Articles, blogs, newsletters |
 | `strategy` | Deep + Advocate + Facts | PRDs, SWOTs, strategy docs |
 | `code` | Deep + Facts + Structure | Code review |
+| `security` | Deep + Facts + Structure | Security audit (CWE classification, OWASP Top 10) |
 | `quick` | Advocate + Facts | Fast validation |
 | `full` | all 5 | Final pre-publish pass |
 
@@ -180,17 +276,35 @@ I use Full PDCA for anything external-facing. For internal notes, `write` alone 
 
 ---
 
-## What's New in v0.5.0
+## Agent Roster
 
-**Soul System** — 3-mode persistent memory: `manual`, `learning`, `hybrid`. The system learns your writing tone, recurring topics, and feedback patterns across sessions. You stop re-explaining yourself.
+17 agents across 3 model tiers. Model distribution: 4 opus / 9 sonnet / 4 haiku.
 
-**Batch Parallel Decomposition** — Large tasks split into independent units, run in parallel, and reassemble. A 10-part competitive analysis that takes 40 minutes serially finishes in 8.
+Each agent is named after a Pokemon whose trait maps to its role — memorable names make the system debuggable when you're reading logs.
 
-**Event Sourcing + Analytics** — Every PDCA cycle is event-logged: phase transitions, gate decisions, review scores, action routes. Query your run history, spot failure patterns, or resume mid-cycle after a crash.
+| Phase | Agent | Role | Model |
+|---|---|---|---|
+| **Plan** | Eevee | Researcher — web search, data collection | sonnet |
+| | Noctowl | Search specialist | haiku |
+| | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
+| | Mewtwo | Strategist — framework analysis | sonnet |
+| **Do** | Smeargle | Writer — long-form content | opus |
+| | Arceus | Master — general-purpose execution | sonnet |
+| **Check** | Xatu | Deep reviewer — logic, structure | opus |
+| | Absol | Devil's advocate — attacks weak points | sonnet |
+| | Porygon | Fact checker — numbers, sources | sonnet |
+| | Jigglypuff | Tone guardian — voice, audience | haiku |
+| | Unown | Structure analyst — readability | haiku |
+| **Act** | Ditto | Editor — content refinement | opus |
+| **Infra** | Machamp | Pipeline step executor | sonnet |
+| | Magnezone | Skill candidate inspector | sonnet |
+| | Deoxys | Skill candidate scorer | sonnet |
+| | Abra | Knowledge connector | haiku |
+| | Pikachu | Soul keeper — user behavior synthesis | opus |
 
-**Playwright Dynamic Web Research** — Research agents now navigate JavaScript-heavy pages, handle login-walled content, and execute dynamic interactions. Modern SPA sites work the way you'd expect.
+![Agent Roster](docs/images/agent-roster.svg)
 
-**Channels Notifications** — Completion alerts dispatch to Slack, Telegram, or email. Start a long PDCA run, close your laptop, get a ping when it's done. 7 lifecycle hooks, 11 MCP tools powering the state layer.
+[Full architecture docs →](docs/architecture.md)
 
 ---
 
@@ -275,42 +389,17 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 </details>
 
 <details>
-<summary><strong><a name="agent-roster"></a>Agent Roster — 17 agents across 3 model tiers</strong></summary>
-
-Model distribution: 4 opus / 9 sonnet / 4 haiku
-
-Each agent is named after a Pokemon whose trait maps to its role — memorable names make the system debuggable when you're reading logs.
-
-| Phase | Agent | Role | Model |
-|---|---|---|---|
-| **Plan** | Eevee | Researcher — web search, data collection | sonnet |
-| | Noctowl | Search specialist | haiku |
-| | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
-| | Mewtwo | Strategist — framework analysis | sonnet |
-| **Do** | Smeargle | Writer — long-form content | opus |
-| | Arceus | Master — general-purpose execution | sonnet |
-| **Check** | Xatu | Deep reviewer — logic, structure | opus |
-| | Absol | Devil's advocate — attacks weak points | sonnet |
-| | Porygon | Fact checker — numbers, sources | sonnet |
-| | Jigglypuff | Tone guardian — voice, audience | haiku |
-| | Unown | Structure analyst — readability | haiku |
-| **Act** | Ditto | Editor — content refinement | opus |
-| **Infra** | Machamp | Pipeline step executor | sonnet |
-| | Magnezone | Skill candidate inspector | sonnet |
-| | Deoxys | Skill candidate scorer | sonnet |
-| | Abra | Knowledge connector | haiku |
-| | Pikachu | Soul keeper — user behavior synthesis | opus |
-
-![Agent Roster](docs/images/agent-roster.svg)
-
-[Full architecture docs →](docs/architecture.md)
-
-</details>
-
-<details>
 <summary><strong>Changelog</strong></summary>
 
-### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing (current)
+### v0.5.1 — Agent Upgrades, MMBridge Full Integration
+
+- **SubagentStart hook** — review session context auto-injection on agent spawn
+- **Agent model upgrades** — Eevee (researcher) and Porygon (fact-checker) promoted haiku → sonnet
+- **MMBridge full integration (Phase 1-3)** — 10 commands across all PDCA phases
+- **8 lifecycle hooks** (was 7) — SubagentStart and StopFailure added
+- Model distribution: 4 opus / 9 sonnet / 4 haiku (was 4/7/6)
+
+### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing
 
 - **Dynamic Soul System** — 3-mode persistent memory: manual / learning / hybrid. Learns user preferences across sessions
 - **Batch Parallel Decomposition** — large tasks split into parallel units and reassembled
@@ -328,7 +417,7 @@ Each agent is named after a Pokemon whose trait maps to its role — memorable n
 - **Question Protocol** — asks clarifying questions before researching (`--no-questions` to skip)
 - **16 subagents** across 3 model tiers
 - **5 parallel reviewers** with consensus gate and 5 presets
-- **Hook-based auto-routing** — ~127 trigger patterns (English + Korean)
+- **Hook-based auto-routing** — ~130 trigger patterns (English + Korean)
 - **Auto-capture** — outputs auto-save to `.captures/`
 
 ### v0.2.0 — Security hardening, English localization

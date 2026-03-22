@@ -1,4 +1,14 @@
+**English** | [한국어](architecture.ko.md)
+
 # Architecture
+
+## What's New in 0.5.1
+
+Three changes in this release (on top of 0.5.0):
+
+1. **SubagentStart Hook** — New lifecycle hook (`hooks/subagent-start.mjs`) initializes review session context when subagents spawn. Registered via `hooks.json` on the `SubagentStart` event.
+2. **Agent Model Upgrades** — Eevee (researcher) promoted from haiku to sonnet for deeper research quality. Porygon (fact-checker) promoted from haiku to sonnet for more reliable verification.
+3. **MMBridge Full Integration (Phase 1–3)** — 10 MMBridge commands integrated across all PDCA phases: research, review, security, debate, gate, followup, resume, diff, memory, handoff. See the MMBridge Integration section below.
 
 ## What's New in 0.5.0
 
@@ -13,7 +23,7 @@ Five major additions shipped in this release:
 
 1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
 2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
-3. **Six Lifecycle Hooks** — Hook count expanded from 3 to 6: SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. The two new compaction hooks preserve PDCA state across context compression; Stop hook (`hooks/stop.mjs`) blocks exit when Check phase is incomplete.
+3. **Lifecycle Hooks** — Hook count expanded from 3 to 6 (later 8 in 0.5.1): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. Compaction hooks preserve PDCA state across context compression.
 4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
 5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
 
@@ -26,7 +36,7 @@ directly to `Plan → Do → Check → Act`.
 | PDCA | Product Phase | Primary Skills |
 |------|---------------|----------------|
 | Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
-| Do | Produce | `analyze`*, `write`, `pipeline`, `batch` |
+| Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
@@ -52,7 +62,7 @@ second-claude/
 │   ├── review/                   # Multi-perspective quality gate
 │   ├── refine/                   # Iterative improvement
 │   ├── collect/                  # Knowledge collection (PARA)
-│   ├── pipeline/                 # Custom workflow builder
+│   ├── workflow/                 # Custom workflow builder
 │   ├── discover/                 # Skill discovery
 │   ├── batch/                    # Parallel task decomposition and execution
 │   │   └── references/           # Decomposition guide, split strategies, merge patterns
@@ -60,14 +70,15 @@ second-claude/
 │       └── references/           # Observation signals, synthesis algorithm, templates
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
 ├── commands/                     # 11 slash command wrappers
-├── hooks/                        # Auto-routing + context injection (6 hooks)
+├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
 │   ├── session-start.mjs         # Session banner + state init (SessionStart)
+│   ├── subagent-start.mjs        # Review session context init (SubagentStart)
 │   ├── subagent-stop.mjs         # Reviewer consensus aggregation (SubagentStop)
-│   ├── stop.mjs                  # Check-phase quality gate (Stop)
-│   ├── pre-compact.mjs           # PDCA state snapshot before compaction (PreCompact)
-│   └── post-compact.mjs          # PDCA state restore after compaction (PostCompact)
+│   ├── stop-failure.mjs          # Check-phase quality gate (StopFailure)
+│   ├── session-end.mjs           # Session cleanup (Stop)
+│   └── compaction.mjs            # PDCA state snapshot/restore (PreCompact, PostCompact)
 ├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
 ├── scripts/                      # Shell utilities
@@ -80,7 +91,7 @@ second-claude/
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
 | `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
 | `commands/` | Thin wrappers that route `/second-claude-code:*` invocations to the matching skill. |
-| `hooks/` | Session lifecycle hooks and the two-layer auto-routing engine (PDCA compound patterns + single-skill patterns). |
+| `hooks/` | 8 lifecycle hooks across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
 ---
@@ -94,7 +105,7 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 
 | Agent | Pokemon | Model | PDCA Phase | Role | Why This Pokemon |
 |-------|---------|-------|------------|------|------------------|
-| researcher | **Eevee** | haiku | Gather | Web search + multi-source data collection | Adapts anywhere, evolves in many directions |
+| researcher | **Eevee** | sonnet | Gather | Web search + multi-source data collection | Adapts anywhere, evolves in many directions |
 | analyst | **Alakazam** | sonnet | Produce | Pattern recognition + data synthesis | IQ 5000, two spoons = cross-data analysis |
 | strategist | **Mewtwo** | sonnet | Produce | Strategic framework application | Ultimate strategic mind |
 | writer | **Smeargle** | opus | Produce | Long-form content creation | The painter — masters any technique |
@@ -106,7 +117,7 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 |-------|---------|-------|------------|------|------------------|
 | deep-reviewer | **Xatu** | opus | Verify | Logic, structure, and completeness | Sees past and future simultaneously = structural flaw detection |
 | devil-advocate | **Absol** | sonnet | Verify | Attacks weakest points and blind spots | The disaster-sensing Pokemon, warns of danger |
-| fact-checker | **Porygon** | haiku | Verify | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
+| fact-checker | **Porygon** | sonnet | Verify | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
 | tone-guardian | **Jigglypuff** | haiku | Verify | Voice and audience fit | THE voice Pokemon, sensitive to tone |
 | structure-analyst | **Unown** | haiku | Verify | Organization and readability | Letter-shaped, obsessed with structure |
 
@@ -132,8 +143,8 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 | Tier | Count | Use |
 |------|-------|-----|
 | opus | 4 | Deep review, long-form writing, editorial, soul synthesis |
-| sonnet | 7 | Analysis, strategy, orchestration, adversarial review |
-| haiku | 6 | Search, data collection, fact-checking, classification |
+| sonnet | 9 | Research, analysis, strategy, orchestration, adversarial review, fact-checking |
+| haiku | 4 | Search, tone-checking, structure analysis, knowledge linking |
 
 ---
 
@@ -170,7 +181,7 @@ Supporting commands reinforce the same loop:
 - `pdca` orchestrates the full cycle with quality gates and the Action Router
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough
-- `pipeline` automates full Gather → Produce → Verify → Refine runs
+- `workflow` automates full Gather → Produce → Verify → Refine runs
 - `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
 
@@ -209,6 +220,25 @@ Phase gate checklists live in `skills/pdca/references/`.
 The `hooks/prompt-detect.mjs` auto-router has a PDCA compound layer that detects
 multi-phase intent (e.g., "알아보고 써줘") and routes to `/second-claude-code:pdca`
 before falling through to single-skill matching.
+
+---
+
+## Lifecycle Hooks
+
+8 hooks registered across 8 events in `hooks/hooks.json`:
+
+| Event | Hook file | Behavior |
+|-------|-----------|----------|
+| `SessionStart` | `session-start.mjs` | Session banner + PDCA state initialization |
+| `UserPromptSubmit` | `prompt-detect.mjs` | Natural language auto-router (PDCA compound + single-skill patterns) |
+| `SubagentStart` | `subagent-start.mjs` | Review session context injection (added in 0.5.1) |
+| `SubagentStop` | `subagent-stop.mjs` | Reviewer consensus aggregation |
+| `Stop` | `session-end.mjs` | Session cleanup |
+| `StopFailure` | `stop-failure.mjs` | Check-phase quality gate enforcement (added in 0.5.1) |
+| `PreCompact` | `compaction.mjs` | PDCA state snapshot before context compression |
+| `PostCompact` | `compaction.mjs` | PDCA state restoration after context compression |
+
+`PreCompact` and `PostCompact` share the same `compaction.mjs` file. It snapshots PDCA cycle state before context window compression and restores it after, preventing mid-cycle state loss.
 
 ---
 

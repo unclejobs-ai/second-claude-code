@@ -1,3 +1,5 @@
+[English](notion-manual.md) | **한국어**
+
 # Second Claude Code 사용 매뉴얼
 
 > Fronmpt Academy 수강생을 위한 실전 가이드
