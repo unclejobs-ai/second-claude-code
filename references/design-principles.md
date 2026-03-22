@@ -52,7 +52,7 @@ These principles reinforce each other:
 
 ## 8. PDCA-Native
 
-Every output cycles through Verify (review) and Refine (loop) before shipping. The skills improve themselves through the same cycle they serve. The `pdca` meta-skill orchestrates the full Plan → Do → Check → Act cycle with quality gates between each phase transition.
+Every output cycles through Verify (review) and Refine (refine) before shipping. The skills improve themselves through the same cycle they serve. The `pdca` meta-skill orchestrates the full Plan → Do → Check → Act cycle with quality gates between each phase transition.
 
 **Implication**: Never declare work complete without a Check phase verdict. The cycle is the quality guarantee.
 

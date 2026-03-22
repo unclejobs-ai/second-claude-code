@@ -87,7 +87,7 @@ Variable values are **positional content strings**. They are interpolated litera
     { "skill": "analyze", "args": "--framework swot {{topic}} --input research.md", "input_from": "research", "output": "analysis.md" },
     { "skill": "write", "args": "--format newsletter --skip-research --skip-review --input research.md", "input_from": "research", "output": "draft.md" },
     { "skill": "review", "args": "draft.md --preset content", "input_from": "write", "output": "review.md" },
-    { "skill": "loop", "args": "--file draft.md --review review.md --max 3", "input_from": "review", "output": "final.md" }
+    { "skill": "refine", "args": "--file draft.md --review review.md --max 3", "input_from": "review", "output": "final.md" }
   ]
 }
 ```
@@ -111,7 +111,7 @@ Note: The `write` step passes `--skip-research` and `--skip-review` because rese
 {
   "steps": [
     { "skill": "review", "args": "{{topic}} --preset content", "output": "review.md" },
-    { "skill": "loop", "args": "--file {{topic}} --review review.md --max 3", "input_from": "review", "output": "final.md" }
+    { "skill": "refine", "args": "--file {{topic}} --review review.md --max 3", "input_from": "review", "output": "final.md" }
   ]
 }
 ```

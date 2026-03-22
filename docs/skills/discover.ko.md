@@ -20,7 +20,7 @@ terraform 보안 감사용 스킬이 있나?
 ```
 
 **진행 과정:**
-1. 로컬 스캔 -- `skills/`의 7개 스킬(review, analyze, research, write, loop, pipeline, collect) 확인. terraform 보안 감사를 다루는 스킬 없음.
+1. 로컬 스캔 -- `skills/`의 7개 스킬(review, analyze, research, write, refine, pipeline, collect) 확인. terraform 보안 감사를 다루는 스킬 없음.
 2. CLI 가용성 확인 -- `npx`, `npm`, `gh` 모두 사용 가능.
 3. 외부 검색 -- npm, GitHub(`gh search repos`), 웹 검색을 질의. 후보 5개와 MCP 서버 언급 3개 발견.
 4. 평가 -- 5개 가중치 기준으로 각 후보를 채점. 1위: Terraform 스킬(4.85/5.0), 스타 1,350개, 전날 업데이트. 2위: HashiCorp 공식 agent-skills 컬렉션(4.35/5.0).

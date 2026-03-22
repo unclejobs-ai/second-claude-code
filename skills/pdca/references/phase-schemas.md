@@ -133,7 +133,7 @@ Produced at the end of the Act phase, used for cycle routing or exit.
 
 ```json
 {
-  "decision": "exit|plan|do|loop",
+  "decision": "exit|plan|do|refine",
   "root_cause_category": "string",
   "improvements_applied": ["string"],
   "next_cycle_constraints": ["string"]
@@ -144,7 +144,7 @@ Produced at the end of the Act phase, used for cycle routing or exit.
 
 | Field | Type | Required | Constraint |
 |-------|------|----------|------------|
-| `decision` | string | yes | One of: `exit`, `plan`, `do`, `loop` |
+| `decision` | string | yes | One of: `exit`, `plan`, `do`, `refine` |
 | `root_cause_category` | string | yes | Non-empty; from Action Router classification |
 | `improvements_applied` | string[] | yes | At least 1 item if `decision != "exit"` |
 | `next_cycle_constraints` | string[] | yes | May be empty if `decision == "exit"` |

@@ -22,7 +22,7 @@ Each phase gates into the next. No gate skipping.
 | "조사해", "알아봐", plan, research, explore | **Plan** (Gather) | research → analyze |
 | "써", "만들어", "분석해", create, write, build | **Do** (Produce) | write (pure execution) |
 | "검토해", "리뷰해", review, check, verify | **Check** (Verify) | review |
-| "고쳐", "개선해", improve, fix, refine, iterate | **Act** (Refine) | action router → loop |
+| "고쳐", "개선해", improve, fix, refine, iterate | **Act** (Refine) | action router → refine |
 | "알아보고 써줘", "end-to-end", "full report" | **Full PDCA** | All phases in sequence |
 
 When a single phase is detected, run that phase and pause at its gate.
@@ -68,7 +68,7 @@ Full schema definitions, field rules, and validation failure actions are in `ref
 | Plan | `PlanOutput` | `sources_count >= 3`, `dod` non-empty, both artifact paths must exist on disk |
 | Do | `DoOutput` | `plan_findings_integrated: true`, `sections_complete: true`, artifact file must exist |
 | Check | `CheckOutput` | verdict is one of 4 standard values, at least 2 reviewers, `average_score` in [0.0, 1.0] |
-| Act | `ActOutput` | decision is one of `exit|plan|do|loop`, `improvements_applied` non-empty when not exiting |
+| Act | `ActOutput` | decision is one of `exit|plan|do|refine`, `improvements_applied` non-empty when not exiting |
 
 **Validation rule**: Missing required fields are gate failures, not warnings. A phase that cannot produce a complete, valid output has not completed its job.
 
@@ -113,7 +113,7 @@ Load `references/do-phase.md` for the full checklist. Key requirements:
 Load `references/check-phase.md` for the full checklist. Routing:
 - `APPROVED` → **EXIT**. Ship it.
 - `MINOR FIXES` → Act with light touch (top 3 fixes only)
-- `NEEDS IMPROVEMENT` → Act with full loop
+- `NEEDS IMPROVEMENT` → Act with full refine
 - `MUST FIX` → Act targeting critical findings first
 
 **Validate output against CheckOutput schema before proceeding.** Gate fails if fewer than 2 reviewers responded or verdict is not a standard value.

@@ -32,7 +32,7 @@ This is the quality gate that determines whether work ships or iterates.
 |---------|---------|-------------|
 | `APPROVED` | Meets quality bar | **EXIT** — Ship it. Save final artifact. |
 | `MINOR FIXES` | Small issues only | **Act** with light touch (top 3 fixes) |
-| `NEEDS IMPROVEMENT` | Substantive gaps | **Act** with full loop |
+| `NEEDS IMPROVEMENT` | Substantive gaps | **Act** with full refine |
 | `MUST FIX` | Critical problems | **Act** targeting critical findings first |
 
 ## Gate Checklist (Check → Act)
@@ -79,7 +79,7 @@ Pass to Act phase (if not APPROVED):
 - Path to artifact file (for Act phase context)
 - Review report (full text or file path)
 - Priority-ordered list of findings to address
-- Recommended `--max` for loop iterations:
+- Recommended `--max` for refine iterations:
   - MINOR FIXES → `--max 1`
   - NEEDS IMPROVEMENT → `--max 3`
   - MUST FIX → `--max 5`

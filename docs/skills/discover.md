@@ -18,7 +18,7 @@ Is there a skill for terraform security auditing?
 ```
 
 **Process:**
-1. Local scan -- checked 7 skills in `skills/` (review, analyze, research, write, loop, pipeline, collect). None covers terraform security auditing.
+1. Local scan -- checked 7 skills in `skills/` (review, analyze, research, write, refine, pipeline, collect). None covers terraform security auditing.
 2. CLI availability -- confirmed `npx`, `npm`, and `gh` are all available.
 3. External search -- queried npm, GitHub (`gh search repos`), and web search. Found 5 candidates plus 3 MCP server mentions.
 4. Evaluation -- scored each candidate on the 5-criterion weighted rubric. Top result: a Terraform skill (4.85/5.0) with 1,350 stars, updated the previous day. Second: an official HashiCorp agent-skills collection (4.35/5.0).
