@@ -149,6 +149,6 @@ When `--external` is set, detects installed external CLIs and dispatches a cross
 deep-reviewer: { model: opus, constraint: "cite exact sections or lines" }
 devil-advocate: { model: sonnet, constraint: "attack exactly 3 weak points when applicable" }
 fact-checker: { model: haiku, tools: [WebSearch], constraint: "include URLs for verified claims" }
-tone-guardian: { model: haiku, constraint: "check voice against guide and audience" }
+tone-guardian: { model: haiku, constraint: "check voice against guide and audience; if .data/soul/SOUL.md exists, include its ## Tone Rules and ## Anti-Patterns sections as primary voice criteria" }
 structure-analyst: { model: haiku, constraint: "check flow, hierarchy, and redundancy" }
 ```

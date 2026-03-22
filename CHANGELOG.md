@@ -3,6 +3,29 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.0] - 2026-03-22
+
+### Added
+- **Soul system**: 10th skill (`/scc:soul`) — personal identity profile for voice, tone, and anti-patterns
+- **Pikachu agent**: soul-profile writer agent (agents/pikachu.md)
+- **SOUL.md**: user-generated identity document at `.data/soul/SOUL.md`
+- **STYLE.md**: bilingual voice guide template at `.data/soul/templates/STYLE.md`
+- **effort frontmatter**: skill-level effort hints (`low | medium | high`) injected into context
+- **Dynamic context injection**: SOUL.md Tone Rules + Anti-Patterns fed into tone-guardian (Jigglypuff) and write skill voice resolution
+
+### Fixed
+- SubagentStop Critic Score aggregation dropping reviewers on partial output
+- MCP `act` tool incorrectly triggering plan-mode instead of acceptEdits
+- Atomic writes: temp-file + rename pattern preventing partial-write corruption
+- SKILL.md bloat: pdca SKILL.md reduced 56% (excess prose removed)
+
+### Changed
+- 16 → 17 agents (Pikachu added)
+- pdca SKILL.md: 56% size reduction via prose pruning
+- write skill: Soul-Aware Voice Resolution priority ladder (--voice > SOUL.md > STYLE.md > format default)
+- review skill: tone-guardian context includes SOUL.md Tone Rules and Anti-Patterns when available
+- Jigglypuff (tone-guardian): personal soul rules take priority over generic voice guidelines
+
 ## [0.4.0] - 2026-03-22
 
 ### Added

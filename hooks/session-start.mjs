@@ -13,6 +13,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { sanitize, readJsonSafe } from "./lib/utils.mjs";
+import { readSoulProfile, readSoulState, isSoulLearning } from "./lib/soul-observer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -112,6 +113,36 @@ function main() {
     lines.push("");
     lines.push("## Resumed State");
     lines.push(state);
+  }
+
+  // ── Soul profile injection ─────────────────────────────────────────────────
+  // Inject SOUL.md content (truncated) so the model's personality is primed
+  // at session start. Appends learning status and proposal notice if relevant.
+  try {
+    const soulProfile = readSoulProfile(DATA_DIR);
+    if (soulProfile) {
+      lines.push("");
+      lines.push("## Soul");
+      lines.push(soulProfile);
+
+      if (isSoulLearning(DATA_DIR)) {
+        const soulState = readSoulState(DATA_DIR);
+        const obsCount = Number(soulState?.observation_count) || 0;
+        const sessCount = Number(soulState?.session_count) || 0;
+        lines.push("");
+        lines.push(
+          `Soul learning active (${obsCount} observations across ${sessCount} sessions)`
+        );
+
+        if (soulState?.proposal_due === true) {
+          lines.push(
+            "Soul evolution proposal ready — run `/second-claude-code:soul propose`"
+          );
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — soul injection errors must never break session start.
   }
 
   console.log(lines.join("\n"));

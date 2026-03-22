@@ -25,10 +25,12 @@ import { randomUUID } from "crypto";
 import {
   readFileSync,
   writeFileSync,
+  appendFileSync,
   renameSync,
   mkdirSync,
   existsSync,
   unlinkSync,
+  readdirSync,
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -43,6 +45,12 @@ const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA ?? join(PLUGIN_ROOT, ".data");
 const STATE_DIR = join(DATA_DIR, "state");
 const ACTIVE_FILE = join(STATE_DIR, "pdca-active.json");
 const COMPLETED_FILE = join(STATE_DIR, "pdca-last-completed.json");
+
+// Soul paths
+const SOUL_DIR = join(DATA_DIR, "soul");
+const SOUL_PROFILE_FILE = join(SOUL_DIR, "SOUL.md");
+const SOUL_ACTIVE_FILE = join(SOUL_DIR, "soul-active.json");
+const SOUL_OBS_DIR = join(SOUL_DIR, "observations");
 
 /** Ensure the state directory exists. */
 function ensureStateDir() {
@@ -349,6 +357,109 @@ function handleUpdateStuckFlags({ flags }) {
 }
 
 // ---------------------------------------------------------------------------
+// Soul tool handlers
+// ---------------------------------------------------------------------------
+
+/** soul_get_profile */
+function handleSoulGetProfile() {
+  const profile = existsSync(SOUL_PROFILE_FILE)
+    ? readFileSync(SOUL_PROFILE_FILE, "utf8")
+    : null;
+
+  let metadata = null;
+  if (existsSync(SOUL_ACTIVE_FILE)) {
+    try {
+      metadata = JSON.parse(readFileSync(SOUL_ACTIVE_FILE, "utf8"));
+    } catch (err) {
+      throw new Error(`Failed to parse soul-active.json: ${err.message}`);
+    }
+  }
+
+  return { profile, metadata };
+}
+
+/** soul_record_observation */
+function handleSoulRecordObservation({ signal, category, confidence, raw_context }) {
+  if (typeof signal !== "string" || signal.trim() === "") {
+    throw new Error("signal must be a non-empty string");
+  }
+  if (typeof category !== "string" || category.trim() === "") {
+    throw new Error("category must be a non-empty string");
+  }
+
+  mkdirSync(SOUL_OBS_DIR, { recursive: true });
+
+  const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  const filePath = join(SOUL_OBS_DIR, `${today}.jsonl`);
+
+  const record = JSON.stringify({
+    ts: new Date().toISOString(),
+    signal: signal.trim(),
+    category: category.trim(),
+    confidence: typeof confidence === "number" ? confidence : 0.8,
+    raw_context: typeof raw_context === "string" ? raw_context.slice(0, 200) : "",
+  });
+
+  appendFileSync(filePath, record + "\n", "utf8");
+
+  return { recorded: true, file: filePath, ts: JSON.parse(record).ts };
+}
+
+/** soul_get_observations */
+function handleSoulGetObservations({ category, date_from, date_to, limit = 50 }) {
+  if (!existsSync(SOUL_OBS_DIR)) {
+    return { observations: [], total: 0 };
+  }
+
+  // Gather candidate JSONL files filtered by date range
+  const allFiles = readdirSync(SOUL_OBS_DIR)
+    .filter((f) => f.endsWith(".jsonl"))
+    .sort(); // lexicographic = chronological for YYYY-MM-DD
+
+  const filteredFiles = allFiles.filter((f) => {
+    const date = f.replace(".jsonl", "");
+    if (date_from && date < date_from) return false;
+    if (date_to && date > date_to) return false;
+    return true;
+  });
+
+  /** @type {object[]} */
+  const observations = [];
+
+  for (const file of filteredFiles) {
+    const filePath = join(SOUL_OBS_DIR, file);
+    let content;
+    try {
+      content = readFileSync(filePath, "utf8");
+    } catch {
+      continue;
+    }
+
+    const lines = content.split("\n").filter((l) => l.trim().length > 0);
+    for (const line of lines) {
+      try {
+        const obj = JSON.parse(line);
+        if (category && obj.category !== category) continue;
+        observations.push(obj);
+      } catch {
+        // Skip malformed lines silently
+      }
+    }
+  }
+
+  // Most recent first, then apply limit
+  observations.sort((a, b) => {
+    const ta = String(a.ts || "");
+    const tb = String(b.ts || "");
+    return tb.localeCompare(ta);
+  });
+
+  const limitedObs = observations.slice(0, Math.max(1, Number(limit) || 50));
+
+  return { observations: limitedObs, total: observations.length };
+}
+
+// ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
 
@@ -450,6 +561,71 @@ const TOOL_DEFINITIONS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "soul_get_profile",
+    description:
+      "Read the current SOUL.md content and soul-active.json metadata. Returns { profile: string | null, metadata: object | null }. Profile is null when SOUL.md does not exist.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "soul_record_observation",
+    description:
+      "Append a soul observation to today's JSONL file. Use this for programmatic signal capture outside the hook pipeline.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        signal: {
+          type: "string",
+          description: "Signal identifier (e.g. 'tone_correction', 'brevity_signal').",
+        },
+        category: {
+          type: "string",
+          description: "Signal category: 'correction', 'emotional', or 'style'.",
+        },
+        confidence: {
+          type: "number",
+          description: "Confidence score between 0 and 1 (default: 0.8).",
+        },
+        raw_context: {
+          type: "string",
+          description: "Short excerpt of the user text that triggered the signal (max 200 chars).",
+        },
+      },
+      required: ["signal", "category"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "soul_get_observations",
+    description:
+      "Query soul observations from daily JSONL files. Supports filtering by category and date range. Returns { observations: object[], total: number }.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description: "Filter by category ('correction', 'emotional', 'style'). Omit to return all categories.",
+        },
+        date_from: {
+          type: "string",
+          description: "Start date inclusive in YYYY-MM-DD format. Omit for no lower bound.",
+        },
+        date_to: {
+          type: "string",
+          description: "End date inclusive in YYYY-MM-DD format. Omit for no upper bound.",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of observations to return, most recent first (default: 50).",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -490,6 +666,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "pdca_update_stuck_flags":
         result = handleUpdateStuckFlags(input);
+        break;
+      case "soul_get_profile":
+        result = handleSoulGetProfile();
+        break;
+      case "soul_record_observation":
+        result = handleSoulRecordObservation(input);
+        break;
+      case "soul_get_observations":
+        result = handleSoulGetObservations(input);
         break;
       default:
         return {

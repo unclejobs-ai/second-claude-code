@@ -38,6 +38,16 @@ Produce content with automatic research and review unless the caller explicitly 
 
 When `--input` is provided (or when called from a pipeline with `input_from`), the file content is injected as source context and `--skip-research` is implied.
 
+## Soul-Aware Voice Resolution
+
+Voice is resolved in this priority order:
+1. `--voice` flag (explicit override — always wins)
+2. `## Tone Rules` in `.data/soul/SOUL.md` (personal preferences — merge with voice guide)
+3. `.data/soul/templates/STYLE.md` defaults (bilingual baseline)
+4. Format voice guide from the Voices table below
+
+If `.data/soul/SOUL.md` exists, read its `## Tone Rules` section and treat those rules as non-negotiable constraints on top of the selected voice guide. Soul tone rules override format defaults but never override an explicit `--voice` flag.
+
 ## Voices
 
 | Voice | Default For |

@@ -27,6 +27,7 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
+import { isSoulLearning, readSoulState, updateSoulState } from "./lib/soul-observer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -405,6 +406,39 @@ function main() {
     );
   } else {
     console.error("Session ended. HANDOFF.md saved (no active state).");
+  }
+
+  // ── Soul observation flush ─────────────────────────────────────────────────
+  // Count observations written today by reading today's JSONL, then update
+  // soul-active.json counters. Proposal threshold check runs without synthesis.
+  try {
+    if (isSoulLearning(DATA_DIR)) {
+      // Count new observations from today's JSONL
+      const today = new Date().toISOString().slice(0, 10);
+      const todayFile = join(DATA_DIR, "soul", "observations", `${today}.jsonl`);
+      let todayCount = 0;
+      if (existsSync(todayFile)) {
+        const lines = readFileSync(todayFile, "utf8")
+          .split("\n")
+          .filter((l) => l.trim().length > 0);
+        todayCount = lines.length;
+      }
+
+      const soulState = readSoulState(DATA_DIR);
+      const synthesisThreshold = Number(soulState?.synthesis_threshold) || 30;
+      const autoPropose = soulState?.auto_propose !== false;
+      const currentCount = Number(soulState?.observation_count) || 0;
+      const newTotal = currentCount + todayCount;
+      const proposalDue = autoPropose && newTotal >= synthesisThreshold;
+
+      updateSoulState(DATA_DIR, {
+        increment_observations: todayCount,
+        increment_sessions: true,
+        set_proposal_due: proposalDue,
+      });
+    }
+  } catch {
+    // Non-fatal — soul flush errors must never affect session exit.
   }
 }
 

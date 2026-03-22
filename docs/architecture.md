@@ -23,6 +23,7 @@ directly to `Plan → Do → Check → Act`.
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
+| **Identity** | **Extend** | **`soul`** |
 
 The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
 It auto-detects which phase to enter from natural language and chains the appropriate skills.
@@ -34,7 +35,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest (v0.2.0)
-├── skills/                       # 9 skills (SKILL.md each)
+├── skills/                       # 10 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research
@@ -44,9 +45,11 @@ second-claude/
 │   ├── refine/                   # Iterative improvement
 │   ├── collect/                  # Knowledge collection (PARA)
 │   ├── pipeline/                 # Custom workflow builder
-│   └── discover/                  # Skill discovery
-├── agents/                       # 16 specialized subagents (Pokemon-themed)
-├── commands/                     # 9 slash command wrappers
+│   ├── discover/                 # Skill discovery
+│   └── soul/                     # User identity profile synthesis
+│       └── references/           # Observation signals, synthesis algorithm, templates
+├── agents/                       # 17 specialized subagents (Pokemon-themed)
+├── commands/                     # 10 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (6 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
@@ -65,7 +68,7 @@ second-claude/
 |-----------|------|
 | `skills/` | Each skill has a `SKILL.md` (short, context-efficient) plus a `references/` subdirectory for deep documentation. Progressive disclosure in action. |
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
-| `agents/` | 16 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
+| `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
 | `commands/` | Thin wrappers that route `/second-claude-code:*` invocations to the matching skill. |
 | `hooks/` | Session lifecycle hooks and the two-layer auto-routing engine (PDCA compound patterns + single-skill patterns). |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
@@ -74,7 +77,7 @@ second-claude/
 
 ## Agent Roster — Pokemon Edition
 
-16 specialized subagents across 3 model tiers, themed as Pokemon.
+17 specialized subagents across 3 model tiers, themed as Pokemon.
 Each Pokemon is chosen because its characteristics match the agent's role.
 
 ### Production Agents (Plan / Do)
@@ -108,11 +111,17 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 | evaluator | **Deoxys** | sonnet | Gather | Skill candidate scoring | Analysis form, adaptive evaluation |
 | connector | **Abra** | haiku | Extend | Knowledge linking | Teleport = connects distant concepts |
 
+### Soul Agents
+
+| Agent | Pokemon | Model | Phase | Role | Why This Pokemon |
+|-------|---------|-------|-------|------|------------------|
+| soul-keeper | **Pikachu** | opus | Extend | User identity synthesis | The iconic companion — knows the trainer better than anyone |
+
 ### Model Distribution
 
 | Tier | Count | Use |
 |------|-------|-----|
-| opus | 3 | Deep review, long-form writing, editorial |
+| opus | 4 | Deep review, long-form writing, editorial, soul synthesis |
 | sonnet | 7 | Analysis, strategy, orchestration, adversarial review |
 | haiku | 6 | Search, data collection, fact-checking, classification |
 
@@ -152,6 +161,7 @@ Supporting commands reinforce the same loop:
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough
 - `pipeline` automates full Gather → Produce → Verify → Refine runs
+- `soul` builds and maintains a persistent user identity profile from observed behavioral signals
 
 ---
 

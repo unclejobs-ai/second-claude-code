@@ -3,13 +3,21 @@
 /**
  * UserPromptSubmit Hook — Auto-routing with priority context injection
  *
- * Two-layer detection:
- * 1. PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
- * 2. Skill layer — detects single-skill intent → routes to individual skill
+ * Layer 0: Soul observation — silently captures user signals (no routing effect)
+ * Layer 1: PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
+ * Layer 2: Skill layer — detects single-skill intent → routes to individual skill
  *
  * Output: JSON additionalContext injected into system-reminder so Claude
  * sees an authoritative routing instruction, not just a hint.
  */
+
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import { detectSignals, appendObservation, isSoulLearning } from "./lib/soul-observer.mjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PLUGIN_ROOT = join(__dirname, "..");
+const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 
 const raw = process.env.USER_PROMPT || "";
 
@@ -19,6 +27,21 @@ if (!raw || raw.startsWith("/")) {
 
 const input = raw.slice(0, 500);
 const lower = input.toLowerCase();
+
+// ──────────────────────────────────────────────
+// Layer 0: Soul observation (silent — no routing effect)
+// ──────────────────────────────────────────────
+
+try {
+  if (isSoulLearning(DATA_DIR)) {
+    const signals = detectSignals(input);
+    for (const sig of signals) {
+      appendObservation(DATA_DIR, sig);
+    }
+  }
+} catch {
+  // Non-fatal — observation errors must never affect routing.
+}
 
 // ──────────────────────────────────────────────
 // Layer 1: PDCA multi-phase detection

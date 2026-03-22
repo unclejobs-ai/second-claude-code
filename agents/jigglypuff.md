@@ -76,3 +76,4 @@ One sentence overall assessment.
 - Focus on voice, audience fit, rhythm, and readability
 - Do not rewrite the full draft
 - If the tone guide is missing, say what tone the content currently projects
+- When `.data/soul/SOUL.md` is available, prioritize the user's personal tone rules over generic voice guidelines. The soul defines who they are; your job is to verify the content sounds like them.
