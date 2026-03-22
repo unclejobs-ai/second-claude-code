@@ -1,22 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 640" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA 품질 사이클 — 액션 라우터 포함</title>
-  <desc id="pc-desc">Plan, Do, Check, Act 단계별 수직 흐름도. 포켓몬 에이전트, 품질 게이트, 액션 라우터 분기를 보여줍니다.</desc>
+  <desc id="pc-desc">Plan, Do, Check, Act 단계별 흐름도. 액션 라우터가 리뷰 실패를 근본원인별로 분류하여 해당 단계로 재투입합니다.</desc>
   <defs>
-    <linearGradient id="pc-bg" x1="0" y1="0" x2="860" y2="540" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#11161d"/>
-      <stop offset="1" stop-color="#090d12"/>
+    <linearGradient id="pc-bg" x1="0" y1="0" x2="820" y2="640" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0c1018"/><stop offset="1" stop-color="#080b10"/>
     </linearGradient>
+    <radialGradient id="hub-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#b39ddb" stop-opacity=".18"/>
+      <stop offset="100%" stop-color="#b39ddb" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="hub-fill" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#241838"/><stop offset="100%" stop-color="#18102a"/>
+    </radialGradient>
     <marker id="pc-arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4a5e6d" stroke-width="1.4" stroke-linecap="round"/>
-    </marker>
-    <marker id="pc-arr-plan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#5b9bd5" stroke-width="1.4" stroke-linecap="round"/>
-    </marker>
-    <marker id="pc-arr-do" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#7fd6c2" stroke-width="1.4" stroke-linecap="round"/>
-    </marker>
-    <marker id="pc-arr-loop" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
-      <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#b39ddb" stroke-width="1.4" stroke-linecap="round"/>
     </marker>
     <marker id="pc-arr-ok" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
       <path d="M1,0.5 L7,3 L1,5.5" fill="none" stroke="#4caf50" stroke-width="1.4" stroke-linecap="round"/>
@@ -24,86 +21,113 @@
   </defs>
 
   <!-- Background -->
-  <rect width="860" height="540" rx="20" fill="url(#pc-bg)"/>
+  <rect width="820" height="640" rx="20" fill="url(#pc-bg)"/>
 
-  <!-- ===== PLAN ===== -->
-  <rect x="200" y="20" width="420" height="72" rx="16" fill="#0f1a28" stroke="#5b9bd5" stroke-width="1.2"/>
-  <text x="230" y="46" fill="#5b9bd5" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, SFMono-Regular, monospace">PLAN</text>
-  <text x="290" y="46" fill="#dce4ed" font-size="14" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">수집 (Gather)</text>
-  <text x="230" y="66" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">질문 프로토콜 → 리서치 → 분석</text>
-  <text x="230" y="82" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">이브이 · 후딘 · 뮤츠</text>
+  <!-- ===== PHASE BOXES (compact top section) ===== -->
 
-  <!-- Gate: Plan → Do -->
-  <line x1="410" y1="92" x2="410" y2="124" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
-  <rect x="300" y="100" width="220" height="22" rx="6" fill="#151e28" stroke="#32414d" stroke-width="0.8"/>
-  <text x="410" y="115" text-anchor="middle" fill="#7a8a9a" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">브리프 + 분석 완료? 소스 ≥ 3개?</text>
+  <!-- PLAN -->
+  <rect x="200" y="20" width="400" height="58" rx="14" fill="#0f1a28" stroke="#5b9bd5" stroke-width="1.2"/>
+  <text x="222" y="42" fill="#5b9bd5" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">PLAN</text>
+  <text x="280" y="42" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">수집 (Gather)</text>
+  <text x="222" y="58" fill="#8c9aa8" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">질문 프로토콜 → 리서치 → 분석</text>
+  <text x="222" y="72" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">이브이 · 후딘 · 뮤츠</text>
 
-  <!-- ===== DO ===== -->
-  <rect x="200" y="130" width="420" height="72" rx="16" fill="#0f201a" stroke="#7fd6c2" stroke-width="1.2"/>
-  <text x="230" y="156" fill="#7fd6c2" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">DO</text>
-  <text x="275" y="156" fill="#dce4ed" font-size="14" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">생산 (Produce)</text>
-  <text x="230" y="176" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">write --skip-research --skip-review (순수 실행)</text>
-  <text x="230" y="192" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">루브도 (Smeargle)</text>
+  <!-- Gate -->
+  <line x1="400" y1="78" x2="400" y2="98" stroke="#3d4d5d" stroke-width="1.3" marker-end="url(#pc-arr)"/>
+  <rect x="306" y="84" width="188" height="14" rx="4" fill="#131a22" stroke="#2a3644" stroke-width="0.6"/>
+  <text x="400" y="94" text-anchor="middle" fill="#6a7a8a" font-size="8" font-family="Apple SD Gothic Neo, sans-serif">브리프 + 분석 완료? 소스 ≥ 3?</text>
 
-  <!-- Gate: Do → Check -->
-  <line x1="410" y1="202" x2="410" y2="234" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
-  <rect x="300" y="210" width="220" height="22" rx="6" fill="#151e28" stroke="#32414d" stroke-width="0.8"/>
-  <text x="410" y="225" text-anchor="middle" fill="#7a8a9a" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">산출물 완성? 포맷 정상?</text>
+  <!-- DO -->
+  <rect x="200" y="104" width="400" height="58" rx="14" fill="#0f201a" stroke="#7fd6c2" stroke-width="1.2"/>
+  <text x="222" y="126" fill="#7fd6c2" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">DO</text>
+  <text x="256" y="126" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, sans-serif">생산 (Produce)</text>
+  <text x="222" y="142" fill="#8c9aa8" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">write --skip-research --skip-review (순수 실행)</text>
+  <text x="222" y="156" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">루브도 (Smeargle)</text>
 
-  <!-- ===== CHECK ===== -->
-  <rect x="200" y="240" width="420" height="72" rx="16" fill="#1a1810" stroke="#c9b48f" stroke-width="1.2"/>
-  <text x="230" y="266" fill="#c9b48f" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">CHECK</text>
-  <text x="300" y="266" fill="#dce4ed" font-size="14" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">검증 (Verify)</text>
-  <text x="230" y="286" fill="#8c9aa8" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명 병렬 리뷰어 → 합의 게이트 → 판정</text>
-  <text x="230" y="302" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">네이티오 · 앱솔 · 폴리곤 · 푸린 · 안농</text>
+  <!-- Gate -->
+  <line x1="400" y1="162" x2="400" y2="182" stroke="#3d4d5d" stroke-width="1.3" marker-end="url(#pc-arr)"/>
+  <rect x="310" y="168" width="180" height="14" rx="4" fill="#131a22" stroke="#2a3644" stroke-width="0.6"/>
+  <text x="400" y="178" text-anchor="middle" fill="#6a7a8a" font-size="8" font-family="Apple SD Gothic Neo, sans-serif">산출물 완성? 포맷 정상?</text>
 
-  <!-- Check verdict split -->
-  <!-- APPROVED branch (right) -->
-  <line x1="620" y1="276" x2="690" y2="276" stroke="#4caf50" stroke-width="1.5" marker-end="url(#pc-arr-ok)"/>
-  <rect x="698" y="260" width="120" height="32" rx="10" fill="#1a2e1a" stroke="#4caf50" stroke-width="1.2"/>
-  <text x="758" y="280" text-anchor="middle" fill="#81c784" font-size="12" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">승인 (PASS)</text>
+  <!-- CHECK -->
+  <rect x="200" y="188" width="400" height="58" rx="14" fill="#1a1810" stroke="#c9b48f" stroke-width="1.2"/>
+  <text x="222" y="210" fill="#c9b48f" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">CHECK</text>
+  <text x="290" y="210" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, sans-serif">검증 (Verify)</text>
+  <text x="222" y="226" fill="#8c9aa8" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">5명 병렬 리뷰어 → 합의 게이트 → 판정</text>
+  <text x="222" y="240" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">네이티오 · 앱솔 · 폴리곤 · 푸린 · 안농</text>
 
-  <!-- NOT APPROVED branch (down) -->
-  <line x1="410" y1="312" x2="410" y2="346" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
-  <text x="434" y="335" fill="#7a8a9a" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">피드백</text>
+  <!-- APPROVED -->
+  <line x1="600" y1="217" x2="636" y2="217" stroke="#4caf50" stroke-width="1.8" marker-end="url(#pc-arr-ok)"/>
+  <rect x="644" y="201" width="130" height="32" rx="10" fill="#142014" stroke="#4caf50" stroke-width="1.2"/>
+  <text x="709" y="222" text-anchor="middle" fill="#81c784" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, sans-serif">승인 (PASS)</text>
 
-  <!-- ===== ACT ===== -->
-  <rect x="290" y="350" width="240" height="56" rx="16" fill="#18102a" stroke="#b39ddb" stroke-width="1.2"/>
-  <text x="320" y="374" fill="#b39ddb" font-size="11" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">ACT</text>
-  <text x="365" y="374" fill="#dce4ed" font-size="14" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, Noto Sans KR, sans-serif">개선 (Refine)</text>
-  <text x="320" y="394" fill="#6b7a8a" font-size="10" font-family="IBM Plex Mono, monospace">메타몽 · 액션 라우터</text>
+  <!-- Feedback arrow down -->
+  <line x1="400" y1="246" x2="400" y2="268" stroke="#3d4d5d" stroke-width="1.3" marker-end="url(#pc-arr)"/>
+  <text x="418" y="262" fill="#6a7a8a" font-size="8" font-family="Apple SD Gothic Neo, sans-serif">피드백</text>
 
-  <!-- Arrow from Act to Action Router -->
-  <line x1="410" y1="406" x2="410" y2="432" stroke="#3d4d5d" stroke-width="1.5" marker-end="url(#pc-arr)"/>
+  <!-- ACT -->
+  <rect x="200" y="274" width="400" height="58" rx="14" fill="#18102a" stroke="#b39ddb" stroke-width="1.2"/>
+  <text x="222" y="296" fill="#b39ddb" font-size="10" letter-spacing="2.5" font-weight="600" font-family="IBM Plex Mono, monospace">ACT</text>
+  <text x="260" y="296" fill="#dce4ed" font-size="13" font-weight="700" font-family="Apple SD Gothic Neo, sans-serif">개선 (Refine)</text>
+  <text x="222" y="312" fill="#8c9aa8" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">리뷰 피드백을 근본원인별로 분류 → 해당 단계로 재투입</text>
+  <text x="222" y="326" fill="#6b7a8a" font-size="9" font-family="IBM Plex Mono, monospace">메타몽 (Ditto)</text>
 
-  <!-- ===== ACTION ROUTER (diamond) ===== -->
-  <polygon points="410,432 460,458 410,484 360,458" fill="#1a1428" stroke="#b39ddb" stroke-width="1.2"/>
-  <text x="410" y="456" text-anchor="middle" fill="#b39ddb" font-size="9" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">액션</text>
-  <text x="410" y="468" text-anchor="middle" fill="#b39ddb" font-size="9" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">라우터</text>
+  <!-- ===== TRANSITION: ACT → ACTION ROUTER HUB ===== -->
+  <line x1="400" y1="332" x2="400" y2="370" stroke="#b39ddb" stroke-width="2" stroke-dasharray="4 4" opacity=".6"/>
 
-  <!-- Route: → Plan (left) -->
-  <line x1="360" y1="458" x2="240" y2="458" stroke="#5b9bd5" stroke-width="1.2" stroke-dasharray="4 3"/>
-  <path d="M240,458 L240,56 L200,56" stroke="#5b9bd5" stroke-width="1.2" stroke-dasharray="4 3" fill="none" marker-end="url(#pc-arr-plan)"/>
-  <rect x="100" y="444" width="130" height="28" rx="8" fill="#0f1a28" stroke="#5b9bd5" stroke-width="0.8"/>
-  <text x="165" y="463" text-anchor="middle" fill="#5b9bd5" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ PLAN</text>
-  <text x="165" y="487" text-anchor="middle" fill="#5a7a9a" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">소스 / 가정 오류</text>
+  <!-- ===== ACTION ROUTER — ORBITAL HUB ===== -->
 
-  <!-- Route: → Do (center-left) -->
-  <rect x="332" y="496" width="110" height="28" rx="8" fill="#0f201a" stroke="#7fd6c2" stroke-width="0.8"/>
-  <text x="387" y="515" text-anchor="middle" fill="#7fd6c2" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ DO</text>
-  <line x1="398" y1="484" x2="387" y2="496" stroke="#7fd6c2" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#pc-arr-do)"/>
-  <text x="387" y="537" text-anchor="middle" fill="#5a9a7a" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">완성도 / 포맷 문제</text>
+  <!-- Outer glow -->
+  <circle cx="400" cy="430" r="110" fill="url(#hub-glow)"/>
 
-  <!-- → Do return path -->
-  <path d="M332,510 L280,510 L280,166 L200,166" stroke="#7fd6c2" stroke-width="1" stroke-dasharray="3 4" fill="none" marker-end="url(#pc-arr-do)"/>
+  <!-- Orbital rings -->
+  <ellipse cx="400" cy="430" rx="92" ry="92" fill="none" stroke="#2a1e40" stroke-width="1" stroke-dasharray="3 6" opacity=".7"/>
+  <ellipse cx="400" cy="430" rx="68" ry="68" fill="none" stroke="#3a2856" stroke-width="0.8" stroke-dasharray="2 8" opacity=".5"/>
 
-  <!-- Route: → Loop (right) -->
-  <line x1="460" y1="458" x2="560" y2="458" stroke="#b39ddb" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#pc-arr-loop)"/>
-  <rect x="568" y="444" width="100" height="28" rx="8" fill="#18102a" stroke="#b39ddb" stroke-width="0.8"/>
-  <text x="618" y="463" text-anchor="middle" fill="#b39ddb" font-size="10" font-weight="600" font-family="IBM Plex Mono, monospace">→ LOOP</text>
-  <text x="618" y="487" text-anchor="middle" fill="#8a6aaa" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">실행 품질 미달</text>
+  <!-- Orbital dots -->
+  <circle cx="330" cy="390" r="2.5" fill="#b39ddb" opacity=".5"/>
+  <circle cx="470" cy="390" r="2" fill="#5b9bd5" opacity=".4"/>
+  <circle cx="345" cy="475" r="2" fill="#7fd6c2" opacity=".4"/>
+  <circle cx="460" cy="470" r="2.5" fill="#b39ddb" opacity=".3"/>
 
-  <!-- Loop → re-verify arrow -->
-  <path d="M668,458 L740,458 L740,276 L620,276" stroke="#b39ddb" stroke-width="1" stroke-dasharray="3 4" fill="none" marker-end="url(#pc-arr-loop)"/>
-  <text x="752" y="370" fill="#8a6aaa" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif" transform="rotate(-90 752 370)">재검증</text>
+  <!-- Hub body -->
+  <circle cx="400" cy="430" r="46" fill="url(#hub-fill)" stroke="#b39ddb" stroke-width="1.8"/>
+  <circle cx="400" cy="430" r="34" fill="none" stroke="#3a2856" stroke-width="0.6"/>
+
+  <!-- Hub label -->
+  <text x="400" y="422" text-anchor="middle" fill="#e0d4f0" font-size="11" font-weight="700" letter-spacing="1" font-family="IBM Plex Mono, monospace">액션</text>
+  <text x="400" y="438" text-anchor="middle" fill="#e0d4f0" font-size="11" font-weight="700" letter-spacing="1" font-family="IBM Plex Mono, monospace">라우터</text>
+  <text x="400" y="452" text-anchor="middle" fill="#8a6aaa" font-size="7" font-family="IBM Plex Mono, monospace">ROOT CAUSE</text>
+
+  <!-- ===== 3 ROUTE PATHS (curved) ===== -->
+
+  <!-- LEFT: → PLAN (curved path) -->
+  <path d="M354,430 C280,430 220,430 170,442" stroke="#5b9bd5" stroke-width="2.4" stroke-dasharray="6 4" fill="none"/>
+  <!-- LEFT card -->
+  <rect x="24" y="408" width="200" height="90" rx="16" fill="#0c1420" stroke="#5b9bd5" stroke-width="1.4"/>
+  <!-- Accent bar -->
+  <rect x="24" y="408" width="6" height="90" rx="3" fill="#5b9bd5"/>
+  <text x="46" y="434" fill="#5b9bd5" font-size="15" font-weight="800" font-family="IBM Plex Mono, monospace">↻ PLAN</text>
+  <text x="46" y="456" fill="#9abacc" font-size="11.5" font-weight="600" font-family="Apple SD Gothic Neo, sans-serif">소스 / 가정 오류</text>
+  <text x="46" y="476" fill="#5a7a9a" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">리서치를 다시 수행한다.</text>
+  <text x="46" y="490" fill="#3a5a7a" font-size="9" font-family="IBM Plex Mono, monospace">"출처가 2019년 데이터"</text>
+
+  <!-- DOWN: → DO (curved path) -->
+  <path d="M400,476 C400,510 400,530 400,548" stroke="#7fd6c2" stroke-width="2.4" stroke-dasharray="6 4" fill="none"/>
+  <!-- DOWN card -->
+  <rect x="300" y="552" width="200" height="80" rx="16" fill="#0c1a14" stroke="#7fd6c2" stroke-width="1.4"/>
+  <rect x="300" y="552" width="6" height="80" rx="3" fill="#7fd6c2"/>
+  <text x="322" y="578" fill="#7fd6c2" font-size="15" font-weight="800" font-family="IBM Plex Mono, monospace">↻ DO</text>
+  <text x="322" y="600" fill="#8cbeb2" font-size="11.5" font-weight="600" font-family="Apple SD Gothic Neo, sans-serif">완성도 / 포맷 문제</text>
+  <text x="322" y="620" fill="#5a9a7a" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">누락 섹션을 재작성한다.</text>
+
+  <!-- RIGHT: → LOOP (curved path) -->
+  <path d="M446,430 C520,430 580,430 630,442" stroke="#b39ddb" stroke-width="2.4" stroke-dasharray="6 4" fill="none"/>
+  <!-- RIGHT card -->
+  <rect x="576" y="408" width="218" height="90" rx="16" fill="#140c20" stroke="#b39ddb" stroke-width="1.4"/>
+  <rect x="788" y="408" width="6" height="90" rx="3" fill="#b39ddb"/>
+  <text x="596" y="434" fill="#b39ddb" font-size="15" font-weight="800" font-family="IBM Plex Mono, monospace">↻ LOOP → CHECK</text>
+  <text x="596" y="456" fill="#b0a0c8" font-size="11.5" font-weight="600" font-family="Apple SD Gothic Neo, sans-serif">실행 품질 미달</text>
+  <text x="596" y="476" fill="#8a6aaa" font-size="10" font-family="Apple SD Gothic Neo, sans-serif">다듬고 재검증한다.</text>
+  <text x="596" y="490" fill="#6a4a8a" font-size="9" font-family="IBM Plex Mono, monospace">"문장이 장황", "톤 불일치"</text>
 </svg>
