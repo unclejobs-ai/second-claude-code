@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.3.0-blue)
+![version](https://img.shields.io/badge/version-0.5.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -31,7 +31,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Your Second Claude
-9 commands for all knowledge work:
+11 commands for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -85,6 +85,22 @@ You get the final draft. Reviewed. Fact-checked. Refined.
 
 ---
 
+## What's New in v0.5.0
+
+Five things that changed how this actually works in practice:
+
+**Soul System — memory that builds on itself.** Three modes: `manual` (you tell it what to remember), `learning` (it observes and infers), `hybrid` (both). After a few sessions, the system knows your preferred writing tone, the topics you return to, the feedback patterns you repeat. You stop re-explaining yourself.
+
+**Batch Parallel Decomposition.** Some tasks are just too big for a single linear run. `batch` breaks them into independent units, runs them in parallel, and reassembles the results. A 10-part competitive analysis that would take 40 minutes serially finishes in 8.
+
+**Event Sourcing + Analytics.** Every PDCA cycle is now event-logged — phase transitions, gate decisions, review scores, action routes. You can query your run history, see which phases fail most, and resume mid-cycle after a crash instead of starting over.
+
+**Playwright Dynamic Web Research.** Eevee now navigates JavaScript-heavy pages, handles login-walled content, and executes dynamic interactions. Research on modern SaaS sites, dashboards, and SPAs works the way you'd expect.
+
+**Channels Notifications.** Pikachu dispatches completion alerts to Slack, Telegram, or email. Start a long PDCA run, close your laptop, get a ping when it's done. 7 lifecycle hooks, 11 MCP tools powering the new state layer.
+
+---
+
 ## Pick Your Skill
 
 You don't need to think about phases or cycles. Just say what you want.
@@ -104,6 +120,8 @@ Which skill fits your next task?
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom automation |
 | Discover a skill you don't have | `discover` | Discover and install new skills |
+| Let the system learn who you are | `soul` | Learns who you are across sessions |
+| Break a large task into parallel units | `batch` | Decompose large tasks into parallel units |
 
 Every skill responds to natural language. If you want precision, slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:workflow`, `/second-claude-code:discover`, etc. I type in Korean half the time — the router handles both without any config. ~127 trigger patterns total.
 
@@ -163,7 +181,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 
 Most AI tools are reactive — you prompt, they respond. Second Claude Code has opinions about quality, and it enforces them. Three ideas drive everything:
 
-**Nine skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of nine handles it.
+**Eleven skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of eleven handles it.
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. You literally can't ship a draft that hasn't passed the consensus gate.
 
@@ -273,7 +291,9 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 </details>
 
 <details>
-<summary><strong>Meet the Team — 16 agents across 3 model tiers</strong></summary>
+<summary><strong>Meet the Team — 17 agents across 3 model tiers</strong></summary>
+
+Model distribution: 4 opus / 7 sonnet / 6 haiku
 
 | Phase | Pokemon | Role | Model |
 |---|---|---|---|
@@ -293,6 +313,7 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 | | Magnezone | Skill candidate inspector | sonnet |
 | | Deoxys | Skill candidate scorer | sonnet |
 | | Abra | Knowledge connector | haiku |
+| | Pikachu | Notification dispatcher — channels & alerts | sonnet |
 
 ![Agent Roster](docs/images/agent-roster.svg)
 
@@ -303,7 +324,19 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 <details>
 <summary><strong>Changelog</strong></summary>
 
-### v0.3.0 — PDCA v2, Action Router, Pokemon agents (current)
+### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing (current)
+
+- **Dynamic Soul System** — 3-mode memory: manual / learning / hybrid. The system learns who you are across sessions and adapts its behavior accordingly
+- **Batch Parallel Decomposition** — large tasks automatically split into parallel units and reassembled. `batch` skill handles the orchestration
+- **Event Sourcing + Analytics** — every PDCA run is event-logged. Query your history, spot patterns, recover from crashes mid-cycle
+- **Playwright Dynamic Web Research** — Eevee can now execute JavaScript-heavy pages, not just static HTML. Research depth improves significantly on modern sites
+- **Channels Notifications** — Pikachu dispatches completion alerts to Slack, Telegram, or email when long tasks finish. Set it and walk away
+- **7 lifecycle hooks** — pre/post hooks for each PDCA phase, plus crash recovery
+- **11 MCP tools** — state management, analytics, and cross-session context via the PDCA MCP server
+- **17 Pokemon-themed subagents** across 3 model tiers (4 opus / 7 sonnet / 6 haiku)
+- **2 new skills**: `soul` and `batch`
+
+### v0.3.0 — PDCA v2, Action Router, Pokemon agents
 
 - **PDCA v2 orchestrator** with Action Router — review failures route by root cause, not blind iteration
 - **Question Protocol** — PDCA asks clarifying questions before researching (`--no-questions` to skip)
