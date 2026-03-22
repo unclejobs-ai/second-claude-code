@@ -312,6 +312,130 @@ function writeHandoff(content) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Channel notification helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Load channels config from .data/channels.json.
+ * Falls back to TELEGRAM_CHAT_ID env var if the file is absent.
+ * Returns null when no channel is configured.
+ *
+ * @returns {{ telegram: { enabled: boolean; chat_id: string } | null; notify_on: string[] } | null}
+ */
+function loadChannelsConfig() {
+  const configPath = join(DATA_DIR, "channels.json");
+  const fromFile = readJsonSafe(configPath);
+  if (fromFile) return fromFile;
+
+  const chatId = process.env.TELEGRAM_CHAT_ID;
+  if (chatId) {
+    return {
+      telegram: { enabled: true, chat_id: chatId },
+      notify_on: [
+        "phase_transition",
+        "review_verdict",
+        "cycle_complete",
+        "approval_needed",
+      ],
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Build a human-readable notification text for a PDCA session-end summary.
+ *
+ * @param {{ pdca: { topic: string; current_phase: string; completed: string[]; check_verdict: string | null } | null }} state
+ * @returns {string | null}
+ */
+function buildPdcaNotificationText(state) {
+  if (!state.pdca) return null;
+
+  const { topic, current_phase, completed, check_verdict } = state.pdca;
+
+  const phaseList =
+    completed.length > 0 ? completed.join(" \u2192 ") : "none";
+  const verdict = check_verdict ? check_verdict : null;
+
+  const lines = [
+    `[PDCA] Topic: ${topic}`,
+    `Phase: ${current_phase}`,
+    `Completed: ${phaseList}`,
+  ];
+
+  if (verdict) {
+    lines.push(`Status: ${verdict}`);
+    const actionNeeded =
+      verdict !== "APPROVED" && verdict !== "max_cycles reached";
+    lines.push(`Action needed: ${actionNeeded ? "yes" : "no"}`);
+  } else {
+    lines.push("Status: in progress");
+    lines.push("Action needed: no");
+  }
+
+  return lines.join("\n");
+}
+
+/**
+ * Emit a channel notification payload to stdout if a channel is configured
+ * and the active state has PDCA progress to report.
+ *
+ * Claude Code's Notification hook pattern routes the `notification` field
+ * to the configured MCP plugin — this function never calls transport directly.
+ *
+ * @param {{ pdca: { topic: string; current_phase: string; completed: string[]; check_verdict: string | null } | null }} state
+ */
+function emitChannelNotification(state) {
+  const config = loadChannelsConfig();
+  if (!config) return;
+
+  const telegram = config.telegram;
+  if (!telegram || !telegram.enabled || !telegram.chat_id) return;
+
+  const notifyOn = Array.isArray(config.notify_on) ? config.notify_on : [];
+
+  // Determine event type from current PDCA state.
+  let eventType = null;
+  if (state.pdca) {
+    const { current_phase, check_verdict } = state.pdca;
+    if (check_verdict) {
+      eventType =
+        check_verdict === "APPROVED" || check_verdict === "max_cycles reached"
+          ? "cycle_complete"
+          : "review_verdict";
+    } else if (current_phase) {
+      eventType = "phase_transition";
+    }
+  }
+
+  if (!eventType) return;
+
+  // Filter by notify_on (empty list means all events).
+  if (notifyOn.length > 0 && !notifyOn.includes(eventType)) return;
+
+  const text = buildPdcaNotificationText(state);
+  if (!text) return;
+
+  // Output notification payload for Claude Code's Notification hook handler.
+  // Written to stdout as a JSON object — the hook runtime routes it to MCP.
+  try {
+    const payload = JSON.stringify({
+      notification: {
+        channel: "telegram",
+        chat_id: sanitize(String(telegram.chat_id), 64),
+        text,
+        event_type: eventType,
+      },
+    });
+    // Flush notification to stdout for Claude Code hook consumption.
+    process.stdout.write(payload + "\n");
+  } catch {
+    // Non-fatal — notification errors must never affect session exit.
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Entry point
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -393,6 +517,9 @@ function main() {
   const state = collectActiveState();
   const content = generateHandoff(state);
   writeHandoff(content);
+
+  // ── Channel notification (after HANDOFF, non-blocking) ────────────────────
+  emitChannelNotification(state);
 
   const hasActiveState = state.refine || state.pipeline || state.pdca;
   if (hasActiveState) {

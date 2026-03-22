@@ -130,6 +130,15 @@ At each gate: phase summary + gate verdict (pass/fail + reason) + next phase rec
 
 At cycle end: full artifact chain, Action Router decisions, verdict progression, total phases + token cost estimate.
 
+## Notifications
+
+When Channels are configured (via `.data/channels.json` or `TELEGRAM_CHAT_ID` env), PDCA emits
+notifications at phase transitions and review verdicts. Opt-in via `--notify` flag or by
+creating `.data/channels.json` from the `.data/channels.json.example` template.
+
+See `references/channels-integration.md` for event formats, configuration fields, and
+the notification payload pattern used by `hooks/session-end.mjs`.
+
 ## Gotchas
 
 - Do NOT skip gates. They prevent garbage-in-garbage-out.

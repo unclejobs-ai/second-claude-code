@@ -19,7 +19,7 @@ directly to `Plan → Do → Check → Act`.
 | PDCA | Product Phase | Primary Skills |
 |------|---------------|----------------|
 | Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
-| Do | Produce | `analyze`*, `write`, `pipeline` |
+| Do | Produce | `analyze`*, `write`, `pipeline`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
@@ -35,7 +35,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest (v0.2.0)
-├── skills/                       # 10 skills (SKILL.md each)
+├── skills/                       # 11 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research
@@ -46,10 +46,12 @@ second-claude/
 │   ├── collect/                  # Knowledge collection (PARA)
 │   ├── pipeline/                 # Custom workflow builder
 │   ├── discover/                 # Skill discovery
+│   ├── batch/                    # Parallel task decomposition and execution
+│   │   └── references/           # Decomposition guide, split strategies, merge patterns
 │   └── soul/                     # User identity profile synthesis
 │       └── references/           # Observation signals, synthesis algorithm, templates
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 10 slash command wrappers
+├── commands/                     # 11 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (6 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
@@ -161,6 +163,7 @@ Supporting commands reinforce the same loop:
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough
 - `pipeline` automates full Gather → Produce → Verify → Refine runs
+- `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
 
 ---
