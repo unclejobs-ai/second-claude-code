@@ -1,7 +1,7 @@
 # Action Router — Act Phase
 
 The Action Router classifies review findings by root cause and routes to the appropriate phase.
-This replaces the previous flat "loop everything" approach with intelligent triage.
+This replaces the previous flat "refine everything" approach with intelligent triage.
 
 ## Classification Matrix
 
@@ -12,7 +12,7 @@ This replaces the previous flat "loop everything" approach with intelligent tria
 | `FRAMEWORK_MISMATCH` | "wrong approach", "format doesn't fit", "methodology mismatch", "프레임워크 부적합" | PLAN |
 | `COMPLETENESS_GAP` | "missing section", "incomplete", "too short", "gaps in coverage" | DO |
 | `FORMAT_VIOLATION` | "wrong format", "tone mismatch", "style inconsistent", "톤 불일치" | DO |
-| `EXECUTION_QUALITY` | "weak argument", "unclear", "could be better", "needs polish", "표현력 부족", "문체 불일치", "구조 혼란", "가독성 낮음" | LOOP |
+| `EXECUTION_QUALITY` | "weak argument", "unclear", "could be better", "needs polish", "표현력 부족", "문체 불일치", "구조 혼란", "가독성 낮음" | REFINE |
 
 ## Classification Algorithm
 
@@ -21,15 +21,15 @@ This replaces the previous flat "loop everything" approach with intelligent tria
 3. Tally categories:
    - `PLAN_ISSUES` = SOURCE_GAP + ASSUMPTION_ERROR + FRAMEWORK_MISMATCH
    - `DO_ISSUES` = COMPLETENESS_GAP + FORMAT_VIOLATION
-   - `LOOP_ISSUES` = EXECUTION_QUALITY
+   - `REFINE_ISSUES` = EXECUTION_QUALITY
 4. Normalize tallies to percentages (e.g., 3 PLAN + 2 DO + 1 LOOP = 50%/33%/17%)
 5. Route by **plurality** (highest percentage wins):
    - PLAN_ISSUES is highest → **route to PLAN**
    - DO_ISSUES is highest → **route to DO**
-   - LOOP_ISSUES is highest → **route to LOOP**
+   - REFINE_ISSUES is highest → **route to REFINE**
 6. Near-tie (top two within 5 percentage points) → **ask user** (2 questions max)
-7. If user doesn't respond to tie-breaker → route to highest-count category (never default to LOOP blindly)
-8. **Exact tie** (two or three categories identical) → **PLAN > DO > LOOP** (most conservative route wins — research gaps cause the deepest rework, so surface them first)
+7. If user doesn't respond to tie-breaker → route to highest-count category (never default to REFINE blindly)
+8. **Exact tie** (two or three categories identical) → **PLAN > DO > REFINE** (most conservative route wins — research gaps cause the deepest rework, so surface them first)
 
 ## Route Actions
 
@@ -48,10 +48,10 @@ This replaces the previous flat "loop everything" approach with intelligent tria
 3. Re-execute Do phase: `/scc:write --skip-research --skip-review --constraints {findings}`
 4. Skip Plan (research is sufficient) and proceed to Check after Do
 
-### Route to LOOP
+### Route to REFINE
 
-1. Standard behavior — dispatch `/scc:loop --file {artifact} --review {report}`
-2. Loop handles iterative fix-review cycles internally
+1. Standard behavior — dispatch `/scc:refine --file {artifact} --review {report}`
+2. Refine handles iterative fix-review cycles internally
 3. Exit when target verdict reached or max iterations hit
 
 ## Ambiguous Classification
@@ -63,13 +63,13 @@ When the top two categories are within 5 percentage points of each other (near-t
    Findings breakdown:
    - Plan issues (source/assumption/framework): 38%
    - Do issues (completeness/format): 25%
-   - Loop issues (execution quality): 37%
+   - Refine issues (execution quality): 37%
 
    Top two are close. Where should we focus? (a) More research (b) Polish existing
    ```
 2. Maximum 2 questions for disambiguation
-3. If no response: route to the highest-count category (not a blind LOOP default)
-4. On exact tie: apply tiebreaker order **PLAN > DO > LOOP** (most conservative wins)
+3. If no response: route to the highest-count category (not a blind REFINE default)
+4. On exact tie: apply tiebreaker order **PLAN > DO > REFINE** (most conservative wins)
 
 When there is a clear plurality winner (>5pt gap): route directly, no questions needed.
 
@@ -89,9 +89,9 @@ Keyword matching confidence affects routing decisiveness:
 
 | Verdict | Max Cycles | Escalation |
 |---------|-----------|------------|
-| MINOR FIXES | 1 loop iteration | If not resolved → DO |
-| NEEDS IMPROVEMENT | 3 loop iterations | If stuck → PLAN |
-| MUST FIX | 5 loop iterations | If stuck → STOP + diagnose |
+| MINOR FIXES | 1 refine iteration | If not resolved → DO |
+| NEEDS IMPROVEMENT | 3 refine iterations | If stuck → PLAN |
+| MUST FIX | 5 refine iterations | If stuck → STOP + diagnose |
 
 When iteration ceiling is hit without progress:
 - STOP the cycle

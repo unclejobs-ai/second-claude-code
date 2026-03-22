@@ -3,7 +3,7 @@
 **Permission Mode**: `acceptEdits`. Applying corrections to the artifact requires file access — the orchestrator must switch from `plan` mode (used in Check) before dispatching Act phase agents.
 
 The Act phase uses an **Action Router** to classify review findings by root cause
-and route to the appropriate phase — not always Loop.
+and route to the appropriate phase — not always Refine.
 
 ## Entry Conditions
 
@@ -22,7 +22,7 @@ See `references/action-router.md` for the full classification matrix.
 |---------------------|-------|-----------|
 | SOURCE_GAP, ASSUMPTION_ERROR, FRAMEWORK_MISMATCH | **PLAN** | Fundamental issues — need more/different research |
 | COMPLETENESS_GAP, FORMAT_VIOLATION | **DO** | Execution issues — rewrite with constraints |
-| EXECUTION_QUALITY | **LOOP** | Polish issues — iterative improvement |
+| EXECUTION_QUALITY | **REFINE** | Polish issues — iterative improvement |
 
 ### Classification Flow
 
@@ -49,17 +49,17 @@ See `references/action-router.md` for the full classification matrix.
 3. Re-execute: `/scc:write --skip-research --skip-review --constraints {findings}` (creates a new `worktree-pdca-do`)
 4. Proceed directly to Check after Do (skip Plan and Loop)
 
-## Route: Act → LOOP (MINOR FIXES or NEEDS IMPROVEMENT)
+## Route: Act → REFINE (MINOR FIXES or NEEDS IMPROVEMENT)
 
-1. Set loop parameters based on verdict (use `--target` from PDCA invocation, default: APPROVED):
+1. Set refine parameters based on verdict (use `--target` from PDCA invocation, default: APPROVED):
    - MINOR FIXES: `--max 1 --target {pdca_target}`
    - NEEDS IMPROVEMENT: `--max 3 --target {pdca_target}`
    - MUST FIX: `--max 5 --target {pdca_target}`
 2. **Keep worktree** — fixes are applied in place inside `worktree-pdca-do`
-3. Dispatch: `/scc:loop --file {artifact} --review {report} --max {N} --target {pdca_target}`
-4. Loop runs review-fix cycles internally
-5. On loop exit with APPROVED or MINOR FIXES: merge worktree → `git merge --no-ff worktree-pdca-do`, then `git worktree remove worktree-pdca-do`
-6. On loop exit with MUST FIX: discard worktree, re-enter Do with full constraints
+3. Dispatch: `/scc:refine --file {artifact} --review {report} --max {N} --target {pdca_target}`
+4. Refine runs review-fix cycles internally
+5. On refine exit with APPROVED or MINOR FIXES: merge worktree → `git merge --no-ff worktree-pdca-do`, then `git worktree remove worktree-pdca-do`
+6. On refine exit with MUST FIX: discard worktree, re-enter Do with full constraints
 
 ## Gate Checklist (Act → Exit or Cycle)
 
@@ -115,8 +115,8 @@ Report:
 
 | Anti-Pattern | Why It's Bad | Correct Approach |
 |-------------|--------------|-----------------|
-| Looping >5 times without improvement | Diminishing returns, token waste | Stop and diagnose via Action Router |
-| Routing everything to LOOP | Ignores root cause — research gaps can't be polished away | Use Action Router classification |
+| Refining >5 times without improvement | Diminishing returns, token waste | Stop and diagnose via Action Router |
+| Routing everything to REFINE | Ignores root cause — research gaps can't be polished away | Use Action Router classification |
 | Skipping Action Router | Misses fundamental issues | Always classify before routing |
 | Cycling back to Plan without diagnosis | Repeats the same mistake | Must identify what was missing |
 | Fixing Minor issues when Critical exists | Critical findings block shipping | Address Critical first |
@@ -127,7 +127,7 @@ Output must conform to the **ActOutput schema** (see `references/phase-schemas.m
 The orchestrator validates all fields before executing the routing decision.
 
 Produce before exiting the Act phase:
-- Routing decision → `decision` (one of: `exit|plan|do|loop`)
+- Routing decision → `decision` (one of: `exit|plan|do|refine`)
 - Action Router classification result → `root_cause_category` (non-empty)
 - Summary of changes applied in this Act pass → `improvements_applied` (non-empty when `decision != "exit"`)
 - Constraints to carry forward into next cycle → `next_cycle_constraints` (may be empty when exiting)
@@ -154,7 +154,7 @@ Final report at PDCA cycle end:
 5. Final Version: {path}
 
 ## Verdict Progression
-Round 1: NEEDS IMPROVEMENT (→LOOP) → Round 2: MINOR FIXES (→DO) → Round 3: APPROVED
+Round 1: NEEDS IMPROVEMENT (→REFINE) → Round 2: MINOR FIXES (→DO) → Round 3: APPROVED
 
 ## Key Improvements
 - {what changed between versions}

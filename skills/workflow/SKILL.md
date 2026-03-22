@@ -52,9 +52,9 @@ Run a named preset with `/second-claude-code:workflow run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|
-| `autopilot` | research -> analyze -> write(`--skip-research --skip-review`) -> review -> loop | End-to-end content production |
+| `autopilot` | research -> analyze -> write(`--skip-research --skip-review`) -> review -> refine | End-to-end content production |
 | `quick-draft` | research -> write | Fast first draft |
-| `quality-gate` | review -> loop | Post-hoc quality check on existing content |
+| `quality-gate` | review -> refine | Post-hoc quality check on existing content |
 
 ## Definition
 

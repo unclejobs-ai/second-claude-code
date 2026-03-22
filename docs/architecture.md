@@ -1,5 +1,17 @@
 # Architecture
 
+## What's New in 0.4.0
+
+Five major additions shipped in this release:
+
+1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
+2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
+3. **Six Lifecycle Hooks** — Hook count expanded from 3 to 6: SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. The two new compaction hooks preserve PDCA state across context compression; Stop blocks exit when Check phase is incomplete.
+4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
+5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
+
+---
+
 Second Claude Code is structured as a PDCA-native knowledge-work system.
 The product-facing phases are `Gather → Produce → Verify → Refine`, which map
 directly to `Plan → Do → Check → Act`.
@@ -35,11 +47,14 @@ second-claude/
 │   └── discover/                  # Skill discovery
 ├── agents/                       # 16 specialized subagents (Pokemon-themed)
 ├── commands/                     # 9 slash command wrappers
-├── hooks/                        # Auto-routing + context injection
+├── hooks/                        # Auto-routing + context injection (6 hooks)
 │   ├── hooks.json                # Hook configuration
-│   ├── prompt-detect.mjs         # Natural language auto-router
-│   ├── session-start.mjs         # Session banner + state init
-│   └── session-end.mjs           # Cleanup
+│   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
+│   ├── session-start.mjs         # Session banner + state init (SessionStart)
+│   ├── subagent-stop.mjs         # Reviewer consensus aggregation (SubagentStop)
+│   ├── stop.mjs                  # Check-phase quality gate (Stop)
+│   ├── pre-compact.mjs           # PDCA state snapshot before compaction (PreCompact)
+│   └── post-compact.mjs          # PDCA state restore after compaction (PostCompact)
 ├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
 ├── scripts/                      # Shell utilities
@@ -160,7 +175,7 @@ The Action Router classifies review findings by root cause before routing:
 |-----------------|-------|-----------|
 | SOURCE_GAP, ASSUMPTION_ERROR, FRAMEWORK_MISMATCH | Plan | Fundamental issues need more research |
 | COMPLETENESS_GAP, FORMAT_VIOLATION | Do | Execution issues need rewrite |
-| EXECUTION_QUALITY | Loop | Polish issues need iteration |
+| EXECUTION_QUALITY | Refine | Polish issues need iteration |
 
 ### Question Protocol (Plan Phase)
 

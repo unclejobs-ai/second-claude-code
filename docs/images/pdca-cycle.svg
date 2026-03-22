@@ -92,10 +92,10 @@
   <text x="306" y="464" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Missing section</text>
   <text x="306" y="480" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Rewrite from plan</text>
 
-  <!-- ↻ LOOP -->
+  <!-- ↻ REFINE -->
   <rect x="510" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="510" y="422" width="3" height="72" rx="1.5" fill="#bc8cff"/>
-  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; LOOP</text>
+  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; REFINE</text>
   <text x="526" y="464" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Polish needed</text>
   <text x="526" y="480" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Refine and re-check</text>
 </svg>

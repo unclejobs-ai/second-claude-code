@@ -87,7 +87,7 @@
   <text x="576" y="377" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">analyze</text>
 
   <rect x="630" y="358" width="84" height="28" rx="14" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <text x="672" y="377" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">loop</text>
+  <text x="672" y="377" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">refine</text>
 
   <!-- Skill pills — Row 2 -->
   <rect x="294" y="398" width="84" height="28" rx="14" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>

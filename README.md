@@ -100,7 +100,7 @@ Which skill fits your next task?
 | Apply 15 frameworks — SWOT, Porter, RICE, and more | `analyze` | Structured strategic analysis |
 | Write an article, report, or newsletter | `write` | Research-backed, review-verified output |
 | Get 3-5 perspectives on a draft | `review` | Parallel review with consensus voting |
-| Polish a draft to a target score | `loop` | Iterative improvement until reviewers pass |
+| Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom automation |
 | Discover a skill you don't have | `discover` | Discover and install new skills |
@@ -167,7 +167,7 @@ Most AI tools are reactive — you prompt, they respond. Second Claude Code has 
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. You literally can't ship a draft that hasn't passed the consensus gate.
 
-**Failures get routed, not retried.** When review finds problems, the Action Router classifies the root cause. Research gap? Back to Plan. Missing section? Back to Do. Polish issue? Loop. Not every problem is a loop problem — and treating them all the same wastes cycles.
+**Failures get routed, not retried.** When review finds problems, the Action Router classifies the root cause. Research gap? Back to Plan. Missing section? Back to Do. Polish issue? Refine. Not every problem is a refine problem — and treating them all the same wastes cycles.
 
 Why does this matter in practice? Because the second pass through PDCA is dramatically better than the first. The Action Router makes sure each pass addresses the actual problem.
 
@@ -179,8 +179,8 @@ Skills call each other. That's where things get interesting.
 
 | Pattern | What happens | Good for |
 |---|---|---|
-| Full PDCA | research → analyze → write → review → loop | Research a topic and publish a reviewed article |
-| Quick Check | review → loop | Polish an existing draft |
+| Full PDCA | research → analyze → write → review → refine | Research a topic and publish a reviewed article |
+| Quick Check | review → refine | Polish an existing draft |
 | Plan Only | research → analyze | Understand a market before committing |
 | Autopilot | `workflow run autopilot --topic "..."` | Set it, go get coffee, come back to a finished piece |
 
@@ -198,7 +198,7 @@ Second Claude Code works out of the box. But if you want to tune it — deeper r
     "research_depth": "medium",     // "shallow" | "medium" | "deep"
     "write_voice": "peer-mentor",   // writing tone
     "review_preset": "content",     // "content" | "strategy" | "code" | "quick" | "full"
-    "loop_max_iterations": 3,       // max rounds before stopping
+    "refine_max_iterations": 3,     // max rounds before stopping
     "publish_target": "file"        // "file" | "notion"
   },
   "quality_gate": {
@@ -210,7 +210,7 @@ Second Claude Code works out of the box. But if you want to tune it — deeper r
 
 Every field is optional. Delete what you don't care about.
 
-I set `loop_max_iterations` to 2 for quick tasks and 5 for anything going to a client. The default of 3 is a good middle ground.
+I set `refine_max_iterations` to 2 for quick tasks and 5 for anything going to a client. The default of 3 is a good middle ground.
 
 ---
 

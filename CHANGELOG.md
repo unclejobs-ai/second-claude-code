@@ -1,5 +1,50 @@
 # Changelog
 
+All notable changes to second-claude-code are documented here.
+Format follows [Keep a Changelog](https://keepachangelog.com/).
+
+## [0.4.0] - 2026-03-22
+
+### Added
+- **Critic Schema**: Structured reviewer output with 0.0-1.0 scoring, severity-tagged findings, and score-based consensus (>= 0.7 + no Critical = APPROVED)
+- **Phase Output Schemas**: PlanOutput/DoOutput/CheckOutput/ActOutput JSON schemas with gate validation
+- **Phase-Scoped Permission Modes**: plan↔acceptEdits alternation enforcing read-only Plan/Check, writable Do/Act
+- **StuckDetector**: 3 PDCA anti-patterns detected at runtime (Plan Churn, Check Avoidance, Scope Creep)
+- **Stop Hook Quality Gate**: Blocks session termination when PDCA Check phase is incomplete
+- **SubagentStop Hook**: Automatic reviewer consensus aggregation on subagent completion
+- **Compaction Hooks**: PreCompact/PostCompact preserve PDCA state across context compression
+- **Worktree Isolation**: Do phase runs in isolated git worktree with merge/discard per verdict
+- **n_critic_runs**: Temperature escalation (standard→diverge→minimize) + best-of-N parallel variant selection
+- **MCP State Server**: 6-tool stdio MCP server for PDCA state management (get/start/transition/check_gate/end/update_stuck)
+- **Agent Teams Review**: --team-review option with challenge round for interactive reviewer deliberation
+- **Session Resume**: session_id/session_history tracking with `claude --resume` suggestion in HANDOFF.md
+- **Agent Auto Memory**: Eevee, Smeargle, Xatu accumulate learnings across sessions via `memory: project`
+- **Action Router Korean**: Korean signal keywords for all classification categories + confidence threshold
+
+### Fixed
+- **CRITICAL**: Review `code` preset mismatch between SKILL.md and consensus-gate.md
+- **HIGH**: Pipeline --topic/--var flag injection vulnerability
+- `--constraints` flag missing from write skill Options table
+- PDCA max_cycles ceiling (was unbounded, now default 3)
+- `sanitize()` missing pipe, quote, and double-dash characters
+- Korean hunt route false-positive patterns (방법, 어떻게 해)
+- Loop revert destroying uncommitted changes without warning
+- Research "cached per session" false documentation claim
+- PDCA state missing run_id for concurrent execution
+- Generic skill-check injecting ~400 tokens on every turn
+- 6 support agents missing name/color frontmatter standardization
+- readJsonSafe silently swallowing parse errors
+- HANDOFF.md not written on clean PDCA completion
+- External reviewer CLI PATH integrity unverified
+
+### Changed
+- SKILL.md size limit: 120 lines → 1000 words (resolves contradiction)
+- Consensus gate: vote-count primary → score-based primary with vote-count secondary
+- Review verdicts: added NEEDS IMPROVEMENT between MINOR FIXES and MUST FIX
+- research SKILL.md: Gotchas and Subagents sections restored inline
+- analyze SKILL.md: dual-phase behavior documented + --context plan|do option
+- collect SKILL.md: Search Mode section for discoverability
+
 ## [0.3.0] - 2026-03-21
 
 ### Breaking

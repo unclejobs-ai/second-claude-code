@@ -32,7 +32,7 @@ test("natural-language prompts resolve to command docs and backing skills", () =
     { prompt: "write a newsletter about AI agents", command: "write" },
     { prompt: "run a swot on this SaaS product", command: "analyze" },
     { prompt: "review this draft for quality", command: "review" },
-    { prompt: "iterate until this is better", command: "loop" },
+    { prompt: "iterate until this is better", command: "refine" },
     { prompt: "save this URL to my notes", command: "collect" },
     { prompt: "automate this workflow as a pipeline", command: "pipeline" },
     { prompt: "find a skill for terraform security audit", command: "discover" },
@@ -98,7 +98,7 @@ test("state-manager written state flows through session start and session end ho
 
   execFileSync(
     "bash",
-    [stateManager, "write", "loop-active", '{"goal":"Polish the brief","current_iteration":1,"max":3,"scores":[3.7]}'],
+    [stateManager, "write", "refine-active", '{"goal":"Polish the brief","current_iteration":1,"max":3,"scores":[3.7]}'],
     { cwd: root, env, encoding: "utf8" }
   );
   execFileSync(
@@ -112,7 +112,7 @@ test("state-manager written state flows through session start and session end ho
     env,
     encoding: "utf8",
   });
-  assert.match(startOutput, /Active loop: "Polish the brief" \(iteration 1\/3\)/);
+  assert.match(startOutput, /Active refine: "Polish the brief" \(iteration 1\/3\)/);
   assert.match(startOutput, /Active pipeline: "autopilot" \(step 2\/5\)/);
 
   const endOutput = execFileSync(process.execPath, [sessionEnd], {
@@ -125,6 +125,6 @@ test("state-manager written state flows through session start and session end ho
   const handoff = readFileSync(path.join(tempDir, "HANDOFF.md"), "utf8");
   assert.match(handoff, /Goal: Polish the brief/);
   assert.match(handoff, /Progress: step 2\/5/);
-  assert.match(handoff, /re-run.*\/second-claude-code:loop/);
+  assert.match(handoff, /re-run.*\/second-claude-code:refine/);
   assert.match(handoff, /\/second-claude-code:workflow run autopilot/);
 });
