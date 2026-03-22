@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" fill="none" role="img" aria-labelledby="h-title h-desc">
-  <title id="h-title">Second Claude Code — PDCA Knowledge Work OS</title>
+  <title id="h-title">Second Claude Code — Your Second Claude</title>
   <desc id="h-desc">Premium hero graphic showing the PDCA quality cycle with Pokemon-themed agents, Action Router, and quality gates.</desc>
   <defs>
     <linearGradient id="page-bg" x1="140" y1="36" x2="820" y2="492" gradientUnits="userSpaceOnUse">
@@ -30,7 +30,7 @@
   <circle cx="820" cy="390" r="100" fill="#c9b48f" fill-opacity=".025" filter="url(#glow-warm)"/>
 
   <!-- Header -->
-  <text x="480" y="56" text-anchor="middle" fill="#f5f7fb" font-size="30" font-weight="700" letter-spacing="-1" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">Knowledge Work OS</text>
+  <text x="480" y="56" text-anchor="middle" fill="#f5f7fb" font-size="30" font-weight="700" letter-spacing="-1" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">Your Second Claude</text>
   <text x="480" y="82" text-anchor="middle" fill="#97a4b2" font-size="12.5" font-weight="500" letter-spacing=".4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">9 skills · 16 agents · 15 frameworks</text>
 
   <!-- Main panel -->
@@ -44,8 +44,8 @@
   <text x="160" y="140" fill="#8c9aa8" font-size="10" letter-spacing="4" font-family="IBM Plex Mono, SFMono-Regular, SF Mono, Consolas, monospace">SECOND CLAUDE CODE</text>
 
   <g font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif" font-weight="700" fill="#f5f7fb">
-    <text x="126" y="184" font-size="38" letter-spacing="-2">One disciplined loop</text>
-    <text x="126" y="224" font-size="38" letter-spacing="-2">for serious knowledge work.</text>
+    <text x="126" y="184" font-size="38" letter-spacing="-2">Your second Claude.</text>
+    <text x="126" y="224" font-size="38" letter-spacing="-2">Thinks, writes, reviews.</text>
   </g>
   <text x="126" y="260" fill="#acb7c1" font-size="14.5" font-weight="500" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">Plan, Do, Check, Act — with quality gates</text>
   <text x="126" y="280" fill="#acb7c1" font-size="14.5" font-weight="500" font-family="Satoshi, Avenir Next, -apple-system, Segoe UI, Helvetica Neue, sans-serif">and intelligent Action Router.</text>
