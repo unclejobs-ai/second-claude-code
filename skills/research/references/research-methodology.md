@@ -79,7 +79,7 @@ Playwright MCP is **optional**. If the `playwright` server is absent or fails to
 
 ```yaml
 researcher:
-  model: haiku
+  model: sonnet
   tools: [WebSearch, WebFetch, browser_navigate, browser_snapshot]
   constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness; Playwright tools optional — use only when WebFetch fails or --interactive set; max 3 Playwright navigations per round"
 

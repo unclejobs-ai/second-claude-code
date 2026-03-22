@@ -7,6 +7,7 @@ description: |
   "Propose an update to my SOUL.md based on this session".
 model: opus
 tools: [Read, Grep, Glob]
+mcpServers: ["pdca-state"]
 memory: project
 color: "#F7D02C"
 permissionMode: plan

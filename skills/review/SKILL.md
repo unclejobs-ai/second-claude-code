@@ -21,7 +21,7 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 |----------|-------|-------|
 | `deep-reviewer` | opus | logic, structure, completeness |
 | `devil-advocate` | sonnet | weakest points and blind spots |
-| `fact-checker` | haiku | claims, numbers, sources |
+| `fact-checker` | sonnet | claims, numbers, sources |
 | `tone-guardian` | haiku | voice and audience fit |
 | `structure-analyst` | haiku | organization and readability |
 
@@ -182,7 +182,7 @@ For kimi/codex/gemini without mmbridge, the review skill delegates to the corres
 ```yaml
 deep-reviewer: { model: opus, constraint: "cite exact sections or lines" }
 devil-advocate: { model: sonnet, constraint: "attack exactly 3 weak points when applicable" }
-fact-checker: { model: haiku, tools: [WebSearch], constraint: "include URLs for verified claims" }
+fact-checker: { model: sonnet, tools: [WebSearch, WebFetch], constraint: "include URLs for verified claims" }
 tone-guardian: { model: haiku, constraint: "check voice against guide and audience; if .data/soul/SOUL.md exists, include its ## Tone Rules and ## Anti-Patterns sections as primary voice criteria" }
 structure-analyst: { model: haiku, constraint: "check flow, hierarchy, and redundancy" }
 ```

@@ -5,8 +5,9 @@ description: |
   on a topic from multiple sources before analysis or writing.
   Examples: "Research competitor pricing", "Find recent stats on AI adoption",
   "Collect expert opinions on remote work trends".
-model: haiku
+model: sonnet
 tools: [Read, Grep, Glob, WebSearch, WebFetch, Write]
+mcpServers: ["playwright"]
 memory: project
 ---
 

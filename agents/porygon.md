@@ -5,7 +5,7 @@ description: |
   that contains statistics, quotes, dates, or factual claims.
   Examples: "Verify the stats in this article", "Check all claims in this report",
   "Are these numbers accurate?".
-model: haiku
+model: sonnet
 tools: [Read, Grep, Glob, WebSearch, WebFetch]
 permissionMode: plan
 ---

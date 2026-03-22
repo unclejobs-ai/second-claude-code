@@ -17,13 +17,13 @@ Autonomous multi-round web research that produces structured Research Briefs.
 ## Internal Flow
 
 ```
-researcher(haiku) --[WebSearch x5-10]--> raw findings
+researcher(sonnet) --[WebSearch x5-10]--> raw findings
         |
         v
 analyst(sonnet) --[structure + gap analysis]--> gap list
         |                                        (shallow: skip gap-fill)
         v  (medium/deep only, if gaps found)
-researcher(haiku) --[WebSearch x3-5]--> supplemental findings
+researcher(sonnet) --[WebSearch x3-5]--> supplemental findings
         |
         v
 writer(sonnet) --[synthesis]--> Research Brief
@@ -32,7 +32,7 @@ writer(sonnet) --[synthesis]--> Research Brief
 ### Step-by-Step
 
 0. **Auto-load template**: Read `references/research-methodology.md` for output format template BEFORE starting any searches.
-1. **Dispatch researcher** (haiku): Execute depth-appropriate WebSearch calls across varied query phrasings. Counts are HARD CAPS — see Depth Behavior.
+1. **Dispatch researcher** (sonnet): Execute depth-appropriate WebSearch calls across varied query phrasings. Counts are HARD CAPS — see Depth Behavior.
 2. **Validate sources**: Verify content is readable — not minified JS, login walls, or error pages. If WebFetch returns empty/error on a URL, fall back to Playwright MCP (`browser_navigate` + `browser_snapshot`) when available. See `references/playwright-guide.md`. Discard and replace sources that remain unreadable after fallback.
 3. **Dispatch analyst** (sonnet): Structure findings, identify gaps and contradictions. Apply Data Conflict Resolution rules (see `references/research-methodology.md`).
 4. **Optional 2nd round**: If analyst finds critical gaps, dispatch researcher again only when depth allows (see Depth Behavior). Shallow depth: skip this step entirely.
@@ -100,7 +100,7 @@ After producing the Research Brief, save it to a file:
 ## Subagents
 
 ```yaml
-researcher: { model: haiku, tools: [WebSearch, WebFetch, browser_navigate, browser_snapshot], constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness; Playwright tools optional — use only when WebFetch fails or --interactive set; max 3 Playwright navigations per round" }
+researcher: { model: sonnet, tools: [WebSearch, WebFetch, browser_navigate, browser_snapshot], constraint: "meet depth minimums, vary phrasing, validate fetched content, flag staleness; Playwright tools optional — use only when WebFetch fails or --interactive set; max 3 Playwright navigations per round" }
 analyst: { model: sonnet, tools: [], constraint: "produce gap list, flag data conflicts, verify coverage requirements" }
 writer: { model: sonnet, tools: [], constraint: "every claim needs a source, no invented URLs, include conflict annotations" }
 ```

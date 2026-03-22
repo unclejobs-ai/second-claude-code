@@ -24,6 +24,18 @@
         ]
       }
     ],
+    "SubagentStart": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/subagent-start.mjs\"",
+            "async": false
+          }
+        ]
+      }
+    ],
     "SubagentStop": [
       {
         "matcher": "*",
