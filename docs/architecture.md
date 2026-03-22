@@ -256,7 +256,10 @@ For detection, invocation, and error handling rules, see `references/mmbridge-in
 | **Plan** | `mmbridge research` | `/scc:research` | Parallel multi-model research, merged into analyst input |
 | **Check** | `mmbridge review` | `/scc:review --external` | Cross-model code review, +1 consensus voter |
 | **Check** | `mmbridge security` | `/scc:review --preset security --external` | CWE-classified security audit |
+| **Plan** | `mmbridge debate` | `/scc:analyze` | Multi-model adversarial challenge at thorough depth |
 | **Check→Act** | `mmbridge gate` | `/scc:pdca` | Advisory coverage check at phase transition |
+| **Act** | `mmbridge followup` | `/scc:refine` | Clarify ambiguous external review findings |
+| **Act** | `mmbridge resume` | `/scc:refine` | External re-assessment after fixes |
 
 ### External Reviewers
 

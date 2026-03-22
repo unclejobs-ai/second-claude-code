@@ -42,7 +42,7 @@ Apply a strategic framework to a topic, then stress-test it with a built-in chal
    - For competitors/external entities: use web search, read their docs/repos, or fetch their feature pages. Do not skip this step.
    - Record sources found for use in citation during analysis.
 3. Ask `strategist` to apply the framework with evidence and clear implications, enforcing Source Requirements (min 3 data points per quadrant, inline citations).
-4. Ask `devil-advocate` to attack the weakest 3 points (Challenge Round 1).
+4. Ask `devil-advocate` to attack the weakest 3 points (Challenge Round 1). At `thorough` depth with mmbridge detected, also dispatch `mmbridge debate` in parallel (see MMBridge Debate Enhancement below).
 5. At `deep` depth: run Challenge Round 2 (Source Audit) to verify sourcing quality.
 6. Synthesize both into a balanced output with recommended actions.
 
@@ -80,7 +80,7 @@ When analyzing competitors, products, or external entities:
 |-------|-------|-------------|-------------|
 | 1 | `quick` | Apply the template only. No research, no challenge round. | Internal brainstorming, time-boxed sessions |
 | 2 | `standard` | Apply template with evidence-enforcement + one challenge round. | Default for most analyses |
-| 3 | `thorough` | Full research pass (web search + source code reading) before applying template. Two challenge rounds. Second round specifically attacks sourcing quality. | Competitive analysis, strategic decisions, publishable artifacts |
+| 3 | `thorough` | Full research pass (web search + source code reading) before applying template. Two challenge rounds + mmbridge debate (if available). Second round specifically attacks sourcing quality. | Competitive analysis, strategic decisions, publishable artifacts |
 
 - `quick` maps to `--depth quick`
 - `standard` maps to `--depth standard` (default)
@@ -119,6 +119,38 @@ After producing the final synthesis, save it to a file:
 ## Challenge Round
 
 Mandatory at `standard` (1 round) and `thorough` (2 rounds). See `references/challenge-round.md` for the full protocol.
+
+## MMBridge Debate Enhancement
+
+When mmbridge is detected (see `references/mmbridge-integration.md`), the analyze skill can dispatch
+`mmbridge debate` to get adversarial perspectives from multiple AI models during the challenge round.
+
+### When to Use
+
+- `--depth standard`: **skip mmbridge debate** (single internal challenge round is sufficient)
+- `--depth thorough`: mmbridge debate enabled — runs in parallel with internal devil-advocate
+
+### Dispatch
+
+At Step 4 (Challenge Round 1), also run via Bash:
+
+```bash
+mmbridge debate "<proposition from analysis>" --rounds 2 --stream --export /tmp/mmbridge-debate-${RUN_ID}.md
+```
+
+The `<proposition>` is the key thesis or recommendation from the strategist's analysis output (Step 3).
+
+### Merge
+
+After both internal devil-advocate and mmbridge debate complete:
+- Parse the mmbridge debate export for arguments tagged `FOR` and `AGAINST`
+- `AGAINST` arguments are merged into the challenge round as additional attack vectors
+- `FOR` arguments that contradict internal devil-advocate findings are noted as "disputed by external model"
+- Synthesize both internal and external challenges into the "## Challenge" section of the output
+
+### Cost Note
+
+`mmbridge debate` runs multi-round exchanges between models — it costs significantly more than a single internal challenge. This is why it only activates at `thorough` depth.
 
 ## Gotchas
 

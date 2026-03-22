@@ -17,9 +17,9 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 ## Workflow
 
 1. Read the current file and record a baseline hash.
-2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass.
+2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass. If a review finding from `[external: mmbridge]` is ambiguous, use `mmbridge followup` to clarify before applying fixes (see MMBridge Refinement Enhancement below).
 3. Apply only the top 3 feedback items.
-4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert. Revert strategy:
+4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert. If mmbridge was used in the original review, run `mmbridge resume` before dispatching the full re-review to get the external reviewer's preliminary assessment of fixes (see MMBridge Refinement Enhancement below). Revert strategy:
    - **Before reverting a git-tracked file**: run `git diff --name-only <file>`. If the file shows uncommitted user changes that are NOT from this refine iteration (i.e., changes that predate `baseline_hash`), **warn the user and abort the revert** unless they explicitly confirm. Never silently overwrite uncommitted work.
    - **Path validation**: confirm the file path resolves within the project root — reject any path containing `../` traversal or resolving outside the working directory.
    - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
@@ -51,6 +51,44 @@ Save active state to `${CLAUDE_PLUGIN_DATA}/state/refine-active.json` with:
 
 - `baseline_content`: stores the full file content when `is_git_tracked` is false (non-git files cannot be reverted via `git checkout`)
 - `is_git_tracked`: set at step 1 by running `git ls-files --error-unmatch <file>`. Determines the revert strategy.
+
+## MMBridge Refinement Enhancement
+
+When mmbridge is detected (see `references/mmbridge-integration.md`) and the previous review cycle used `--external`, the refine skill can leverage mmbridge's session continuity for smarter iterations.
+
+### Followup — Clarifying Review Findings
+
+When a review finding is ambiguous or the editor needs more context before fixing:
+
+```bash
+mmbridge followup --tool kimi --prompt "<specific question about a finding>" --latest --export /tmp/mmbridge-followup-${RUN_ID}.md
+```
+
+- `--latest`: reuses the most recent review session for this project
+- Use this BEFORE applying fixes when a Critical or Major finding's intent is unclear
+- Parse the followup response and provide it to the editor alongside the original finding
+
+### Resume — Re-review After Fixes
+
+After the editor applies fixes (Step 3), before dispatching a full internal re-review (Step 4):
+
+```bash
+mmbridge resume --action followup -y --export /tmp/mmbridge-resume-${RUN_ID}.md
+```
+
+- This asks the original external reviewer to evaluate the fixes against its earlier findings
+- The resume result is merged as supplemental context into the next `/scc:review` cycle
+- If resume indicates all external findings are addressed, it counts as a positive signal for the consensus gate
+
+### When to Use
+
+- **Followup**: when a review finding (especially from `[external: mmbridge]`) lacks actionable detail
+- **Resume**: at every re-review cycle if mmbridge was used in the original review
+- **Skip both**: if the original review did not use `--external`, or if mmbridge is not installed
+
+### Cost Note
+
+Followup and resume reuse existing mmbridge sessions — they are cheaper than dispatching a full new review.
 
 ## Output
 

@@ -31,7 +31,8 @@ mmbridge <command> [command-specific-options] --stream --export /tmp/mmbridge-<c
 ### `--tool` Flag
 
 - `mmbridge review`: Use `--tool kimi` (most reliable). Avoid `--tool all` (known race condition).
-- `mmbridge research`, `mmbridge security`, `mmbridge gate`: Handle model selection internally. No `--tool` needed.
+- `mmbridge research`, `mmbridge security`, `mmbridge gate`, `mmbridge debate`: Handle model selection internally. No `--tool` needed.
+- `mmbridge followup`: Use `--tool kimi` (must match the original review session's tool).
 
 ### Timeout Per Command
 
@@ -40,6 +41,8 @@ mmbridge <command> [command-specific-options] --stream --export /tmp/mmbridge-<c
 | `research` | 300s |
 | `security` | 180s |
 | `review` | 120s |
+| `debate` | 300s |
+| `followup` | 120s |
 | `gate` | 60s |
 
 Kill the process and proceed on timeout.
@@ -67,6 +70,8 @@ mmbridge results are merged as "external source" at each skill's merge point:
 - **Review**: mmbridge findings → consensus gate (additional voter)
 - **Security**: mmbridge findings → consensus gate (additional voter with CWE mapping)
 - **Gate**: mmbridge gate → advisory signal (logged, not blocking)
+- **Debate**: mmbridge debate → challenge round input (adversarial perspectives from multiple models)
+- **Followup**: mmbridge followup → refine iteration input (reviewer clarifications on specific findings)
 
 ## Severity Mapping
 
