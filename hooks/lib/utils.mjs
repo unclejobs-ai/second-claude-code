@@ -1,4 +1,26 @@
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, renameSync } from "fs";
+
+/**
+ * Ensure a directory exists, creating it recursively if needed.
+ * @param {string} dir
+ */
+export function ensureDir(dir) {
+  if (!existsSync(dir)) {
+    mkdirSync(dir, { recursive: true });
+  }
+}
+
+/**
+ * Write JSON atomically: write to a .tmp file, then rename into place.
+ * Prevents partial-write corruption on crash.
+ * @param {string} filePath
+ * @param {unknown} data
+ */
+export function writeJsonAtomic(filePath, data) {
+  const tmp = `${filePath}.tmp.${process.pid}`;
+  writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+  renameSync(tmp, filePath);
+}
 
 /**
  * Sanitize a value for safe markdown embedding.

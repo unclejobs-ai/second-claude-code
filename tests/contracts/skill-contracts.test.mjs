@@ -168,7 +168,7 @@ test("README install and command namespace match the plugin surface", () => {
   const plugin = JSON.parse(read(".claude-plugin/plugin.json"));
   const readme = read("README.md");
   const readmeKo = read("README.ko.md");
-  const expectedInstall = "claude plugin add github:EungjePark/second-claude-code";
+  const expectedInstall = "claude plugin add github:unclejobs-ai/second-claude-code";
   const publicPrefix = `/${plugin.name}:`;
 
   for (const doc of [readme, readmeKo]) {

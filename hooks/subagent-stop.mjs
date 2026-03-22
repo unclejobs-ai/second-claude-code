@@ -33,10 +33,10 @@
  * forces the final consensus to MUST FIX regardless of pass/fail tallies.
  */
 
-import { readFileSync, writeFileSync, existsSync, mkdirSync, renameSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { readJsonSafe, sanitize } from "./lib/utils.mjs";
+import { readJsonSafe, sanitize, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -88,7 +88,7 @@ const FAIL_VERDICTS = new Set(["NEEDS IMPROVEMENT", "MUST FIX", "FAIL"]);
  * Parse reviewer output text and extract structured result.
  *
  * @param {string} text
- * @returns {{ name: string, verdict: string, is_pass: boolean, critical_count: number, warning_count: number, findings: string[] }}
+ * @returns {{ name: string, verdict: string, is_pass: boolean, critical_count: number, warning_count: number, findings: string[], score: number | null }}
  */
 function parseReviewerOutput(text) {
   const lines = text.split("\n");
@@ -103,6 +103,16 @@ function parseReviewerOutput(text) {
     const headingMatch = text.match(/^##\s+([a-z][a-z0-9\-_ ]+)/im);
     if (headingMatch) {
       name = sanitize(headingMatch[1].toLowerCase().trim(), 50);
+    }
+  }
+
+  // ── Score (Critic Schema: **Score**: 0.85 or Score: 0.85) ─────────────────
+  let score = null;
+  const scoreMatch = text.match(/\*\*Score\*\*:\s*([\d.]+)/i) ?? text.match(/Score:\s*([\d.]+)/i);
+  if (scoreMatch) {
+    const parsed = parseFloat(scoreMatch[1]);
+    if (!isNaN(parsed) && parsed >= 0.0 && parsed <= 1.0) {
+      score = parsed;
     }
   }
 
@@ -151,16 +161,30 @@ function parseReviewerOutput(text) {
     }
   }
 
+  // ── Table-format Critical detection (Critic Schema: | N | Critical | ... |) ─
+  // Matches rows like: | 1 | Critical | description |
+  const tableMatches = text.match(/\|\s*\d+\s*\|\s*Critical\s*\|/gi) || [];
+  const tableCriticals = tableMatches.length;
+  if (tableCriticals > 0) {
+    // Extract the finding descriptions from table rows for traceability.
+    const tableRowRe = /\|\s*\d+\s*\|\s*Critical\s*\|([^|]+)\|/gi;
+    let tableRow;
+    while ((tableRow = tableRowRe.exec(text)) !== null) {
+      findings.push(sanitize(`Critical (table): ${tableRow[1].trim()}`, 200));
+    }
+  }
+
   // Count **[reviewer]** findings under "### Critical" sections via a broader
   // pattern: lines that are findings (start with "- **") inside a Critical block.
   const criticalSectionMatch = text.match(/###\s*Critical\s*\n([\s\S]*?)(?=###|$)/i);
+  let headingCriticals = critical_count; // already counted "Critical:" prefixed lines
   if (criticalSectionMatch) {
     const section = criticalSectionMatch[1];
     const bulletCount = (section.match(/^[\s]*-\s+\*\*/gm) || []).length;
     // Only add if the section actually has bullets (avoid double-counting
     // explicitly prefixed "Critical:" lines already counted above).
-    if (bulletCount > 0 && critical_count === 0) {
-      critical_count = bulletCount;
+    if (bulletCount > 0 && headingCriticals === 0) {
+      headingCriticals = bulletCount;
       // Extract truncated findings for traceability.
       const bullets = section.match(/^[\s]*-\s+(.+)/gm) || [];
       for (const b of bullets) {
@@ -169,16 +193,28 @@ function parseReviewerOutput(text) {
     }
   }
 
+  // Merge critical counts: take the maximum to avoid under-counting when both
+  // formats appear, but avoid double-counting the same findings.
+  critical_count = Math.max(headingCriticals, tableCriticals);
+
+  // ── Score/verdict consistency check ───────────────────────────────────────
+  // If score < 0.7 but verdict is a pass verdict, downgrade to NEEDS IMPROVEMENT
+  // so that schema-compliant reviewers with low scores don't sneak through.
+  let resolvedRawVerdict = rawVerdict;
+  if (score !== null && score < 0.7 && rawVerdict !== null && PASS_VERDICTS.has(rawVerdict)) {
+    resolvedRawVerdict = "NEEDS IMPROVEMENT";
+  }
+
   // ── Resolve final verdict ──────────────────────────────────────────────────
   // Critical findings override the stated verdict to MUST FIX.
-  let verdict = rawVerdict ?? "UNKNOWN";
+  let verdict = resolvedRawVerdict ?? "UNKNOWN";
   if (critical_count > 0) {
     verdict = "MUST FIX";
   }
 
   const is_pass = PASS_VERDICTS.has(verdict);
 
-  return { name, verdict, is_pass, critical_count, warning_count, findings };
+  return { name, verdict, is_pass, critical_count, warning_count, findings, score };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -188,25 +224,46 @@ function parseReviewerOutput(text) {
 /**
  * Compute consensus verdict from the current list of reviewer records.
  *
- * @param {Array<{ verdict: string, is_pass: boolean, critical_count: number }>} reviewers
+ * @param {Array<{ verdict: string, is_pass: boolean, critical_count: number, warning_count: number, score: number | null }>} reviewers
  * @param {number} expected  total expected reviewer count
- * @param {number} threshold pass fraction (default 0.67)
- * @returns {{ verdict: string, pass_count: number, total: number, required: number } | null}
+ * @param {number} threshold pass fraction (default 0.67) — clamped to [0.5, 1.0]
+ * @returns {{ verdict: string, pass_count: number, total: number, required: number, average_score: number | null } | null}
  *   Returns null when not all reviewers have reported yet.
  */
 function computeConsensus(reviewers, expected, threshold = 0.67) {
   if (reviewers.length < expected) return null;
 
   const total = reviewers.length;
-  const required = Math.ceil(threshold * total);
+  // Clamp threshold to a safe range to prevent trivially easy or impossible gates.
+  const clampedThreshold = Math.max(0.5, Math.min(1.0, threshold));
+  const required = Math.ceil(clampedThreshold * total);
   const pass_count = reviewers.filter((r) => r.is_pass).length;
   const any_critical = reviewers.some((r) => r.critical_count > 0);
+
+  // ── Score-based primary gate ───────────────────────────────────────────────
+  // Average the scores of reviewers that provided a numeric score.
+  const scoringReviewers = reviewers.filter((r) => r.score !== null && r.score !== undefined);
+  const average_score =
+    scoringReviewers.length > 0
+      ? scoringReviewers.reduce((sum, r) => sum + /** @type {number} */ (r.score), 0) /
+        scoringReviewers.length
+      : null;
 
   let verdict;
   if (any_critical) {
     verdict = "MUST FIX";
+  } else if (average_score !== null) {
+    // Score-based path: scores are available from schema-compliant reviewers.
+    if (average_score >= 0.7) {
+      const has_major_findings = reviewers.some(
+        (r) => r.warning_count > 0 || r.verdict === "MINOR FIXES"
+      );
+      verdict = has_major_findings ? "MINOR FIXES" : "APPROVED";
+    } else {
+      verdict = "NEEDS IMPROVEMENT";
+    }
   } else if (pass_count >= required) {
-    // Threshold met — check whether there are lingering Major/Minor issues.
+    // Fallback vote-count path when no reviewer provided scores.
     const has_major_findings = reviewers.some(
       (r) => r.warning_count > 0 || r.verdict === "MINOR FIXES"
     );
@@ -215,17 +272,7 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
     verdict = "NEEDS IMPROVEMENT";
   }
 
-  return { verdict, pass_count, total, required };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Atomic JSON write (write to temp, then rename to avoid partial reads)
-// ─────────────────────────────────────────────────────────────────────────────
-
-function writeJsonAtomic(filePath, data) {
-  const tmp = filePath + ".tmp." + process.pid;
-  writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
-  renameSync(tmp, filePath);
+  return { verdict, pass_count, total, required, average_score };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -244,10 +291,16 @@ function main() {
     state.reviewers = [];
   }
 
-  const expected =
+  const rawExpected =
     typeof state.expected_reviewers === "number" ? state.expected_reviewers : 3;
-  const threshold =
+  // Clamp to [2, 10] to prevent trivially-small or unreachably-large reviewer pools.
+  const expected = Math.max(2, Math.min(10, rawExpected));
+
+  const rawThreshold =
     typeof state.threshold === "number" ? state.threshold : 0.67;
+  // Threshold is also clamped inside computeConsensus; clamp here as well so
+  // the stored value in the aggregation file reflects the effective threshold.
+  const threshold = Math.max(0.5, Math.min(1.0, rawThreshold));
 
   // ── Parse the subagent's output ────────────────────────────────────────────
   const text = readSubagentOutput();
@@ -275,6 +328,7 @@ function main() {
         pass_count: consensusResult.pass_count,
         total: consensusResult.total,
         required: consensusResult.required,
+        average_score: consensusResult.average_score,
         computed_at: new Date().toISOString(),
       }
     : null;
@@ -291,14 +345,19 @@ function main() {
 
   lines.push(
     `Latest: ${record.name} → ${record.verdict}` +
+      (record.score !== null && record.score !== undefined ? ` score=${record.score.toFixed(2)}` : "") +
       (record.critical_count > 0 ? ` (${record.critical_count} Critical)` : "") +
       (record.warning_count > 0 ? ` (${record.warning_count} Warning)` : "")
   );
 
   if (state.consensus) {
     const c = state.consensus;
+    const scoreLabel =
+      c.average_score !== null && c.average_score !== undefined
+        ? ` avg_score=${c.average_score.toFixed(2)} [score-gate]`
+        : " [vote-gate]";
     lines.push(
-      `CONSENSUS: ${c.verdict} (${c.pass_count}/${c.total} pass, required ${c.required})`
+      `CONSENSUS: ${c.verdict} (${c.pass_count}/${c.total} pass, required ${c.required}${scoreLabel})`
     );
     lines.push(
       `Review complete. Proceed with the consensus verdict: ${c.verdict}.`
@@ -319,11 +378,6 @@ function main() {
   );
 }
 
-function ensureDir(dir) {
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-}
 
 try {
   main();

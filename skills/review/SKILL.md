@@ -1,6 +1,7 @@
 ---
 name: review
 description: "Use when reviewing content, strategy, or code with parallel specialized reviewers"
+effort: medium
 ---
 
 # Review

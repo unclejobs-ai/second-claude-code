@@ -1,6 +1,7 @@
 ---
 name: research
 description: "Use when researching a topic through iterative web exploration and synthesis"
+effort: high
 ---
 
 # Research

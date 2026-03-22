@@ -1,6 +1,7 @@
 ---
 name: refine
 description: "Use when iteratively improving a draft until it meets a review target"
+effort: medium
 ---
 
 # Refine

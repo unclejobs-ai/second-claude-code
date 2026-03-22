@@ -1,6 +1,7 @@
 ---
 name: workflow
 description: "Use when chaining multiple /scc commands into a reusable workflow"
+effort: medium
 ---
 
 # Workflow

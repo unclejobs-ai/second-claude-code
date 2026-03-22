@@ -19,7 +19,6 @@
 import {
   writeFileSync,
   existsSync,
-  mkdirSync,
   chmodSync,
   unlinkSync,
   statSync,
@@ -27,7 +26,7 @@ import {
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { sanitize, readJsonSafe } from "./lib/utils.mjs";
+import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -58,7 +57,7 @@ function guardIsActive() {
 }
 
 function writeGuard() {
-  ensureDir(STATE_DIR);
+  ensureDirUtil(STATE_DIR);
   writeFileSync(GUARD_FILE, String(Date.now()), "utf8");
 }
 
@@ -69,16 +68,6 @@ function clearGuard() {
     } catch {
       // Non-fatal — guard will expire naturally via TTL.
     }
-  }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Filesystem helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-function ensureDir(dir) {
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
   }
 }
 
@@ -106,10 +95,11 @@ function pdcaBlockReason(pdcaState) {
   if (checkDone || inActPhase) return null;
 
   const topic = sanitize(pdcaState.topic || "current cycle");
+  const safePhase = sanitize(phase || "unknown");
   return (
     `PDCA cycle "${topic}" is active — Check phase not yet completed. ` +
     `Run /second-claude-code:review before finishing the session. ` +
-    `Current phase: ${phase || "unknown"}. ` +
+    `Current phase: ${safePhase}. ` +
     `Completed: ${completed.length > 0 ? completed.join(" → ") : "none"}.`
   );
 }
@@ -314,7 +304,7 @@ function generateHandoff(state) {
 }
 
 function writeHandoff(content) {
-  ensureDir(DATA_DIR);
+  ensureDirUtil(DATA_DIR);
   const handoffPath = join(DATA_DIR, "HANDOFF.md");
   writeFileSync(handoffPath, content, "utf8");
   chmodSync(handoffPath, 0o600);
@@ -390,8 +380,8 @@ function main() {
       rawPdca.session_history = sessionHistory;
 
       try {
-        ensureDir(STATE_DIR);
-        writeFileSync(pdcaActivePath, JSON.stringify(rawPdca, null, 2), "utf8");
+        ensureDirUtil(STATE_DIR);
+        writeJsonAtomic(pdcaActivePath, rawPdca);
       } catch {
         // Non-fatal — HANDOFF generation continues.
       }

@@ -19,14 +19,12 @@
  */
 
 import {
-  writeFileSync,
   existsSync,
-  mkdirSync,
   unlinkSync,
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { sanitize, readJsonSafe } from "./lib/utils.mjs";
+import { sanitize, readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -38,12 +36,6 @@ const SNAPSHOT_PATH = join(STATE_DIR, "compaction-snapshot.json");
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
-
-function ensureDir(dir) {
-  if (!existsSync(dir)) {
-    mkdirSync(dir, { recursive: true });
-  }
-}
 
 /**
  * Collect all active state and return a compact snapshot object.
@@ -79,7 +71,7 @@ function buildSnapshot() {
       goal: sanitize(loop.goal),
       current_iteration: Number(loop.current_iteration) || 0,
       max: Number(loop.max) || 3,
-      scores: Array.isArray(loop.scores) ? loop.scores : [],
+      scores: Array.isArray(loop.scores) ? loop.scores.map((s) => Number(s) || 0) : [],
     };
   }
 
@@ -109,7 +101,7 @@ function handlePreCompact() {
   }
 
   ensureDir(STATE_DIR);
-  writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), "utf8");
+  writeJsonAtomic(SNAPSHOT_PATH, snapshot);
   console.error("[compaction] PDCA state preserved before compression");
   process.exit(0);
 }

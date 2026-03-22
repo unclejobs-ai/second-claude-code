@@ -89,7 +89,7 @@ const VALID_TRANSITIONS = {
   plan: ["do"],
   do: ["check"],
   check: ["act"],
-  act: [],
+  act: ["plan"],
 };
 
 /** Gates and what conditions they require. */
@@ -205,8 +205,8 @@ function handleStartRun({ topic, max_cycles = 3 }) {
   if (typeof topic !== "string" || topic.trim() === "") {
     throw new Error("topic must be a non-empty string");
   }
-  if (typeof max_cycles !== "number" || max_cycles < 1) {
-    throw new Error("max_cycles must be a positive number");
+  if (typeof max_cycles !== "number" || !Number.isInteger(max_cycles) || max_cycles < 1) {
+    throw new Error("max_cycles must be a positive integer");
   }
 
   const existing = readJson(ACTIVE_FILE);
@@ -261,9 +261,14 @@ function handleTransition({ target_phase, artifacts = {} }) {
     }
   }
 
-  // Merge artifacts
+  // Merge artifacts — only allowlisted keys accepted
+  const VALID_ARTIFACT_KEYS = new Set(["plan_research", "plan_analysis", "do", "check_report", "act_final"]);
   if (artifacts && typeof artifacts === "object") {
-    state.artifacts = { ...state.artifacts, ...artifacts };
+    for (const k of Object.keys(artifacts)) {
+      if (VALID_ARTIFACT_KEYS.has(k)) {
+        state.artifacts[k] = artifacts[k];
+      }
+    }
   }
 
   state.current_phase = target_phase;

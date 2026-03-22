@@ -5,7 +5,7 @@
  *
  * Injects core context on session startup:
  * - 9 skills overview + routing rules
- * - Active refine/pipeline/PDCA state restoration
+ * - Active refine/workflow/PDCA state restoration
  * - Available environment capabilities
  */
 
@@ -64,12 +64,12 @@ function getActiveState() {
     }
   }
 
-  const pipeline = readJsonSafe(join(statePath, "pipeline-active.json"));
-  if (pipeline) {
-    const name = sanitize(pipeline.name);
-    const step = Number(pipeline.current_step) || 0;
-    const total = Number(pipeline.total_steps) || 0;
-    parts.push(`Active pipeline: "${name}" (step ${step}/${total})`);
+  const workflow = readJsonSafe(join(statePath, "workflow-active.json"));
+  if (workflow) {
+    const name = sanitize(workflow.name);
+    const step = Number(workflow.current_step) || 0;
+    const total = Number(workflow.total_steps) || 0;
+    parts.push(`Active workflow: "${name}" (step ${step}/${total})`);
   }
 
   return parts.length > 0 ? parts.join("\n") : null;
@@ -98,7 +98,7 @@ function main() {
   lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, refine, collect, pipeline, discover.");
+  lines.push("Or use individual skills: research, write, analyze, review, refine, collect, workflow, discover.");
   lines.push('Action Router: review failures route by root cause (Plan/Do/Loop).');
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

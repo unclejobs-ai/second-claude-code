@@ -1,6 +1,7 @@
 ---
 name: collect
 description: "Use when collecting URLs, notes, files, or excerpts into structured PARA knowledge"
+effort: low
 ---
 
 # Collect

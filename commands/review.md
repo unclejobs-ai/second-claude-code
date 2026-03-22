@@ -8,6 +8,7 @@ Invoke the `/second-claude-code:review` command for multi-perspective quality re
 ## Context
 - Current git status: !`git status --short`
 - Current staged files: !`git diff --cached --stat`
+- Active review state: !`cat .data/state/review-aggregation.json 2>/dev/null || echo "No active review"`
 
 ## Arguments
 - Optional: file path to review (defaults to staged files)

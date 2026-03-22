@@ -5,6 +5,9 @@ argument-hint: "raise this to 4.5/5" --max 3
 
 Invoke the `/second-claude-code:refine` command for iterative improvement through the `refine` skill.
 
+## Context
+- Active refine loop: !`cat .data/state/refine-active.json 2>/dev/null || echo "No active loop"`
+
 ## Arguments
 - First argument: improvement goal (quoted string)
 - `--max N` (max iterations, default: 3)

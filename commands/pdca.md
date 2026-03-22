@@ -5,6 +5,9 @@ argument-hint: "AI agent market report" or --phase plan "topic" or --no-question
 
 Invoke the `/second-claude-code:pdca` command to run a full or partial PDCA knowledge work cycle through the `pdca` skill.
 
+## Context
+- Active PDCA state: !`cat .data/state/pdca-active.json 2>/dev/null || echo "No active PDCA"`
+
 ## Arguments
 - First argument: topic or subject (required for full cycle or plan phase)
 - `--phase plan|do|check|act|full` (default: auto-detect from context)

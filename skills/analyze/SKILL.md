@@ -1,6 +1,7 @@
 ---
 name: analyze
 description: "Use when applying strategic frameworks such as SWOT, RICE, OKR, or GTM"
+effort: high
 ---
 
 # Analyze

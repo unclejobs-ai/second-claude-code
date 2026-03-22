@@ -1,6 +1,7 @@
 ---
 name: discover
 description: "Use when the current skills cannot handle a task and new skills are needed"
+effort: low
 ---
 
 # Discover

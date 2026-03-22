@@ -24,7 +24,7 @@ Want to try it?
 **1. Install**
 
 ```bash
-claude plugin add github:EungjePark/second-claude-code
+claude plugin add github:unclejobs-ai/second-claude-code
 ```
 
 **2. Verify** — start a new session and look for this in the context injection:
@@ -224,7 +224,7 @@ Every limitation here is a choice. Here's why:
 - **Subagent results arrive after completion,** not incrementally. This is by design — streaming partial results would break the quality gate model.
 - **Review findings are in English** regardless of input language. Korean output is planned.
 
-If one of these bothers you, [open an issue](https://github.com/EungjePark/second-claude-code/issues). The reasoning might change with new evidence.
+If one of these bothers you, [open an issue](https://github.com/unclejobs-ai/second-claude-code/issues). The reasoning might change with new evidence.
 
 ---
 
@@ -234,7 +234,7 @@ Built for Claude Code. Compatible with anything that reads SKILL.md or speaks AC
 
 | Platform | Install | Status |
 |---|---|---|
-| **Claude Code** (primary) | `claude plugin add github:EungjePark/second-claude-code` | Tested |
+| **Claude Code** (primary) | `claude plugin add github:unclejobs-ai/second-claude-code` | Tested |
 | **OpenClaw** | Standard ACP protocol — auto-detected | Experimental |
 | **Codex** | SKILL.md compatible | Experimental |
 | **Gemini CLI** | SKILL.md compatible | Experimental |
@@ -243,9 +243,9 @@ Built for Claude Code. Compatible with anything that reads SKILL.md or speaks AC
 
 ## Contributing
 
-Issues and pull requests welcome at [github.com/EungjePark/second-claude-code](https://github.com/EungjePark/second-claude-code).
+Issues and pull requests welcome at [github.com/unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code).
 
-Built by [Park Eungje](https://github.com/EungjePark). MIT License.
+Built by [Unclejobs](https://github.com/unclejobs-ai). MIT License.
 
 If this plugin saved you time, a star on GitHub means a lot.
 
