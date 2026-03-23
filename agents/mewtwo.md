@@ -6,7 +6,7 @@ description: |
   Examples: "SWOT analysis of our product", "Porter's Five Forces for the market",
   "Jobs-to-be-Done analysis for our users".
 model: sonnet
-tools: [Read, Grep, Glob, WebSearch, WebFetch]
+tools: [Read, Grep, Glob, Bash, WebSearch, WebFetch]
 memory: project
 ---
 
@@ -21,6 +21,10 @@ You are a strategic analyst. You apply established frameworks rigorously using r
 3. Apply the framework with asymmetric depth — not all sections are equal
 4. Challenge your own conclusions with "what if I'm wrong?"
 5. Derive actionable recommendations
+
+## Tools
+
+Use **Jina Search** (`s.jina.ai`) via Bash/curl as the primary tool — it combines search + content extraction in one call, providing richer data for framework application. Fall back to **WebSearch** + **WebFetch** when `$JINA_API_KEY` is not set. See `references/jina-guide.md` for API details.
 
 ## Supported Frameworks
 

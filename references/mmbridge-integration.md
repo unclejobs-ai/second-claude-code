@@ -79,6 +79,26 @@ mmbridge results are merged as "external source" at each skill's merge point:
 - **Handoff**: mmbridge handoff → session export artifact (PDCA exit summary)
 - **Memory**: mmbridge memory search → cross-session context retrieval (prior decisions and findings)
 
+## Jina + Kimi Synergy (Research)
+
+When both Jina Search (`s.jina.ai`) and mmbridge are available, the research skill dispatches them in parallel:
+
+```
+┌─ researcher: Jina Search (structured markdown) ──┐
+│                                                    ├→ analyst: merge + cross-validate
+└─ mmbridge research (Kimi deep analysis) ──────────┘
+```
+
+**Why this works**: Jina returns clean markdown with no navigation noise, eliminating the WebSearch+WebFetch fallback chain. Kimi (BrowseComp 60.6%) independently performs deep reasoning across sources. The analyst receives two high-quality, independently-produced inputs — enabling stronger cross-validation than either source alone.
+
+**Rules**:
+- Jina replaces WebSearch+WebFetch as the researcher's primary content source, not Kimi
+- The existing parallel dispatch pattern (see Parallel Execution above) is preserved
+- If Jina fails, fall back to WebSearch+WebFetch; if mmbridge fails, proceed without it
+- Each Jina-sourced URL counts as 1 source in the Research merge (same as before)
+
+See `skills/research/references/jina-guide.md` for Jina API details and fallback chain.
+
 ## Severity Mapping
 
 For review and security commands, map mmbridge severity labels to internal 3-tier scheme:
