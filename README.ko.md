@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.5.4-blue)
+![version](https://img.shields.io/badge/version-0.5.5-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -532,6 +532,16 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 <details>
 <summary><strong>변경 이력</strong></summary>
+
+### v0.5.5 — MMBridge CLI 정합성, 참조 파일 정리, 스킬 완성도
+
+- **MMBridge CLI 정합성** — mmbridge v0.6.3 CLI에 맞게 전체 스킬의 호출 패턴 수정. `--export`는 `review` 전용으로 정리하고, 나머지 커맨드는 `--json`, `--write`, stdout 리다이렉트를 올바르게 사용
+- **참조 파일 중복 해소** — 최상위 `references/`와 스킬별 `references/` 사이에 내용이 갈라진 5쌍을 최신 버전 기준으로 동기화
+- **mmbridge-integration.md 전면 개편** — 잘못된 범용 `--export` 패턴을 커맨드별 호출 테이블로 교체. `resume`(120s), `embrace`(600s) 커맨드 추가
+- **PDCA Subagents 섹션** — `pdca` SKILL.md에 11개 에이전트 YAML 블록 추가 (유일하게 빠져있던 스킬)
+- **MMBridge Embrace 연동** — `pdca` 스킬에 `mmbridge embrace` 풀사이클 멀티모델 가속 문서화 (`--depth deep` 전용)
+- **Soul 템플릿 추가** — `developer`, `writer`, `researcher` 3개 템플릿 신규 생성 (기존 `default`만 존재)
+- **잔여 CLI 수정** — `check-phase.md`의 `mmbridge gate` 호출, `plan-phase.md`의 `mmbridge memory search` 플래그 정정
 
 ### v0.5.4 — 데몬 하드닝, 라우팅 가드레일, 릴리스 정렬
 

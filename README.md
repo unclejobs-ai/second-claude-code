@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.4-blue)
+![version](https://img.shields.io/badge/version-0.5.5-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -402,6 +402,16 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 <details>
 <summary><strong>Changelog</strong></summary>
+
+### v0.5.5 — MMBridge CLI Alignment, Reference Deduplication, Skill Completeness
+
+- **MMBridge CLI alignment** — fixed invocation patterns across all skills to match mmbridge v0.6.3 CLI. `--export` is now correctly used only for `review`; other commands use `--json`, `--write`, or stdout redirect as appropriate
+- **Reference deduplication** — resolved 5 pairs of diverged reference files between top-level `references/` and skill-level `references/`. Both locations now stay in sync with the newer version as source of truth
+- **mmbridge-integration.md overhaul** — replaced incorrect universal `--export` pattern with per-command invocation table. Added `resume` (120s) and `embrace` (600s) commands with timeout and merge rules
+- **PDCA Subagents section** — added consolidated 11-agent YAML block to `pdca` SKILL.md (was the only skill missing it)
+- **MMBridge Embrace integration** — `pdca` skill now documents `mmbridge embrace` for full-cycle multi-model acceleration at `--depth deep`
+- **Soul templates** — added `developer`, `writer`, and `researcher` templates for the soul identity system (previously only `default` existed)
+- **Stray CLI fixes** — corrected `mmbridge gate` invocation in `check-phase.md` and `mmbridge memory search` flag in `plan-phase.md`
 
 ### v0.5.4 — Daemon Hardening, Routing Guardrails, Release Alignment
 
