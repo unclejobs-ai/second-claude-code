@@ -28,6 +28,14 @@ Applied only when score-based condition is met (no Critical findings, score `>= 
 | `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
 | `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
 
+Reviewer composition by preset:
+
+| Preset | Reviewers |
+|--------|-----------|
+| content | Xatu (deep-reviewer) + Absol (devil-advocate) + Jigglypuff (tone-guardian) |
+| strategy | Xatu (deep-reviewer) + Absol (devil-advocate) + Porygon (fact-checker) |
+| code | Xatu (deep-reviewer) + Porygon (fact-checker) + Unown (structure-analyst) |
+
 Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `ceil(0.5 * 3) = 2`.
 
 ## Score Aggregation

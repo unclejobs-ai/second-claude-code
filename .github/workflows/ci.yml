@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  plugin-contracts:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Syntax checks
+        run: node --check hooks/*.mjs mcp/*.mjs daemon/*.mjs
+
+      - name: Contract and runtime tests
+        run: >
+          node --test
+          tests/contracts/*.test.mjs
+          tests/hooks/*.test.mjs
+          tests/integration/*.test.mjs
+          tests/runtime/*.test.mjs
+          tests/skill-tests/*.test.mjs
+
+      - name: Validate plugin manifests
+        run: >
+          node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'));
+          JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8'))"
+
+      - name: Verify agent frontmatter
+        run: |
+          for f in agents/*.md; do
+            head -1 "$f" | grep -q '^---' || {
+              echo "MISSING frontmatter: $f"
+              exit 1
+            }
+          done
+
+      - name: Verify skill docs
+        run: |
+          for d in skills/*/; do
+            [ -f "${d}SKILL.md" ] || {
+              echo "MISSING SKILL.md: $d"
+              exit 1
+            }
+          done
