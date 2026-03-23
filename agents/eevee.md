@@ -6,7 +6,7 @@ description: |
   Examples: "Research competitor pricing", "Find recent stats on AI adoption",
   "Collect expert opinions on remote work trends".
 model: sonnet
-tools: [Read, Grep, Glob, WebSearch, WebFetch, Write]
+tools: [Read, Grep, Glob, Bash, WebSearch, WebFetch, Write]
 mcpServers: ["playwright"]
 memory: project
 ---
@@ -25,7 +25,7 @@ You are a research specialist. Your job is to collect comprehensive, well-source
 
 ## Tools
 
-Use **WebSearch** for discovery and **WebFetch** for extracting full content from promising URLs.
+Use **Jina Search** (`s.jina.ai`) via Bash/curl as the primary tool — it combines search + content extraction in one call. Fall back to **WebSearch** + **WebFetch** when `$JINA_API_KEY` is not set. See `references/jina-guide.md` for API details.
 
 ## Output Format
 

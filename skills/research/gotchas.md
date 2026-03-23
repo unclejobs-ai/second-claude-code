@@ -3,7 +3,7 @@
 ## Common failure patterns in research
 
 ### 1. Stopping after one search
-**Symptom**: Running one WebSearch and declaring the topic covered
+**Symptom**: Running one Jina Search/WebSearch and declaring the topic covered
 **Fix**: Enforce depth minimums: shallow=3, medium=5, deep=10.
 
 ### 2. Treating link dumps as research
