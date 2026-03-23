@@ -1,29 +1,57 @@
-# Consensus Gate
+# Review: Detailed Protocols
 
-The multi-perspective review mechanism used by `/second-claude-code:review` to ensure quality through independent evaluation.
+## Verdict Definitions
 
----
+The consensus gate applies two conditions in order: score-based gate first, vote-count gate second.
 
-## How It Works
+**Score-based gate (primary)**:
 
-Three reviewer subagents are dispatched in parallel. Each receives the content to review but no access to other reviewers' output. This independence prevents groupthink and ensures diverse perspectives.
+| Verdict | Score Condition | Finding Condition |
+|---------|----------------|-------------------|
+| `APPROVED` | average score `>= 0.7` | No Critical findings, no Major findings, vote threshold met |
+| `MINOR FIXES` | average score `>= 0.7` | No Critical findings, Minor findings only, vote threshold met |
+| `NEEDS IMPROVEMENT` | average score `< 0.7` OR vote threshold not met | No Critical findings |
+| `MUST FIX` | any value | Any Critical finding from any reviewer |
 
-## Reviewers by Preset
+Any single Critical finding forces `MUST FIX` regardless of average score or vote threshold.
 
-| Preset | Reviewers | Threshold |
-|--------|-----------|-----------|
-| content | Xatu (deep-reviewer) + Absol (devil-advocate) + Jigglypuff (tone-guardian) | 2/3 |
-| strategy | Xatu (deep-reviewer) + Absol (devil-advocate) + Porygon (fact-checker) | 2/3 |
-| code | Xatu (deep-reviewer) + Porygon (fact-checker) + Unown (structure-analyst) | 2/3 |
-| quick | Absol (devil-advocate) + Porygon (fact-checker) | 2/2 |
-| full | all 5 reviewers | 3/5 |
+**Vote-count gate (secondary)**:
 
-## Consensus Threshold
+Applied only when score-based condition is met (no Critical findings, score `>= 0.7`):
 
-- **APPROVED**: threshold met, no Critical or Major findings
-- **MINOR FIXES**: threshold met, no Critical findings, but Major or Minor issues remain
-- **NEEDS IMPROVEMENT**: threshold NOT met, but no Critical findings — substantive rework needed
-- **MUST FIX**: any Critical finding from any reviewer (regardless of threshold)
+| Preset | Reviewers (N) | Required Approvals | Formula |
+|--------|---------------|-------------------|---------|
+| `content` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `strategy` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `code` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `security` | 3 | 2 | `ceil(0.67 * 3) = 2` |
+| `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
+| `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
+
+Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `ceil(0.5 * 3) = 2`.
+
+## Score Aggregation
+
+Each reviewer emits a numeric score `0.0–1.0` per `references/critic-schema.md`. After all reviewers complete, compute:
+
+```
+average_score = sum(scores) / count(reviewers)
+```
+
+Store per-reviewer scores in the review aggregation block for cross-cycle comparison:
+
+```markdown
+## Score Aggregation
+
+| Reviewer | Score | Verdict |
+|----------|-------|---------|
+| deep-reviewer | 0.00 | APPROVED |
+| devil-advocate | 0.00 | MINOR FIXES |
+| fact-checker | 0.00 | NEEDS IMPROVEMENT |
+| **Average** | **0.00** | — |
+```
+
+This block is appended to the final Review Report before the overall Verdict is declared. Tracking scores across review cycles enables measurement of quality improvement over iterations.
 
 ## Severity Calibration
 
@@ -35,47 +63,38 @@ Three reviewer subagents are dispatched in parallel. Each receives the content t
 
 Rule of thumb: if the finding would cause a reader/user to reach a **wrong conclusion**, it is Critical. If it would cause **incomplete understanding**, it is Major. If it would cause **mild friction**, it is Minor.
 
-## Critical Finding Override
-
-Any single reviewer can flag a finding as **Critical**. A Critical finding forces `MUST FIX` regardless of overall consensus. Examples: factual errors, security vulnerabilities, legal risks, missing attribution.
-
-## External Voter
-
-When `--external` is set, the review skill detects an installed external CLI (mmbridge, kimi, codex, or gemini) and dispatches a parallel review. The external review counts as one additional voter, increasing the denominator by 1. For example, a `content` preset with an external voter uses a `2/4` threshold instead of `2/3`. If no external CLI is detected, the flag is silently ignored and the gate operates at its default threshold.
-
-## Conflict Resolution
-
-When reviewers directly contradict each other (one says "add more detail" while another says "too verbose"), the main session mediates. The mediator sees all three reviews, identifies the conflict, and makes a judgment call based on the original brief's goals.
-
-## Cost Optimization
-
-Model tier matches reviewer role to keep review cost proportional:
-
-| Reviewer | Model | Use case |
-|----------|-------|----------|
-| Xatu (deep-reviewer) | opus | Logic, structure, completeness |
-| Absol (devil-advocate) | sonnet | Adversarial stress test |
-| Porygon (fact-checker) | haiku | Claim verification |
-| Jigglypuff (tone-guardian) | haiku | Tone and audience fit |
-| Unown (structure-analyst) | haiku | Flow and formatting |
-
-The `quick` preset keeps cost low by using only Absol (devil-advocate) + Porygon (fact-checker).
-
 ## Deduplication Rules
 
 When multiple reviewers flag the same or overlapping issue:
 
 1. **Same location, same issue**: Keep the finding with the most specific evidence (exact quote, line number, or data). Credit all agreeing reviewers in the `[reviewers]` tag. Agreeing reviewers still count as individual approvals for the consensus gate.
-2. **Same issue, different locations**: Keep each as a separate finding -- they are distinct occurrences.
+2. **Same issue, different locations**: Keep each as a separate finding — they are distinct occurrences.
 3. **Overlapping but different angles**: Keep both if they suggest different fixes. Merge only if one strictly subsumes the other.
-4. **Severity conflict on the same finding**: Use the higher severity and note the disagreement (e.g., `[Xatu: Critical, Jigglypuff: Major]`).
+4. **Severity conflict on the same finding**: Use the higher severity and note the disagreement (e.g., `[deep-reviewer: Critical, tone-guardian: Major]`).
 
-## External Reviewer Detection
+## External Reviewers
 
-Detection order:
-1. `mmbridge` -- multi-model bridge (preferred)
-2. `kimi` -- Kimi reviewer
-3. `codex` -- OpenAI Codex CLI
-4. `gemini` -- Google Gemini CLI
+When `--external` is set, the review skill detects the first available external CLI and dispatches a parallel cross-model review.
 
-The external review runs in parallel with internal reviewers. Its findings are merged into the consensus gate as an additional voter. Configure available reviewers in `config.example.json` under `quality_gate.external_reviewers`.
+For detection order, invocation pattern, error handling, and severity mapping, see `references/mmbridge-integration.md`.
+
+### Vote Weight
+
+The external review counts as **1 additional voter**, increasing the denominator by 1:
+
+| Preset | Without `--external` | With `--external` |
+|--------|---------------------|-------------------|
+| `content` | 2/3 pass | 2/4 pass |
+| `strategy` | 2/3 pass | 2/4 pass |
+| `code` | 2/3 pass | 2/4 pass |
+| `security` | 2/3 pass | 2/4 pass |
+| `quick` | 2/2 pass | 2/3 pass |
+| `full` | 4/5 pass | 4/6 pass |
+
+### Score Handling
+
+If mmbridge provides a numeric score (from its consensus output), include it in the average score calculation. If no score is available, the external reviewer participates only in the vote-count gate.
+
+### Finding Merge
+
+External findings are deduplicated against internal findings using the standard deduplication rules (section above). External-only findings are added to the report with `[external: mmbridge]` tag.

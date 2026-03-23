@@ -31,7 +31,7 @@ When mmbridge is detected (see `references/mmbridge-integration.md`), query proj
 ### Command
 
 ```bash
-mmbridge memory search "<topic keywords>" --format json
+mmbridge memory search "<topic keywords>" --json
 ```
 
 ### Integration

@@ -61,19 +61,19 @@ When mmbridge is detected (see `references/mmbridge-integration.md`) and the pre
 When a review finding is ambiguous or the editor needs more context before fixing:
 
 ```bash
-mmbridge followup --tool kimi --prompt "<specific question about a finding>" --latest --export /tmp/mmbridge-followup-${RUN_ID}.md
+mmbridge followup --tool kimi --prompt "<specific question about a finding>" --latest --json > /tmp/mmbridge-followup-${RUN_ID}.json
 ```
 
 - `--latest`: reuses the most recent review session for this project
 - Use this BEFORE applying fixes when a Critical or Major finding's intent is unclear
-- Parse the followup response and provide it to the editor alongside the original finding
+- Parse the followup JSON response and provide it to the editor alongside the original finding
 
 ### Resume — Re-review After Fixes
 
 After the editor applies fixes (Step 3), before dispatching a full internal re-review (Step 4):
 
 ```bash
-mmbridge resume --action followup -y --export /tmp/mmbridge-resume-${RUN_ID}.md
+mmbridge resume --action followup -y --json > /tmp/mmbridge-resume-${RUN_ID}.json
 ```
 
 - This asks the original external reviewer to evaluate the fixes against its earlier findings

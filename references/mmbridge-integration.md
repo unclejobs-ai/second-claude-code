@@ -18,14 +18,27 @@ Detection is per-skill-invocation. Do not cache across skill boundaries.
 
 ## Invocation Pattern
 
-All mmbridge commands use this base pattern:
+`--export` is only supported on the `review` command. Each command uses a different output capture method:
 
-```bash
-mmbridge <command> [command-specific-options] --stream --export /tmp/mmbridge-<command>-${RUN_ID}.md
-```
+| Command | Invocation Pattern |
+|---------|--------------------|
+| `review` | `mmbridge review [opts] --stream --export /tmp/mmbridge-review-${RUN_ID}.md` |
+| `research` | `mmbridge research [opts] --json > /tmp/mmbridge-research-${RUN_ID}.json` |
+| `debate` | `mmbridge debate [opts] --json > /tmp/mmbridge-debate-${RUN_ID}.json` |
+| `security` | `mmbridge security [opts] --json > /tmp/mmbridge-security-${RUN_ID}.json` |
+| `followup` | `mmbridge followup [opts] --json > /tmp/mmbridge-followup-${RUN_ID}.json` |
+| `resume` | `mmbridge resume [opts] --json > /tmp/mmbridge-resume-${RUN_ID}.json` |
+| `diff` | `mmbridge diff [opts] > /tmp/mmbridge-diff-${RUN_ID}.md` |
+| `handoff` | `mmbridge handoff [opts] --write /tmp/mmbridge-handoff-${RUN_ID}.md` |
+| `gate` | `mmbridge gate [opts] --format json > /tmp/mmbridge-gate-${RUN_ID}.json` |
+| `memory search` | `mmbridge memory search [opts] --json > /tmp/mmbridge-memory-${RUN_ID}.json` |
+| `embrace` | `mmbridge embrace [opts] --json > /tmp/mmbridge-embrace-${RUN_ID}.json` |
 
-- `--stream`: Real-time output to terminal for user visibility
-- `--export`: Write results to a file for programmatic parsing
+- `--export`: Write results to file (review only)
+- `--json`: Output JSON to stdout for redirection (research, debate, security, followup, resume, memory)
+- `--write <path>`: Direct file output (handoff)
+- `--format json`: Structured output (gate)
+- stdout redirect: Capture stdout directly (diff, embrace)
 - `${RUN_ID}`: See RUN_ID Generation above
 
 ### `--tool` Flag
@@ -46,6 +59,8 @@ mmbridge <command> [command-specific-options] --stream --export /tmp/mmbridge-<c
 | `gate` | 60s |
 | `diff` | 60s |
 | `handoff` | 60s |
+| `resume` | 120s |
+| `embrace` | 600s |
 | `memory search` | 30s |
 
 Kill the process and proceed on timeout.
@@ -61,8 +76,8 @@ mmbridge calls are ALWAYS dispatched in **parallel** with internal agents:
 
 - **Exit non-zero**: Log the error message. Proceed without mmbridge result. Do not retry.
 - **Timeout**: Kill process and proceed (see per-command timeouts above).
-- **Export file missing**: If the export path does not exist after mmbridge completes, treat as failure.
-- **Parse error**: If the export file exists but cannot be parsed, log and skip mmbridge findings.
+- **Output file missing**: If the output path does not exist after mmbridge completes, treat as failure.
+- **Parse error**: If the output file exists but cannot be parsed, log and skip mmbridge findings.
 
 **Iron rule**: mmbridge failure NEVER blocks the pipeline. Internal agents alone produce a complete result.
 
@@ -77,6 +92,8 @@ mmbridge results are merged as "external source" at each skill's merge point:
 - **Followup**: mmbridge followup → refine iteration input (reviewer clarifications on specific findings)
 - **Diff**: mmbridge diff → review output visualization (annotated git diff with findings)
 - **Handoff**: mmbridge handoff → session export artifact (PDCA exit summary)
+- **Resume**: mmbridge resume → re-evaluation input (continues previous review sessions for re-evaluation of fixes)
+- **Embrace**: mmbridge embrace → full pipeline orchestration (runs research→debate→checkpoint→review→security automatically; relevant for PDCA Act→Plan transitions)
 - **Memory**: mmbridge memory search → cross-session context retrieval (prior decisions and findings)
 
 ## Jina + Kimi Synergy (Research)
@@ -115,4 +132,4 @@ For review and security commands, map mmbridge severity labels to internal 3-tie
 
 ## Cleanup
 
-Delete the export file (`/tmp/mmbridge-*`) after successful parsing, or at end of skill invocation regardless of outcome.
+Delete the output file (`/tmp/mmbridge-*`) after successful parsing, or at end of skill invocation regardless of outcome.

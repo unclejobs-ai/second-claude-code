@@ -128,12 +128,12 @@ When mmbridge is detected (see `references/mmbridge-integration.md`), analyze ca
 At Step 4 (Challenge Round 1), also run via Bash:
 
 ```bash
-mmbridge debate "<proposition from analysis>" --rounds 2 --stream --export /tmp/mmbridge-debate-${RUN_ID}.md
+mmbridge debate "<proposition from analysis>" --rounds 2 --json > /tmp/mmbridge-debate-${RUN_ID}.json
 ```
 
 ### Merge
 
-- Parse the mmbridge debate export for arguments tagged `FOR` and `AGAINST`
+- Parse the mmbridge debate JSON output for arguments tagged `FOR` and `AGAINST`
 - `AGAINST` arguments are merged into the challenge round as additional attack vectors
 - `FOR` arguments that contradict internal devil-advocate findings are noted as "disputed by external model"
 - Synthesize both internal and external challenges into the "## Challenge" section of the output

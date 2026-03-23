@@ -1,73 +1,50 @@
-# PARA Method
+# Collect: Formats, Quality Gates & Search
 
-The classification system used by `/second-claude-code:collect` to organize collected knowledge into actionable categories.
+## Markdown Template
 
+```markdown
+---
+title: "..."
+source: "..."
+source_type: url | text | file | search
+category: project | area | resource | archive
+tags: [tag1, tag2, tag3]
+collected_at: "YYYY-MM-DDTHH:mm:ssZ"
 ---
 
-## Categories
+## Summary
 
-### Projects
-Items with a **deadline** and a **specific outcome**. Active work with a defined finish line.
-- Examples: "Q1 product launch", "Newsletter issue #47", "Client proposal for Acme"
-- Test: "Will this be done within a defined timeframe?" If yes, it is a Project.
+(2-3 sentences max)
 
-### Areas
-**Ongoing responsibilities** with no end date. Standards to maintain over time.
-- Examples: "Content quality", "Customer relationships", "Professional development"
-- Test: "Is this something I need to maintain indefinitely?" If yes, it is an Area.
+## Key Points
 
-### Resources
-**Reference material** on topics of interest. Information that might be useful someday.
-- Examples: "AI industry trends", "Writing techniques", "Competitor analysis data"
-- Test: "Is this information I might reference later, but not acting on now?" If yes, it is a Resource.
+1. ...
+2. ...
+3. ...
 
-### Archives
-**Inactive items** from any of the above categories. Completed projects, retired areas, outdated resources.
-- Examples: "Completed Q4 campaign", "Former client files", "Deprecated API docs"
-- Test: "Is this no longer active but worth keeping?" If yes, it is an Archive.
+## Connections
 
-## Decision Flow
-
+- **[target item title]**: [specific shared principle, pattern, or concept]
 ```
-Is there a deadline and specific outcome?
-  Yes --> Project
-  No  --> Is it an ongoing responsibility?
-          Yes --> Area
-          No  --> Is it potentially useful reference material?
-                  Yes --> Resource
-                  No  --> Do not collect (or Archive if it was previously collected)
-```
-
-## Storage Structure
-
-```
-$CLAUDE_PLUGIN_DATA/knowledge/
-  projects/     # Active project materials
-  areas/        # Ongoing responsibility references
-  resources/    # Topic-based reference library
-  archives/     # Inactive items (auto-moved after project completion)
-```
-
-Each collected item is stored as a JSON file with metadata (source URL, collection date, PARA category, tags) and content (extracted text, summary, key points).
 
 ## Connection Quality Gate
 
-A connection must name a **specific principle, pattern, or concept** -- not a topic or domain.
+A connection must name a **specific principle, pattern, or concept** — not a topic or domain.
 
 | Quality | Example | Verdict |
 |---------|---------|---------|
 | Good | "Both use the Zettelkasten principle of atomic notes" | Pass |
 | Good | "Shares the PARA classification heuristic for active vs reference" | Pass |
 | Good | "Both apply progressive summarization layer 2 (bold key passages)" | Pass |
-| Bad | "Related to knowledge management" | Fail -- topic, not concept |
-| Bad | "Also about productivity" | Fail -- domain, not pattern |
-| Bad | "Similar content" | Fail -- says nothing specific |
+| Bad | "Related to knowledge management" | Fail — topic, not concept |
+| Bad | "Also about productivity" | Fail — domain, not pattern |
+| Bad | "Similar content" | Fail — says nothing specific |
 
 If no specific connection exists, set `connections` to an empty array rather than forcing a vague one.
 
 ## Search Ranking
 
-Results from `/second-claude-code:collect --search` are scored by match location:
+Results are scored by match location with the following weights:
 
 | Match Location | Weight | Example |
 |----------------|--------|---------|

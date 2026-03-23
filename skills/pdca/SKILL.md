@@ -139,6 +139,22 @@ creating `.data/channels.json` from the `.data/channels.json.example` template.
 See `references/channels-integration.md` for event formats, configuration fields, and
 the notification payload pattern used by `hooks/session-end.mjs`.
 
+## Subagents
+
+```yaml
+orchestrator: { model: opus, agent: arceus, constraint: "enforce gates, manage phase transitions, never skip phases" }
+researcher: { model: sonnet, agent: eevee, constraint: "collect sources with citations, minimum 3 distinct sources" }
+analyst: { model: sonnet, agent: alakazam, constraint: "apply frameworks with evidence, no generic claims" }
+strategist: { model: opus, agent: mewtwo, constraint: "strategic synthesis, challenge assumptions" }
+writer: { model: sonnet, agent: smeargle, constraint: "produce artifact from plan, skip-research skip-review" }
+deep-reviewer: { model: opus, agent: xatu, constraint: "thorough quality review with structured critic output" }
+devil-advocate: { model: sonnet, agent: absol, constraint: "attack weakest points, find logical gaps" }
+fact-checker: { model: sonnet, agent: porygon, constraint: "verify claims against sources, flag unsupported statements" }
+structure-analyst: { model: haiku, agent: jigglypuff, constraint: "check organization, flow, format compliance" }
+consistency-checker: { model: haiku, agent: unown, constraint: "cross-reference internal consistency, flag contradictions" }
+editor: { model: sonnet, agent: ditto, constraint: "apply top 3 fixes per iteration, verify improvement" }
+```
+
 ## Gotchas
 
 - Do NOT skip gates. They prevent garbage-in-garbage-out.
@@ -183,3 +199,35 @@ The handoff artifact serves two purposes:
 2. **Team communication**: Share with colleagues as a work summary
 
 This is an **optional convenience** — the PDCA cycle is complete regardless of whether the handoff succeeds.
+
+## MMBridge Embrace (Full-Cycle Acceleration)
+
+When mmbridge is detected, the PDCA orchestrator can optionally delegate the full cycle to `mmbridge embrace` for parallel multi-model acceleration.
+
+### When to Use
+
+- `--depth deep` with full PDCA: embrace provides multi-model research and debate in parallel with internal agents
+- Large-scope tasks where multi-model perspectives add value
+- NOT for `--depth shallow` or single-phase runs
+
+### Dispatch
+
+At the start of a full PDCA cycle, if mmbridge is detected and depth is `deep`:
+
+```bash
+mmbridge embrace "<task summary>" --json --non-interactive > /tmp/mmbridge-embrace-${RUN_ID}.json
+```
+
+- `--non-interactive`: auto-proceed through checkpoints (PDCA orchestrator manages gates, not embrace)
+- `--skip-phases`: use when specific PDCA phases should not have embrace acceleration (e.g., `--skip-phases security` if not a code project)
+
+### Merge Points
+
+Embrace results are merged at multiple PDCA phases:
+- **Plan**: embrace research findings → supplemental sources for Eevee
+- **Check**: embrace review findings → additional voter in consensus gate
+- **Act**: embrace security findings → additional input for action router
+
+### Cost Note
+
+`mmbridge embrace` runs multiple models across multiple phases. Only activate at `deep` depth. Warn user about estimated cost at PDCA start.

@@ -95,7 +95,7 @@ after the internal consensus gate completes.
 After internal consensus gate produces a verdict:
 
 ```bash
-mmbridge gate --mode <mode> --format json --export /tmp/mmbridge-gate-${RUN_ID}.json
+mmbridge gate --mode <mode> --format json > /tmp/mmbridge-gate-${RUN_ID}.json
 ```
 
 - `--mode review`: for content/strategy/code presets

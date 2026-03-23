@@ -51,7 +51,7 @@ The `security` preset activates security-focused review with optional mmbridge s
 When `--external` is set and mmbridge is detected, `mmbridge security` runs in parallel with internal reviewers. Consistent with all other presets — `--external` is always opt-in.
 
 ```bash
-mmbridge security --scope <scope> --stream --export /tmp/mmbridge-security-${RUN_ID}.md
+mmbridge security --scope <scope> --json > /tmp/mmbridge-security-${RUN_ID}.json
 ```
 
 **Option passthrough**:
@@ -156,7 +156,7 @@ When mmbridge is detected (see `references/mmbridge-integration.md`) and the rev
 ### Command
 
 ```bash
-mmbridge diff --base-ref <base> --export /tmp/mmbridge-diff-${RUN_ID}.md
+mmbridge diff --base-ref <base> > /tmp/mmbridge-diff-${RUN_ID}.md
 ```
 
 - `--base-ref`: use the same base ref as the review (default: `HEAD~1`)
@@ -212,7 +212,7 @@ When mmbridge is not found, check for standalone CLIs (`kimi`, `codex`, `gemini`
 
 ### Merging External Findings
 
-1. Parse the mmbridge export file for findings with severity markers.
+1. Parse the mmbridge JSON output file for findings with severity markers.
 2. Map severities per `references/mmbridge-integration.md` § Severity Mapping.
 3. Add the external review as 1 voter. A 3-reviewer preset becomes 4 voters with `--external`.
 4. Deduplicate against internal findings per `references/consensus-gate.md`.

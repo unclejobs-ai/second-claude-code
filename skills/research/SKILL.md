@@ -27,7 +27,7 @@ When mmbridge is detected (see `references/mmbridge-integration.md`), dispatch `
 At Step 1, also run via Bash:
 
 ```bash
-mmbridge research "<topic>" --type <type> --stream --export /tmp/mmbridge-research-${RUN_ID}.md
+mmbridge research "<topic>" --type <type> --json > /tmp/mmbridge-research-${RUN_ID}.json
 ```
 
 - `--type code-aware`: when topic relates to the current codebase
@@ -37,7 +37,7 @@ mmbridge research "<topic>" --type <type> --stream --export /tmp/mmbridge-resear
 
 ### Merge
 
-At Step 3, provide the mmbridge export file as supplemental source material. Count each distinct cited URL from mmbridge as one source and deduplicate overlaps during gap analysis.
+At Step 3, parse the mmbridge JSON output file as supplemental source material. Count each distinct cited URL from mmbridge as one source and deduplicate overlaps during gap analysis.
 
 ### Step-by-Step
 
