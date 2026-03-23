@@ -3,6 +3,25 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.5] - 2026-03-24
+
+### Fixed
+- **MMBridge CLI alignment** — corrected invocation patterns across all skills to match mmbridge v0.6.3 CLI; `--export` now used only for `review`, other commands use `--json`, `--write`, or stdout redirect
+- **Reference file deduplication** — synced 5 diverged reference file pairs between top-level and skill-level `references/` to the newer version
+- **mmbridge gate invocation** — fixed `--format json --export` to `--format json >` in `check-phase.md`
+- **mmbridge memory search flag** — fixed `--format json` to `--json` in `plan-phase.md`
+- **MMBridge Embrace output format** — unified `pdca` SKILL.md and `mmbridge-integration.md` to both use `--json`
+
+### Added
+- **mmbridge-integration.md per-command table** — replaced incorrect universal `--export` pattern with per-command invocation table
+- **resume command** (120s timeout) and **embrace command** (600s timeout) added to mmbridge-integration.md
+- **PDCA Subagents section** — consolidated 11-agent YAML block added to `pdca` SKILL.md
+- **MMBridge Embrace integration** — `pdca` skill documents `mmbridge embrace` for full-cycle multi-model acceleration at `--depth deep`
+- **Soul templates** — `developer`, `writer`, `researcher` templates for the soul identity system
+
+### Changed
+- Version surfaces aligned to `0.5.5` across plugin manifest, marketplace, READMEs, and CLAUDE.md
+
 ## [0.5.4] - 2026-03-23
 
 ### Added
