@@ -97,6 +97,21 @@ describe("true positives", () => {
     const out = run("SWOT 분석해줘");
     assertRoutes(out, "analyze");
   });
+
+  test("Workflow scheduling: schedule this workflow every morning → workflow", () => {
+    const out = run("schedule this workflow every morning");
+    assertRoutes(out, "workflow");
+  });
+
+  test("Workflow background execution: run this workflow in background → workflow", () => {
+    const out = run("run this workflow in background");
+    assertRoutes(out, "workflow");
+  });
+
+  test("Workflow recall: search session recall for Hermes → workflow", () => {
+    const out = run("search session recall for Hermes");
+    assertRoutes(out, "workflow");
+  });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -190,6 +205,42 @@ describe("false positive prevention", () => {
       !extractContext(out).includes(`skill: "second-claude-code:workflow"`),
       `"automate this deployment" should not route to pipeline but got: ${JSON.stringify(out)}`
     );
+  });
+
+  test("search session recall in postgres logs → should NOT route to workflow", () => {
+    const out = run("search session recall in postgres logs");
+    assert.ok(
+      !extractContext(out).includes(`skill: "second-claude-code:workflow"`),
+      `"search session recall in postgres logs" should not route to workflow but got: ${JSON.stringify(out)}`
+    );
+    assertSilent(out, "search session recall in postgres logs");
+  });
+
+  test("do an end-to-end analysis of our failing auth flow → should NOT route to PDCA", () => {
+    const out = run("do an end-to-end analysis of our failing auth flow");
+    assert.ok(
+      !extractContext(out).includes(`skill: "second-claude-code:pdca"`),
+      `"do an end-to-end analysis of our failing auth flow" should not route to PDCA but got: ${JSON.stringify(out)}`
+    );
+    assertSilent(out, "do an end-to-end analysis of our failing auth flow");
+  });
+
+  test("iterate until the tests pass in this repo → should NOT route to refine", () => {
+    const out = run("iterate until the tests pass in this repo");
+    assert.ok(
+      !extractContext(out).includes(`skill: "second-claude-code:refine"`),
+      `"iterate until the tests pass in this repo" should not route to refine but got: ${JSON.stringify(out)}`
+    );
+    assertSilent(out, "iterate until the tests pass in this repo");
+  });
+
+  test("automate this workflow in our CI deployment pipeline → should NOT route to workflow", () => {
+    const out = run("automate this workflow in our CI deployment pipeline");
+    assert.ok(
+      !extractContext(out).includes(`skill: "second-claude-code:workflow"`),
+      `"automate this workflow in our CI deployment pipeline" should not route to workflow but got: ${JSON.stringify(out)}`
+    );
+    assertSilent(out, "automate this workflow in our CI deployment pipeline");
   });
 
   test("analyze this function signature → behavior check", () => {

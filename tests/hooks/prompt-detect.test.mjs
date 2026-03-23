@@ -43,6 +43,21 @@ test("prompt detect still routes Korean review prompts without Hangul literals i
   assertRoutesTo(output, "review");
 });
 
+test("prompt detect routes workflow scheduling prompts to /second-claude-code:workflow", () => {
+  const output = runPrompt("schedule this workflow every morning");
+  assertRoutesTo(output, "workflow");
+});
+
+test("prompt detect routes background workflow prompts to /second-claude-code:workflow", () => {
+  const output = runPrompt("run this workflow in background");
+  assertRoutesTo(output, "workflow");
+});
+
+test("prompt detect routes session recall prompts to /second-claude-code:workflow", () => {
+  const output = runPrompt("search session recall for Hermes adoption");
+  assertRoutesTo(output, "workflow");
+});
+
 // ── PDCA compound pattern tests ──
 
 test("PDCA: Korean compound '알아보고' routes to full PDCA", () => {
@@ -105,4 +120,19 @@ test("PDCA: single-skill prompts still route to individual skills, not PDCA", ()
 test("PDCA: slash commands are skipped entirely", () => {
   const output = runPrompt("/second-claude-code:review my draft");
   assert.equal(output.trim(), "");
+});
+
+test("engineering prompt with end-to-end analysis does not misroute to PDCA", () => {
+  const output = runPrompt("do an end-to-end analysis of our failing auth flow");
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:pdca\\"/);
+});
+
+test("engineering prompt with iterate until tests pass does not misroute to refine", () => {
+  const output = runPrompt("iterate until the tests pass in this repo");
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:refine\\"/);
+});
+
+test("engineering prompt with CI deployment workflow does not misroute to workflow", () => {
+  const output = runPrompt("automate this workflow in our CI deployment pipeline");
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:workflow\\"/);
 });

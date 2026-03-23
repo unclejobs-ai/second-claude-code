@@ -47,10 +47,12 @@ test("session end writes recall entries and queues notifications when daemon is 
   const paths = getDaemonPaths(tempDir);
   const notifications = readdirSync(paths.notificationsDir);
   const recallRaw = readFileSync(paths.recallIndexPath, "utf8");
+  const stdout = result.stdout || "";
 
   assert.equal(result.status, 0);
   assert.equal(existsSync(path.join(tempDir, "HANDOFF.md")), true);
   assert.equal(notifications.length, 1);
+  assert.match(stdout, /"notification":/);
   assert.match(recallRaw, /Hermes adoption/);
   assert.match(recallRaw, /sess-42/);
 

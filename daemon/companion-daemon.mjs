@@ -5,6 +5,8 @@ import { fileURLToPath } from "url";
 import {
   appendRecallEntry,
   createBackgroundRun,
+  listBackgroundRuns,
+  listDaemonJobs,
   queueDaemonNotification,
   readDaemonStatus,
   searchSessionRecall,
@@ -39,7 +41,9 @@ function usage() {
       "  node daemon/companion-daemon.mjs status",
       "  node daemon/companion-daemon.mjs heartbeat [json-overrides]",
       "  node daemon/companion-daemon.mjs schedule-job '<json>'",
+      "  node daemon/companion-daemon.mjs list-jobs",
       "  node daemon/companion-daemon.mjs start-run '<json>'",
+      "  node daemon/companion-daemon.mjs list-runs",
       "  node daemon/companion-daemon.mjs update-run <run-id> '<json>'",
       "  node daemon/companion-daemon.mjs queue-notification '<json>'",
       "  node daemon/companion-daemon.mjs index-session '<json>'",
@@ -61,8 +65,14 @@ function main() {
     case "schedule-job":
       output(upsertDaemonJob(DATA_DIR, parseJsonArg(args[0], "job")));
       return;
+    case "list-jobs":
+      output(listDaemonJobs(DATA_DIR));
+      return;
     case "start-run":
       output(createBackgroundRun(DATA_DIR, parseJsonArg(args[0], "run")));
+      return;
+    case "list-runs":
+      output(listBackgroundRuns(DATA_DIR));
       return;
     case "update-run":
       output(updateBackgroundRun(DATA_DIR, args[0], parseJsonArg(args[1], "patch")));

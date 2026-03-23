@@ -42,6 +42,8 @@ test("companion daemon CLI writes heartbeat and background job state", () => {
       trigger: "manual",
     })
   );
+  const jobs = runDaemon(tempDir, "list-jobs");
+  const runs = runDaemon(tempDir, "list-runs");
 
   const paths = getDaemonPaths(tempDir);
   assert.equal(status.online, true);
@@ -49,6 +51,10 @@ test("companion daemon CLI writes heartbeat and background job state", () => {
   assert.equal(job.name, "Daily Digest");
   assert.equal(job.workflow_name, "autopilot");
   assert.equal(run.workflow_name, "autopilot");
+  assert.equal(jobs.jobs.length, 1);
+  assert.equal(jobs.jobs[0].id, job.id);
+  assert.equal(runs.runs.length, 1);
+  assert.equal(runs.runs[0].run_id, run.run_id);
   assert.equal(existsSync(paths.statusPath), true);
   assert.equal(existsSync(path.join(paths.runsDir, `${run.run_id}.json`)), true);
 });
@@ -88,4 +94,21 @@ test("companion daemon queues notifications and searches recall entries", () => 
   assert.equal(stored.chat_id, "123");
   assert.equal(recall.total, 1);
   assert.match(recall.entries[0].summary, /Hermes adoption/);
+});
+
+test("companion daemon rejects path-traversal run identifiers", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-daemon-"));
+
+  assert.throws(
+    () =>
+      runDaemon(
+        tempDir,
+        "start-run",
+        JSON.stringify({
+          run_id: "../../escaped",
+          workflow_name: "autopilot",
+        })
+      ),
+    /run_id/i
+  );
 });

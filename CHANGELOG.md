@@ -3,6 +3,20 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.4] - 2026-03-23
+
+### Added
+- **Daemon listing surfaces**: `list-jobs` / `list-runs` in the local daemon CLI plus matching MCP tools for job/run inspection
+- **Workflow Phase 3 surface**: workflow docs and command wrapper now cover background runs, recurring scheduling, and session recall
+
+### Fixed
+- **Background run path traversal**: `run_id` is now normalized and rejected when it contains path segments or unsafe characters
+- **Project memory prompt injection**: instruction-like memory entries are blocked on write and redacted on read before session-start injection
+- **Notification regression under daemon heartbeat**: stdout notification contract remains active even when daemon queue mirroring is enabled
+- **Prompt routing false positives**: engineering prompts no longer misroute to PDCA, refine, or workflow while schedule/background/recall prompts route correctly
+- **Workflow state compatibility**: `session-start` again restores legacy `pipeline-active.json` state
+- **Marketplace release metadata**: marketplace and plugin manifests are version-aligned for GitHub-based plugin delivery
+
 ## [0.5.3] - 2026-03-23
 
 ### Added

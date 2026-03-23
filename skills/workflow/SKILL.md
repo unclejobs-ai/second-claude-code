@@ -20,7 +20,10 @@ Create, save, and run reusable multi-step workflows where each step passes files
 | Command | Purpose | Output |
 |---------|---------|--------|
 | `create` | define a workflow | Confirmation with definition summary and variable list |
-| `run` | execute a saved workflow (accepts `--topic`, `--output_dir`, and custom `--var` flags) | Step-by-step progress (Pending/Running/Done/Failed); final summary with output file paths |
+| `run` | execute a saved workflow (accepts `--topic`, `--output_dir`, `--background`, and custom `--var` flags) | Foreground progress or a queued background-run receipt with run ID |
+| `schedule` | persist a recurring daemon job for a saved workflow | Job summary with schedule, status, and next-run metadata |
+| `runs` | inspect recent background runs for a workflow | Table: run ID, trigger, status, created/updated timestamps |
+| `recall` | search prior session recall summaries linked to workflows | Ranked recall hits with topic, workflow name, tags, and handoff path |
 | `list` | show saved workflows | Table: name, step count, preset flag, last run date. Include all presets. |
 | `show` | inspect a workflow (resolves variables if `--topic` provided) | Full definition with resolved variables |
 | `delete` | remove a workflow | Confirmation with name of deleted workflow |
@@ -52,6 +55,8 @@ Pass custom variables with `--var key=value`. See `references/workflow-definitio
 - Workflows should be **background-ready**: every step must be able to run without interactive chat context.
 - Prefer stable file outputs over ephemeral chat-only instructions.
 - When a workflow is reused often, treat it as the canonical task payload for future automation or companion-daemon scheduling.
+- Recurring delivery should be modeled as a daemon job plus workflow variables, not as a free-form cron prompt.
+- Use workflow recall to find prior sessions before rebuilding the same chain from scratch.
 
 ## Presets
 
@@ -73,6 +78,9 @@ Store workflow definitions at `${CLAUDE_PLUGIN_DATA}/workflows/{name}.json`. See
 
 - Active state: `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`
 - Run log: `${CLAUDE_PLUGIN_DATA}/workflows/{name}-run.json`
+- Daemon jobs: `${CLAUDE_PLUGIN_DATA}/daemon/jobs.json`
+- Background runs: `${CLAUDE_PLUGIN_DATA}/daemon/runs/*.json`
+- Session recall index: `${CLAUDE_PLUGIN_DATA}/daemon/recall/index.jsonl`
 
 See `references/workflow-definition.md` for the canonical state schema.
 

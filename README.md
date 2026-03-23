@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.3-blue)
+![version](https://img.shields.io/badge/version-0.5.4-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -402,6 +402,14 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 <details>
 <summary><strong>Changelog</strong></summary>
+
+### v0.5.4 — Daemon Hardening, Routing Guardrails, Release Alignment
+
+- **Daemon hardening** — background run IDs are path-safe and daemon job/run listing surfaces are exposed through CLI and MCP
+- **Project memory trust boundary** — instruction-like memory entries are rejected or redacted before session-start injection
+- **Routing guardrails** — workflow scheduling/recall prompts route correctly while engineering prompts avoid false knowledge-work routing
+- **Notification fallback** — stdout notification delivery remains active even when the daemon heartbeat is present
+- **State compatibility + release alignment** — legacy `pipeline-active.json` resume support restored and marketplace/plugin version surfaces re-aligned
 
 ### v0.5.3 — Companion Daemon Foundation, Project Memory Boundary
 

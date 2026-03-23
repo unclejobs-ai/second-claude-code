@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.5.3-blue)
+![version](https://img.shields.io/badge/version-0.5.4-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -532,6 +532,14 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 <details>
 <summary><strong>변경 이력</strong></summary>
+
+### v0.5.4 — 데몬 하드닝, 라우팅 가드레일, 릴리스 정렬
+
+- **데몬 하드닝** — background run ID를 경로 안전하게 제한하고 daemon job/run 조회 표면을 CLI와 MCP에 노출
+- **프로젝트 메모리 신뢰 경계** — instruction-like 메모리 항목은 세션 시작 주입 전에 차단하거나 redaction
+- **라우팅 가드레일** — workflow 스케줄링/recall 프롬프트는 정확히 라우팅하고 엔지니어링 프롬프트는 지식작업 스킬로 오탐되지 않게 조정
+- **알림 fallback 유지** — daemon heartbeat가 있어도 stdout 기반 알림 전달 계약을 계속 유지
+- **상태 호환성 + 릴리스 정렬** — legacy `pipeline-active.json` resume 지원 복원 및 marketplace/plugin 버전 표면 재정렬
 
 ### v0.5.3 — 컴패니언 데몬 기반, 프로젝트 메모리 경계
 

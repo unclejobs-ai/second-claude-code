@@ -45,3 +45,29 @@ test("session start renders active state with canonical keys and capability summ
   assert.match(output, /git/);
   assert.doesNotMatch(output, /undefined/);
 });
+
+test("session start still resumes legacy pipeline-active state", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-"));
+  const stateDir = path.join(tempDir, "state");
+
+  mkdirSync(stateDir, { recursive: true });
+  writeFileSync(
+    path.join(stateDir, "pipeline-active.json"),
+    JSON.stringify({
+      name: "legacy-pipeline",
+      current_step: 3,
+      total_steps: 7,
+    })
+  );
+
+  const output = execFileSync(process.execPath, [hookPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: tempDir,
+    },
+    encoding: "utf8",
+  });
+
+  assert.match(output, /Active workflow: "legacy-pipeline" \(step 3\/7\)/);
+});

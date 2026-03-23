@@ -39,6 +39,8 @@ import { fileURLToPath } from "url";
 import { logEvent, readEvents, getEventStats, listRunIds } from "../hooks/lib/event-log.mjs";
 import {
   createBackgroundRun,
+  listBackgroundRuns,
+  listDaemonJobs,
   queueDaemonNotification,
   readDaemonStatus,
   searchSessionRecall,
@@ -662,9 +664,19 @@ function handleDaemonScheduleWorkflow(input) {
   return upsertDaemonJob(DATA_DIR, input);
 }
 
+/** daemon_list_jobs */
+function handleDaemonListJobs() {
+  return listDaemonJobs(DATA_DIR);
+}
+
 /** daemon_start_background_run */
 function handleDaemonStartBackgroundRun(input) {
   return createBackgroundRun(DATA_DIR, input);
+}
+
+/** daemon_list_background_runs */
+function handleDaemonListBackgroundRuns() {
+  return listBackgroundRuns(DATA_DIR);
 }
 
 /** session_recall_search */
@@ -965,6 +977,16 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "daemon_list_jobs",
+    description:
+      "List the daemon-managed workflow job definitions currently stored in the local substrate.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
     name: "daemon_start_background_run",
     description:
       "Queue a background workflow run in the daemon substrate. The daemon may execute it later when online.",
@@ -982,6 +1004,16 @@ const TOOL_DEFINITIONS = [
         },
       },
       required: ["workflow_name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "daemon_list_background_runs",
+    description:
+      "List background workflow runs currently persisted in the daemon substrate, newest first.",
+    inputSchema: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },
@@ -1093,8 +1125,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "daemon_schedule_workflow":
         result = handleDaemonScheduleWorkflow(input);
         break;
+      case "daemon_list_jobs":
+        result = handleDaemonListJobs();
+        break;
       case "daemon_start_background_run":
         result = handleDaemonStartBackgroundRun(input);
+        break;
+      case "daemon_list_background_runs":
+        result = handleDaemonListBackgroundRuns();
         break;
       case "session_recall_search":
         result = handleSessionRecallSearch(input);

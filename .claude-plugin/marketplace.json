@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "PDCA-native Knowledge Work OS — 11 skills + 17 Pokemon agents across Plan, Do, Check, and Act",
-    "version": "0.5.0"
+    "version": "0.5.4"
   },
   "plugins": [
     {
       "name": "second-claude-code",
       "source": "./",
       "description": "PDCA-native Knowledge Work OS — 11 skills + 17 Pokemon agents across Plan, Do, Check, and Act",
-      "version": "0.5.0",
+      "version": "0.5.4",
       "author": {
         "name": "unclejobs-ai"
       },

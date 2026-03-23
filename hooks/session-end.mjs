@@ -439,7 +439,6 @@ function emitChannelNotification(state) {
     const daemonStatus = readDaemonStatus(DATA_DIR);
     if (daemonStatus.online) {
       queueDaemonNotification(DATA_DIR, JSON.parse(payload).notification);
-      return;
     }
     process.stdout.write(payload + "\n");
   } catch {

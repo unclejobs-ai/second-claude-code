@@ -28,6 +28,51 @@ if (!raw || raw.startsWith("/")) {
 const input = raw.slice(0, 500);
 const lower = input.toLowerCase();
 
+function matchesAny(value, patterns) {
+  return patterns.some((pattern) => pattern.test(value));
+}
+
+const ENGINEERING_PATTERNS = [
+  /\bauth flow\b/,
+  /\bci\b/,
+  /\bdeployment\b/,
+  /\brepo\b/,
+  /\btests?\b/,
+  /\bstack trace\b/,
+  /\bcypress\b/,
+  /\bpostgres\b/,
+  /\bfunction\b/,
+  /\bcomponent\b/,
+  /\breact\b/,
+  /\bnode\b/,
+  /\btypescript\b/,
+  /\bjavascript\b/,
+  /\bapi\b/,
+  /\bendpoint\b/,
+  /\bbuild\b/,
+  /\bcompile\b/,
+  /\bdebug\b/,
+  /\bbug\b/,
+  /(?:^|[\s(])[\w./-]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|go|rs|java)\b/,
+];
+
+const WORKFLOW_KNOWLEDGE_PATTERNS = [
+  /\bschedule (?:this |a |the )?workflow\b/,
+  /\brun (?:this |a |the )?workflow in background\b/,
+  /\bsearch session recall\b/,
+  /\bsearch recall\b/,
+  /\bfind (?:the )?(?:previous|past) session\b/,
+  /\brecall (?:the )?(?:previous|past) session\b/,
+  /\bautomate this workflow\b/,
+  /\bbuild a workflow\b/,
+  /\bcreate a workflow\b/,
+  /\brun a workflow\b/,
+  /워크플로우/,
+];
+
+const engineeringPrompt = matchesAny(lower, ENGINEERING_PATTERNS);
+const knowledgeWorkflowPrompt = matchesAny(lower, WORKFLOW_KNOWLEDGE_PATTERNS);
+
 // ──────────────────────────────────────────────
 // Layer 0: Soul observation (silent — no routing effect)
 // ──────────────────────────────────────────────
@@ -73,11 +118,13 @@ const pdcaCompound = [
 let pdcaMatch = null;
 let pdcaPos = Infinity;
 
-for (const entry of pdcaCompound) {
-  const pos = lower.indexOf(entry.pattern);
-  if (pos !== -1 && pos < pdcaPos) {
-    pdcaPos = pos;
-    pdcaMatch = entry;
+if (!engineeringPrompt) {
+  for (const entry of pdcaCompound) {
+    const pos = lower.indexOf(entry.pattern);
+    if (pos !== -1 && pos < pdcaPos) {
+      pdcaPos = pos;
+      pdcaMatch = entry;
+    }
   }
 }
 
@@ -151,7 +198,27 @@ const routes = [
     label: "collect",
   },
   {
-    patterns: [...ko.workflow, "build a pipeline", "run a pipeline", "create a pipeline", "run pipeline", "automate this workflow", "automate this process", "build a workflow", "run a workflow", "create a workflow", "run workflow"],
+    patterns: [
+      ...ko.workflow,
+      "build a pipeline",
+      "run a pipeline",
+      "create a pipeline",
+      "run pipeline",
+      "automate this workflow",
+      "automate this process",
+      "build a workflow",
+      "run a workflow",
+      "create a workflow",
+      "run workflow",
+      "schedule this workflow",
+      "schedule workflow",
+      "run this workflow in background",
+      "run workflow in background",
+      "search session recall",
+      "search recall",
+      "find previous session",
+      "recall previous session",
+    ],
     skill: "second-claude-code:workflow",
     label: "workflow",
   },
@@ -166,6 +233,24 @@ let bestMatch = null;
 let bestPos = Infinity;
 
 for (const route of routes) {
+  if (engineeringPrompt) {
+    const blockedForEngineering = [
+      "research",
+      "review",
+      "write",
+      "analyze",
+      "refine",
+      "collect",
+      "discover",
+    ];
+    if (blockedForEngineering.includes(route.label)) continue;
+    if (route.label === "workflow") {
+      const ciOrBuildWorkflow =
+        /\b(ci|deployment|build|compile|repo|tests?|postgres|stack trace|api|function|component|auth)\b/.test(lower);
+      if (!knowledgeWorkflowPrompt || ciOrBuildWorkflow) continue;
+    }
+  }
+
   for (const p of route.patterns) {
     const pos = lower.indexOf(p);
     if (pos !== -1 && pos < bestPos) {

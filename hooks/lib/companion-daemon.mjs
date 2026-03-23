@@ -1,6 +1,7 @@
 import {
   appendFileSync,
   existsSync,
+  readdirSync,
   readFileSync,
 } from "fs";
 import { join } from "path";
@@ -26,6 +27,27 @@ function slugify(value) {
 
 function generatedId(prefix, seed = "") {
   return `${prefix}-${slugify(seed)}-${Date.now()}`;
+}
+
+function normalizeRunId(value, { allowGenerate = false, seed = "" } = {}) {
+  if (typeof value !== "string" || value.trim() === "") {
+    if (allowGenerate) return generatedId("run", seed);
+    throw new Error("run_id must be a non-empty string");
+  }
+
+  const normalized = value.trim();
+  if (
+    normalized.includes("/") ||
+    normalized.includes("\\") ||
+    normalized.includes("..") ||
+    !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/.test(normalized)
+  ) {
+    throw new Error(
+      "run_id must use only letters, numbers, dot, underscore, or hyphen and must not contain path segments"
+    );
+  }
+
+  return normalized;
 }
 
 function readJsonl(filePath) {
@@ -176,6 +198,15 @@ export function upsertDaemonJob(dataDir, job) {
   return store.jobs.find((entry) => entry.id === id);
 }
 
+export function listDaemonJobs(dataDir) {
+  const store = readJobsStore(dataDir);
+  const jobs = [...store.jobs].sort((a, b) => a.name.localeCompare(b.name));
+  return {
+    jobs,
+    total: jobs.length,
+  };
+}
+
 export function createBackgroundRun(dataDir, input) {
   const { runsDir } = ensureDaemonLayout(dataDir);
   const workflowName =
@@ -184,10 +215,10 @@ export function createBackgroundRun(dataDir, input) {
     throw new Error("workflow_name must be a non-empty string");
   }
 
-  const runId =
-    typeof input.run_id === "string" && input.run_id.trim()
-      ? input.run_id.trim()
-      : generatedId("run", workflowName);
+  const runId = normalizeRunId(input.run_id, {
+    allowGenerate: true,
+    seed: workflowName,
+  });
   const now = nowIso();
   const run = {
     run_id: runId,
@@ -206,15 +237,13 @@ export function createBackgroundRun(dataDir, input) {
 }
 
 export function updateBackgroundRun(dataDir, runId, patch) {
-  if (typeof runId !== "string" || runId.trim() === "") {
-    throw new Error("runId must be a non-empty string");
-  }
+  const normalizedRunId = normalizeRunId(runId);
 
   const { runsDir } = ensureDaemonLayout(dataDir);
-  const filePath = join(runsDir, `${runId}.json`);
+  const filePath = join(runsDir, `${normalizedRunId}.json`);
   const existing = readJsonSafe(filePath);
   if (!existing) {
-    throw new Error(`Background run not found: ${runId}`);
+    throw new Error(`Background run not found: ${normalizedRunId}`);
   }
 
   const next = {
@@ -225,6 +254,24 @@ export function updateBackgroundRun(dataDir, runId, patch) {
   };
   writeJsonAtomic(filePath, next);
   return next;
+}
+
+export function listBackgroundRuns(dataDir) {
+  const { runsDir } = ensureDaemonLayout(dataDir);
+  const runs = readdirSync(runsDir)
+    .filter((entry) => entry.endsWith(".json"))
+    .map((entry) => readJsonSafe(join(runsDir, entry)))
+    .filter(Boolean)
+    .sort((a, b) =>
+      String(b.updated_at || b.created_at || "").localeCompare(
+        String(a.updated_at || a.created_at || "")
+      )
+    );
+
+  return {
+    runs,
+    total: runs.length,
+  };
 }
 
 export function queueDaemonNotification(dataDir, notification) {

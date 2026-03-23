@@ -21,10 +21,16 @@ test("guidance schema documents Hermes-style optional metadata fields", () => {
 
 test("workflow and discover docs describe skill-attached automation and registry-first discovery", () => {
   const workflow = read("skills/workflow/SKILL.md");
+  const workflowCommand = read("commands/workflow.md");
   const discover = read("skills/discover/SKILL.md");
 
   assert.match(workflow, /skill-attached task/i);
   assert.match(workflow, /background-ready/i);
+  assert.match(workflow, /schedule/i);
+  assert.match(workflow, /recall/i);
+  assert.match(workflowCommand, /run --background/i);
+  assert.match(workflowCommand, /schedule/i);
+  assert.match(workflowCommand, /recall/i);
   assert.match(discover, /official\/local\/verified registry/i);
   assert.match(discover, /registry-first/i);
 });
