@@ -14,49 +14,17 @@ Autonomous multi-round web research that produces structured Research Briefs.
 - Another skill (e.g., `/second-claude-code:write`, `/second-claude-code:analyze`) needs source material
 - User wants competitive intelligence, market data, or literature review
 
-## Internal Flow
-
-```
-researcher(sonnet) --[Jina Search x5-10]--> raw findings ─┐
-                                                            ├─→ analyst(sonnet) --[merge + gap analysis]
-mmbridge research (parallel, if detected) ─────────────────┘        |
-                                                             (shallow: skip gap-fill)
-        v  (medium/deep only, if gaps found)
-researcher(sonnet) --[Jina Search x3-5]--> supplemental findings
-        |
-        v
-writer(sonnet) --[synthesis]--> Research Brief
-```
-
 ### Web Engine
 
-The researcher uses **Jina Search** (`s.jina.ai`) as the primary tool, which combines search + content extraction in a single call. Each Jina Search call returns up to 5 results with full markdown content.
-
-Fallback chain: Jina Search → WebSearch + WebFetch → Playwright. See `references/jina-guide.md`.
+The researcher uses **Jina Search** (`s.jina.ai`) as the primary tool. Fallback chain: Jina Search → WebSearch + WebFetch → Playwright. See `references/jina-guide.md`.
 
 ## MMBridge Enhancement
 
-When mmbridge is detected (see `references/mmbridge-integration.md`), the research skill dispatches
-`mmbridge research` in **parallel** with the internal researcher for multi-model perspective.
-
-### Enhanced Flow
-
-```
-┌─ researcher(sonnet): Jina Search ──────────────┐
-│                                                  ├─→ analyst: merge + gap analysis
-└─ mmbridge research "<topic>" --type code-aware ──┘
-```
-
-### Jina + Kimi Synergy
-
-Jina provides clean, structured markdown from web sources. Kimi performs deep reasoning and cross-source synthesis. Together:
-- Jina eliminates noisy WebFetch content → analyst gets higher-quality inputs from both pipelines
-- Kimi cross-validates Jina findings independently → stronger conflict detection
-- No fallback chain failures between them — each operates on its own retrieval path
+When mmbridge is detected (see `references/mmbridge-integration.md`), dispatch `mmbridge research` in parallel with the internal researcher.
 
 ### Dispatch
 
-At Step 1 (Dispatch researcher), also run via Bash:
+At Step 1, also run via Bash:
 
 ```bash
 mmbridge research "<topic>" --type <type> --stream --export /tmp/mmbridge-research-${RUN_ID}.md
@@ -64,25 +32,22 @@ mmbridge research "<topic>" --type <type> --stream --export /tmp/mmbridge-resear
 
 - `--type code-aware`: when topic relates to the current codebase
 - `--type open`: for general topics unrelated to code
-- `--depth shallow`: **skip mmbridge** (cost vs value too low)
+- `--depth shallow`: skip mmbridge
 - `--depth medium|deep`: mmbridge enabled
 
 ### Merge
 
-At Step 3 (Dispatch analyst), provide the mmbridge export file as supplemental source material:
-- Analyst treats mmbridge findings as additional sources alongside internal researcher findings
-- mmbridge sources count toward the `sources_count` gate requirement (Plan→Do needs ≥3). Count each distinct cited URL from mmbridge export as 1 source
-- If mmbridge produced duplicate findings, analyst deduplicates during gap analysis
+At Step 3, provide the mmbridge export file as supplemental source material. Count each distinct cited URL from mmbridge as one source and deduplicate overlaps during gap analysis.
 
 ### Step-by-Step
 
-0. **Auto-load template**: Read `references/research-methodology.md` for output format template and `references/jina-guide.md` for Jina API usage BEFORE starting any searches.
-1. **Dispatch researcher** (sonnet): Execute depth-appropriate Jina Search calls (`s.jina.ai`) via Bash/curl across varied query phrasings. Each call returns search results WITH content — no separate fetch step needed. Counts are HARD CAPS — see Depth Behavior. If `$JINA_API_KEY` is not set, fall back to WebSearch + WebFetch. If mmbridge detected and depth is medium or deep, dispatch `mmbridge research` in parallel (see MMBridge Enhancement above).
-2. **Validate sources**: Verify Jina-returned content is readable — not login walls, blocked pages, or empty. For blocked URLs, use Jina Reader (`r.jina.ai`) with `X-Engine: browser` for a deeper fetch. If still unreadable, fall back to Playwright MCP when available. See `references/playwright-guide.md`.
-3. **Dispatch analyst** (sonnet): Structure findings from internal researcher AND mmbridge (if available). Identify gaps and contradictions. Apply Data Conflict Resolution rules (see `references/research-methodology.md`).
-4. **Optional 2nd round**: If analyst finds critical gaps, dispatch researcher again only when depth allows (see Depth Behavior). Shallow depth: skip this step entirely.
-5. **Dispatch writer** (sonnet): Synthesize into the output brief format with conflict annotations.
-6. **Verification**: Before outputting the brief, count actual Jina Search calls. If count exceeds depth limit, discard excess results and re-synthesize from the capped set.
+0. Auto-load `references/research-methodology.md` and `references/jina-guide.md`.
+1. Dispatch **researcher** (sonnet): run depth-appropriate Jina Search calls with varied query phrasings. If `$JINA_API_KEY` is unavailable, fall back to WebSearch + WebFetch. If mmbridge is available at medium or deep depth, dispatch it in parallel.
+2. Validate sources: reject login walls, blocked pages, and empty content. For blocked URLs, try Jina Reader (`r.jina.ai`) with `X-Engine: browser`, then Playwright if available.
+3. Dispatch **analyst** (sonnet): merge internal and mmbridge findings, identify gaps, and apply conflict-resolution rules from `references/research-methodology.md`.
+4. Optional second round: only when depth allows and the analyst found critical gaps.
+5. Dispatch **writer** (sonnet): synthesize the final brief with conflict annotations.
+6. Verify actual search counts before output. If counts exceed the depth cap, discard excess results and re-synthesize.
 
 ## Options
 
@@ -96,9 +61,9 @@ At Step 3 (Dispatch analyst), provide the mmbridge export file as supplemental s
 
 ### Depth Behavior
 
-- **shallow**: EXACTLY 3 Jina Search calls. No deep reads. No gap analysis round. Violation = restart.
-- **medium**: EXACTLY 5 Jina Search calls + up to 2 Jina Reader deep reads. One gap analysis round.
-- **deep**: 10+ Jina Search calls. Unlimited Jina Reader deep reads. Repeated gap-fill cycles until coverage, **max 3 gap-fill rounds**. If gaps remain after 3 rounds, document them in "Gaps & Limitations" and proceed to synthesis.
+- **shallow**: EXACTLY 3 Jina Search calls. No deep reads. No gap analysis round.
+- **medium**: EXACTLY 5 Jina Search calls plus up to 2 Jina Reader deep reads.
+- **deep**: 10+ Jina Search calls, unlimited Jina Reader deep reads, and at most 3 gap-fill rounds before documenting remaining gaps.
 
 When `--engine legacy` is set or `$JINA_API_KEY` is unavailable, replace "Jina Search" with "WebSearch" and "Jina Reader" with "WebFetch" in the above counts.
 
@@ -107,8 +72,8 @@ Coverage requirements and conflict resolution rules are in `references/research-
 ### Source Domain (`--sources`)
 
 - **web** (default): General web search. No domain restrictions.
-- **academic**: With Jina, use `X-Site: https://scholar.google.com` header on 50%+ of calls. Alternate with `X-Site: https://arxiv.org`. With legacy engine, add `site:scholar.google.com OR site:arxiv.org` to queries.
-- **news**: Add `after:30d` to query string. Prioritize Reuters, Bloomberg, TechCrunch, The Verge, and similar editorial sources over blog posts. With Jina, set `gl` and `hl` to match target audience locale.
+- **academic**: Bias at least half the calls toward Google Scholar or arXiv.
+- **news**: Add `after:30d` and prefer established editorial sources over blogs.
 
 ## Fallback Chain
 
@@ -119,27 +84,22 @@ Jina Search (s.jina.ai) ─── primary: search + content in one call
             └─ unavailable → note in Gaps & Limitations
 ```
 
-When `--engine legacy` or `$JINA_API_KEY` unavailable:
+When `--engine legacy` or `$JINA_API_KEY` is unavailable:
 ```
 WebSearch → WebFetch → Playwright → Gaps & Limitations
 ```
 
-When `--interactive` flag is set, skip Jina/WebFetch and use Playwright for every URL.
+When `--interactive` is set, skip Jina/WebFetch and use Playwright for every URL.
 
-**Cost controls**: Max 3 Playwright navigations per research round. Count them. Exceeding the cap = skip remaining Playwright fetches and note in Gaps & Limitations.
+**Cost controls**: Max 3 Playwright navigations per round. Exceeding the cap means skip the rest and note the gap.
 
-**Graceful degradation**: Both Jina and Playwright are optional. If `$JINA_API_KEY` is not set, fall back to WebSearch + WebFetch silently. If Playwright MCP is unavailable, proceed without it. Note unreachable URLs in Gaps & Limitations.
-
-See `references/jina-guide.md` for Jina API reference and `references/playwright-guide.md` for Playwright patterns.
+**Graceful degradation**: Both Jina and Playwright are optional. If `$JINA_API_KEY` is missing, fall back silently. If Playwright MCP is unavailable, proceed without it and note unreachable URLs.
 
 ## Auto-Save
 
-After producing the Research Brief, save it to a file:
-
 - Path: `.captures/research-{slug}-{YYYY-MM-DD}.md`
 - `{slug}` = topic lowercased, spaces to hyphens, max 40 chars
-- Write the full brief using the Write tool. Do NOT skip this step.
-- Tell the user the saved path.
+- Write the full brief using the Write tool and tell the user the saved path.
 
 ## Gotchas
 

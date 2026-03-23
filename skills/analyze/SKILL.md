@@ -6,7 +6,7 @@ effort: high
 
 # Analyze
 
-Apply a strategic framework to a topic, then stress-test it with a built-in challenge pass.
+Apply a strategic framework to a topic, then stress-test it with a challenge pass.
 
 ## When to Use
 
@@ -36,14 +36,11 @@ Apply a strategic framework to a topic, then stress-test it with a built-in chal
 
 ## Workflow
 
-1. Detect the framework and load `references/frameworks/{framework}.md`.
-2. **Gather sources before analyzing.** For each entity being analyzed:
-   - Read internal source files (SKILL.md, code, configs) for the subject.
-   - For competitors/external entities: use web search, read their docs/repos, or fetch their feature pages. Do not skip this step.
-   - Record sources found for use in citation during analysis.
-3. Ask `strategist` to apply the framework with evidence and clear implications, enforcing Source Requirements (min 3 data points per quadrant, inline citations).
-4. Ask `devil-advocate` to attack the weakest 3 points (Challenge Round 1). At `thorough` depth with mmbridge detected, also dispatch `mmbridge debate` in parallel (see MMBridge Debate Enhancement below).
-5. At `deep` depth: run Challenge Round 2 (Source Audit) to verify sourcing quality.
+1. Detect the framework and load `skills/analyze/references/frameworks/{framework}.md`.
+2. Gather sources before analyzing. Read internal source files for the subject; for external entities, read current docs, source, changelogs, or feature pages. Record source paths for citation.
+3. Ask `strategist` to apply the framework with evidence and clear implications, enforcing Source Requirements.
+4. Ask `devil-advocate` to attack the weakest 3 points. At `thorough` depth with mmbridge detected, also dispatch `mmbridge debate` in parallel.
+5. At `thorough` depth, run a second challenge pass focused on sourcing quality.
 6. Synthesize both into a balanced output with recommended actions.
 
 ## Options
@@ -60,19 +57,19 @@ Apply a strategic framework to a topic, then stress-test it with a built-in chal
 
 When `--framework` is not specified, detect from the prompt:
 
-1. **Explicit name**: "SWOT", "RICE", "OKR" etc. → exact match
-2. **Intent keywords**: "prioritize" → `rice`, "competitors" → `porter` or `battlecard`, "pricing" → `pricing`, "market entry" → `gtm`, "goals" → `okr`, "persona" → `persona`, "journey" → `journey-map`
-3. **Ambiguous** (multiple frameworks apply): ask the user. Do NOT silently pick one.
-4. **No match**: default to `swot` and state the assumption.
+1. Explicit name wins.
+2. Intent keywords map common prompts to the closest framework.
+3. If multiple frameworks fit, ask instead of guessing.
+4. If nothing matches, default to `swot` and state the assumption.
 
 ## Source Requirements
 
 When analyzing competitors, products, or external entities:
 
-1. **Read actual sources, not reputation.** Read their documentation, source code, changelog, or official feature pages. Use web search if available.
-2. **Minimum 3 concrete data points per quadrant.** Each section needs 3+ items backed by observable facts: feature names, version numbers, pricing tiers, API signatures, or direct quotes.
-3. **Cite the source for every external claim.** Use `(source: URL/filename/doc section)` inline. Prefix uncitable claims with `[unverified]`.
-4. **Distinguish fact from inference.** State the metric (GitHub stars, npm downloads) or mark the statement as an inference.
+1. Read actual sources, not reputation.
+2. Use at least 3 concrete data points per section or quadrant.
+3. Cite every external claim inline; mark uncited claims as `[unverified]`.
+4. Distinguish fact from inference.
 
 ## Depth Levels
 
@@ -109,12 +106,9 @@ When analyzing competitors, products, or external entities:
 
 ## Auto-Save
 
-After producing the final synthesis, save it to a file:
-
 - Path: `.captures/analyze-{framework}-{slug}-{YYYY-MM-DD}.md`
 - `{slug}` = topic lowercased, spaces to hyphens, max 40 chars
-- Write the full analysis using the Write tool. Do NOT skip this step.
-- Tell the user the saved path.
+- Write the full analysis using the Write tool and tell the user the saved path.
 
 ## Challenge Round
 
@@ -122,13 +116,12 @@ Mandatory at `standard` (1 round) and `thorough` (2 rounds). See `references/cha
 
 ## MMBridge Debate Enhancement
 
-When mmbridge is detected (see `references/mmbridge-integration.md`), the analyze skill can dispatch
-`mmbridge debate` to get adversarial perspectives from multiple AI models during the challenge round.
+When mmbridge is detected (see `references/mmbridge-integration.md`), analyze can dispatch `mmbridge debate` during the challenge round.
 
 ### When to Use
 
-- `--depth standard`: **skip mmbridge debate** (single internal challenge round is sufficient)
-- `--depth thorough`: mmbridge debate enabled — runs in parallel with internal devil-advocate
+- `--depth standard`: skip mmbridge debate
+- `--depth thorough`: run it in parallel with the internal devil-advocate
 
 ### Dispatch
 
@@ -138,11 +131,8 @@ At Step 4 (Challenge Round 1), also run via Bash:
 mmbridge debate "<proposition from analysis>" --rounds 2 --stream --export /tmp/mmbridge-debate-${RUN_ID}.md
 ```
 
-The `<proposition>` is the key thesis or recommendation from the strategist's analysis output (Step 3).
-
 ### Merge
 
-After both internal devil-advocate and mmbridge debate complete:
 - Parse the mmbridge debate export for arguments tagged `FOR` and `AGAINST`
 - `AGAINST` arguments are merged into the challenge round as additional attack vectors
 - `FOR` arguments that contradict internal devil-advocate findings are noted as "disputed by external model"
@@ -150,23 +140,22 @@ After both internal devil-advocate and mmbridge debate complete:
 
 ### Cost Note
 
-`mmbridge debate` runs multi-round exchanges between models — it costs significantly more than a single internal challenge. This is why it only activates at `thorough` depth.
+`mmbridge debate` costs more than a single internal challenge, so only activate it at `thorough` depth.
 
 ## Gotchas
 
 - Do not force equal depth across all framework sections.
 - Do not present generic claims without names, numbers, or evidence.
-- Keep the challenge output in the final synthesis rather than discarding it.
-- **Do not analyze competitors based on reputation alone** — read their actual documentation, source code, or feature pages. If sources are unavailable, explicitly state what you could not verify.
-- Do not conflate "widely believed" with "true." Popular opinion about a product's strengths/weaknesses may be outdated or wrong. Verify against current sources.
-- When comparing two products, apply the same evidentiary standard to both. Do not rigorously source your own product's strengths while hand-waving the competitor's.
+- Keep the challenge output in the final synthesis.
+- Do not analyze competitors by reputation alone.
+- Apply the same evidentiary standard to every option being compared.
 
 ## When Called from PDCA
 
-`analyze` spans both Plan and Do phases and behaves differently in each:
+`analyze` spans both Plan and Do phases:
 
-- **Plan phase**: synthesizes research findings into a structured framework (e.g., SWOT over collected sources). Use `--with-research` when no prior brief exists.
-- **Do phase**: applies a production-oriented framework (e.g., `prd`, `lean-canvas`, `value-prop`) to shape the artifact being built. Pass `--context do` to signal this mode explicitly.
+- **Plan**: synthesize research findings into a structured framework.
+- **Do**: apply a production-oriented framework to shape the artifact being built.
 
 Add `--context plan|do` to override auto-detected PDCA phase.
 

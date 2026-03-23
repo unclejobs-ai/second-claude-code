@@ -6,7 +6,7 @@ effort: medium
 
 # Workflow
 
-Create, save, and run reusable multi-step workflows where each step passes files to the next. Workflows support runtime parameterization so a single definition serves multiple topics and contexts.
+Create, save, and run reusable multi-step workflows where each step passes files to the next. Workflows support runtime parameterization so a single definition serves multiple topics and contexts. Treat each workflow run as a **skill-attached task** that can later be scheduled, resumed, or routed through background infrastructure.
 
 ## When to Use
 
@@ -46,6 +46,12 @@ Pass custom variables with `--var key=value`. See `references/workflow-definitio
 4. Run sequential steps one at a time as fresh subagents. Pass data through files, never memory.
 5. Save run state (including resolved variables) after every step.
 6. Resume from saved state if interrupted.
+
+## Automation Readiness
+
+- Workflows should be **background-ready**: every step must be able to run without interactive chat context.
+- Prefer stable file outputs over ephemeral chat-only instructions.
+- When a workflow is reused often, treat it as the canonical task payload for future automation or companion-daemon scheduling.
 
 ## Presets
 

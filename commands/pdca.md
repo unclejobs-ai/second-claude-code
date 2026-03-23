@@ -1,6 +1,6 @@
 ---
 description: "PDCA cycle -- orchestrate Plan→Do→Check→Act with quality gates"
-argument-hint: "AI agent market report" or --phase plan "topic" or --no-questions
+argument-hint: '"AI agent market report" or --phase plan "topic" or --no-questions'
 ---
 
 Invoke the `/second-claude-code:pdca` command to run a full or partial PDCA knowledge work cycle through the `pdca` skill.

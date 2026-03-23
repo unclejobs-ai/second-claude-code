@@ -1,6 +1,6 @@
 ---
 description: "Batch parallel execution -- decompose large tasks into independent units and run concurrently"
-argument-hint: --topic "10편 뉴스레터 시리즈" --skill write --parallel 3
+argument-hint: --topic "10-part newsletter series" --skill write --parallel 3
 ---
 
 Invoke the `/second-claude-code:batch` command to decompose and execute a large task in parallel through the `batch` skill.

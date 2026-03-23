@@ -1,6 +1,6 @@
 ---
 description: "Observe and synthesize a persistent user identity profile (SOUL.md)"
-argument-hint: "learn" or "propose" or "show" or "init --template developer"
+argument-hint: '"learn" or "propose" or "show" or "init --template developer"'
 ---
 
 Invoke the `/second-claude-code:soul` command to build and maintain a user identity profile through the `soul` skill.

@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.1-blue)
+![version](https://img.shields.io/badge/version-0.5.3-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -180,6 +180,15 @@ A dedicated `pdca-state` MCP server (stdio transport) manages persistent state a
 **Crash recovery:** If the session restarts mid-cycle (context compression, network drop), `PostCompact` restores the last known state and resumes from where it stopped — not from the beginning.
 
 **Playwright MCP** (optional): enables browser automation for JavaScript-heavy research targets. Separate setup required.
+
+### Memory Boundary
+
+Second Claude Code keeps two memory layers separate on purpose:
+
+- `soul` stores persistent user identity and preference signals.
+- Project recall comes from PDCA recovery state plus MMBridge continuity features such as memory search, handoff, and resume.
+
+This project can borrow ideas from standalone agent runtimes, but it should not embed a second runtime inside the Claude Code plugin model.
 
 ---
 
@@ -393,6 +402,12 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 <details>
 <summary><strong>Changelog</strong></summary>
+
+### v0.5.3 — Companion Daemon Foundation, Project Memory Boundary
+
+- **Companion daemon foundation** — local daemon CLI and state helpers for scheduling, background runs, notifications, and recall indexing
+- **Project memory layer** — session-start context can inject durable project facts separately from soul identity memory
+- **Hermes boundary guidance** — documented that external runtime ideas can be borrowed without embedding a second agent runtime inside the plugin
 
 ### v0.5.1 — Agent Upgrades, MMBridge Full Integration
 

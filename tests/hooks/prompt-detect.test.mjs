@@ -17,85 +17,89 @@ function runPrompt(userPrompt) {
   });
 }
 
+function assertRoutesTo(output, skill) {
+  assert.match(output, new RegExp(`skill: \\\\\"second-claude-code:${skill}\\\\\"`));
+}
+
 // ── Existing single-skill routing tests ──
 
 test("prompt detect routes review prompts to /second-claude-code:review", () => {
   const output = runPrompt("quality check this document");
-  assert.match(output, /Consider using \/second-claude-code:review/);
+  assertRoutesTo(output, "review");
 });
 
 test("prompt detect routes writing prompts to /second-claude-code:write", () => {
   const output = runPrompt("write a newsletter");
-  assert.match(output, /Consider using \/second-claude-code:write/);
+  assertRoutesTo(output, "write");
 });
 
 test("prompt detect prioritizes review for mixed report-quality prompts", () => {
   const output = runPrompt("review this report for quality");
-  assert.match(output, /Consider using \/second-claude-code:review/);
+  assertRoutesTo(output, "review");
 });
 
 test("prompt detect still routes Korean review prompts without Hangul literals in source", () => {
   const output = runPrompt("이거 리뷰해");
-  assert.match(output, /Consider using \/second-claude-code:review/);
+  assertRoutesTo(output, "review");
 });
 
 // ── PDCA compound pattern tests ──
 
 test("PDCA: Korean compound '알아보고' routes to full PDCA", () => {
   const output = runPrompt("AI 에이전트에 대해 알아보고 보고서 써줘");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /full PDCA cycle/);
 });
 
 test("PDCA: Korean compound '조사해서' routes to full PDCA", () => {
   const output = runPrompt("시장 동향 조사해서 정리해줘");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /full PDCA cycle/);
 });
 
 test("PDCA: English 'research and write' routes to full PDCA", () => {
   const output = runPrompt("research and write a report on AI agents");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /full PDCA cycle/);
 });
 
 test("PDCA: English 'review and improve' routes to check+act", () => {
   const output = runPrompt("review and improve this draft");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /Check→Act cycle/);
 });
 
 test("PDCA: Korean '검토하고 고쳐' routes to check+act", () => {
   const output = runPrompt("이 초안 검토하고 고쳐줘");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /Check→Act cycle/);
 });
 
 test("PDCA: 'end-to-end' routes to full PDCA", () => {
   const output = runPrompt("do an end-to-end analysis of the cloud market");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /full PDCA cycle/);
 });
 
 test("PDCA: 'comprehensive report' routes to full PDCA", () => {
   const output = runPrompt("write a comprehensive report on competitor landscape");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   assert.match(output, /full PDCA cycle/);
 });
 
 test("PDCA: compound patterns take priority over single-skill patterns", () => {
   // "research and write" should match PDCA, not individual research or write
   const output = runPrompt("research and write about the future of AI");
-  assert.match(output, /Consider using \/second-claude-code:pdca/);
+  assertRoutesTo(output, "pdca");
   // Should NOT match individual skills
-  assert.doesNotMatch(output, /Consider using \/second-claude-code:research/);
-  assert.doesNotMatch(output, /Consider using \/second-claude-code:write/);
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:research\\"/);
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:write\\"/);
 });
 
 test("PDCA: single-skill prompts still route to individual skills, not PDCA", () => {
   const output = runPrompt("research the AI market");
-  assert.match(output, /Consider using \/second-claude-code:research/);
-  assert.doesNotMatch(output, /pdca/);
+  assertRoutesTo(output, "research");
+  assert.doesNotMatch(output, /skill: \\"second-claude-code:pdca\\"/);
 });
 
 test("PDCA: slash commands are skipped entirely", () => {

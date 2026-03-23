@@ -37,6 +37,18 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { logEvent, readEvents, getEventStats, listRunIds } from "../hooks/lib/event-log.mjs";
+import {
+  createBackgroundRun,
+  queueDaemonNotification,
+  readDaemonStatus,
+  searchSessionRecall,
+  upsertDaemonJob,
+} from "../hooks/lib/companion-daemon.mjs";
+import {
+  readProjectMemoryIndex,
+  readProjectMemorySnapshot,
+  upsertProjectMemoryEntry,
+} from "../hooks/lib/project-memory.mjs";
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -627,6 +639,44 @@ function handleSoulGetObservations({ category, date_from, date_to, limit = 50 })
   return { observations: limitedObs, total: observations.length };
 }
 
+/** project_memory_get */
+function handleProjectMemoryGet() {
+  return {
+    markdown: readProjectMemorySnapshot(DATA_DIR),
+    index: readProjectMemoryIndex(DATA_DIR),
+  };
+}
+
+/** project_memory_upsert */
+function handleProjectMemoryUpsert({ key, content, source = "", tags = [] }) {
+  return upsertProjectMemoryEntry(DATA_DIR, { key, content, source, tags });
+}
+
+/** daemon_get_status */
+function handleDaemonGetStatus() {
+  return readDaemonStatus(DATA_DIR);
+}
+
+/** daemon_schedule_workflow */
+function handleDaemonScheduleWorkflow(input) {
+  return upsertDaemonJob(DATA_DIR, input);
+}
+
+/** daemon_start_background_run */
+function handleDaemonStartBackgroundRun(input) {
+  return createBackgroundRun(DATA_DIR, input);
+}
+
+/** session_recall_search */
+function handleSessionRecallSearch({ query, limit = 5 }) {
+  return searchSessionRecall(DATA_DIR, { query, limit });
+}
+
+/** daemon_queue_notification */
+function handleDaemonQueueNotification(input) {
+  return queueDaemonNotification(DATA_DIR, input);
+}
+
 // ---------------------------------------------------------------------------
 // Tool definitions
 // ---------------------------------------------------------------------------
@@ -839,6 +889,142 @@ const TOOL_DEFINITIONS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "project_memory_get",
+    description:
+      "Read the current project memory layer. Returns both the rendered PROJECT_MEMORY.md snapshot and the structured JSON index.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "project_memory_upsert",
+    description:
+      "Create or replace a project memory note. Use this for stable repo facts, conventions, and long-lived product decisions that should persist across sessions.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        key: {
+          type: "string",
+          description: "Stable identifier for the project memory note, e.g. 'runtime' or 'phase-2-direction'.",
+        },
+        content: {
+          type: "string",
+          description: "The project memory note content.",
+        },
+        source: {
+          type: "string",
+          description: "Optional provenance, such as 'AGENTS.md' or 'user-confirmed'.",
+        },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional tags for later indexing and filtering.",
+        },
+      },
+      required: ["key", "content"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "daemon_get_status",
+    description:
+      "Read the local companion daemon status. Returns whether the daemon is installed, online, and which substrate capabilities are currently available.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "daemon_schedule_workflow",
+    description:
+      "Create or update a daemon-managed workflow job definition. Jobs are persisted even if the daemon is offline and will be picked up when it resumes.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: { type: "string" },
+        name: { type: "string" },
+        workflow_name: { type: "string" },
+        schedule: {
+          type: "object",
+          description: "Schedule metadata such as { type: 'manual' } or { type: 'interval', minutes: 60 }.",
+          additionalProperties: true,
+        },
+        status: { type: "string" },
+        next_run_at: { type: "string" },
+        tags: {
+          type: "array",
+          items: { type: "string" },
+        },
+      },
+      required: ["name", "workflow_name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "daemon_start_background_run",
+    description:
+      "Queue a background workflow run in the daemon substrate. The daemon may execute it later when online.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        run_id: { type: "string" },
+        job_id: { type: "string" },
+        workflow_name: { type: "string" },
+        trigger: { type: "string" },
+        status: { type: "string" },
+        input: {
+          type: "object",
+          additionalProperties: true,
+        },
+      },
+      required: ["workflow_name"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "session_recall_search",
+    description:
+      "Search the local session recall index produced by the companion daemon substrate and session-end hook.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: {
+          type: "string",
+          description: "Free-text query over session summaries, topics, workflow names, and tags.",
+        },
+        limit: {
+          type: "number",
+          description: "Maximum number of recall entries to return (default: 5).",
+        },
+      },
+      required: ["query"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "daemon_queue_notification",
+    description:
+      "Queue a daemon-managed notification attempt for later delivery. Useful when the plugin wants durable notification routing without blocking the foreground session.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        channel: { type: "string" },
+        chat_id: { type: "string" },
+        event_type: { type: "string" },
+        text: { type: "string" },
+        metadata: {
+          type: "object",
+          additionalProperties: true,
+        },
+      },
+      required: ["event_type", "text"],
+      additionalProperties: false,
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -894,6 +1080,27 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "soul_get_observations":
         result = handleSoulGetObservations(input);
+        break;
+      case "project_memory_get":
+        result = handleProjectMemoryGet();
+        break;
+      case "project_memory_upsert":
+        result = handleProjectMemoryUpsert(input);
+        break;
+      case "daemon_get_status":
+        result = handleDaemonGetStatus();
+        break;
+      case "daemon_schedule_workflow":
+        result = handleDaemonScheduleWorkflow(input);
+        break;
+      case "daemon_start_background_run":
+        result = handleDaemonStartBackgroundRun(input);
+        break;
+      case "session_recall_search":
+        result = handleSessionRecallSearch(input);
+        break;
+      case "daemon_queue_notification":
+        result = handleDaemonQueueNotification(input);
         break;
       default:
         return {

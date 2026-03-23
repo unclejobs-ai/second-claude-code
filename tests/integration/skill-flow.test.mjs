@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   existsSync,
   mkdtempSync,
+  readdirSync,
   readFileSync,
 } from "node:fs";
 import os from "node:os";
@@ -26,6 +27,26 @@ function runPrompt(userPrompt) {
   });
 }
 
+function findAgentFileByName(expectedName) {
+  const agentsDir = path.join(root, "agents");
+  for (const fileName of readdirSync(agentsDir)) {
+    if (!fileName.endsWith(".md")) continue;
+    const content = read(path.join("agents", fileName));
+    if (new RegExp(`^name:\\s*${expectedName}$`, "m").test(content)) {
+      return path.join("agents", fileName);
+    }
+  }
+  return null;
+}
+
+function assertPromptRoutes(output, command) {
+  assert.match(
+    output,
+    new RegExp(`skill: \\\\\"second-claude-code:${command}\\\\\"`),
+    `prompt should route to ${command}`
+  );
+}
+
 test("natural-language prompts resolve to command docs and backing skills", () => {
   const cases = [
     { prompt: "research the AI agent market", command: "research" },
@@ -34,17 +55,13 @@ test("natural-language prompts resolve to command docs and backing skills", () =
     { prompt: "review this draft for quality", command: "review" },
     { prompt: "iterate until this is better", command: "refine" },
     { prompt: "save this URL to my notes", command: "collect" },
-    { prompt: "automate this workflow as a pipeline", command: "pipeline" },
+    { prompt: "automate this workflow as a pipeline", command: "workflow" },
     { prompt: "find a skill for terraform security audit", command: "discover" },
   ];
 
   for (const testCase of cases) {
     const output = runPrompt(testCase.prompt);
-    assert.match(
-      output,
-      new RegExp(`Consider using /second-claude-code:${testCase.command}`),
-      `${testCase.prompt} should route to ${testCase.command}`
-    );
+    assertPromptRoutes(output, testCase.command);
 
     const commandDoc = read(path.join("commands", `${testCase.command}.md`));
     assert.match(commandDoc, new RegExp(`loaded \`${testCase.command}\` skill`, "i"));
@@ -59,7 +76,9 @@ test("natural-language prompts resolve to command docs and backing skills", () =
 test("write advertised formats and voices have concrete backing references", () => {
   const commandDoc = read("commands/write.md");
   const skillDoc = read("skills/write/SKILL.md");
-  const writerAgent = read("agents/writer.md");
+  const writerAgentPath = findAgentFileByName("writer");
+  assert.ok(writerAgentPath, "writer agent definition should exist");
+  const writerAgent = read(writerAgentPath);
 
   const formatMatch = commandDoc.match(/format \(([^)]+)\)/);
   assert.ok(formatMatch, "write command should list supported formats");
@@ -103,7 +122,7 @@ test("state-manager written state flows through session start and session end ho
   );
   execFileSync(
     "bash",
-    [stateManager, "write", "pipeline-active", '{"name":"autopilot","current_step":2,"total_steps":5,"status":"running"}'],
+    [stateManager, "write", "workflow-active", '{"name":"autopilot","current_step":2,"total_steps":5,"status":"running"}'],
     { cwd: root, env, encoding: "utf8" }
   );
 
@@ -113,14 +132,14 @@ test("state-manager written state flows through session start and session end ho
     encoding: "utf8",
   });
   assert.match(startOutput, /Active refine: "Polish the brief" \(iteration 1\/3\)/);
-  assert.match(startOutput, /Active pipeline: "autopilot" \(step 2\/5\)/);
+  assert.match(startOutput, /Active workflow: "autopilot" \(step 2\/5\)/);
 
-  const endOutput = execFileSync(process.execPath, [sessionEnd], {
+  const endResult = spawnSync(process.execPath, [sessionEnd], {
     cwd: root,
     env,
     encoding: "utf8",
   });
-  assert.match(endOutput, /HANDOFF\.md saved/);
+  assert.match(endResult.stderr || "", /HANDOFF\.md saved/);
 
   const handoff = readFileSync(path.join(tempDir, "HANDOFF.md"), "utf8");
   assert.match(handoff, /Goal: Polish the brief/);

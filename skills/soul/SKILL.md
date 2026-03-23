@@ -1,6 +1,6 @@
 ---
 name: soul
-description: "Observe user patterns and synthesize a persistent identity profile (SOUL.md)"
+description: "Use when observing user patterns and synthesizing a persistent identity profile"
 effort: high
 ---
 

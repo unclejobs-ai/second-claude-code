@@ -14,11 +14,26 @@ Every SKILL.md must be a standalone instruction set that Claude can follow witho
 ---
 name: skill-name
 description: "Under 15 tokens. Third-person capability statement, not an instruction."
+platforms: [macos, linux]  # Optional
+required_environment_variables:
+  - name: API_KEY
+    prompt: Service API key
+    required_for: enhanced mode
+metadata:
+  second_codex:
+    fallback_for_capabilities: [web]   # Optional
+    requires_capabilities: [bash]      # Optional
+    supports_background: true          # Optional
 ---
 ```
 
 - `name`: kebab-case, matches the directory name.
 - `description`: Used by Claude to decide when to invoke the skill. Write it as a trigger-rich capability statement (e.g., "Use when applying strategic frameworks such as SWOT, RICE, OKR"). Do not exceed 15 tokens.
+- `platforms`: Optional OS filter. Valid values: `macos`, `linux`, `windows`.
+- `required_environment_variables`: Optional secret/setup hints. Use when the skill can still be discovered but needs runtime setup for full functionality.
+- `metadata.second_codex.fallback_for_capabilities`: Optional capability-based fallback list. The skill should surface only when those capabilities are missing.
+- `metadata.second_codex.requires_capabilities`: Optional hard requirements. The skill should be hidden or treated as unavailable when these capabilities are absent.
+- `metadata.second_codex.supports_background`: Optional boolean. Mark `true` when the skill is safe to attach to automation, background runs, or future daemon execution.
 
 ### Title and One-Liner
 
@@ -68,6 +83,7 @@ agent-name: { model: haiku|sonnet|opus, tools: [...], constraint: "one sentence"
 - **State**: If the skill persists state across turns, document the file path and JSON schema.
 - **Integration**: How this skill calls or is called by other skills.
 - **Depth**: If the skill has multiple depth levels (quick/standard/thorough).
+- **Metadata Notes**: If you use capability fallbacks or background support, explain the operational tradeoff in one short paragraph.
 
 ## Progressive Disclosure
 

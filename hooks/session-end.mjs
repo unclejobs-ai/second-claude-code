@@ -28,6 +28,11 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
 import { isSoulLearning, readSoulState, updateSoulState } from "./lib/soul-observer.mjs";
+import {
+  appendRecallEntry,
+  queueDaemonNotification,
+  readDaemonStatus,
+} from "./lib/companion-daemon.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -122,7 +127,9 @@ function collectActiveState() {
     };
   }
 
-  const pipelineState = readJsonSafe(join(STATE_DIR, "pipeline-active.json"));
+  const pipelineState =
+    readJsonSafe(join(STATE_DIR, "workflow-active.json")) ||
+    readJsonSafe(join(STATE_DIR, "pipeline-active.json"));
   if (pipelineState) {
     result.pipeline = {
       name: sanitize(pipelineState.name),
@@ -309,6 +316,7 @@ function writeHandoff(content) {
   const handoffPath = join(DATA_DIR, "HANDOFF.md");
   writeFileSync(handoffPath, content, "utf8");
   chmodSync(handoffPath, 0o600);
+  return handoffPath;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -428,11 +436,46 @@ function emitChannelNotification(state) {
         event_type: eventType,
       },
     });
-    // Flush notification to stdout for Claude Code hook consumption.
+    const daemonStatus = readDaemonStatus(DATA_DIR);
+    if (daemonStatus.online) {
+      queueDaemonNotification(DATA_DIR, JSON.parse(payload).notification);
+      return;
+    }
     process.stdout.write(payload + "\n");
   } catch {
     // Non-fatal — notification errors must never affect session exit.
   }
+}
+
+function buildRecallSummary(state) {
+  if (state.pdca) {
+    const phaseList =
+      state.pdca.completed.length > 0 ? state.pdca.completed.join(" -> ") : "none";
+    return `PDCA session for "${state.pdca.topic}" stopped in ${state.pdca.current_phase}. Completed phases: ${phaseList}.`;
+  }
+  if (state.pipeline) {
+    return `Workflow "${state.pipeline.name}" stopped at step ${state.pipeline.current_step}/${state.pipeline.total_steps}.`;
+  }
+  if (state.refine) {
+    return `Refine loop for "${state.refine.goal}" stopped at iteration ${state.refine.iteration}/${state.refine.max}.`;
+  }
+  return "Session ended with no active PDCA, workflow, or refine state.";
+}
+
+function recordSessionRecall(state, handoffPath) {
+  const tags = [];
+  if (state.pdca) tags.push("pdca");
+  if (state.pipeline) tags.push("workflow");
+  if (state.refine) tags.push("refine");
+
+  appendRecallEntry(DATA_DIR, {
+    session_id: process.env.CLAUDE_SESSION_ID || null,
+    topic: state.pdca?.topic || state.refine?.goal || "",
+    workflow_name: state.pipeline?.name || "",
+    artifact_path: handoffPath,
+    summary: buildRecallSummary(state),
+    tags,
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -516,7 +559,13 @@ function main() {
   // ── HANDOFF.md (always written) ───────────────────────────────────────────
   const state = collectActiveState();
   const content = generateHandoff(state);
-  writeHandoff(content);
+  const handoffPath = writeHandoff(content);
+
+  try {
+    recordSessionRecall(state, handoffPath);
+  } catch {
+    // Non-fatal — recall indexing must never affect session exit.
+  }
 
   // ── Channel notification (after HANDOFF, non-blocking) ────────────────────
   emitChannelNotification(state);

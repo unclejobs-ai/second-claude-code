@@ -36,22 +36,34 @@ function run(prompt) {
   }
 }
 
+function extractContext(output) {
+  if (!output) return "";
+  try {
+    const parsed = JSON.parse(output);
+    return parsed.hookSpecificOutput?.additionalContext || "";
+  } catch {
+    return output;
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
 function assertRoutes(output, skill) {
+  const context = extractContext(output);
   assert.ok(
-    output.includes(skill),
-    `Expected output to mention "${skill}" but got: ${JSON.stringify(output)}`
+    context.includes(`skill: "second-claude-code:${skill}"`),
+    `Expected routing to "${skill}" but got: ${JSON.stringify(output)}`
   );
 }
 
 function assertSilent(output, description) {
+  const context = extractContext(output);
   assert.strictEqual(
-    output,
-    "",
-    `Expected silent output for "${description}" but got: ${JSON.stringify(output)}`
+    context.includes("[ROUTING]"),
+    false,
+    `Expected no explicit routing for "${description}" but got: ${JSON.stringify(output)}`
   );
 }
 
@@ -121,17 +133,16 @@ describe("false positive prevention", () => {
   test("loop through this array → should NOT route to loop", () => {
     const out = run("loop through this array");
     assert.ok(
-      !out.includes(":loop"),
+      !extractContext(out).includes(`skill: "second-claude-code:loop"`),
       `"loop through this array" should not route to loop but got: ${JSON.stringify(out)}`
     );
-    // Should also be completely silent (no partial match from other skills)
     assertSilent(out, "loop through this array");
   });
 
   test("pipeline this data through the transformer → should NOT route to pipeline", () => {
     const out = run("pipeline this data through the transformer");
     assert.ok(
-      !out.includes(":pipeline"),
+      !extractContext(out).includes(`skill: "second-claude-code:workflow"`),
       `"pipeline this data…" should not route to pipeline but got: ${JSON.stringify(out)}`
     );
     assertSilent(out, "pipeline this data through the transformer");
@@ -140,7 +151,7 @@ describe("false positive prevention", () => {
   test("end-to-end testing with cypress → should NOT route to PDCA", () => {
     const out = run("end-to-end testing with cypress");
     assert.ok(
-      !out.includes("pdca"),
+      !extractContext(out).includes(`skill: "second-claude-code:pdca"`),
       `"end-to-end testing…" should not route to PDCA but got: ${JSON.stringify(out)}`
     );
     assertSilent(out, "end-to-end testing with cypress");
@@ -149,7 +160,7 @@ describe("false positive prevention", () => {
   test("deep dive on this stack trace → should NOT route to PDCA", () => {
     const out = run("deep dive on this stack trace");
     assert.ok(
-      !out.includes("pdca"),
+      !extractContext(out).includes(`skill: "second-claude-code:pdca"`),
       `"deep dive on this stack trace" should not route to PDCA but got: ${JSON.stringify(out)}`
     );
     assertSilent(out, "deep dive on this stack trace");
@@ -163,7 +174,7 @@ describe("false positive prevention", () => {
     // TODO: fix the pattern before this test will pass.
     const out = run("save this file to disk");
     assert.ok(
-      !out.includes(":collect"),
+      !extractContext(out).includes(`skill: "second-claude-code:collect"`),
       `"save this file to disk" should not route to collect but got: ${JSON.stringify(out)}`
     );
     assertSilent(out, "save this file to disk");
@@ -176,7 +187,7 @@ describe("false positive prevention", () => {
     // TODO: fix the pattern before this test will pass.
     const out = run("automate this deployment");
     assert.ok(
-      !out.includes(":pipeline"),
+      !extractContext(out).includes(`skill: "second-claude-code:workflow"`),
       `"automate this deployment" should not route to pipeline but got: ${JSON.stringify(out)}`
     );
   });
@@ -188,9 +199,9 @@ describe("false positive prevention", () => {
     // an acknowledged limitation. The test records the actual behavior.
     const out = run("analyze this function signature");
     // If the hook routes, it should route to analyze (not something else)
-    if (out !== "") {
+    if (extractContext(out).includes("[ROUTING]")) {
       assert.ok(
-        out.includes(":analyze"),
+        extractContext(out).includes(`skill: "second-claude-code:analyze"`),
         `"analyze this function signature" routed but not to analyze: ${JSON.stringify(out)}`
       );
     }
@@ -229,7 +240,7 @@ describe("edge cases", () => {
     const out = run("write a newsletter and review this draft");
     assertRoutes(out, "write");
     assert.ok(
-      !out.includes(":review"),
+      !extractContext(out).includes(`skill: "second-claude-code:review"`),
       `"write a newsletter and review this" should route to write, not review, but got: ${JSON.stringify(out)}`
     );
   });

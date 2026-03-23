@@ -3,6 +3,17 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.3] - 2026-03-23
+
+### Added
+- **Companion daemon foundation**: local daemon CLI and state helpers for scheduling, background runs, notification routing, and session recall indexing
+- **Project memory layer**: hook-side project memory snapshot/index helpers plus session-start context injection
+- **Hermes boundary notes**: explicit operating guidance on borrowing runtime patterns without embedding a second runtime
+
+### Changed
+- Version surfaces aligned to `0.5.3` across the plugin manifest, READMEs, manuals, and agent-facing docs
+- Architecture docs now describe the plugin/runtime boundary and the companion daemon substrate separately
+
 ## [0.5.0] - 2026-03-22
 
 ### Added

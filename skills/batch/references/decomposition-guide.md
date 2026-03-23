@@ -11,8 +11,8 @@ How to split large tasks into independent parallel units.
 Use when: the overarching subject has natural sub-topics with no overlap.
 
 **Examples**:
-- "AI 트렌드 10편" → split by trend: LLM scaling, agentic systems, multimodal, robotics, ...
-- "2026 마케팅 전략 가이드" → split by channel: SEO, paid ads, social, email, influencer, ...
+- "10-part AI trends series" → split by trend: LLM scaling, agentic systems, multimodal, robotics, ...
+- "2026 marketing strategy guide" → split by channel: SEO, paid ads, social, email, influencer, ...
 
 **Rule**: Each topic must be independently researchable. If topic B requires understanding topic A first, merge them or make A a prerequisite (which disqualifies it from batch execution).
 
@@ -21,8 +21,8 @@ Use when: the overarching subject has natural sub-topics with no overlap.
 Use when: a large document has clearly bounded sections that can be written in parallel and stitched together.
 
 **Examples**:
-- "연간 보고서" → Executive Summary, Market Analysis, Financials, Risks, Outlook
-- "종합 가이드" → Introduction, Core Concepts, Advanced Techniques, Case Studies, References
+- "Annual report" → Executive Summary, Market Analysis, Financials, Risks, Outlook
+- "Comprehensive guide" → Introduction, Core Concepts, Advanced Techniques, Case Studies, References
 
 **Rule**: Sections must not share a narrative arc that requires the writer to know what the previous section concluded. Structure-dependent sections (e.g., Conclusion requires all body sections to exist first) must be produced sequentially, not in batch.
 
@@ -31,8 +31,8 @@ Use when: a large document has clearly bounded sections that can be written in p
 Use when: a research or analysis task covers N named entities with the same evaluation criteria.
 
 **Examples**:
-- "8개 SaaS 경쟁사 분석" → one unit per company
-- "5개 AI 스타트업 투자 분석" → one unit per startup
+- "8 SaaS competitor analyses" → one unit per company
+- "5 AI startup investment reviews" → one unit per startup
 
 **Rule**: Evaluation criteria must be identical across all units. If each company requires a different analytical lens, batch decomposition will produce inconsistent outputs — use `workflow` instead.
 
@@ -41,8 +41,8 @@ Use when: a research or analysis task covers N named entities with the same eval
 Use when: the same subject is being analyzed through multiple distinct frameworks.
 
 **Examples**:
-- "AI 거버넌스 5개 프레임워크 비교" → one unit per framework (OECD, EU AI Act, NIST, Singapore Model AI, IEEE)
-- "스타트업 평가 3가지 방법론" → one unit per methodology (YC, Sequoia, First Round)
+- "Compare 5 AI governance frameworks" → one unit per framework (OECD, EU AI Act, NIST, Singapore Model AI, IEEE)
+- "Compare 3 startup evaluation methods" → one unit per methodology (YC, Sequoia, First Round)
 
 **Rule**: The subject being analyzed must be identical across all units. If different units have different subjects, split by subject (use "By Topic" instead).
 
@@ -51,8 +51,8 @@ Use when: the same subject is being analyzed through multiple distinct framework
 Use when: a recurring output covers distinct time windows.
 
 **Examples**:
-- "주간 뉴스레터 4주치" → one unit per week
-- "분기별 시장 보고서 Q1–Q4" → one unit per quarter
+- "4 weekly newsletter issues" → one unit per week
+- "Quarterly market report Q1-Q4" → one unit per quarter
 
 **Rule**: Each time period must have distinct, non-overlapping source material. If the content for Q2 is largely identical to Q1 (e.g., slow-moving market), flag this to the user before decomposing.
 
@@ -61,8 +61,8 @@ Use when: a recurring output covers distinct time windows.
 Use when: the same core content must be adapted for multiple distinct audiences.
 
 **Examples**:
-- "투자자/개발자/일반 사용자용 제품 소개서 3종" → one unit per audience
-- "경영진/실무자/고객용 보고서 버전" → one unit per audience
+- "Investor / developer / end-user product briefs" → one unit per audience
+- "Executive / operator / customer report versions" → one unit per audience
 
 **Rule**: Core facts must be identical across units. If the underlying research differs by audience, this is not a persona split — it is a topic split.
 

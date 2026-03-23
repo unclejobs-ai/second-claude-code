@@ -1,6 +1,6 @@
 ---
 name: batch
-description: "Decompose large tasks into independent parallel units and execute concurrently"
+description: "Use when decomposing large tasks into independent parallel units"
 effort: high
 ---
 
@@ -126,26 +126,6 @@ Save report to `.captures/batch-{run_id}/00-summary.md`.
 | `--synthesize` | flag | off | After all units complete, merge outputs into one document |
 | `--lang` | `ko\|en` | `ko` | Output language passed to each unit skill |
 | `--format` | write-skill formats | `article` | Passed to each unit's write skill |
-
-## Examples
-
-**10편 뉴스레터 시리즈**
-- Decompose: 10 units by topic/week
-- Skill: `write --format newsletter`
-- Each unit: one newsletter issue with its own research angle
-- `--parallel 3` → weeks 1–3 start simultaneously
-
-**8개 경쟁사 분석**
-- Decompose: 8 units by company
-- Skill: `research` then inline `analyze`
-- Each unit: one company's full competitive profile
-- `--synthesize` → final comparison table across all 8
-
-**5개 프레임워크 비교**
-- Decompose: 5 units by framework
-- Skill: `analyze`
-- Each unit: one framework evaluated against shared criteria
-- `--synthesize` → side-by-side matrix
 
 ## State
 

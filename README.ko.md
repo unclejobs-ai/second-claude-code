@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.5.1-blue)
+![version](https://img.shields.io/badge/version-0.5.3-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -532,6 +532,12 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 <details>
 <summary><strong>변경 이력</strong></summary>
+
+### v0.5.3 — 컴패니언 데몬 기반, 프로젝트 메모리 경계
+
+- **컴패니언 데몬 기반** — 스케줄링, 백그라운드 실행, 알림 라우팅, 리콜 인덱싱을 위한 로컬 데몬 CLI와 상태 헬퍼 추가
+- **프로젝트 메모리 레이어** — 세션 시작 시 `soul`과 분리된 프로젝트 사실 컨텍스트를 주입할 수 있게 정리
+- **Hermes 경계 문서화** — 외부 런타임 아이디어는 차용하되 플러그인 안에 두 번째 에이전트 런타임을 넣지 않는다는 원칙 명시
 
 ### v0.5.1 — 에이전트 승격, MMBridge 전면 통합
 

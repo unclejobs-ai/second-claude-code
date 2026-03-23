@@ -22,7 +22,7 @@ test("session start renders active state with canonical keys and capability summ
     })
   );
   writeFileSync(
-    path.join(stateDir, "pipeline-active.json"),
+    path.join(stateDir, "workflow-active.json"),
     JSON.stringify({
       name: "weekly-digest",
       current_step: 2,
@@ -40,7 +40,7 @@ test("session start renders active state with canonical keys and capability summ
   });
 
   assert.match(output, /Active refine: "Polish newsletter draft to 4\.5\+" \(iteration 2\/3\)/);
-  assert.match(output, /Active pipeline: "weekly-digest" \(step 2\/4\)/);
+  assert.match(output, /Active workflow: "weekly-digest" \(step 2\/4\)/);
   assert.match(output, /Capabilities/i);
   assert.match(output, /git/);
   assert.doesNotMatch(output, /undefined/);

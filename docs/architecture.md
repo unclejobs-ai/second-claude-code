@@ -2,6 +2,14 @@
 
 # Architecture
 
+## What's New in 0.5.3
+
+Three changes landed in this release:
+
+1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing.
+2. **Project memory layer** — session-start can now surface durable project facts separately from `soul` identity memory.
+3. **Runtime boundary guidance** — the plugin now explicitly documents that standalone agent-runtime ideas can be borrowed without embedding a second runtime.
+
 ## What's New in 0.5.1
 
 Three changes in this release (on top of 0.5.0):
@@ -9,6 +17,16 @@ Three changes in this release (on top of 0.5.0):
 1. **SubagentStart Hook** — New lifecycle hook (`hooks/subagent-start.mjs`) initializes review session context when subagents spawn. Registered via `hooks.json` on the `SubagentStart` event.
 2. **Agent Model Upgrades** — Eevee (researcher) promoted from haiku to sonnet for deeper research quality. Porygon (fact-checker) promoted from haiku to sonnet for more reliable verification.
 3. **MMBridge Full Integration (Phase 1–3)** — 10 MMBridge commands integrated across all PDCA phases: research, review, security, debate, gate, followup, resume, diff, memory, handoff. See the MMBridge Integration section below.
+
+## Runtime Boundary
+
+Second Claude Code is intentionally a Claude Code plugin, not a standalone agent runtime.
+
+- `soul` is the persistent identity layer for user preferences and behavioral patterns.
+- Project recall belongs to PDCA recovery state, MMBridge memory, handoff artifacts, and session resume.
+- External skill discovery remains approval-first.
+
+This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the Claude Code execution model.
 
 ## What's New in 0.5.0
 

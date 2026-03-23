@@ -63,6 +63,8 @@ const pdcaCompound = [
   { pattern: "review and improve", phases: "check+act" },
   { pattern: "review and fix", phases: "check+act" },
   { pattern: "check and refine", phases: "check+act" },
+  { pattern: "end-to-end analysis", phases: "full" },
+  { pattern: "end to end analysis", phases: "full" },
   { pattern: "full report on", phases: "full" },
   { pattern: "full analysis of", phases: "full" },
   { pattern: "comprehensive report", phases: "full" },
@@ -139,7 +141,7 @@ const routes = [
     label: "analyze",
   },
   {
-    patterns: [...ko.refine, "improve this", "improve my", "improve the", "iterate on", "iterate this", "loop this", "loop until", "polish this", "refine this", "refine my", "refine the", "make this better", "raise the score", "raise this to"],
+    patterns: [...ko.refine, "improve this", "improve my", "improve the", "iterate on", "iterate this", "iterate until", "loop this", "loop until", "polish this", "refine this", "refine my", "refine the", "make this better", "raise the score", "raise this to"],
     skill: "second-claude-code:refine",
     label: "refine",
   },
@@ -149,7 +151,7 @@ const routes = [
     label: "collect",
   },
   {
-    patterns: [...ko.workflow, "build a pipeline", "run a pipeline", "create a pipeline", "run pipeline", "pipeline", "automate this workflow", "automate this process", "build a workflow", "run a workflow", "create a workflow", "run workflow"],
+    patterns: [...ko.workflow, "build a pipeline", "run a pipeline", "create a pipeline", "run pipeline", "automate this workflow", "automate this process", "build a workflow", "run a workflow", "create a workflow", "run workflow"],
     skill: "second-claude-code:workflow",
     label: "workflow",
   },

@@ -6,7 +6,7 @@ effort: low
 
 # Discover
 
-Find existing skills first, then search external marketplaces only when needed and safe.
+Find existing skills first, then search external marketplaces only when needed and safe. Discovery is **registry-first**: prefer the official/local/verified registry path before broader community search.
 
 ## When to Use
 
@@ -18,7 +18,7 @@ Find existing skills first, then search external marketplaces only when needed a
 
 0. **Check built-in capabilities**: Before searching, check if the requested capability is already available through built-in tools (Read for PDFs, WebFetch for URLs, Bash for shell tasks, etc.). If built-in tools suffice, report that and skip external search.
 1. Scan local skills by name and description.
-2. If no strong match, search external sources in priority order (see Source Prioritization).
+2. If no strong match, search external sources in priority order (see Source Prioritization). Treat official/local/verified registry sources as the default adoption path.
 3. **Candidate Inspection**: Fetch and read README/SKILL.md for the top 3 candidates. If inspection is blocked (private repo, rate limit): (a) search package name + "review"/"tutorial", (b) check npm page for README, (c) note "inspection blocked" and apply a -1 score penalty. See `references/discover-scoring.md` for the full workflow.
 4. Score candidates on relevance, popularity, recency, dependency weight, and source trust. Show the full weighted breakdown (see `references/discover-scoring.md`).
 5. Apply the **Build vs Install** threshold. If no candidate scores above 3.0, recommend a custom pipeline instead.

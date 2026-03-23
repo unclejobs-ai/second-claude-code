@@ -14,6 +14,8 @@ import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 import { readSoulProfile, readSoulState, isSoulLearning } from "./lib/soul-observer.mjs";
+import { readProjectMemorySnapshot } from "./lib/project-memory.mjs";
+import { readDaemonStatus } from "./lib/companion-daemon.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -133,6 +135,36 @@ function main() {
     lines.push("");
     lines.push("## Resumed State");
     lines.push(state);
+  }
+
+  try {
+    const projectMemory = readProjectMemorySnapshot(DATA_DIR);
+    if (projectMemory) {
+      lines.push("");
+      lines.push("## Project Memory");
+      lines.push(projectMemory);
+    }
+  } catch {
+    // Non-fatal — project memory injection errors must never break session start.
+  }
+
+  try {
+    const daemonStatus = readDaemonStatus(DATA_DIR);
+    if (daemonStatus.installed || daemonStatus.online) {
+      lines.push("");
+      lines.push("## Companion Daemon");
+      if (daemonStatus.online) {
+        lines.push(
+          `Status: online (${daemonStatus.mode || "local"}) — scheduler, background runs, notification routing, and session recall are available.`
+        );
+      } else {
+        lines.push(
+          "Status: offline — background and scheduled execution are disabled until the daemon heartbeats again."
+        );
+      }
+    }
+  } catch {
+    // Non-fatal — daemon status errors must never break session start.
   }
 
   // ── Soul profile injection ─────────────────────────────────────────────────

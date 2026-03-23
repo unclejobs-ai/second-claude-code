@@ -276,4 +276,4 @@ Each Pokemon was chosen because its traits map to the reviewer's role. Xatu sees
 
 ---
 
-*Version 0.5.1 | MIT License*
+*Version 0.5.3 | MIT License*

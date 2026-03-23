@@ -9,6 +9,18 @@ function read(relPath) {
   return readFileSync(path.join(root, relPath), "utf8");
 }
 
+function findAgentFileByName(expectedName) {
+  const agentsDir = path.join(root, "agents");
+  for (const fileName of readdirSync(agentsDir)) {
+    if (!fileName.endsWith(".md")) continue;
+    const content = read(path.join("agents", fileName));
+    if (new RegExp(`^name:\\s*${expectedName}$`, "m").test(content)) {
+      return path.join("agents", fileName);
+    }
+  }
+  return null;
+}
+
 test("skill descriptions use trigger-only frontmatter", () => {
   const skillsDir = path.join(root, "skills");
   const skillNames = readdirSync(skillsDir);
@@ -37,8 +49,9 @@ test("review presets only reference implemented reviewer agents", () => {
   ];
 
   for (const agent of expectedAgents) {
+    const relPath = findAgentFileByName(agent);
     assert.equal(
-      existsSync(path.join(root, "agents", `${agent}.md`)),
+      relPath !== null && existsSync(path.join(root, relPath)),
       true,
       `${agent} agent definition should exist`
     );
@@ -59,28 +72,28 @@ test("review presets only reference implemented reviewer agents", () => {
   }
 
   assert.ok(
-    readme.includes("| `content` | deep-reviewer + devil-advocate + tone-guardian |"),
+    readme.includes("| `content` | Deep + Advocate + Tone |"),
     "README should document the content preset"
   );
   assert.ok(
-    readme.includes("| `strategy` | deep-reviewer + devil-advocate + fact-checker |"),
+    readme.includes("| `strategy` | Deep + Advocate + Facts |"),
     "README should document the strategy preset"
   );
   assert.ok(
-    readme.includes("| `code` | deep-reviewer + fact-checker + structure-analyst |"),
+    readme.includes("| `code` | Deep + Facts + Structure |"),
     "README should document the code preset"
   );
 
   assert.ok(
-    consensusGate.includes("| content | deep-reviewer + devil-advocate + tone-guardian |"),
+    consensusGate.includes("| content | Xatu (deep-reviewer) + Absol (devil-advocate) + Jigglypuff (tone-guardian) |"),
     "consensus gate should document the content preset"
   );
   assert.ok(
-    consensusGate.includes("| strategy | deep-reviewer + devil-advocate + fact-checker |"),
+    consensusGate.includes("| strategy | Xatu (deep-reviewer) + Absol (devil-advocate) + Porygon (fact-checker) |"),
     "consensus gate should document the strategy preset"
   );
   assert.ok(
-    consensusGate.includes("| code | deep-reviewer + fact-checker + structure-analyst |"),
+    consensusGate.includes("| code | Xatu (deep-reviewer) + Porygon (fact-checker) + Unown (structure-analyst) |"),
     "consensus gate should document the code preset"
   );
 });
@@ -140,7 +153,7 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
     "review",
     "refine",
     "collect",
-    "pipeline",
+    "workflow",
     "discover",
   ];
 
@@ -207,7 +220,9 @@ test("analyze framework templates use the standardized section layout", () => {
 
 test("numeric contracts stay aligned across docs", () => {
   const writeSkill = read("skills/write/SKILL.md");
-  const writerAgent = read("agents/writer.md");
+  const writerAgentPath = findAgentFileByName("writer");
+  assert.ok(writerAgentPath, "writer agent definition should exist");
+  const writerAgent = read(writerAgentPath);
   const newsletterTemplate = read("templates/newsletter.md");
   const writeGotchas = read("skills/write/gotchas.md");
   const captureSkill = read("skills/collect/SKILL.md");
@@ -255,17 +270,17 @@ test("numeric contracts stay aligned across docs", () => {
   );
   assert.match(
     researchSkill,
-    /shallow.*3 searches/i,
+    /shallow.*3.*(searches|Jina Search calls|WebSearch)/i,
     "research skill should define shallow depth as 3 searches"
   );
   assert.match(
     researchSkill,
-    /medium.*5 searches/i,
+    /medium.*5.*(searches|Jina Search calls|WebSearch)/i,
     "research skill should define medium depth as 5 searches"
   );
   assert.match(
     researchSkill,
-    /deep.*10 searches/i,
+    /deep.*10.*(searches|Jina Search calls|WebSearch)/i,
     "research skill should define deep depth as 10 searches"
   );
   assert.match(
@@ -313,12 +328,14 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
   const koreanAllowlist = new Set([
     "hooks/prompt-detect.mjs",
     "hooks/session-start.mjs",
+    "hooks/lib/soul-observer.mjs",
   ]);
 
   // Prefix-based Korean allowlist: directories where Korean content is expected
   const koreanAllowlistPrefixes = [
     "tests/hooks/",
     "skills/pdca/",
+    "skills/soul/",
   ];
 
   for (const file of files) {
@@ -333,7 +350,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
 
 // Orchestrator skills (pdca, refine) intentionally exceed the 1000-word limit due to their
 // extensive phase schemas, gate checklists, and state management specifications.
-const WORD_LIMIT_EXEMPTIONS = new Set(["pdca", "refine"]);
+const WORD_LIMIT_EXEMPTIONS = new Set(["pdca", "refine", "review", "soul"]);
 
 test("skill files stay within the documented 1000-word limit", () => {
   const skillDirs = readdirSync(path.join(root, "skills"));

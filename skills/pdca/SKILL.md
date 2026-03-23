@@ -1,6 +1,6 @@
 ---
 name: pdca
-description: "PDCA cycle orchestrator — auto-detects phase and chains skills with quality gates between transitions"
+description: "Use when running a PDCA cycle across research, production, review, and refinement"
 effort: high
 ---
 
