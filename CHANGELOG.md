@@ -3,6 +3,14 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.6] - 2026-03-25
+
+### Added
+- **Refine DoD (`--dod`) flag** — semicolon-separated success criteria checklist for the `refine` skill. Reviewers evaluate each criterion as PASS/FAIL per iteration; editor prioritizes failing criteria; refine exits only when all DoD criteria pass alongside the verdict target. Inspired by independent verification patterns. No behavior change without `--dod`.
+
+### Changed
+- Version surfaces aligned to `0.5.6` across plugin manifest, READMEs, architecture docs, and CHANGELOG
+
 ## [0.5.5] - 2026-03-24
 
 ### Fixed

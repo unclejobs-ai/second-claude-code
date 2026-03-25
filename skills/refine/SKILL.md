@@ -16,16 +16,24 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 
 ## Workflow
 
-1. Read the current file and record a baseline hash.
-2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass. If a review finding from `[external: mmbridge]` is ambiguous, use `mmbridge followup` to clarify before applying fixes (see MMBridge Refinement Enhancement below).
-3. Apply only the top 3 feedback items.
-4. Re-run `/second-claude-code:review` and keep the new baseline only if the verdict improves; otherwise revert. If mmbridge was used in the original review, run `mmbridge resume` before dispatching the full re-review to get the external reviewer's preliminary assessment of fixes (see MMBridge Refinement Enhancement below). Revert strategy:
+1. Read the current file and record a baseline hash. If `--dod` is provided, parse the semicolon-separated string into a numbered criteria list and store in state as `dod_criteria`.
+2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass. When `--dod` is active, inject the following block into each reviewer's context alongside any `--promise` text:
+   ```
+   ## DoD Checklist — evaluate each criterion independently
+   1. [criterion text]
+   2. [criterion text]
+   ...
+   For EACH criterion, append a line: `DoD-N: PASS` or `DoD-N: FAIL — <reason>`
+   ```
+   After reviewers return, extract `DoD-N: PASS/FAIL` lines and compute per-criterion consensus (majority across reviewers). Store results in state `dod_results`.
+3. Apply fixes. When `--dod` is active, **prioritize FAIL DoD criteria first** (up to 3 total including general feedback). If all DoD criteria already pass, fall back to the standard top-3 general feedback.
+4. Re-run `/second-claude-code:review` (with DoD checklist re-injected) and keep the new baseline only if the verdict improves; otherwise revert. If mmbridge was used in the original review, run `mmbridge resume` before dispatching the full re-review to get the external reviewer's preliminary assessment of fixes (see MMBridge Refinement Enhancement below). Revert strategy:
    - **Before reverting a git-tracked file**: run `git diff --name-only <file>`. If the file shows uncommitted user changes that are NOT from this refine iteration (i.e., changes that predate `baseline_hash`), **warn the user and abort the revert** unless they explicitly confirm. Never silently overwrite uncommitted work.
    - **Path validation**: confirm the file path resolves within the project root — reject any path containing `../` traversal or resolving outside the working directory.
    - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
    - For non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`): restore from `baseline_content` in `refine-active.json`.
-5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction).
-6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a refine option) one final time. Only exit on `APPROVED` or `MINOR FIXES`. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, continue refining.
+5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction). When `--dod` is active, the target is only considered met when **all DoD criteria pass** AND the score/verdict target is satisfied.
+6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
 
 ## Options
 
@@ -34,6 +42,7 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 | `--max` | `1-10` | `3` |
 | `--target` | score (e.g., 4.5) or verdict (e.g., APPROVED) | `APPROVED` |
 | `--promise` | text injected into each reviewer's context as a constraint | none |
+| `--dod` | semicolon-separated success criteria checklist (e.g. `"no factual errors; every section has examples"`) | none |
 | `--file` | path to the draft to iterate on | required |
 | `--review` | path to initial review report (skips first review cycle) | none |
 
@@ -46,8 +55,11 @@ When called from a pipeline with `input_from`, the first file is the draft (`--f
 Save active state to `${CLAUDE_PLUGIN_DATA}/state/refine-active.json` with:
 
 ```json
-{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS IMPROVEMENT","APPROVED"],"scores":[],"baseline_hash":"...","baseline_content":null,"is_git_tracked":true,"feedback_log":[]}
+{"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS IMPROVEMENT","APPROVED"],"scores":[],"baseline_hash":"...","baseline_content":null,"is_git_tracked":true,"feedback_log":[],"dod_criteria":["no factual errors","every section has examples"],"dod_results":[[true,false],[true,true]]}
 ```
+
+- `dod_criteria`: array of criterion strings parsed from `--dod`. Empty array when `--dod` is not used.
+- `dod_results`: array of arrays — one boolean array per iteration, positionally matching `dod_criteria`. `true` = PASS (majority of reviewers agreed), `false` = FAIL.
 
 - `baseline_content`: stores the full file content when `is_git_tracked` is false (non-git files cannot be reverted via `git checkout`)
 - `is_git_tracked`: set at step 1 by running `git ls-files --error-unmatch <file>`. Determines the revert strategy.
@@ -92,7 +104,15 @@ Followup and resume reuse existing mmbridge sessions — they are cheaper than d
 
 ## Output
 
-Return the final draft plus an iteration log showing verdict progression and major changes.
+Return the final draft plus an iteration log showing verdict progression and major changes. When `--dod` is active, append DoD status per iteration:
+
+```
+Round 0 (baseline):  2.0/5  ||||..............  MUST FIX
+  DoD: [x] no factual errors  [ ] every section has examples
+
+Round 1 (post-edit): 3.8/5  |||||||||||||||...  MINOR FIXES  (+1.8)
+  DoD: [x] no factual errors  [x] every section has examples  ✓ ALL PASS
+```
 
 ## Gotchas
 

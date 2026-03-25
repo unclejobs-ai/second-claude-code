@@ -214,7 +214,7 @@ Plan ──[Gate: Brief exists? Analysis exists? Sources ≥3?]──→ Do
   Do ──[Gate: Artifact complete? Format OK? Research used?]──→ Check
 Check ──[Gate: Verdict routing]──→ Act (or Exit if APPROVED)
   Act ──[Action Router: classify root cause]──→ Plan / Do / Refine
-Refine ──[Gate: Target met?]──→ Exit (or present options)
+Refine ──[Gate: Target met? DoD all PASS?]──→ Exit (or present options)
 ```
 
 ### Action Router (Act Phase)
@@ -226,6 +226,18 @@ The Action Router classifies review findings by root cause before routing:
 | SOURCE_GAP, ASSUMPTION_ERROR, FRAMEWORK_MISMATCH | Plan | Fundamental issues need more research |
 | COMPLETENESS_GAP, FORMAT_VIOLATION | Do | Execution issues need rewrite |
 | EXECUTION_QUALITY | Refine | Polish issues need iteration |
+
+### Definition of Done — Refine Gate (0.5.6)
+
+The `refine` skill accepts an optional `--dod` flag: a semicolon-separated checklist of success criteria. When active:
+
+1. DoD criteria are injected into each reviewer's context as a structured checklist
+2. Reviewers evaluate each criterion as `DoD-N: PASS` or `DoD-N: FAIL` alongside their normal review
+3. Per-criterion consensus is computed (majority across reviewers)
+4. The editor prioritizes FAIL criteria before general feedback (up to 3 fixes per round)
+5. Refine exits only when **all DoD criteria PASS** AND the score/verdict target is met
+
+This prevents the "score is high but the specific thing I asked for isn't done" failure mode. Without `--dod`, refine behaves exactly as before.
 
 ### Question Protocol (Plan Phase)
 

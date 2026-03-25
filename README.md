@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.5-blue)
+![version](https://img.shields.io/badge/version-0.5.6-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -139,6 +139,8 @@ Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagg
 
 A Critical finding blocks the output regardless of score. The Action Router reads the severity distribution to determine which phase to re-enter — not just "try again from scratch."
 
+**Definition of Done (DoD):** The `refine` skill accepts `--dod` — a semicolon-separated checklist of success criteria (e.g., `"no factual errors; every section has examples"`). Reviewers evaluate each criterion as PASS/FAIL per iteration. The editor prioritizes failing criteria, and refine only exits when all DoD criteria pass alongside the verdict target.
+
 ---
 
 ### Hook System
@@ -205,7 +207,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Apply strategic frameworks — SWOT, Porter, RICE, and more | `analyze` | Structured strategic analysis from 15 built-in frameworks |
 | Write an article, report, or newsletter | `write` | Research-backed, review-verified output |
 | Get 3-5 independent perspectives on a draft | `review` | Parallel review with consensus voting |
-| Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass |
+| Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass — supports `--dod` for structured success criteria |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom multi-step automation |
 | Find and install new capabilities | `discover` | Skill discovery and installation |

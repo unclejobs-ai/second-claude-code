@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.5.5-blue)
+![version](https://img.shields.io/badge/version-0.5.6-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -159,6 +159,8 @@ PDCA 오케스트레이터
 
 게이트는 PDCA 매 페이즈 사이에 있어요. 리서치 브리프가 통과해야 집필이 시작되고, 초안이 게이트를 통과해야 저한테 와요. 급하다고 건너뛸 수 없어요 — 의도적 설계예요.
 
+**Definition of Done (DoD):** `refine` 스킬에 `--dod`를 쓰면 성공 기준을 체크리스트로 정의할 수 있어요 (예: `"팩트 오류 없음; 모든 섹션에 예시"`). 리뷰어가 매 라운드 기준별 PASS/FAIL을 평가하고, 에디터는 FAIL 기준을 우선 수정해요. 모든 DoD 기준이 PASS이고 판정 목표도 충족해야 종료돼요.
+
 ---
 
 ### 훅 시스템
@@ -280,7 +282,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | SWOT, Porter, RICE 등 15개 프레임워크 | `analyze` | 구조화된 전략 분석 |
 | 아티클, 보고서, 뉴스레터 | `write` | 리서치 + 초안 + 리뷰가 한 명령어로 |
 | 3~5명 관점에서 초안 리뷰 | `review` | 병렬 리뷰 + 합의 투표 |
-| 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 |
+| 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 — `--dod`로 성공 기준 체크리스트 지원 |
 | URL, 메모, 발췌 저장 | `collect` | PARA 분류 기반 지식 캡처 |
 | 여러 스킬을 워크플로우로 연결 | `workflow` | 커스텀 자동화 |
 | 없는 스킬 찾아 설치 | `discover` | 새 스킬 탐색 및 설치 |

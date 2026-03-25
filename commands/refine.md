@@ -13,6 +13,7 @@ Invoke the `/second-claude-code:refine` command for iterative improvement throug
 - `--max N` (max iterations, default: 3)
 - `--target "condition"` (termination condition, default: /second-claude-code:review APPROVED)
 - `--promise "text"` (completion promise for each iteration)
+- `--dod "criteria"` (semicolon-separated Definition of Done checklist; reviewers evaluate each criterion as PASS/FAIL per iteration)
 
 ## Your task
 Perform the iterative improvement now using the plugin's loaded `refine` skill and the provided arguments.

@@ -12,6 +12,14 @@
 
 **동작 방식:** 스킬이 현재 초안을 읽고, 리뷰어를 독립 서브에이전트로 디스패치하여 상위 피드백 3개를 반영한 뒤 다시 리뷰합니다. 목표 점수 충족, 최대 라운드 소진, 또는 개선 정체 시까지 이 사이클을 반복합니다. 종료 전에 최종 Completion Gate를 통과해야 합니다.
 
+### Definition of Done (DoD) 모드
+
+```
+이 아티클 개선해 --dod "팩트 오류 없음; 모든 섹션에 구체적 예시; 결론이 도입부와 연결"
+```
+
+**동작 방식:** 동일한 리뷰-수정 루프에 DoD 체크리스트가 추가됩니다. 리뷰어가 각 기준을 PASS/FAIL로 평가하고, 에디터는 FAIL 기준을 우선 수정합니다. 모든 DoD 기준이 PASS이고 판정 목표를 충족해야 종료됩니다.
+
 ## 실전 예시
 
 **입력:**
@@ -34,6 +42,18 @@ Round 2 (post-edit): 4.2/5  ||||||||||||||||..  MINOR FIXES  (+0.4)
 Round 3 (post-edit): 4.5/5  ||||||||||||||||||  APPROVED     (+0.3)
 ```
 
+**`--dod` 사용 시** (DoD가 에디터에게 특정 기준 수정을 강제하므로 더 적은 라운드로 목표에 도달하는 경우가 많아요):
+```
+Round 0 (baseline):  2.0/5  ||||..............  MUST FIX
+  DoD: [x] 팩트 오류 없음  [ ] 구체적 예시  [ ] 결론-도입 연결
+
+Round 1 (post-edit): 3.8/5  |||||||||||||||...  MINOR FIXES  (+1.8)
+  DoD: [x] 팩트 오류 없음  [x] 구체적 예시  [ ] 결론-도입 연결
+
+Round 2 (post-edit): 4.5/5  ||||||||||||||||||  APPROVED     (+0.7)
+  DoD: [x] 팩트 오류 없음  [x] 구체적 예시  [x] 결론-도입 연결  ✓ ALL PASS
+```
+
 ## 옵션
 
 | 플래그 | 값 | 기본값 |
@@ -41,23 +61,27 @@ Round 3 (post-edit): 4.5/5  ||||||||||||||||||  APPROVED     (+0.3)
 | `--max` | `1-10` | `3` |
 | `--target` | 점수 (예: `4.5`) 또는 판정 (예: `APPROVED`) | `APPROVED` |
 | `--promise` | 각 리뷰어 컨텍스트에 제약으로 주입되는 텍스트 | 없음 |
+| `--dod` | 세미콜론 구분 성공 기준 체크리스트 (예: `"팩트 오류 없음; 예시 포함"`) | 없음 |
 
 ## 작동 원리
 
 ```mermaid
 graph TD
-    A[Read draft + record baseline] --> B[Dispatch review subagents]
-    B --> C{Target met?}
+    A[초안 읽기 + 베이스라인 기록] --> A2{--dod 있음?}
+    A2 -- Yes --> A3[DoD 기준 파싱]
+    A2 -- No --> B
+    A3 --> B[리뷰 서브에이전트 디스패치 + DoD 체크리스트]
+    B --> C{목표 충족 + DoD 전체 PASS?}
     C -- Yes --> G[Completion gate]
-    C -- No --> D{Max rounds?}
+    C -- No --> D{최대 라운드?}
     D -- Yes --> G
-    D -- No --> E[Apply top 3 fixes]
-    E --> F{Score improved?}
+    D -- No --> E[수정 적용 — DoD FAIL 우선]
+    E --> F{점수 개선?}
     F -- Yes --> B
-    F -- No, revert --> H[git checkout -- file]
+    F -- No, 롤백 --> H[git checkout -- file]
     H --> G
-    G -- APPROVED --> I[Done]
-    G -- MUST FIX --> B
+    G -- APPROVED + DoD ALL PASS --> I[완료]
+    G -- MUST FIX 또는 DoD FAIL --> B
 ```
 
 ## 주의사항
@@ -67,6 +91,7 @@ graph TD
 - 수확 체감은 정상입니다(예: +1.8, +0.4, +0.3). 한 라운드에서 개선 폭이 0이면 반복을 낭비하지 말고 조기 종료하세요.
 - Completion Gate(`--preset quick`)는 필수입니다. 절대 생략하지 마세요 -- MUST FIX 판정이 나오면 계속 진행됩니다.
 - 라운드당 상위 피드백 3개만 반영합니다. 전부 적용하면 과잉 편집으로 점수가 오히려 하락할 수 있습니다.
+- `--dod` 기준은 3-5개가 적당합니다. 5개 초과 시 리뷰어 집중도가 분산되어 `--max` 라운드 내 전체 PASS가 어려워집니다.
 
 ## 연동 스킬
 
