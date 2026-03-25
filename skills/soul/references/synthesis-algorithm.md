@@ -33,7 +33,8 @@ Group all observations by dimension:
 | Communication Preferences | Style, Correction (tone/format) |
 | Expertise | Expertise signals, Correction (vocabulary/depth) |
 | Decision Style | Decision signals |
-| Work Patterns | Style (request framing), Decision (speed/quality trade-offs) |
+| Work Patterns | Style (request framing), Decision (speed/quality trade-offs), Shipping (commit cadence, size profile) |
+| Shipping Cadence | Shipping signals (retro metrics — cadence type, focus pattern, work rhythm, trends) |
 | Emotional Profile | Emotional signals |
 
 Observations may belong to multiple dimensions. Do not force single assignment — duplicate if relevant.
@@ -155,3 +156,35 @@ previous_version: path/to/archive (if update)
 ```
 
 Increment `version` on every `apply` call. Version 1 = first synthesis.
+
+## Shipping Cadence Synthesis
+
+Shipping observations are quantitative, not behavioral. Apply different rules:
+
+### Evidence Threshold
+- Minimum **2 retro entries** to claim a Shipping Cadence dimension (same as behavioral dimensions)
+- A single retro entry goes to "insufficient evidence" — the pattern needs repetition to be meaningful
+
+### Characterization Rules
+Use the classification from `references/retro-metrics.md` § Integration with Soul Synthesis:
+- Cadence type from `active_ratio` and `streak`
+- Commit profile from `commit_size_profile`
+- Focus pattern from `project_distribution` across retros
+- Work rhythm from `peak_hours`
+
+### Anti-Generic Filter for Shipping
+These are forbidden because they describe most active developers:
+- "Ships code regularly"
+- "Active contributor"
+- "Works across multiple projects"
+
+Pass examples:
+- "Daily shipper with 85%+ active ratio, never gaps more than 1 day — even weekends show commits"
+- "Serial focus: 80%+ commits on one project for 2-3 weeks, then hard switch. Rarely parallel."
+- "Bimodal rhythm: 2-4 PM burst + 10 PM-midnight second wind. Dead zone 6-9 PM."
+
+### Cross-Referencing with Behavioral Signals
+Shipping data grounds behavioral observations:
+- If Work Patterns says "prefers small iterative steps" but commit profile shows 60% large commits → flag contradiction, apply conditional rule
+- If Decision Style says "fast shipper" but streak is broken with 3-day gaps → refine characterization
+- If Expertise shows "primary: project X" but shipping shows 80% commits in project Y → note divergence between expertise depth and current focus

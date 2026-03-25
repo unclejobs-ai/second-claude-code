@@ -26,6 +26,7 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 | `apply` | Write the proposed SOUL.md to `.data/soul/SOUL.md` after user review |
 | `diff` | Compare current SOUL.md against a proposed version, highlighting changes |
 | `reset` | Archive current SOUL.md and start a fresh observation log |
+| `retro` | Show shipping metrics from git history across projects |
 
 ## Options
 
@@ -34,6 +35,8 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 | `--mode` | `manual\|learning\|hybrid` | `hybrid` | manual = only user-triggered; learning = auto-observe every session; hybrid = auto-observe + user-triggered synthesis |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | Starter template for `init` |
 | `--import` | file path | none | Import observations from an external file into the log |
+| `--period` | `week\|month\|quarter` | `week` | Time range for `retro` metrics |
+| `--projects` | comma-separated paths | auto-detect | Project directories for `retro` git scanning |
 
 ### Mode Behavior
 
@@ -69,11 +72,12 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 ### `propose`
 
 1. Check minimum threshold: `observations.jsonl` must contain ≥10 sessions OR ≥30 observations. If below threshold, output gap report and stop.
-2. Dispatch **soul-keeper** (Pikachu, opus) with full observation log + current SOUL.md (if exists)
-3. Soul-keeper applies synthesis algorithm from `references/synthesis-algorithm.md`
-4. Output proposed SOUL.md with full evidence citations
-5. If current SOUL.md exists: run `diff` automatically and surface any dimension with >30% shift
-6. Do NOT write to file — output is for review only
+2. If `observations.jsonl` contains `shipping` signal entries, include the most recent 4 as quantitative evidence for the "Work Patterns" and "Shipping Cadence" dimensions
+3. Dispatch **soul-keeper** (Pikachu, opus) with full observation log + shipping metrics + current SOUL.md (if exists)
+4. Soul-keeper applies synthesis algorithm from `references/synthesis-algorithm.md`
+5. Output proposed SOUL.md with full evidence citations
+6. If current SOUL.md exists: run `diff` automatically and surface any dimension with >30% shift
+7. Do NOT write to file — output is for review only
 
 ### `apply`
 
@@ -89,6 +93,20 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 3. Diff dimension-by-dimension: new dimensions, removed dimensions, changed characterizations
 4. Flag any dimension with semantic shift >30% (see `references/synthesis-algorithm.md` for drift detection)
 5. Output side-by-side table
+
+### `retro`
+
+1. Determine project directories:
+   - If `--projects` provided, use those paths
+   - Otherwise, auto-detect: scan parent directory of current working directory for sibling directories containing `.git/`
+2. For each project, run git log for the `--period` range:
+   - Collect: commit count, lines added/removed, files changed, commit timestamps, commit message subjects
+3. Compute metrics per `references/retro-metrics.md` specification:
+   - **Per-project**: commits, net lines, top 3 changed files
+   - **Aggregate**: total commits, shipping streak (consecutive days with 1+ commit across any project), active hours heatmap, project distribution
+4. If `.data/soul/SOUL.md` exists, compare current cadence against the "Shipping Cadence" section — note acceleration, deceleration, or project focus shifts
+5. Output formatted retro report with metrics table + trend summary
+6. Append a `shipping` observation to `observations.jsonl` with aggregated metrics as evidence (signal_type: `shipping`, one entry per retro invocation)
 
 ### `reset`
 
@@ -113,10 +131,27 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 {
   "id": "obs-{timestamp}-{n}",
   "session_id": "session-{YYYY-MM-DD}-{topic-slug}",
-  "signal_type": "correction|style|expertise|decision|emotional",
+  "signal_type": "correction|style|expertise|decision|emotional|shipping",
   "context": "brief description of what was happening",
   "raw_text": "exact quote or paraphrase of the signal",
   "inferred_pattern": "what this reveals about the user",
+  "timestamp": "ISO-8601",
+  "weight": 1
+}
+```
+
+### Shipping Observation Entry Format
+
+`shipping` entries use the same schema with structured `raw_text`:
+
+```json
+{
+  "id": "obs-{timestamp}-retro",
+  "session_id": "retro-{YYYY-MM-DD}",
+  "signal_type": "shipping",
+  "context": "retro --period week",
+  "raw_text": "{\"period\":\"2026-03-18..2026-03-25\",\"total_commits\":47,\"streak_days\":12,\"projects\":{\"christmas-ai-studio\":28,\"second-claude\":11,\"fronmpt-academy\":8},\"net_lines\":2340,\"peak_hours\":[14,15,22]}",
+  "inferred_pattern": "ships daily across 3 projects, heaviest in christmas-ai-studio, afternoon + late night peaks",
   "timestamp": "ISO-8601",
   "weight": 1
 }
@@ -152,3 +187,4 @@ A >30% shift in any dimension is not automatically applied. It requires explicit
 - Template reference at `references/templates/`
 - Observation signals reference at `references/observation-signals.md`
 - Synthesis algorithm at `references/synthesis-algorithm.md`
+- Retro metrics specification at `references/retro-metrics.md`

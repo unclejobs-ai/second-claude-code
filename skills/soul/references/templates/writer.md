@@ -106,6 +106,26 @@ previous_version: none
 
 ---
 
+## Shipping Cadence
+
+**Cadence type**: [daily shipper / burst shipper / steady pacer — derived from active_ratio and streak data]
+
+**Commit profile**: [small-commit iterative / large-batch delivery / mixed — from commit_size_profile]
+
+**Focus pattern**: [serial focus / parallel operator — from project_distribution across retros]
+
+**Work rhythm**: [morning / afternoon / bimodal / late night — from peak_hours]
+
+**Evidence** (from retro observations):
+- [retro-id] — [period] — [total commits, streak, active ratio] — [pattern it reveals]
+- [retro-id] — [period] — [total commits, streak, active ratio] — [pattern it reveals]
+
+**Trends**: [accelerating / steady / decelerating — from multi-retro comparison, if available]
+
+**Predictive value**: Expect [shipping behavior] during [time context]. Project focus likely on [project] given recent trajectory.
+
+---
+
 ## Tone Rules
 
 **Active tone rules** derived from observed corrections and preferences:

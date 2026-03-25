@@ -66,6 +66,21 @@ Triggered by energy, engagement, frustration, or enthusiasm markers. These are t
 | Disengagement | 짧은 승인 후 주제 전환 | Short acknowledgment then topic switch | Diminishing interest, threshold reached |
 | Satisfaction without praise | 추가 수정 없이 넘어감 | Moves on without comment | Implicit satisfaction — absence of friction is signal |
 
+## Category 6: Shipping Signals
+
+Triggered by `soul retro` — quantitative git metrics collected automatically, not from behavioral observation.
+
+| Signal | Source | What It Reveals |
+|--------|--------|-----------------|
+| Commit cadence | `active_ratio` — active days / period days | Daily discipline vs. burst work style |
+| Shipping streak | Consecutive days with 1+ commit | Consistency, work-life integration |
+| Commit size distribution | Lines per commit bucketed into small/medium/large | Iterative vs. batch delivery preference |
+| Project distribution | % of commits per project across the period | Serial focus vs. parallel operation |
+| Peak hours | Top 3 commit hours | Work rhythm, energy windows |
+| Trend direction | Current vs. previous retro comparison | Acceleration, deceleration, or focus shifts |
+
+**Note**: Shipping signals are machine-generated from git log data. They do NOT go through the analyst — they are appended directly by the `retro` subcommand. One `shipping` observation per retro invocation.
+
 ---
 
 ## Signal Collection Rules
