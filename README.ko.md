@@ -42,7 +42,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-11 commands for all knowledge work:
+12 commands for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -283,13 +283,28 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | 아티클, 보고서, 뉴스레터 | `write` | 리서치 + 초안 + 리뷰가 한 명령어로 |
 | 3~5명 관점에서 초안 리뷰 | `review` | 병렬 리뷰 + 합의 투표 |
 | 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 — `--dod`로 성공 기준 체크리스트 지원 |
+| 프롬프트 자산 벤치마크 최적화 | `loop` | 고정 스위트 기반 루프 + 격리 우승 브랜치 |
 | URL, 메모, 발췌 저장 | `collect` | PARA 분류 기반 지식 캡처 |
 | 여러 스킬을 워크플로우로 연결 | `workflow` | 커스텀 자동화 |
 | 없는 스킬 찾아 설치 | `discover` | 새 스킬 탐색 및 설치 |
 | 나를 기억하고 학습하게 | `soul` | 너를 이해하고 기억한다 |
 | 대형 작업을 병렬로 쪼개기 | `batch` | 대형 작업 병렬 분해 |
 
-스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:workflow`, `/second-claude-code:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
+스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, `/second-claude-code:workflow`, `/second-claude-code:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
+
+### 유지보수자용 Karpathy-Style Loop
+
+`loop`는 일반 사용자 자동 라우팅용이 아니라 유지보수자용 최적화 표면이에요. `skills/**/SKILL.md`, `commands/*.md`, `agents/*.md`, `templates/*.md` 같은 프롬프트 자산을 고정 벤치마크 스위트로 반복 평가하고, 우승 후보만 격리된 `codex/loop-...` 브랜치에 승급합니다.
+
+보통은 이렇게 써요:
+
+```bash
+/second-claude-code:loop list-suites
+/second-claude-code:loop show-suite write-core
+/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
+```
+
+실행 상태는 `.data/state/loop-active.json`에 저장되고, 점수표, 세대 히스토리, 우승 diff 같은 산출물은 `.captures/loop-<run_id>/`에 남습니다.
 
 ```
 "AI 에이전트 알아보고 보고서 써줘"       →  pdca (전체 사이클)

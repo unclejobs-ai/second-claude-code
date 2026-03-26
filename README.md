@@ -34,7 +34,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-11 commands for all knowledge work:
+12 commands for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -208,13 +208,28 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Write an article, report, or newsletter | `write` | Research-backed, review-verified output |
 | Get 3-5 independent perspectives on a draft | `review` | Parallel review with consensus voting |
 | Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass — supports `--dod` for structured success criteria |
+| Benchmark and evolve prompt assets | `loop` | Fixed-suite optimization with isolated winner branches |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom multi-step automation |
 | Find and install new capabilities | `discover` | Skill discovery and installation |
 | Let the system learn your preferences | `soul` | Adaptive personalization across sessions |
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
 
-Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, etc. ~130 trigger patterns across English and Korean.
+Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, etc. ~130 trigger patterns across English and Korean.
+
+### Karpathy-Style Loop for Maintainers
+
+`loop` is the maintainer-facing optimization surface. It does not route from normal user prompts in v1. Instead, it runs a fixed benchmark suite against prompt assets such as `skills/**/SKILL.md`, `commands/*.md`, `agents/*.md`, and `templates/*.md`, then promotes the best candidate only inside an isolated `codex/loop-...` branch.
+
+Typical flow:
+
+```bash
+/second-claude-code:loop list-suites
+/second-claude-code:loop show-suite write-core
+/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
+```
+
+The run writes resumable state to `.data/state/loop-active.json` and captures artifacts in `.captures/loop-<run_id>/`, including the leaderboard, score history, and winner diff.
 
 ```
 "Research and write about AI agents"       →  pdca (full cycle)

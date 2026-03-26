@@ -87,8 +87,8 @@ At Plan entry, the orchestrator asks up to 3 scope-clarifying questions:
 | analyze | Called during Plan phase for structured analysis |
 | write | Called during Do phase in pure execution mode |
 | review | Called during Check phase with parallel reviewers |
-| loop | Called during Act phase when Action Router routes to Loop |
-| pipeline | Can automate full PDCA cycles |
+| refine | Called during Act phase when Action Router routes to Refine |
+| workflow | Can automate full PDCA cycles |
 
 ## Full Reference
 

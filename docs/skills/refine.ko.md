@@ -99,5 +99,5 @@ graph TD
 |------|------|
 | `review` | 매 라운드 스코어링 엔진으로 디스패치 |
 | `write` | refine이 개선할 초안을 생성하는 주요 스킬 |
-| `pipeline` | 파이프라인 단계로 활용 가능 (예: `autopilot` 프리셋) |
+| `workflow` | 워크플로우 단계로 활용 가능 (예: `autopilot` 프리셋) |
 | `collect` | 최종 승인된 초안을 지식 베이스에 저장 |

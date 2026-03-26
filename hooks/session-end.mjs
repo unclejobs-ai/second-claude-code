@@ -115,7 +115,19 @@ function pdcaBlockReason(pdcaState) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function collectActiveState() {
-  const result = { refine: null, pipeline: null, pdca: null };
+  const result = { loop: null, refine: null, pipeline: null, pdca: null };
+
+  const loopState = readJsonSafe(join(STATE_DIR, "loop-active.json"));
+  if (loopState) {
+    result.loop = {
+      run_id: sanitize(loopState.run_id),
+      suite: sanitize(loopState.suite || loopState.goal),
+      generation: Number(loopState.generation ?? loopState.current_iteration) || 0,
+      max_generations: Number(loopState.max_generations ?? loopState.max) || 0,
+      status: sanitize(loopState.status),
+      best_score: Number(loopState.best_score) || 0,
+    };
+  }
 
   const refineState = readJsonSafe(join(STATE_DIR, "refine-active.json"));
   if (refineState) {
@@ -174,11 +186,23 @@ function generateHandoff(state) {
   lines.push(`Generated: ${now}`);
   lines.push("");
 
-  const hasActiveState = state.refine || state.pipeline || state.pdca;
+  const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;
 
   // ── Active state ──────────────────────────────────────────────────────────
   lines.push("## Active State");
   lines.push("");
+
+  if (state.loop) {
+    lines.push("### Loop");
+    lines.push(`- Suite: ${state.loop.suite}`);
+    lines.push(`- Run ID: ${state.loop.run_id}`);
+    lines.push(`- Generation: ${state.loop.generation}/${state.loop.max_generations}`);
+    lines.push(`- Status: ${state.loop.status}`);
+    if (state.loop.best_score > 0) {
+      lines.push(`- Best score: ${state.loop.best_score}`);
+    }
+    lines.push("");
+  }
 
   if (state.refine) {
     lines.push("### Refine");
@@ -246,7 +270,7 @@ function generateHandoff(state) {
   }
 
   if (!hasActiveState) {
-    lines.push("No active refine, pipelines, or PDCA cycles.");
+    lines.push("No active loops, refine passes, pipelines, or PDCA cycles.");
     lines.push("");
 
     // ── Last completed cycle summary ────────────────────────────────────────
@@ -277,6 +301,11 @@ function generateHandoff(state) {
   // ── Resumption hints ──────────────────────────────────────────────────────
   lines.push("## Resumption");
   lines.push("");
+  if (state.loop) {
+    lines.push(
+      `- To resume loop: \`/second-claude-code:loop resume ${state.loop.run_id}\``
+    );
+  }
   if (state.refine) {
     lines.push(
       `- To resume refine: re-run \`/second-claude-code:refine\` with the same file — it reads saved state from iteration ${state.refine.iteration}`
@@ -447,6 +476,9 @@ function emitChannelNotification(state) {
 }
 
 function buildRecallSummary(state) {
+  if (state.loop) {
+    return `Loop run "${state.loop.suite}" stopped at generation ${state.loop.generation}/${state.loop.max_generations}.`;
+  }
   if (state.pdca) {
     const phaseList =
       state.pdca.completed.length > 0 ? state.pdca.completed.join(" -> ") : "none";
@@ -463,13 +495,14 @@ function buildRecallSummary(state) {
 
 function recordSessionRecall(state, handoffPath) {
   const tags = [];
+  if (state.loop) tags.push("loop");
   if (state.pdca) tags.push("pdca");
   if (state.pipeline) tags.push("workflow");
   if (state.refine) tags.push("refine");
 
   appendRecallEntry(DATA_DIR, {
     session_id: process.env.CLAUDE_SESSION_ID || null,
-    topic: state.pdca?.topic || state.refine?.goal || "",
+    topic: state.pdca?.topic || state.loop?.suite || state.refine?.goal || "",
     workflow_name: state.pipeline?.name || "",
     artifact_path: handoffPath,
     summary: buildRecallSummary(state),
@@ -569,9 +602,10 @@ function main() {
   // ── Channel notification (after HANDOFF, non-blocking) ────────────────────
   emitChannelNotification(state);
 
-  const hasActiveState = state.refine || state.pipeline || state.pdca;
+  const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;
   if (hasActiveState) {
     const parts = [
+      state.loop && "active loop",
       state.refine && "active refine",
       state.pipeline && "active pipeline",
       state.pdca && "active PDCA cycle",

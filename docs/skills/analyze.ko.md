@@ -96,5 +96,5 @@ graph TD
 |------|------|
 | research | `--with-research` 설정 시 또는 `--depth thorough` 시 호출 |
 | review | 분석 결과를 추가 검증할 때 사용 가능 |
-| pipeline | 전략 워크플로우의 한 단계로 연결 가능 |
+| workflow | 전략 워크플로우의 한 단계로 연결 가능 |
 | write | 분석 결과가 리포트나 아티클의 입력으로 활용 |

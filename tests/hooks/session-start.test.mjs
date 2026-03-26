@@ -29,6 +29,16 @@ test("session start renders active state with canonical keys and capability summ
       total_steps: 4,
     })
   );
+  writeFileSync(
+    path.join(stateDir, "loop-active.json"),
+    JSON.stringify({
+      run_id: "loop-write-core-20260326",
+      suite: "write-core",
+      generation: 1,
+      max_generations: 3,
+      status: "running",
+    })
+  );
 
   const output = execFileSync(process.execPath, [hookPath], {
     cwd: root,
@@ -40,6 +50,7 @@ test("session start renders active state with canonical keys and capability summ
   });
 
   assert.match(output, /Active refine: "Polish newsletter draft to 4\.5\+" \(iteration 2\/3\)/);
+  assert.match(output, /Active loop: "write-core" \(generation 1\/3, status: running\)/);
   assert.match(output, /Active workflow: "weekly-digest" \(step 2\/4\)/);
   assert.match(output, /Capabilities/i);
   assert.match(output, /git/);

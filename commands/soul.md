@@ -24,7 +24,7 @@ Invoke the `/second-claude-code:soul` command to build and maintain a user ident
 - `--import <path>` (import observations from external file)
 
 ## Your task
-Run the soul skill using the provided subcommand and arguments.
+Run the plugin's loaded `soul` skill using the provided subcommand and arguments.
 
 - Execute the subcommand workflow as defined in the soul skill.
 - For `propose`: output the full proposed SOUL.md with evidence citations. Do not write to file.

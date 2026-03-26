@@ -144,17 +144,17 @@ graph TD
 
 | 프리셋 | 단계 | 용도 |
 |--------|------|------|
-| `autopilot` | research, analyze, write, review, loop | 엔드투엔드 콘텐츠 프로덕션 |
+| `autopilot` | research, analyze, write, review, refine | 엔드투엔드 콘텐츠 프로덕션 |
 | `quick-draft` | research, write | 분석이 불필요한 빠른 초안 작성 |
-| `quality-gate` | review, loop | 기존 콘텐츠의 사후 품질 검수 |
+| `quality-gate` | review, refine | 기존 콘텐츠의 사후 품질 검수 |
 
 모든 프리셋은 `--topic`과 `--var` 플래그를 지원합니다.
 
-**autopilot**: 기본 엔드투엔드 파이프라인. research가 소스를 수집하고, analyze가 프레임워크를 적용하며(기본: SWOT, `--var framework=porter`로 변경 가능), write가 결과물을 생성하고, review가 비평하고, loop이 피드백을 반영합니다. 완성도 높은 결과물에 적합합니다.
+**autopilot**: 기본 엔드투엔드 파이프라인. research가 소스를 수집하고, analyze가 프레임워크를 적용하며(기본: SWOT, `--var framework=porter`로 변경 가능), write가 결과물을 생성하고, review가 비평하고, refine이 피드백을 반영합니다. 완성도 높은 결과물에 적합합니다.
 
 **quick-draft**: 분석과 리뷰를 건너뜁니다. research 결과가 바로 write로 전달됩니다. 수동으로 정제할 시간 제약이 있는 초안에 적합합니다.
 
-**quality-gate**: 기존 파일을 입력으로 받아(`--var input=path/to/file.md`) review를 실행한 후 loop으로 이슈를 수정합니다. 리서치 없이 기존 콘텐츠를 다듬는 데 적합합니다.
+**quality-gate**: 기존 파일을 입력으로 받아(`--var input=path/to/file.md`) review를 실행한 후 refine으로 이슈를 수정합니다. 리서치 없이 기존 콘텐츠를 다듬는 데 적합합니다.
 
 ## 주의사항
 

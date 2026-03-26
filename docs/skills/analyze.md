@@ -100,5 +100,5 @@ graph TD
 |-------|-------------|
 | research | Called when `--with-research` is set or `--depth thorough` |
 | review | Can review the analysis output for additional validation |
-| pipeline | Chainable as a step in strategic workflows |
+| workflow | Chainable as a step in strategic workflows |
 | write | Analysis outputs feed into reports or articles |

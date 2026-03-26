@@ -84,4 +84,4 @@ graph TD
 |-------|-------------|
 | write | Auto-called before drafting unless `--skip-research` is set |
 | analyze | Called when `--with-research` is set |
-| pipeline | Output cached per session to avoid redundant searches |
+| workflow | Output cached per session to avoid redundant searches |

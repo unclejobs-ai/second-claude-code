@@ -37,6 +37,17 @@ test("session end persists a handoff from canonical state files", () => {
       status: "running",
     })
   );
+  writeFileSync(
+    path.join(stateDir, "loop-active.json"),
+    JSON.stringify({
+      run_id: "loop-write-core-20260326",
+      suite: "write-core",
+      generation: 1,
+      max_generations: 3,
+      status: "running",
+      best_score: 0.84,
+    })
+  );
 
   const result = spawnSync(process.execPath, [hookPath], {
     cwd: root,
@@ -56,11 +67,15 @@ test("session end persists a handoff from canonical state files", () => {
 
   const handoff = readFileSync(handoffPath, "utf8");
   assert.match(handoff, /Goal: Raise the draft to APPROVED/);
+  assert.match(handoff, /Suite: write-core/);
+  assert.match(handoff, /Generation: 1\/3/);
+  assert.match(handoff, /Best score: 0\.84/);
   assert.match(handoff, /Progress: iteration 2\/4/);
   assert.match(handoff, /Scores: NEEDS WORK → APPROVED/);
   assert.match(handoff, /Name: weekly-digest/);
   assert.match(handoff, /Progress: step 3\/5/);
   assert.match(handoff, /Status: running/);
+  assert.match(handoff, /\/second-claude-code:loop resume loop-write-core-20260326/);
   assert.match(handoff, /re-run.*\/second-claude-code:refine/);
   assert.match(handoff, /\/second-claude-code:workflow run weekly-digest/);
 });

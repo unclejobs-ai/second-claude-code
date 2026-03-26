@@ -125,6 +125,11 @@ test("state-manager written state flows through session start and session end ho
     [stateManager, "write", "workflow-active", '{"name":"autopilot","current_step":2,"total_steps":5,"status":"running"}'],
     { cwd: root, env, encoding: "utf8" }
   );
+  execFileSync(
+    "bash",
+    [stateManager, "write", "loop-active", '{"run_id":"loop-write-core-20260326","suite":"write-core","generation":1,"max_generations":3,"status":"running"}'],
+    { cwd: root, env, encoding: "utf8" }
+  );
 
   const startOutput = execFileSync(process.execPath, [sessionStart], {
     cwd: root,
@@ -132,6 +137,7 @@ test("state-manager written state flows through session start and session end ho
     encoding: "utf8",
   });
   assert.match(startOutput, /Active refine: "Polish the brief" \(iteration 1\/3\)/);
+  assert.match(startOutput, /Active loop: "write-core" \(generation 1\/3, status: running\)/);
   assert.match(startOutput, /Active workflow: "autopilot" \(step 2\/5\)/);
 
   const endResult = spawnSync(process.execPath, [sessionEnd], {
@@ -143,7 +149,9 @@ test("state-manager written state flows through session start and session end ho
 
   const handoff = readFileSync(path.join(tempDir, "HANDOFF.md"), "utf8");
   assert.match(handoff, /Goal: Polish the brief/);
+  assert.match(handoff, /Suite: write-core/);
   assert.match(handoff, /Progress: step 2\/5/);
+  assert.match(handoff, /\/second-claude-code:loop resume loop-write-core-20260326/);
   assert.match(handoff, /re-run.*\/second-claude-code:refine/);
   assert.match(handoff, /\/second-claude-code:workflow run autopilot/);
 });

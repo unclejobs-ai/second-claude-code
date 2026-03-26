@@ -89,8 +89,8 @@ Plan 진입 시 최대 3개의 범위 확인 질문을 합니다:
 | analyze | Plan 페이즈에서 구조화된 분석에 호출 |
 | write | Do 페이즈에서 순수 실행 모드로 호출 |
 | review | Check 페이즈에서 병렬 리뷰어와 함께 호출 |
-| loop | Act 페이즈에서 액션 라우터가 Loop으로 라우팅할 때 호출 |
-| pipeline | 전체 PDCA 사이클 자동화 가능 |
+| refine | Act 페이즈에서 액션 라우터가 Refine으로 라우팅할 때 호출 |
+| workflow | 전체 PDCA 사이클 자동화 가능 |
 
 ## 전체 레퍼런스
 

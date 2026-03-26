@@ -142,18 +142,18 @@ Run a named preset with `/second-claude-code:workflow run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|
-| `autopilot` | research, analyze, write, review, loop | End-to-end content production |
+| `autopilot` | research, analyze, write, review, refine | End-to-end content production |
 | `quick-draft` | research, write | Fast first draft when analysis is unnecessary |
-| `quality-gate` | review, loop | Post-hoc quality check on existing content |
+| `quality-gate` | review, refine | Post-hoc quality check on existing content |
 
 All presets accept `--topic` and `--var` flags for runtime parameterization.
 Together they let you automate the full Gather → Produce → Verify → Refine loop.
 
-**autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and loop incorporates feedback. Best for polished deliverables.
+**autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and refine incorporates feedback. Best for polished deliverables.
 
 **quick-draft**: Skips analysis and review. Research feeds directly into write. Best for time-sensitive first drafts that will be manually refined.
 
-**quality-gate**: Takes an existing file as input (`--var input=path/to/file.md`), runs review, then loop to fix issues. Best for polishing existing content without re-researching.
+**quality-gate**: Takes an existing file as input (`--var input=path/to/file.md`), runs review, then refine to fix issues. Best for polishing existing content without re-researching.
 
 ## Gotchas
 

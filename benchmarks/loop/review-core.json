@@ -1,0 +1,53 @@
+{
+  "name": "review-core",
+  "description": "Optimize the review skill surface with stable consensus and command checks.",
+  "allowed_targets": [
+    "skills/review/SKILL.md",
+    "commands/review.md",
+    "agents/xatu.md"
+  ],
+  "cases": [
+    {
+      "id": "review-command-surface",
+      "prompt": "The review command must expose presets and execution semantics clearly.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case review-core review-command-surface \"{{candidate_dir}}\"",
+      "review_preset": "code",
+      "weight": 0.3,
+      "timeout_sec": 10
+    },
+    {
+      "id": "review-skill-consensus",
+      "prompt": "The review skill must preserve the consensus gate and score rules.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case review-core review-skill-consensus \"{{candidate_dir}}\"",
+      "review_preset": "code",
+      "weight": 0.45,
+      "timeout_sec": 10
+    },
+    {
+      "id": "xatu-agent-contract",
+      "prompt": "The deep reviewer agent must keep its logic and structure emphasis.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case review-core xatu-agent-contract \"{{candidate_dir}}\"",
+      "review_preset": "code",
+      "weight": 0.25,
+      "timeout_sec": 10
+    }
+  ],
+  "budget": {
+    "max_candidates": 4,
+    "max_generations": 2,
+    "parallel": 2
+  },
+  "scoring": {
+    "hard_gates": [
+      "syntax",
+      "manifest",
+      "contract-smoke",
+      "allowed-targets",
+      "critic-output"
+    ],
+    "weights": {
+      "average_score": 1
+    },
+    "min_delta": 0.02
+  }
+}

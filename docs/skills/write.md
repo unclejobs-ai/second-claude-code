@@ -103,5 +103,5 @@ graph TD
 |-------|-------------|
 | research | Auto-called before drafting (unless `--skip-research`) |
 | review | Auto-called after drafting with `content` preset (unless `--skip-review`) |
-| pipeline | Can be chained as a step in custom workflows |
-| loop | Iterative refinement after review findings |
+| workflow | Can be chained as a step in custom workflows |
+| refine | Iterative improvement after review findings |

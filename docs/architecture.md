@@ -57,6 +57,7 @@ directly to `Plan → Do → Check → Act`.
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
+| **Optimization** | **Evolve** | **`loop`** |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
 
@@ -70,7 +71,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state, playwright (optional)
-├── skills/                       # 11 skills (SKILL.md each)
+├── skills/                       # 12 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
@@ -82,12 +83,13 @@ second-claude/
 │   ├── collect/                  # Knowledge collection (PARA)
 │   ├── workflow/                 # Custom workflow builder
 │   ├── discover/                 # Skill discovery
+│   ├── loop/                     # Karpathy-style prompt optimization loop
 │   ├── batch/                    # Parallel task decomposition and execution
 │   │   └── references/           # Decomposition guide, split strategies, merge patterns
 │   └── soul/                     # User identity profile synthesis
 │       └── references/           # Observation signals, synthesis algorithm, templates
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 11 slash command wrappers
+├── commands/                     # 12 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
@@ -197,11 +199,22 @@ The agents map to the PDCA quality cycle with the Action Router in Act phase:
 Supporting commands reinforce the same loop:
 
 - `pdca` orchestrates the full cycle with quality gates and the Action Router
+- `/second-claude-code:loop` runs fixed benchmark suites to evolve prompt assets in isolated winner branches
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough
 - `workflow` automates full Gather → Produce → Verify → Refine runs
 - `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
+
+### Loop Runner Architecture
+
+The maintainer-facing `loop` command adds a second optimization loop around the plugin's own prompt assets:
+
+- Suite manifests live in `benchmarks/loop/*.json` and declare `allowed_targets`, weighted `cases`, budget, and `min_delta`.
+- `scripts/loop-runner.mjs` creates an isolated `codex/loop-<suite>-<run_id>` branch plus run worktree, then evaluates the baseline and every candidate under the exact same suite budget.
+- Candidate worktrees are temporary. Only the winning patch is copied back into the isolated run branch, and the main workspace remains untouched.
+- Active state is persisted in `.data/state/loop-active.json`, while `.captures/loop-<run_id>/` stores the leaderboard, score history, summary, case logs, and winner diff.
+- Session hooks surface loop state in startup banners, compaction restoration, and `HANDOFF.md`, so long-running optimization runs can be resumed safely.
 
 ---
 

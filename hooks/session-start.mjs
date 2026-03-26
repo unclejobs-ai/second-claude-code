@@ -4,8 +4,8 @@
  * SessionStart Hook — Second Claude Knowledge Work OS
  *
  * Injects core context on session startup:
- * - 9 skills overview + routing rules
- * - Active refine/workflow/PDCA state restoration
+ * - 12-command overview + routing rules
+ * - Active loop/refine/workflow/PDCA state restoration
  * - Available environment capabilities
  */
 
@@ -52,6 +52,15 @@ function getCrashRecovery() {
 function getActiveState() {
   const statePath = join(DATA_DIR, "state");
   const parts = [];
+
+  const loop = readJsonSafe(join(statePath, "loop-active.json"));
+  if (loop) {
+    const suite = sanitize(loop.suite || loop.goal || "unknown");
+    const generation = Number(loop.generation ?? loop.current_iteration) || 0;
+    const maxGenerations = Number(loop.max_generations ?? loop.max) || 0;
+    const status = sanitize(loop.status || "running");
+    parts.push(`Active loop: "${suite}" (generation ${generation}/${maxGenerations || "?"}, status: ${status})`);
+  }
 
   const refine = readJsonSafe(join(statePath, "refine-active.json"));
   if (refine) {
@@ -100,7 +109,7 @@ function main() {
   lines.push("");
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
-  lines.push("9 commands for all knowledge work:");
+  lines.push("12 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
@@ -110,13 +119,16 @@ function main() {
   lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
   lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
   lines.push("| `/second-claude-code:refine` | Iterative improvement until quality target met |");
+  lines.push("| `/second-claude-code:loop` | Benchmark and evolve prompt assets inside isolated loop branches |");
   lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
   lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
+  lines.push("| `/second-claude-code:batch` | Parallel decomposition for large homogeneous tasks |");
+  lines.push("| `/second-claude-code:soul` | Persistent identity profile synthesis and adaptation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, refine, collect, workflow, discover.");
-  lines.push('Action Router: review failures route by root cause (Plan/Do/Loop).');
+  lines.push("Or use individual skills: research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul.");
+  lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");
   lines.push(

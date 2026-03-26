@@ -79,4 +79,4 @@ graph TD
 |------|------|
 | write | `--skip-research` 미설정 시 초안 작성 전 자동 호출 |
 | analyze | `--with-research` 설정 시 호출 |
-| pipeline | 세션별 출력 캐싱으로 중복 검색 방지 |
+| workflow | 세션별 출력 캐싱으로 중복 검색 방지 |

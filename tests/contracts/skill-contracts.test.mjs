@@ -147,6 +147,9 @@ test("analyze supports exactly the framework templates it advertises", () => {
 
 test("command wrappers map each /scc command to the matching bare skill", () => {
   const commandNames = [
+    "batch",
+    "soul",
+    "loop",
     "research",
     "write",
     "analyze",
@@ -173,6 +176,27 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
       content,
       /Use the Skill tool to invoke/i,
       `${name} command should execute directly rather than emit meta instructions`
+    );
+  }
+});
+
+test("loop surfaces are documented across primary docs", () => {
+  const readme = read("README.md");
+  const readmeKo = read("README.ko.md");
+  const architecture = read("docs/architecture.md");
+  const architectureKo = read("docs/architecture.ko.md");
+  const claude = read("CLAUDE.md");
+
+  for (const doc of [readme, readmeKo, architecture, architectureKo, claude]) {
+    assert.match(
+      doc,
+      /12 skills|12 commands|12\uAC1C \uC2A4\uD0AC|12\uAC1C \uC2AC\uB798\uC2DC/i,
+      "top-level docs should reflect the new loop surface"
+    );
+    assert.match(
+      doc,
+      /\/second-claude-code:loop/,
+      "top-level docs should mention the public loop command"
     );
   }
 });

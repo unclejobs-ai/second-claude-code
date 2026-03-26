@@ -99,11 +99,33 @@ test("state manager supports a full read/write/list/exists/clear roundtrip", () 
     encoding: "utf8",
   });
   assert.match(readAfterClear, /^null\s*$/);
+
+  const loopWriteOutput = execFileSync(
+    "bash",
+    [
+      scriptPath,
+      "write",
+      "loop-active",
+      '{"run_id":"loop-write-core-1","suite":"write-core","status":"running","generation":1}'
+    ],
+    { cwd: root, env, encoding: "utf8" }
+  );
+  assert.match(loopWriteOutput, /"ok":true/);
+
+  const loopReadOutput = execFileSync("bash", [scriptPath, "read", "loop-active"], {
+    cwd: root,
+    env,
+    encoding: "utf8",
+  });
+  assert.match(loopReadOutput, /loop-write-core-1/);
 });
 
 test("autopilot preset only uses supported commands, frameworks, and file handoffs", () => {
   const pipeline = readJson("templates/autopilot-pipeline.json");
   const allowedSkills = new Set([
+    "/second-claude-code:batch",
+    "/second-claude-code:soul",
+    "/second-claude-code:loop",
     "/second-claude-code:research",
     "/second-claude-code:write",
     "/second-claude-code:analyze",

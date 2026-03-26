@@ -1,12 +1,12 @@
 # Second Codex
 
-Codex plugin (v0.5.3). PDCA-native knowledge work system — 11 skills, 17 agents, 8 hooks, 2 MCP servers.
+Codex plugin (v0.5.3). PDCA-native knowledge work system — 12 skills, 17 agents, 8 hooks, 2 MCP servers.
 
 ## Project Structure
 
 ```
 .Codex-plugin/plugin.json  — Plugin manifest (name, version, MCP servers)
-skills/                     — 11 skill directories (pdca, research, write, analyze, review, refine, collect, workflow, discover, batch, soul)
+skills/                     — 12 skill directories (pdca, research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul)
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
@@ -20,6 +20,7 @@ docs/                       — Architecture docs (EN/KO bilingual)
 ## Key Conventions
 
 - **Language**: Skills, hooks, MCP server are JavaScript ESM (.mjs). No TypeScript.
+- **Public loop command**: `/second-claude-code:loop`
 - **Agent naming**: Pokemon-themed (Arceus=orchestrator, Pikachu=soul, Eevee=researcher, etc.)
 - **Bilingual docs**: EN (.md) + KO (.ko.md) maintained independently, not translated
 - **PDCA phases**: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Ditto)

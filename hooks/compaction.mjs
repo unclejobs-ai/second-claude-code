@@ -68,9 +68,11 @@ function buildSnapshot() {
 
   if (loop) {
     snapshot.loop = {
-      goal: sanitize(loop.goal),
-      current_iteration: Number(loop.current_iteration) || 0,
-      max: Number(loop.max) || 3,
+      suite: sanitize(loop.suite || loop.goal),
+      generation: Number(loop.generation ?? loop.current_iteration) || 0,
+      max_generations: Number(loop.max_generations ?? loop.max) || 3,
+      status: sanitize(loop.status || "running"),
+      best_score: Number(loop.best_score) || 0,
       scores: Array.isArray(loop.scores) ? loop.scores.map((s) => Number(s) || 0) : [],
     };
   }
@@ -130,10 +132,13 @@ function formatRestorationContext(snapshot) {
   }
 
   if (snapshot.loop) {
-    const { goal, current_iteration, max, scores } = snapshot.loop;
+    const { suite, generation, max_generations, status, best_score, scores } = snapshot.loop;
     lines.push(
-      `Active loop: "${goal}" (iteration ${current_iteration}/${max})`
+      `Active loop: "${suite}" (generation ${generation}/${max_generations}, status: ${status})`
     );
+    if (best_score > 0) {
+      lines.push(`  Best score so far: ${best_score}`);
+    }
     if (scores.length > 0) {
       lines.push(`  Loop scores so far: ${scores.join(" → ")}`);
     }

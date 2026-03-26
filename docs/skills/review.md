@@ -112,5 +112,5 @@ graph TD
 |-------|-------------|
 | write | Auto-called after drafting with `content` preset |
 | analyze | Can validate analysis output |
-| loop | Iterates on review findings until verdict improves |
-| pipeline | Chainable as a quality gate step |
+| refine | Iterates on review findings until verdict improves |
+| workflow | Chainable as a quality gate step |

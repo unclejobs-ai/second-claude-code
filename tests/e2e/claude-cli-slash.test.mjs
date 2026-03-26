@@ -34,6 +34,9 @@ if (!enabled) {
     );
 
     for (const command of [
+      "/second-claude-code:batch",
+      "/second-claude-code:soul",
+      "/second-claude-code:loop",
       "/second-claude-code:research",
       "/second-claude-code:write",
       "/second-claude-code:analyze",

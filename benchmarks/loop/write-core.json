@@ -1,0 +1,53 @@
+{
+  "name": "write-core",
+  "description": "Optimize the write skill surface with fixed prompt and template checks.",
+  "allowed_targets": [
+    "skills/write/SKILL.md",
+    "commands/write.md",
+    "templates/newsletter.md"
+  ],
+  "cases": [
+    {
+      "id": "write-command-surface",
+      "prompt": "The write command must expose the public command surface clearly.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case write-core write-command-surface \"{{candidate_dir}}\"",
+      "review_preset": "content",
+      "weight": 0.35,
+      "timeout_sec": 10
+    },
+    {
+      "id": "write-skill-structure",
+      "prompt": "The write skill should retain its workflow and options structure.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case write-core write-skill-structure \"{{candidate_dir}}\"",
+      "review_preset": "content",
+      "weight": 0.4,
+      "timeout_sec": 10
+    },
+    {
+      "id": "newsletter-template-contract",
+      "prompt": "The newsletter template must preserve its length and structure contract.",
+      "command": "node scripts/loop-runner.mjs __score-suite-case write-core newsletter-template-contract \"{{candidate_dir}}\"",
+      "review_preset": "content",
+      "weight": 0.25,
+      "timeout_sec": 10
+    }
+  ],
+  "budget": {
+    "max_candidates": 4,
+    "max_generations": 2,
+    "parallel": 2
+  },
+  "scoring": {
+    "hard_gates": [
+      "syntax",
+      "manifest",
+      "contract-smoke",
+      "allowed-targets",
+      "critic-output"
+    ],
+    "weights": {
+      "average_score": 1
+    },
+    "min_delta": 0.02
+  }
+}

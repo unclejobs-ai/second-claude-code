@@ -104,5 +104,5 @@ graph TD
 |-------|-------------|
 | `review` | Dispatched each round as the scoring engine |
 | `write` | Commonly produces the initial draft that refine polishes |
-| `pipeline` | Refine can be a step in a pipeline (e.g. `autopilot` preset) |
+| `workflow` | Refine can be a step in a workflow (e.g. `autopilot` preset) |
 | `collect` | Save the final approved draft to the knowledge base |
