@@ -13,6 +13,8 @@ node_modules/
 .captures/
 .claude/agent-memory/
 .claude/handoffs/
+.claude/last30days.env
+.claude/settings.local.json
 .superpowers/
 
 # Test snapshots
