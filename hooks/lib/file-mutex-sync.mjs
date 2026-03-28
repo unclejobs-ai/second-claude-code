@@ -18,7 +18,7 @@
  *   });
  */
 
-import { writeFileSync, unlinkSync, existsSync, readFileSync, statSync } from "node:fs";
+import { writeFileSync, unlinkSync, existsSync, mkdirSync, statSync } from "node:fs";
 import { resolve } from "node:path";
 
 const LOCK_SUFFIX = ".lock";
@@ -43,6 +43,13 @@ export function withFileLockSync(filePath, fn, opts = {}) {
   // Spin-acquire
   while (true) {
     try {
+      // Ensure parent directory exists before attempting O_EXCL lock creation.
+      // Without this, writeFileSync fails with ENOENT (not EEXIST) if the
+      // directory hasn't been created yet.
+      const lockDir = resolve(lockPath, "..");
+      if (!existsSync(lockDir)) {
+        try { mkdirSync(lockDir, { recursive: true }); } catch { /* race-safe */ }
+      }
       // O_EXCL — fails if file already exists (atomic create)
       writeFileSync(lockPath, String(process.pid), { flag: "wx" });
       break; // Lock acquired

@@ -84,6 +84,18 @@ function generateMermaid(phases) {
 `;
 }
 
+/**
+ * Escape HTML entities to prevent XSS when interpolating user-controlled values.
+ */
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 function phaseIcon(status) {
   const map = { pass: "✓", warn: "⚠", fail: "✗" };
   return map[status] || "?";
@@ -139,7 +151,7 @@ function generateHTML(data) {
 <body>
   <div class="header">
     <h1>PDCA Cycle #${cycleNumber}</h1>
-    <div class="meta">${topic || "Second Claude Code"} — Generated ${new Date().toISOString().slice(0, 19)}</div>
+    <div class="meta">${escapeHtml(topic || "Second Claude Code")} — Generated ${new Date().toISOString().slice(0, 19)}</div>
   </div>
 
   <div class="grid">
@@ -211,7 +223,7 @@ ${mmd}
         ? `<div class="card">
       <h2>Issues (${issues.length})</h2>
       <ul class="issues-list">
-        ${issues.map((i) => `<li>${i}</li>`).join("\n        ")}
+        ${issues.map((i) => `<li>${escapeHtml(i)}</li>`).join("\n        ")}
       </ul>
     </div>`
         : ""
@@ -221,7 +233,7 @@ ${mmd}
       nextAction
         ? `<div class="card">
       <h2>Next Action</h2>
-      <div class="next-action">${nextAction}</div>
+      <div class="next-action">${escapeHtml(nextAction)}</div>
     </div>`
         : ""
     }
