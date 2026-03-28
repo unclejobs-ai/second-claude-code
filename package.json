@@ -1,0 +1,17 @@
+{
+  "name": "second-claude-code",
+  "version": "0.5.6",
+  "description": "PDCA-native Knowledge Work OS — skills, hooks, and MCP server for Claude Code",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test 'tests/**/*.test.mjs'"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.28.0"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
