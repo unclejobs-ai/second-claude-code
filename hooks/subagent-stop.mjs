@@ -12,8 +12,8 @@
  *   2. Parses the output for verdict and severity markers.
  *   3. Appends the reviewer record to the aggregation file (atomic rename).
  *   4. When all expected reviewers have reported, computes consensus using the
- *      2/3 threshold defined in skills/review/references/consensus-gate.md and
- *      sets the `consensus` field.
+ *      preset-aware threshold defined in skills/review/references/consensus-gate.md
+ *      and sets the `consensus` field.
  *   5. Emits additionalContext so the main agent sees the live aggregation state.
  *
  * Verdict detection rules (aligned with consensus-gate.md):
@@ -37,6 +37,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, sanitize, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -299,16 +300,14 @@ function main() {
     state.reviewers = [];
   }
 
-  const rawExpected =
-    typeof state.expected_reviewers === "number" ? state.expected_reviewers : 3;
-  // Clamp to [2, 10] to prevent trivially-small or unreachably-large reviewer pools.
-  const expected = Math.max(2, Math.min(10, rawExpected));
-
-  const rawThreshold =
-    typeof state.threshold === "number" ? state.threshold : 0.67;
-  // Threshold is also clamped inside computeConsensus; clamp here as well so
-  // the stored value in the aggregation file reflects the effective threshold.
-  const threshold = Math.max(0.5, Math.min(1.0, rawThreshold));
+  const config = resolveReviewAggregationConfig(state);
+  const expected = config.expected_reviewers;
+  const threshold = config.threshold;
+  state.expected_reviewers = expected;
+  state.threshold = threshold;
+  if (config.preset) {
+    state.preset = config.preset;
+  }
 
   // ── Parse the subagent's output ────────────────────────────────────────────
   const text = readSubagentOutput();

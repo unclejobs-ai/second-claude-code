@@ -188,6 +188,50 @@ test("subagent stop computes APPROVED consensus with score gate when all reviewe
   assert.match(output.hookSpecificOutput.additionalContext, /Review complete\. Proceed with the consensus verdict: APPROVED\./);
 });
 
+test("subagent stop requires unanimous approval for quick two-reviewer runs", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    expected_reviewers: 2,
+    threshold: 0.67,
+    preset: "quick",
+    started_reviewers: [
+      {
+        name: "devil-advocate",
+        started_at: "2026-03-28T00:01:00.000Z",
+      },
+      {
+        name: "fact-checker",
+        started_at: "2026-03-28T00:02:00.000Z",
+      },
+    ],
+    reviewers: [
+      makeReviewer({
+        name: "devil-advocate",
+        score: 0.8,
+      }),
+    ],
+  });
+
+  const result = runHook(tempDir, {
+    output: [
+      "Reviewer: fact-checker",
+      "Score: 0.70",
+      "NEEDS IMPROVEMENT",
+    ].join("\n"),
+  });
+
+  const aggregation = readAggregation(tempDir);
+  const output = parseStdout(result);
+
+  assert.equal(aggregation.threshold, 1);
+  assert.equal(aggregation.consensus.verdict, "NEEDS IMPROVEMENT");
+  assert.equal(aggregation.consensus.pass_count, 1);
+  assert.equal(aggregation.consensus.required, 2);
+  assert.ok(Math.abs(aggregation.consensus.average_score - 0.75) < 1e-9);
+  assert.match(output.hookSpecificOutput.additionalContext, /CONSENSUS: NEEDS IMPROVEMENT \(1\/2 pass, required 2 avg_score=0\.75 \[score-gate\]\)/);
+});
+
 test("subagent stop computes MINOR FIXES when score gate passes but warnings remain", () => {
   const tempDir = makeTempDataDir();
 

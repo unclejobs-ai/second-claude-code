@@ -153,6 +153,49 @@ test("compaction postcompact restores snapshot context and deletes the snapshot 
   assert.match(context, /Resume: continue from the current phase/);
 });
 
+test("compaction precompact snapshots workflow-active.json alongside other state", () => {
+  const tempDir = makeTempDataDir();
+
+  writeState(tempDir, "workflow-active.json", {
+    name: "weekly-digest",
+    current_step: 3,
+    total_steps: 5,
+    status: "running",
+  });
+
+  const result = runHook(tempDir, JSON.stringify({ event: "PreCompact" }));
+  const snapshot = JSON.parse(readFileSync(statePath(tempDir, "compaction-snapshot.json"), "utf8"));
+
+  assert.equal(result.status, 0);
+  assert.ok(snapshot.workflow);
+  assert.equal(snapshot.workflow.name, "weekly-digest");
+  assert.equal(snapshot.workflow.current_step, 3);
+  assert.equal(snapshot.workflow.total_steps, 5);
+  assert.equal(snapshot.workflow.status, "running");
+});
+
+test("compaction postcompact restores workflow state from snapshot", () => {
+  const tempDir = makeTempDataDir();
+
+  writeState(tempDir, "compaction-snapshot.json", {
+    workflow: {
+      name: "content-pipeline",
+      current_step: 2,
+      total_steps: 4,
+      status: "running",
+    },
+    captured_at: "2026-03-28T00:00:00.000Z",
+  });
+
+  const result = runHook(tempDir, JSON.stringify({ event: "PostCompact" }));
+  const output = parseStdout(result);
+  const context = output.additionalContext;
+
+  assert.equal(result.status, 0);
+  assert.match(context, /Active workflow: "content-pipeline" \(step 2\/4, status: running\)/);
+  assert.match(context, /Resume: continue from the current phase/);
+});
+
 test("compaction ignores unknown hook events without writing a snapshot", () => {
   const tempDir = makeTempDataDir();
 

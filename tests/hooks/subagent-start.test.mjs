@@ -158,6 +158,36 @@ test("subagent start grows expected reviewer count when more reviewers are dispa
   );
 });
 
+test("subagent start infers the quick preset threshold from the reviewer pair", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    started_at: "2026-03-28T00:00:00.000Z",
+    expected_reviewers: 3,
+    threshold: 0.67,
+    reviewers: [],
+    started_reviewers: [
+      {
+        name: "devil-advocate",
+        started_at: "2026-03-28T00:01:00.000Z",
+      },
+    ],
+  });
+
+  const result = runHook(tempDir, { subagent_name: "fact-checker" });
+  const aggregation = readAggregation(tempDir);
+  const output = parseOutput(result);
+
+  assert.equal(result.status, 0);
+  assert.equal(aggregation.expected_reviewers, 2);
+  assert.equal(aggregation.threshold, 1);
+  assert.equal(aggregation.preset, "quick");
+  assert.match(
+    output.hookSpecificOutput.additionalContext,
+    /\[REVIEW START\] fact-checker started \(2\/2 dispatched\)\./
+  );
+});
+
 test("subagent start identifies reviewers from alternate payload fields", () => {
   const tempDir = makeTempDataDir();
   const result = runHook(tempDir, { agent_name: "deep-reviewer" });

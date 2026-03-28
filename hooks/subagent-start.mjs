@@ -20,6 +20,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -139,10 +140,11 @@ function main() {
     });
   }
 
-  // Update expected_reviewers if more reviewers have started than expected.
-  // This handles the full preset (5 reviewers) without requiring preset detection.
-  if (state.started_reviewers.length > state.expected_reviewers) {
-    state.expected_reviewers = state.started_reviewers.length;
+  const config = resolveReviewAggregationConfig(state, payload);
+  state.expected_reviewers = config.expected_reviewers;
+  state.threshold = config.threshold;
+  if (config.preset) {
+    state.preset = config.preset;
   }
 
   writeJsonAtomic(AGGREGATION_FILE, state);
