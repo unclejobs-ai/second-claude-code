@@ -282,7 +282,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 
 Three ideas drive the system's design:
 
-**Eleven skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of eleven handles it.
+**Twelve skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of twelve handles it.
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. A draft that hasn't passed the consensus gate doesn't reach you.
 
