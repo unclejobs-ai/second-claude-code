@@ -27,6 +27,7 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
+import { generateCycleReport } from "./lib/report-generator.mjs";
 import { isSoulLearning, readSoulState, updateSoulState } from "./lib/soul-observer.mjs";
 import {
   appendRecallEntry,
@@ -726,6 +727,34 @@ function main() {
   const pdcaSummaryBox = buildPdcaSummaryBox(state.pdca);
   if (pdcaSummaryBox) {
     console.error(pdcaSummaryBox);
+  }
+
+  // ── HTML Cycle Report (when PDCA cycle completes act phase) ──────────────
+  if (state.pdca && state.pdca.current_phase === "act") {
+    try {
+      const pdca = state.pdca;
+      const completedPhases = Array.isArray(pdca.completed) ? pdca.completed : [];
+      const phaseStatus = (p) =>
+        completedPhases.includes(p) ? (pdca.check_verdict === "MUST FIX" && p === "check" ? "fail" : "pass") : "warn";
+      const htmlPath = generateCycleReport(DATA_DIR, {
+        cycleNumber: pdca.cycle_count || 1,
+        phases: {
+          plan: phaseStatus("plan"),
+          do: phaseStatus("do"),
+          check: pdca.check_verdict === "MUST FIX" ? "fail" : pdca.check_verdict === "MINOR FIXES" ? "warn" : phaseStatus("check"),
+          act: "pass",
+        },
+        totalTimeMs: pdca.elapsed_ms || 0,
+        issueCount: (pdca.critical_findings || []).length + (pdca.top_improvements || []).length,
+        score: pdca.average_score != null ? Math.round(pdca.average_score * 100) : null,
+        topic: sanitize(pdca.topic || ""),
+        issues: (pdca.critical_findings || []).concat(pdca.top_improvements || []).map(sanitize),
+        nextAction: sanitize(pdca.next_action || ""),
+      });
+      console.error(`[SCC] Cycle report: ${htmlPath}`);
+    } catch {
+      // Non-fatal — report generation must never block session exit.
+    }
   }
 
   const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;

@@ -37,6 +37,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, sanitize, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -289,27 +290,7 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main() {
-  // ── Load current aggregation state ────────────────────────────────────────
-  const state = readJsonSafe(AGGREGATION_FILE);
-  if (!state) {
-    // File vanished between the guard check and now — nothing to do.
-    process.exit(0);
-  }
-
-  if (!Array.isArray(state.reviewers)) {
-    state.reviewers = [];
-  }
-
-  const config = resolveReviewAggregationConfig(state);
-  const expected = config.expected_reviewers;
-  const threshold = config.threshold;
-  state.expected_reviewers = expected;
-  state.threshold = threshold;
-  if (config.preset) {
-    state.preset = config.preset;
-  }
-
-  // ── Parse the subagent's output ────────────────────────────────────────────
+  // ── Parse the subagent's output (before lock, no shared state) ─────────────
   const text = readSubagentOutput();
   if (!text.trim()) {
     // Empty output — subagent produced nothing useful; skip aggregation update.
@@ -318,31 +299,58 @@ function main() {
 
   const record = parseReviewerOutput(text);
 
-  // Avoid duplicate entries for the same named reviewer (last-write wins so
-  // a retried subagent does not inflate the tally).
-  const existingIndex = state.reviewers.findIndex((r) => r.name === record.name);
-  if (existingIndex !== -1) {
-    state.reviewers[existingIndex] = record;
-  } else {
-    state.reviewers.push(record);
+  // ── Locked read-modify-write of aggregation file ──────────────────────────
+  // Multiple reviewer subagents may complete simultaneously. withFileLockSync
+  // ensures the entire read→update→write cycle is atomic across processes.
+  const state = withFileLockSync(AGGREGATION_FILE, () => {
+    const s = readJsonSafe(AGGREGATION_FILE);
+    if (!s) return null;
+
+    if (!Array.isArray(s.reviewers)) {
+      s.reviewers = [];
+    }
+
+    const config = resolveReviewAggregationConfig(s);
+    const expected = config.expected_reviewers;
+    const threshold = config.threshold;
+    s.expected_reviewers = expected;
+    s.threshold = threshold;
+    if (config.preset) {
+      s.preset = config.preset;
+    }
+
+    // Avoid duplicate entries for the same named reviewer (last-write wins).
+    const existingIndex = s.reviewers.findIndex((r) => r.name === record.name);
+    if (existingIndex !== -1) {
+      s.reviewers[existingIndex] = record;
+    } else {
+      s.reviewers.push(record);
+    }
+
+    // Compute consensus when all reviewers have reported.
+    const consensusResult = computeConsensus(s.reviewers, expected, threshold);
+    s.consensus = consensusResult
+      ? {
+          verdict: consensusResult.verdict,
+          pass_count: consensusResult.pass_count,
+          total: consensusResult.total,
+          required: consensusResult.required,
+          average_score: consensusResult.average_score,
+          computed_at: new Date().toISOString(),
+        }
+      : null;
+
+    ensureDir(STATE_DIR);
+    writeJsonAtomic(AGGREGATION_FILE, s);
+    return s;
+  });
+
+  if (!state) {
+    // File vanished between the guard check and now — nothing to do.
+    process.exit(0);
   }
 
-  // ── Compute consensus when all reviewers have reported ────────────────────
-  const consensusResult = computeConsensus(state.reviewers, expected, threshold);
-  state.consensus = consensusResult
-    ? {
-        verdict: consensusResult.verdict,
-        pass_count: consensusResult.pass_count,
-        total: consensusResult.total,
-        required: consensusResult.required,
-        average_score: consensusResult.average_score,
-        computed_at: new Date().toISOString(),
-      }
-    : null;
-
-  // ── Persist updated state ──────────────────────────────────────────────────
-  ensureDir(STATE_DIR);
-  writeJsonAtomic(AGGREGATION_FILE, state);
+  const expected = state.expected_reviewers;
 
   // ── Emit additionalContext for the main agent ──────────────────────────────
   const reported = state.reviewers.length;

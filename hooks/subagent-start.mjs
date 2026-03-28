@@ -20,6 +20,7 @@ import { readFileSync, existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -111,43 +112,47 @@ function main() {
     process.exit(0);
   }
 
-  // ── Ensure aggregation file exists (safety net) ─────────────────────────
-  let state = readJsonSafe(AGGREGATION_FILE);
+  // ── Locked read-modify-write of aggregation file ──────────────────────────
+  // Serialized with subagent-stop to prevent reviewer record loss.
+  const state = withFileLockSync(AGGREGATION_FILE, () => {
+    let s = readJsonSafe(AGGREGATION_FILE);
 
-  if (!state) {
-    // The review skill should create this before dispatch. If it didn't,
-    // create a minimal aggregation file so SubagentStop can still aggregate.
-    ensureDir(STATE_DIR);
-    state = {
-      started_at: new Date().toISOString(),
-      expected_reviewers: 3, // default for content/strategy/code presets
-      threshold: 0.67,
-      reviewers: [],
-      started_reviewers: [],
-    };
-  }
+    if (!s) {
+      // The review skill should create this before dispatch. If it didn't,
+      // create a minimal aggregation file so SubagentStop can still aggregate.
+      ensureDir(STATE_DIR);
+      s = {
+        started_at: new Date().toISOString(),
+        expected_reviewers: 3, // default for content/strategy/code presets
+        threshold: 0.67,
+        reviewers: [],
+        started_reviewers: [],
+      };
+    }
 
-  // ── Record reviewer start time ──────────────────────────────────────────
-  if (!Array.isArray(state.started_reviewers)) {
-    state.started_reviewers = [];
-  }
+    // Record reviewer start time.
+    if (!Array.isArray(s.started_reviewers)) {
+      s.started_reviewers = [];
+    }
 
-  // Avoid duplicate entries on retry.
-  if (!state.started_reviewers.some((r) => r.name === reviewerName)) {
-    state.started_reviewers.push({
-      name: reviewerName,
-      started_at: new Date().toISOString(),
-    });
-  }
+    // Avoid duplicate entries on retry.
+    if (!s.started_reviewers.some((r) => r.name === reviewerName)) {
+      s.started_reviewers.push({
+        name: reviewerName,
+        started_at: new Date().toISOString(),
+      });
+    }
 
-  const config = resolveReviewAggregationConfig(state, payload);
-  state.expected_reviewers = config.expected_reviewers;
-  state.threshold = config.threshold;
-  if (config.preset) {
-    state.preset = config.preset;
-  }
+    const config = resolveReviewAggregationConfig(s, payload);
+    s.expected_reviewers = config.expected_reviewers;
+    s.threshold = config.threshold;
+    if (config.preset) {
+      s.preset = config.preset;
+    }
 
-  writeJsonAtomic(AGGREGATION_FILE, state);
+    writeJsonAtomic(AGGREGATION_FILE, s);
+    return s;
+  });
 
   // ── Emit additionalContext ──────────────────────────────────────────────
   const lines = [];

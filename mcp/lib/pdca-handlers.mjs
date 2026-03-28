@@ -324,6 +324,10 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
         const decision = evaluateCheckToActDecision(state);
         autoGateResult.decision = decision;
 
+        // Persist decision so act_to_exit gate (which requires decision_set) is satisfied,
+        // and subsequent hooks/transitions can read the decision.
+        state.act_decision = decision;
+
         if (decision === "REFINE") {
           state.refine_count = (state.refine_count ?? 0) + 1;
         } else if (decision === "PIVOT") {

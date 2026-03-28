@@ -12,10 +12,10 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-const REPORTS_DIR = ".data/reports";
+const REPORTS_DIR = "reports";
 
 /**
- * @param {string} dataDir - Plugin data directory root
+ * @param {string} dataDir - Plugin data directory (e.g., ".data"). Reports go to dataDir/reports/.
  * @param {object} cycleData
  * @param {number} cycleData.cycleNumber
  * @param {object} cycleData.phases - { plan: "pass"|"warn"|"fail", do: ..., check: ..., act: ... }

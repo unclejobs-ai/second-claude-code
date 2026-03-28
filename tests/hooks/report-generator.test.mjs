@@ -49,7 +49,7 @@ test("generates Mermaid .mmd file alongside HTML", () => {
     topic: "Test",
   });
 
-  const mmdPath = path.join(dir, ".data/reports/cycle-1.mmd");
+  const mmdPath = path.join(dir, "reports/cycle-1.mmd");
   assert.ok(existsSync(mmdPath));
   const mmd = readFileSync(mmdPath, "utf8");
   assert.match(mmd, /flowchart LR/);
@@ -106,7 +106,7 @@ test("omits trend chart when history has fewer than 2 entries", () => {
 
 test("creates .data/reports/ directory if it does not exist", () => {
   const dir = makeTempDir();
-  const reportsDir = path.join(dir, ".data/reports");
+  const reportsDir = path.join(dir, "reports");
   assert.ok(!existsSync(reportsDir));
 
   generateCycleReport(dir, {
