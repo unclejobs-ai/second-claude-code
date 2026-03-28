@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.6-blue)
+![version](https://img.shields.io/badge/version-0.5.7-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -158,7 +158,7 @@ A Critical finding blocks the output regardless of score. The Action Router read
 | **PreCompact** | Before context compression | PDCA state serialization |
 | **PostCompact** | After context compression | PDCA state restoration, mid-cycle resume |
 
-The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound patterns (prompts that request research + writing + review together), then falls back to single-skill patterns. This ordering matters — "research and write" should route to `pdca`, not to `research` alone.
+The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound patterns (prompts that request research + writing + review together), then falls back to single-skill patterns. This ordering matters — "research and write" should route to `pdca`, not to `research` alone. Routing decisions now include **confidence scoring** for observability — corrections are captured as soul observations for long-term learning.
 
 ---
 
@@ -166,14 +166,15 @@ The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound p
 
 A dedicated `pdca-state` MCP server (stdio transport) manages persistent state across the session.
 
-**6 tools:**
+**7 tools:**
 
 | Tool | Purpose |
 |---|---|
 | `get` | Read current PDCA state |
 | `start` | Initialize a new cycle |
-| `transition` | Advance to next phase |
+| `transition` | Advance to next phase (with `auto_gate` evaluation) |
 | `check_gate` | Evaluate gate conditions |
+| `list_runs` | Query PDCA run history |
 | `end` | Complete the cycle |
 | `update_stuck` | Record a stuck/failed cycle |
 
@@ -269,6 +270,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 | `strategy` | Deep + Advocate + Facts | PRDs, SWOTs, strategy docs |
 | `code` | Deep + Facts + Structure | Code review |
 | `security` | Deep + Facts + Structure | Security audit (CWE classification, OWASP Top 10) |
+| `academic` | Deep + Facts + Structure | Academic papers, research outputs, citations |
 | `quick` | Advocate + Facts | Fast validation |
 | `full` | all 5 | Final pre-publish pass |
 
@@ -419,6 +421,18 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 <details>
 <summary><strong>Changelog</strong></summary>
+
+### v0.5.7 — MCP Test Suite, Confidence Scoring, Academic Preset
+
+- **MCP server test suite (72 tests)** — comprehensive coverage for pdca-state-server
+- **`pdca_list_runs` tool** — query PDCA run history from the MCP state server
+- **`auto_gate` on `pdca_transition`** — automatic gate evaluation on phase transitions
+- **Academic review preset** — specialized reviewer configuration for academic papers
+- **Confidence scoring** — routing decisions include confidence scores for observability
+- **Routing correction soul observation** — soul system captures corrections for learning
+- **Benchmark CI** — automated benchmark suite in CI pipeline
+- **P0 fixes** — package.json alignment, audit cleanup, skill count fix, metadata fix, CI MCP coverage, routing guard fix
+- Total tests: 87 → 194
 
 ### v0.5.5 — MMBridge CLI Alignment, Reference Deduplication, Skill Completeness
 

@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.5.6-blue)
+![version](https://img.shields.io/badge/version-0.5.7-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -178,20 +178,21 @@ PDCA 오케스트레이터
 | **PreCompact** | 컨텍스트 압축 전 PDCA 상태 직렬화 |
 | **PostCompact** | 압축 후 상태 복원 — 긴 세션에서도 사이클 연속성을 유지해요 |
 
-UserPromptSubmit 훅이 라우팅을 담당해요. 슬래시 명령어 없이 자연어로 써도 되는 이유가 여기 있어요. "AI 에이전트 알아보고 보고서 써줘"는 PDCA 복합 패턴에 걸려요. "이 초안을 리뷰해"는 단일 스킬 패턴에 걸려요. 오탐 방지를 위해 19개 라우팅 테스트가 있어요.
+UserPromptSubmit 훅이 라우팅을 담당해요. 슬래시 명령어 없이 자연어로 써도 되는 이유가 여기 있어요. "AI 에이전트 알아보고 보고서 써줘"는 PDCA 복합 패턴에 걸려요. "이 초안을 리뷰해"는 단일 스킬 패턴에 걸려요. 오탐 방지를 위해 19개 라우팅 테스트가 있어요. 라우팅 결정에는 **신뢰도 점수(confidence scoring)**가 포함돼요 — 수정 사항은 소울 관찰로 캡처되어 장기 학습에 반영돼요.
 
 ---
 
 ### MCP 상태 레이어
 
-`pdca-state` MCP 서버(stdio 방식)가 세션 간 상태를 관리해요. 6개 도구예요:
+`pdca-state` MCP 서버(stdio 방식)가 세션 간 상태를 관리해요. 7개 도구예요:
 
 | 도구 | 하는 일 |
 |---|---|
 | `get` | 현재 PDCA 상태 조회 |
 | `start` | 새 사이클 시작 |
-| `transition` | 페이즈 전환 (Plan → Do → Check → Act) |
+| `transition` | 페이즈 전환 (`auto_gate` 자동 평가 포함) |
 | `check_gate` | 품질 게이트 판정 |
+| `list_runs` | PDCA 실행 이력 조회 |
 | `end` | 사이클 종료 |
 | `update_stuck` | 막힌 상태 강제 해소 |
 
@@ -348,6 +349,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | `strategy` | 네이티오 + 앱솔 + 폴리곤 | PRD, SWOT, 전략 문서 |
 | `code` | 네이티오 + 폴리곤 + 안농 | 코드 리뷰 |
 | `security` | 네이티오 + 폴리곤 + 안농 | 보안 감사 (CWE 분류, OWASP Top 10) |
+| `academic` | 네이티오 + 폴리곤 + 안농 | 학술 논문, 연구 산출물, 인용 검증 |
 | `quick` | 앱솔 + 폴리곤 | 빠른 검증 |
 | `full` | 5마리 전원 | 퍼블리시 전 최종 검수 |
 
@@ -549,6 +551,18 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 <details>
 <summary><strong>변경 이력</strong></summary>
+
+### v0.5.7 — MCP 테스트 스위트, 신뢰도 점수, 학술 프리셋
+
+- **MCP 서버 테스트 스위트 (72개)** — pdca-state-server 전체 커버리지 (전환, 게이트, 분석, 엣지 케이스)
+- **`pdca_list_runs` 도구** — MCP 상태 서버에서 PDCA 실행 이력 조회
+- **`auto_gate` on `pdca_transition`** — 페이즈 전환 시 자동 게이트 평가
+- **학술 리뷰 프리셋** — 학술 논문 및 연구 산출물 전용 리뷰어 구성
+- **신뢰도 점수(confidence scoring)** — 라우팅 결정에 신뢰도 점수 포함, 관찰성 강화
+- **라우팅 수정 소울 관찰** — 소울 시스템이 라우팅 수정을 캡처하여 장기 학습에 반영
+- **벤치마크 CI** — CI 파이프라인에 자동화된 벤치마크 스위트 추가
+- **P0 수정** — package.json 정렬, 감사 정리, 스킬 카운트 수정, 메타데이터 수정, CI MCP 커버리지, 라우팅 가드 수정
+- 총 테스트: 87 → 194개
 
 ### v0.5.5 — MMBridge CLI 정합성, 참조 파일 정리, 스킬 완성도
 

@@ -3,6 +3,29 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.7] - 2026-03-28
+
+### Added
+- **MCP server test suite (72 tests)** — comprehensive coverage for pdca-state-server including transitions, gates, analytics, and edge cases
+- **`pdca_list_runs` MCP tool** — query PDCA run history from the state server
+- **`auto_gate` on `pdca_transition`** — automatic gate evaluation on phase transitions
+- **Academic review preset** — specialized reviewer configuration for academic papers and research outputs
+- **Confidence scoring** — routing decisions now include confidence scores for observability and correction
+- **Routing correction soul observation** — soul system captures routing corrections for long-term learning
+- **Benchmark CI** — automated benchmark suite in CI pipeline
+
+### Fixed
+- **package.json alignment** — version and metadata fields corrected
+- **Audit cleanup** — resolved outstanding audit findings
+- **Skill count fix** — corrected skill count reporting in session-start
+- **Metadata fix** — aligned metadata across plugin surfaces
+- **CI MCP coverage** — MCP server tests included in CI pipeline
+- **Routing guard fix** — prevented false-positive routing on ambiguous prompts
+
+### Changed
+- Total test count: 87 → 194 (107 new tests including 72 MCP server tests)
+- Version surfaces aligned to `0.5.7` across plugin manifest, READMEs, CLAUDE.md, and CHANGELOG
+
 ## [0.5.6] - 2026-03-25
 
 ### Added
