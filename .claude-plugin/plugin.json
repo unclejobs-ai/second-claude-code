@@ -30,6 +30,12 @@
       "type": "stdio",
       "command": "npx",
       "args": ["@playwright/mcp@0.0.68"]
+    },
+    "mmbridge": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@mmbridge/mcp"],
+      "optional": true
     }
   }
 }

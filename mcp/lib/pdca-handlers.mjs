@@ -63,6 +63,55 @@ function writeJsonAtomic(path, data) {
 }
 
 // ---------------------------------------------------------------------------
+// Stage Contracts (loaded from config/stage-contracts.json)
+// ---------------------------------------------------------------------------
+
+const CONTRACTS_PATH = join(PLUGIN_ROOT, "config", "stage-contracts.json");
+
+/** @type {object|null} Cached stage contracts */
+let _contracts = null;
+
+/**
+ * Load stage contracts. Returns null if file is missing or malformed.
+ * Contracts are cached after first load.
+ */
+function loadContracts() {
+  if (_contracts !== undefined && _contracts !== null) return _contracts;
+  try {
+    _contracts = JSON.parse(readFileSync(CONTRACTS_PATH, "utf8"));
+    return _contracts;
+  } catch {
+    _contracts = null;
+    return null;
+  }
+}
+
+/**
+ * Get the DoD (Definition of Done) for a specific phase and domain.
+ * @param {string} phase - plan, do, check, act
+ * @param {string} [domain="code"] - code, content, analysis, pipeline
+ * @returns {string[]} DoD items, empty array if contracts unavailable
+ */
+function getDoD(phase, domain = "code") {
+  const contracts = loadContracts();
+  if (!contracts?.contracts?.[phase]) return [];
+  const phaseContract = contracts.contracts[phase][domain] || contracts.contracts[phase].code;
+  return phaseContract?.dod || [];
+}
+
+/**
+ * Get the contract for a phase transition, including rollback target.
+ * @param {string} phase
+ * @param {string} [domain="code"]
+ * @returns {{ input_files: string[], output_files: string[], dod: string[], max_retries: number, rollback_target: string|null } | null}
+ */
+function getPhaseContract(phase, domain = "code") {
+  const contracts = loadContracts();
+  if (!contracts?.contracts?.[phase]) return null;
+  return contracts.contracts[phase][domain] || contracts.contracts[phase].code || null;
+}
+
+// ---------------------------------------------------------------------------
 // Domain helpers
 // ---------------------------------------------------------------------------
 
@@ -380,10 +429,26 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
     data: { cycle_count: state.cycle_count },
   });
 
+  // Enrich result with stage contract information when available.
+  const domain = state.domain || "code";
+  const contract = getPhaseContract(target_phase, domain);
+  const dod = getDoD(target_phase, domain);
+
   if (autoGateResult) {
     return {
       ...state,
-      auto_gate_result: autoGateResult,
+      auto_gate_result: {
+        ...autoGateResult,
+        contract: contract ? { dod, rollback_target: contract.rollback_target, max_retries: contract.max_retries } : null,
+      },
+    };
+  }
+
+  // Even without auto_gate, include contract info for the new phase.
+  if (contract) {
+    return {
+      ...state,
+      current_contract: { phase: target_phase, domain, dod, rollback_target: contract.rollback_target },
     };
   }
 
