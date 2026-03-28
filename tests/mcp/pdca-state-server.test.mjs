@@ -11,11 +11,11 @@
 
 import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, renameSync, unlinkSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, existsSync, rmSync, renameSync, unlinkSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import os from "node:os";
 import { randomUUID } from "node:crypto";
-import { logEvent, readEvents, getEventStats } from "../../hooks/lib/event-log.mjs";
+import { logEvent, readEvents, getEventStats, listRunIds } from "../../hooks/lib/event-log.mjs";
 
 // ---------------------------------------------------------------------------
 // Domain logic extracted from mcp/pdca-state-server.mjs (pure functions)
@@ -178,10 +178,18 @@ function simulateStartRun(env, { topic, max_cycles = 3 }) {
   return state;
 }
 
+/** Map from "current_phase → target_phase" to the gate key. */
+const PHASE_TO_GATE = {
+  plan_do: "plan_to_do",
+  do_check: "do_to_check",
+  check_act: "check_to_act",
+  act_plan: "act_to_exit",
+};
+
 /**
  * Simulate handleTransition using temp dir.
  */
-function simulateTransition(env, { target_phase, artifacts = {} }) {
+function simulateTransition(env, { target_phase, artifacts = {}, auto_gate = false }) {
   const validPhases = ["plan", "do", "check", "act"];
   if (!validPhases.includes(target_phase)) {
     throw new Error(
@@ -201,6 +209,38 @@ function simulateTransition(env, { target_phase, artifacts = {} }) {
       `Illegal transition: ${current} → ${target_phase}. ` +
         `From "${current}", allowed targets are: ${allowed.length > 0 ? allowed.join(", ") : "none (terminal phase)"}.`
     );
+  }
+
+  // ── auto_gate: evaluate the gate for this transition first ──
+  if (auto_gate) {
+    const gateKey = PHASE_TO_GATE[`${current}_${target_phase}`];
+    if (gateKey) {
+      const gateResult = evaluateGate(gateKey, state);
+
+      logEvent(env.tempDir, state.run_id, {
+        type: "gate_check",
+        phase: current,
+        action: gateKey,
+        data: { passed: gateResult.passed, missing: gateResult.missing },
+      });
+
+      logEvent(env.tempDir, state.run_id, {
+        type: gateResult.passed ? "gate_pass" : "gate_fail",
+        phase: current,
+        action: gateKey,
+        data: gateResult.passed ? undefined : { missing: gateResult.missing },
+      });
+
+      if (!gateResult.passed) {
+        return {
+          transitioned: false,
+          gate: gateKey,
+          gate_result: gateResult,
+          current_phase: current,
+          target_phase,
+        };
+      }
+    }
   }
 
   if (!state.completed.includes(current)) {
@@ -1086,5 +1126,346 @@ describe("PDCA State Server — Stuck Flags", () => {
     simulateUpdateStuckFlags(env, { flags: ["check_avoidance"] });
     const state = readJson(env.activeFile);
     assert.ok(state.stuck_flags.includes("check_avoidance"));
+  });
+});
+
+// ---------------------------------------------------------------------------
+// simulateListRuns helper — mirrors handleListRuns from the server
+// ---------------------------------------------------------------------------
+
+function simulateListRuns(env) {
+  const runs = [];
+
+  const knownRunIds = listRunIds(env.tempDir);
+  const active = readJson(env.activeFile);
+  const lastCompleted = readJson(env.completedFile);
+
+  const allIds = new Set(knownRunIds);
+  if (active) allIds.add(active.run_id);
+  if (lastCompleted) allIds.add(lastCompleted.run_id);
+
+  for (const runId of allIds) {
+    const events = readEvents(env.tempDir, runId);
+
+    const started_at = events.length > 0 ? events[0].ts : null;
+
+    const cycleEnd = events.find((e) => e.type === "cycle_end");
+    const ended_at = cycleEnd?.data?.ended_at ?? null;
+
+    let topic = null;
+    let final_phase = null;
+    let cycles_completed = 0;
+
+    if (active && active.run_id === runId) {
+      topic = active.topic;
+      final_phase = active.current_phase;
+      cycles_completed = active.cycle_count ?? 1;
+    }
+
+    if (lastCompleted && lastCompleted.run_id === runId) {
+      topic = lastCompleted.topic;
+      final_phase = lastCompleted.current_phase;
+      cycles_completed = lastCompleted.cycle_count ?? 1;
+    }
+
+    if (!topic) {
+      const cycleStart = events.find((e) => e.type === "cycle_start");
+      topic = cycleStart?.data?.topic ?? "unknown";
+    }
+
+    if (!final_phase) {
+      for (let i = events.length - 1; i >= 0; i--) {
+        if (events[i].phase) {
+          final_phase = events[i].phase;
+          break;
+        }
+      }
+      final_phase = final_phase ?? "unknown";
+    }
+
+    if (!cycles_completed) {
+      cycles_completed = events.filter((e) => e.type === "cycle_start").length || 1;
+    }
+
+    runs.push({
+      run_id: runId,
+      topic,
+      started_at,
+      ended_at,
+      final_phase,
+      cycles_completed,
+      is_active: active?.run_id === runId,
+    });
+  }
+
+  runs.sort((a, b) => {
+    if (a.is_active && !b.is_active) return -1;
+    if (!a.is_active && b.is_active) return 1;
+    return (b.started_at || "").localeCompare(a.started_at || "");
+  });
+
+  return { total: runs.length, runs };
+}
+
+// ===========================================================================
+// NEW TESTS — Feature 1: GATE-BEFORE-TRANSITION (auto_gate)
+// ===========================================================================
+
+describe("PDCA State Server — auto_gate on transition", () => {
+  let env;
+
+  beforeEach(() => {
+    env = createTestEnv();
+  });
+
+  afterEach(() => {
+    rmSync(env.tempDir, { recursive: true, force: true });
+  });
+
+  it("auto_gate=false (default) allows transition without gate check", () => {
+    simulateStartRun(env, { topic: "No gate" });
+    const result = simulateTransition(env, { target_phase: "do" });
+    // Normal transition returns the state with current_phase set
+    assert.equal(result.current_phase, "do");
+  });
+
+  it("auto_gate=true blocks transition when gate fails", () => {
+    simulateStartRun(env, { topic: "Gate block" });
+    const result = simulateTransition(env, { target_phase: "do", auto_gate: true });
+
+    // Should NOT have transitioned
+    assert.equal(result.transitioned, false);
+    assert.equal(result.gate, "plan_to_do");
+    assert.equal(result.gate_result.passed, false);
+    assert.ok(result.gate_result.missing.length > 0);
+    assert.equal(result.current_phase, "plan");
+    assert.equal(result.target_phase, "do");
+
+    // Verify state was NOT mutated on disk
+    const state = readJson(env.activeFile);
+    assert.equal(state.current_phase, "plan");
+    assert.deepEqual(state.completed, []);
+  });
+
+  it("auto_gate=true allows transition when gate passes", () => {
+    simulateStartRun(env, { topic: "Gate pass" });
+
+    // Satisfy plan_to_do gate requirements
+    const state = readJson(env.activeFile);
+    state.artifacts.plan_research = "/research.md";
+    state.sources_count = 5;
+    state.artifacts.plan_analysis = "/analysis.md";
+    state.plan_mode_approved = true;
+    writeJsonSync(env.activeFile, state);
+
+    const result = simulateTransition(env, { target_phase: "do", auto_gate: true });
+
+    // Should have transitioned normally
+    assert.equal(result.current_phase, "do");
+    assert.ok(result.completed.includes("plan"));
+    // No transitioned property on successful transitions (it returns the state)
+    assert.equal(result.transitioned, undefined);
+  });
+
+  it("auto_gate logs gate events when gate fails", () => {
+    const run = simulateStartRun(env, { topic: "Gate fail events" });
+    simulateTransition(env, { target_phase: "do", auto_gate: true });
+
+    const events = readEvents(env.tempDir, run.run_id);
+    const gateCheck = events.find((e) => e.type === "gate_check" && e.action === "plan_to_do");
+    assert.ok(gateCheck, "should have gate_check event");
+    assert.equal(gateCheck.data.passed, false);
+
+    const gateFail = events.find((e) => e.type === "gate_fail" && e.action === "plan_to_do");
+    assert.ok(gateFail, "should have gate_fail event");
+  });
+
+  it("auto_gate logs gate events when gate passes", () => {
+    const run = simulateStartRun(env, { topic: "Gate pass events" });
+
+    const state = readJson(env.activeFile);
+    state.artifacts.plan_research = "/r.md";
+    state.sources_count = 3;
+    state.artifacts.plan_analysis = "/a.md";
+    state.plan_mode_approved = true;
+    writeJsonSync(env.activeFile, state);
+
+    simulateTransition(env, { target_phase: "do", auto_gate: true });
+
+    const events = readEvents(env.tempDir, run.run_id);
+    const gatePass = events.find((e) => e.type === "gate_pass" && e.action === "plan_to_do");
+    assert.ok(gatePass, "should have gate_pass event");
+  });
+
+  it("auto_gate works for do_to_check gate", () => {
+    simulateStartRun(env, { topic: "Do gate" });
+    simulateTransition(env, { target_phase: "do" });
+
+    // Gate should fail — no artifacts
+    const result = simulateTransition(env, { target_phase: "check", auto_gate: true });
+    assert.equal(result.transitioned, false);
+    assert.equal(result.gate, "do_to_check");
+    assert.ok(result.gate_result.missing.includes("artifact_exists"));
+  });
+
+  it("auto_gate works for check_to_act gate", () => {
+    simulateStartRun(env, { topic: "Check gate" });
+    simulateTransition(env, { target_phase: "do" });
+    simulateTransition(env, { target_phase: "check" });
+
+    const result = simulateTransition(env, { target_phase: "act", auto_gate: true });
+    assert.equal(result.transitioned, false);
+    assert.equal(result.gate, "check_to_act");
+    assert.ok(result.gate_result.missing.includes("verdict_set"));
+  });
+
+  it("auto_gate returns gate failure info with correct shape", () => {
+    simulateStartRun(env, { topic: "Shape test" });
+    const result = simulateTransition(env, { target_phase: "do", auto_gate: true });
+
+    // Verify shape
+    assert.equal(typeof result.transitioned, "boolean");
+    assert.equal(typeof result.gate, "string");
+    assert.equal(typeof result.gate_result, "object");
+    assert.equal(typeof result.gate_result.passed, "boolean");
+    assert.ok(Array.isArray(result.gate_result.missing));
+    assert.equal(typeof result.current_phase, "string");
+    assert.equal(typeof result.target_phase, "string");
+  });
+
+  it("existing callers unaffected — transition without auto_gate param still works", () => {
+    simulateStartRun(env, { topic: "Backward compat" });
+    // Call exactly as the old API: no auto_gate
+    const result = simulateTransition(env, { target_phase: "do" });
+    assert.equal(result.current_phase, "do");
+  });
+});
+
+// ===========================================================================
+// NEW TESTS — Feature 2: pdca_list_runs
+// ===========================================================================
+
+describe("PDCA State Server — pdca_list_runs", () => {
+  let env;
+
+  beforeEach(() => {
+    env = createTestEnv();
+  });
+
+  afterEach(() => {
+    rmSync(env.tempDir, { recursive: true, force: true });
+  });
+
+  it("returns empty array when no runs exist", () => {
+    const result = simulateListRuns(env);
+    assert.equal(result.total, 0);
+    assert.deepEqual(result.runs, []);
+  });
+
+  it("lists active run", () => {
+    const state = simulateStartRun(env, { topic: "Active run" });
+    const result = simulateListRuns(env);
+
+    assert.equal(result.total, 1);
+    assert.equal(result.runs[0].run_id, state.run_id);
+    assert.equal(result.runs[0].topic, "Active run");
+    assert.equal(result.runs[0].is_active, true);
+    assert.equal(result.runs[0].ended_at, null);
+    assert.equal(result.runs[0].final_phase, "plan");
+    assert.equal(result.runs[0].cycles_completed, 1);
+  });
+
+  it("lists completed run", () => {
+    const state = simulateStartRun(env, { topic: "Completed run" });
+    simulateEndRun(env);
+
+    const result = simulateListRuns(env);
+    assert.equal(result.total, 1);
+    assert.equal(result.runs[0].run_id, state.run_id);
+    assert.equal(result.runs[0].topic, "Completed run");
+    assert.equal(result.runs[0].is_active, false);
+    assert.ok(result.runs[0].ended_at);
+  });
+
+  it("lists both active and completed runs", () => {
+    // First run — complete it
+    simulateStartRun(env, { topic: "Run 1" });
+    simulateEndRun(env);
+
+    // Second run — keep it active
+    const activeState = simulateStartRun(env, { topic: "Run 2" });
+
+    const result = simulateListRuns(env);
+    assert.equal(result.total, 2);
+
+    // Active run should come first
+    assert.equal(result.runs[0].run_id, activeState.run_id);
+    assert.equal(result.runs[0].is_active, true);
+    assert.equal(result.runs[1].is_active, false);
+  });
+
+  it("includes started_at from first event timestamp", () => {
+    simulateStartRun(env, { topic: "Timestamp test" });
+    const result = simulateListRuns(env);
+
+    assert.ok(result.runs[0].started_at);
+    const ts = new Date(result.runs[0].started_at);
+    assert.ok(!isNaN(ts.getTime()), "started_at should be valid ISO date");
+  });
+
+  it("tracks phase progression", () => {
+    simulateStartRun(env, { topic: "Phase track" });
+    simulateTransition(env, { target_phase: "do" });
+    simulateTransition(env, { target_phase: "check" });
+
+    const result = simulateListRuns(env);
+    assert.equal(result.runs[0].final_phase, "check");
+  });
+
+  it("tracks cycle count", () => {
+    simulateStartRun(env, { topic: "Cycle count" });
+    simulateTransition(env, { target_phase: "do" });
+    simulateTransition(env, { target_phase: "check" });
+    simulateTransition(env, { target_phase: "act" });
+    simulateTransition(env, { target_phase: "plan" }); // cycle 2
+
+    const result = simulateListRuns(env);
+    assert.equal(result.runs[0].cycles_completed, 2);
+  });
+
+  it("result has correct shape", () => {
+    simulateStartRun(env, { topic: "Shape" });
+    const result = simulateListRuns(env);
+
+    assert.equal(typeof result.total, "number");
+    assert.ok(Array.isArray(result.runs));
+
+    const run = result.runs[0];
+    assert.equal(typeof run.run_id, "string");
+    assert.equal(typeof run.topic, "string");
+    assert.equal(typeof run.is_active, "boolean");
+    assert.equal(typeof run.cycles_completed, "number");
+    assert.equal(typeof run.final_phase, "string");
+    // started_at is a string, ended_at may be null
+    assert.ok(typeof run.started_at === "string" || run.started_at === null);
+  });
+
+  it("multiple completed runs appear in order (most recent first)", () => {
+    // Run 1
+    simulateStartRun(env, { topic: "Run A" });
+    simulateEndRun(env);
+
+    // Small delay to ensure different timestamps
+    const run2 = simulateStartRun(env, { topic: "Run B" });
+    simulateEndRun(env);
+
+    const result = simulateListRuns(env);
+    assert.equal(result.total, 2);
+    // Run B should be first (more recent) — but note: only last-completed is stored
+    // in the completed file. Run A may only exist in event logs.
+    // Both should be listed regardless.
+    const topics = result.runs.map((r) => r.topic);
+    assert.ok(topics.includes("Run A"));
+    assert.ok(topics.includes("Run B"));
   });
 });

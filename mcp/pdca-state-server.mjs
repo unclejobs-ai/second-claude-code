@@ -254,8 +254,16 @@ function handleStartRun({ topic, max_cycles = 3 }) {
   return state;
 }
 
+/** Map from "current_phase → target_phase" to the gate key. */
+const PHASE_TO_GATE = {
+  plan_do: "plan_to_do",
+  do_check: "do_to_check",
+  check_act: "check_to_act",
+  act_plan: "act_to_exit",
+};
+
 /** pdca_transition */
-function handleTransition({ target_phase, artifacts = {} }) {
+function handleTransition({ target_phase, artifacts = {}, auto_gate = false }) {
   const validPhases = ["plan", "do", "check", "act"];
   if (!validPhases.includes(target_phase)) {
     throw new Error(
@@ -275,6 +283,38 @@ function handleTransition({ target_phase, artifacts = {} }) {
       `Illegal transition: ${current} → ${target_phase}. ` +
         `From "${current}", allowed targets are: ${allowed.length > 0 ? allowed.join(", ") : "none (terminal phase)"}.`
     );
+  }
+
+  // ── auto_gate: evaluate the gate for this transition first ──
+  if (auto_gate) {
+    const gateKey = PHASE_TO_GATE[`${current}_${target_phase}`];
+    if (gateKey) {
+      const gateResult = evaluateGate(gateKey, state);
+
+      logEvent(DATA_DIR, state.run_id, {
+        type: "gate_check",
+        phase: current,
+        action: gateKey,
+        data: { passed: gateResult.passed, missing: gateResult.missing },
+      });
+
+      logEvent(DATA_DIR, state.run_id, {
+        type: gateResult.passed ? "gate_pass" : "gate_fail",
+        phase: current,
+        action: gateKey,
+        data: gateResult.passed ? undefined : { missing: gateResult.missing },
+      });
+
+      if (!gateResult.passed) {
+        return {
+          transitioned: false,
+          gate: gateKey,
+          gate_result: gateResult,
+          current_phase: current,
+          target_phase,
+        };
+      }
+    }
   }
 
   // Mark current phase as completed
@@ -435,6 +475,97 @@ function handleUpdateStuckFlags({ flags }) {
   }
 
   return state;
+}
+
+/** pdca_list_runs */
+function handleListRuns() {
+  const runs = [];
+
+  // Gather all run IDs from event logs
+  const knownRunIds = listRunIds(DATA_DIR);
+
+  // Active run (if any)
+  const active = readJson(ACTIVE_FILE);
+
+  // Last completed run
+  const lastCompleted = readJson(COMPLETED_FILE);
+
+  // Build a set of all run IDs to process
+  const allIds = new Set(knownRunIds);
+  if (active) allIds.add(active.run_id);
+  if (lastCompleted) allIds.add(lastCompleted.run_id);
+
+  for (const runId of allIds) {
+    const events = readEvents(DATA_DIR, runId);
+
+    // Determine started_at from first event
+    const started_at = events.length > 0 ? events[0].ts : null;
+
+    // Determine ended_at from cycle_end event
+    const cycleEnd = events.find((e) => e.type === "cycle_end");
+    const ended_at = cycleEnd?.data?.ended_at ?? null;
+
+    // Determine topic, final_phase, cycles_completed
+    let topic = null;
+    let final_phase = null;
+    let cycles_completed = 0;
+
+    // Check if this is the active run
+    if (active && active.run_id === runId) {
+      topic = active.topic;
+      final_phase = active.current_phase;
+      cycles_completed = active.cycle_count ?? 1;
+    }
+
+    // Check if this is the last completed run
+    if (lastCompleted && lastCompleted.run_id === runId) {
+      topic = lastCompleted.topic;
+      final_phase = lastCompleted.current_phase;
+      cycles_completed = lastCompleted.cycle_count ?? 1;
+    }
+
+    // Fall back to event data for topic
+    if (!topic) {
+      const cycleStart = events.find((e) => e.type === "cycle_start");
+      topic = cycleStart?.data?.topic ?? "unknown";
+    }
+
+    // Fall back to event data for final_phase
+    if (!final_phase) {
+      // Last phase_start or phase_end event gives best info
+      for (let i = events.length - 1; i >= 0; i--) {
+        if (events[i].phase) {
+          final_phase = events[i].phase;
+          break;
+        }
+      }
+      final_phase = final_phase ?? "unknown";
+    }
+
+    // Fall back: count cycle_start events for cycles_completed
+    if (!cycles_completed) {
+      cycles_completed = events.filter((e) => e.type === "cycle_start").length || 1;
+    }
+
+    runs.push({
+      run_id: runId,
+      topic,
+      started_at,
+      ended_at,
+      final_phase,
+      cycles_completed,
+      is_active: active?.run_id === runId,
+    });
+  }
+
+  // Sort: active first, then most recently started
+  runs.sort((a, b) => {
+    if (a.is_active && !b.is_active) return -1;
+    if (!a.is_active && b.is_active) return 1;
+    return (b.started_at || "").localeCompare(a.started_at || "");
+  });
+
+  return { total: runs.length, runs };
 }
 
 // ---------------------------------------------------------------------------
@@ -727,7 +858,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "pdca_transition",
     description:
-      "Transitions the active PDCA run to the next phase. Validates that the transition is legal (plan→do→check→act). Merges any provided artifacts into the state.",
+      "Transitions the active PDCA run to the next phase. Validates that the transition is legal (plan→do→check→act). Merges any provided artifacts into the state. When auto_gate=true, the gate for the current phase is evaluated first; if it fails, the transition is blocked and the gate failure is returned instead.",
     inputSchema: {
       type: "object",
       properties: {
@@ -741,6 +872,11 @@ const TOOL_DEFINITIONS = [
           description:
             "Optional artifact paths to merge into state.artifacts. Keys must match artifact field names (plan_research, plan_analysis, do, check_report, act_final).",
           additionalProperties: { type: "string" },
+        },
+        auto_gate: {
+          type: "boolean",
+          description:
+            "When true, automatically evaluate the gate for the current→target transition before proceeding. If the gate fails, the transition is blocked and the gate result is returned. Default: false.",
         },
       },
       required: ["target_phase"],
@@ -788,6 +924,16 @@ const TOOL_DEFINITIONS = [
         },
       },
       required: ["flags"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "pdca_list_runs",
+    description:
+      "Lists all historical PDCA runs by scanning event logs and state files. Returns an array of run summaries including the active run if one exists. Each entry has: run_id, topic, started_at, ended_at, final_phase, cycles_completed, is_active.",
+    inputSchema: {
+      type: "object",
+      properties: {},
       additionalProperties: false,
     },
   },
@@ -1097,6 +1243,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "pdca_update_stuck_flags":
         result = handleUpdateStuckFlags(input);
+        break;
+      case "pdca_list_runs":
+        result = handleListRuns();
         break;
       case "pdca_get_events":
         result = handleGetEvents(input);

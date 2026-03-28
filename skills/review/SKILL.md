@@ -33,6 +33,7 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 | `strategy` | deep-reviewer + devil-advocate + fact-checker | — |
 | `code` | deep-reviewer + fact-checker + structure-analyst | — |
 | `security` | deep-reviewer + fact-checker + structure-analyst | `mmbridge security` (via `--external`) |
+| `academic` | deep-reviewer + fact-checker + structure-analyst + devil-advocate | — |
 | `quick` | devil-advocate + fact-checker | — |
 | `full` | all 5 reviewers | — |
 
@@ -68,6 +69,35 @@ mmbridge security counts as 1 additional voter (same as `--external` for other p
 - Without mmbridge: 2/3 pass (3 internal reviewers)
 - With mmbridge: 2/4 pass (3 internal + 1 mmbridge)
 
+## Academic Preset
+
+The `academic` preset activates academic-focused review for research papers, theses, dissertations, and scholarly articles.
+
+### Internal reviewers (academic mode)
+
+- **deep-reviewer** (opus): Argument structure review — thesis clarity, logical flow between sections, claim-evidence alignment, and overall coherence of the academic argument
+- **fact-checker** (sonnet): Citation format validation — verifies references conform to the specified style (APA, MLA, or Chicago; default APA), checks for missing citations, inconsistent formatting, and broken cross-references
+- **structure-analyst** (haiku): Literature gap analysis — identifies missing key references in the field, undercited foundational works, and areas where additional literature support would strengthen the argument
+- **devil-advocate** (sonnet): Methodology critique and evidence quality assessment — challenges research design choices, statistical validity, sample size adequacy, potential biases, and evaluates the strength and relevance of evidence presented
+
+### Option passthrough
+
+- `--citation-style`: `/scc:review --preset academic --citation-style APA` (default: `APA`, accepts `APA`, `MLA`, `Chicago`)
+
+### Academic review focus areas
+
+1. **Citation format validation** — Ensures all in-text citations and bibliography entries conform to the specified style guide (APA 7th, MLA 9th, or Chicago 17th edition). Flags missing DOIs, incorrect author formatting, and inconsistent date formats.
+2. **Methodology critique** — Evaluates research design appropriateness, sample selection, data collection methods, analytical frameworks, and reproducibility. Flags unsupported methodological claims.
+3. **Literature gap analysis** — Identifies missing seminal works, undercited subfields, over-reliance on a single source, and areas where the literature review fails to establish the research context.
+4. **Argument structure review** — Assesses thesis statement clarity, logical progression from introduction through discussion, whether conclusions follow from presented evidence, and internal consistency across sections.
+5. **Evidence quality assessment** — Rates evidence on relevance, recency, authority, and sufficiency. Flags anecdotal evidence presented as empirical, outdated sources in fast-moving fields, and claims lacking adequate support.
+
+### Consensus gate
+
+Uses 4 reviewers (same gate logic as other presets):
+- 3/4 pass (4 internal reviewers)
+- With `--external`: 3/5 pass (4 internal + 1 external)
+
 ## Critic Output Format
 
 Every reviewer MUST structure their output according to `references/critic-schema.md`. Each review must include:
@@ -87,6 +117,7 @@ Unstructured prose output is not accepted. Each reviewer emits the `## Critic Ou
 
 **Vote-count gate** (secondary gate, used when score-based gate passes):
 - 3-reviewer presets (`content`, `strategy`, `code`): pass with 2/3 approvals
+- 4-reviewer preset (`academic`): pass with 3/4 approvals
 - 2-reviewer preset (`quick`): pass only with 2/2 unanimous approval
 - 5-reviewer preset (`full`): pass with 3/5 approvals
 
@@ -151,7 +182,7 @@ When mmbridge is detected (see `references/mmbridge-integration.md`) and the rev
 
 - After the Review Report is generated
 - Only for `code` and `security` presets (diff annotation is most useful for code)
-- Do not offer for `content`, `strategy`, or `quick` presets
+- Do not offer for `content`, `strategy`, `academic`, or `quick` presets
 
 ### Command
 
@@ -172,13 +203,14 @@ This is a **display enhancement only** — it does not affect the consensus gate
 
 | Flag | Values | Default | Description |
 |------|--------|---------|-------------|
-| `--preset` | `content\|strategy\|code\|security\|quick\|full` | `content` | |
+| `--preset` | `content\|strategy\|code\|security\|academic\|quick\|full` | `content` | |
 | `--threshold` | number | `0.67` | |
 | `--strict` | flag | off | |
 | `--external` | flag | off | |
 | `--team-review` | flag | off | |
 | `--scope` | `auth\|api\|infra\|all` | `all` | Security audit scope (security preset only) |
 | `--compliance` | `GDPR,SOC2,HIPAA,PCI-DSS` | — | Compliance frameworks (security preset only) |
+| `--citation-style` | `APA\|MLA\|Chicago` | `APA` | Citation style guide (academic preset only) |
 
 ## Team Review Workflow
 

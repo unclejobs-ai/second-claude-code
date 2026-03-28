@@ -13,6 +13,7 @@
 
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { detectSignals, appendObservation, isSoulLearning } from "./lib/soul-observer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -21,7 +22,69 @@ const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 
 const raw = process.env.USER_PROMPT || "";
 
-if (!raw || raw.startsWith("/")) {
+if (!raw) {
+  process.exit(0);
+}
+
+// ──────────────────────────────────────────────
+// Routing state persistence helpers
+// Stores the last auto-routed skill to a file so we can compare on next invocation.
+// ──────────────────────────────────────────────
+const ROUTE_STATE_FILE = join(DATA_DIR, "soul", "last-auto-route.json");
+
+function readLastAutoRoute() {
+  try {
+    if (!existsSync(ROUTE_STATE_FILE)) return null;
+    const data = JSON.parse(readFileSync(ROUTE_STATE_FILE, "utf8"));
+    // Only consider routes from the last 5 minutes (same session context)
+    if (data.ts && Date.now() - new Date(data.ts).getTime() < 5 * 60 * 1000) {
+      return data.skill || null;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLastAutoRoute(skill) {
+  try {
+    const dir = join(DATA_DIR, "soul");
+    if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+    writeFileSync(ROUTE_STATE_FILE, JSON.stringify({ skill, ts: new Date().toISOString() }), "utf8");
+  } catch {
+    // Non-fatal
+  }
+}
+
+// ──────────────────────────────────────────────
+// Slash-command override detection → Soul observation
+// When a user manually invokes a skill via slash command (e.g. /second-claude-code:write),
+// check if the auto-router had previously suggested a different route. If they differ,
+// record a routing_correction observation so the soul learning pipeline can adapt
+// future routing decisions.
+// ──────────────────────────────────────────────
+if (raw.startsWith("/")) {
+  try {
+    const lastAutoRoute = readLastAutoRoute();
+    if (lastAutoRoute && isSoulLearning(DATA_DIR)) {
+      // Extract the skill name from the slash command, e.g. "/second-claude-code:write ..." → "second-claude-code:write"
+      const slashMatch = raw.match(/^\/([\w:.-]+)/);
+      const manualSkill = slashMatch ? slashMatch[1] : "";
+
+      if (manualSkill && manualSkill !== lastAutoRoute) {
+        appendObservation(DATA_DIR, {
+          signal: "routing_correction",
+          category: "correction",
+          confidence: 0.95,
+          raw_context: `User manually invoked /${manualSkill} after auto-router suggested ${lastAutoRoute}`,
+          auto_routed: lastAutoRoute,
+          user_chosen: manualSkill,
+        });
+      }
+    }
+  } catch {
+    // Non-fatal — observation errors must never affect the user experience.
+  }
   process.exit(0);
 }
 
@@ -30,6 +93,87 @@ const lower = input.toLowerCase();
 
 function matchesAny(value, patterns) {
   return patterns.some((pattern) => pattern.test(value));
+}
+
+/**
+ * Compute a confidence score (0.0–1.0) for a route based on how many of its
+ * patterns match, how specific they are, and where in the prompt they appear.
+ *
+ * Scoring factors:
+ *   - Base score for first match: 0.5
+ *   - Each additional match:     +0.15 (diminishing)
+ *   - Multi-word pattern bonus:  +0.1  per multi-word match (capped contribution)
+ *   - Position bonus:            +0.1  if earliest match is in first 100 chars
+ *
+ * The result is clamped to [0.0, 1.0].
+ */
+function computeRouteConfidence(value, patterns) {
+  let matchCount = 0;
+  let multiWordMatches = 0;
+  let earliestPos = Infinity;
+
+  for (const p of patterns) {
+    const pos = value.indexOf(p);
+    if (pos !== -1) {
+      matchCount++;
+      if (pos < earliestPos) earliestPos = pos;
+      // A pattern with a space is multi-word → more specific
+      if (p.includes(" ")) multiWordMatches++;
+    }
+  }
+
+  if (matchCount === 0) return { confidence: 0, matchCount: 0, earliestPos: Infinity };
+
+  let score = 0.5;                                         // base for first match
+  score += Math.min((matchCount - 1) * 0.15, 0.3);        // additional matches
+  score += Math.min(multiWordMatches * 0.1, 0.2);         // specificity bonus
+  if (earliestPos < 100) score += 0.1;                     // position bonus
+
+  const confidence = Math.min(Math.max(score, 0), 1);
+  return { confidence: Math.round(confidence * 100) / 100, matchCount, earliestPos };
+}
+
+/**
+ * Compute a confidence score for PDCA compound patterns.
+ * Compound patterns are already multi-word and specific, so base is higher.
+ *
+ *   - Base for a compound match: 0.7
+ *   - Compound pattern with 3+ words: +0.1
+ *   - Position bonus (first 100 chars): +0.1
+ *   - Multiple compound matches: +0.1
+ */
+function computePdcaConfidence(value, compounds) {
+  let matchCount = 0;
+  let earliestPos = Infinity;
+  let bestEntry = null;
+  let hasLongPattern = false;
+
+  for (const entry of compounds) {
+    const pos = value.indexOf(entry.pattern);
+    if (pos !== -1) {
+      matchCount++;
+      if (pos < earliestPos) {
+        earliestPos = pos;
+        bestEntry = entry;
+      }
+      if (entry.pattern.split(/\s+/).length >= 3) hasLongPattern = true;
+    }
+  }
+
+  if (matchCount === 0) return { confidence: 0, matchCount: 0, entry: null };
+
+  let score = 0.7;
+  if (hasLongPattern) score += 0.1;
+  if (earliestPos < 100) score += 0.1;
+  if (matchCount > 1) score += 0.1;
+
+  const confidence = Math.min(Math.max(score, 0), 1);
+  return { confidence: Math.round(confidence * 100) / 100, matchCount, entry: bestEntry };
+}
+
+/** Format a confidence annotation for medium-confidence routing. */
+function confidenceNote(confidence) {
+  return ` (confidence: ${Math.round(confidence * 100)}%)`;
 }
 
 const ENGINEERING_PATTERNS = [
@@ -174,21 +318,15 @@ const pdcaCompound = [
   { pattern: "comprehensive report", phases: "full" },
 ];
 
-let pdcaMatch = null;
-let pdcaPos = Infinity;
+let pdcaResult = { confidence: 0, matchCount: 0, entry: null };
 
 // Allow PDCA routing if: no engineering terms, OR knowledge intent precedes engineering terms
 if (!engineeringPrompt || knowledgeIntentBeforeEngineering(lower)) {
-  for (const entry of pdcaCompound) {
-    const pos = lower.indexOf(entry.pattern);
-    if (pos !== -1 && pos < pdcaPos) {
-      pdcaPos = pos;
-      pdcaMatch = entry;
-    }
-  }
+  pdcaResult = computePdcaConfidence(lower, pdcaCompound);
 }
 
-if (pdcaMatch) {
+if (pdcaResult.confidence >= 0.5 && pdcaResult.entry) {
+  const pdcaMatch = pdcaResult.entry;
   const phaseHint =
     pdcaMatch.phases === "full"
       ? "full PDCA cycle (Plan→Do→Check→Act)"
@@ -198,9 +336,15 @@ if (pdcaMatch) {
           ? "Plan→Do phases"
           : pdcaMatch.phases;
 
-  const ctx = `[ROUTING] This is a knowledge-work request requiring ${phaseHint}. ` +
+  const confNote = pdcaResult.confidence < 0.8
+    ? confidenceNote(pdcaResult.confidence)
+    : "";
+
+  const ctx = `[ROUTING] This is a knowledge-work request requiring ${phaseHint}${confNote}. ` +
     `You MUST invoke the Skill tool with skill: "second-claude-code:pdca" BEFORE any other response. ` +
     `This takes priority over brainstorming, debugging, or other development skills.`;
+
+  writeLastAutoRoute("second-claude-code:pdca");
 
   console.log(JSON.stringify({
     hookSpecificOutput: {
@@ -290,7 +434,7 @@ const routes = [
 ];
 
 let bestMatch = null;
-let bestPos = Infinity;
+let bestConfidence = 0;
 
 const knowledgeLeadsEngineering = knowledgeIntentBeforeEngineering(lower);
 
@@ -315,12 +459,10 @@ for (const route of routes) {
     }
   }
 
-  for (const p of route.patterns) {
-    const pos = lower.indexOf(p);
-    if (pos !== -1 && pos < bestPos) {
-      bestPos = pos;
-      bestMatch = route;
-    }
+  const result = computeRouteConfidence(lower, route.patterns);
+  if (result.confidence >= 0.5 && result.confidence > bestConfidence) {
+    bestConfidence = result.confidence;
+    bestMatch = route;
   }
 }
 
@@ -366,9 +508,14 @@ No match? → Proceed normally.
 const shouldInjectGuide = input.trim().length > 10;
 
 if (bestMatch) {
-  const routing = `[ROUTING] This is a knowledge-work request (${bestMatch.label}). ` +
+  const confNote = bestConfidence < 0.8
+    ? confidenceNote(bestConfidence)
+    : "";
+  const routing = `[ROUTING] This is a knowledge-work request (${bestMatch.label})${confNote}. ` +
     `You MUST invoke the Skill tool with skill: "${bestMatch.skill}" BEFORE any other response. ` +
     `This is a content/research task — use second-claude-code, not development skills like brainstorming or TDD.`;
+
+  writeLastAutoRoute(bestMatch.skill);
 
   console.log(JSON.stringify({
     hookSpecificOutput: {

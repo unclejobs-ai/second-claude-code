@@ -48,6 +48,9 @@ jobs:
             }
           done
 
+      - name: Benchmark suite regression
+        run: node --test tests/benchmarks/loop-suites.test.mjs
+
       - name: Verify skill docs
         run: |
           for d in skills/*/; do
