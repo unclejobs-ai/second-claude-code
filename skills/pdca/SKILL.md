@@ -4,6 +4,18 @@ description: "Use when running a PDCA cycle across research, production, review,
 effort: high
 ---
 
+## Iron Law
+
+> **No skipping. Always proceed P→D→C→A in order.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # PDCA — Knowledge Work Cycle Orchestrator
 
 Meta-skill that runs the Plan → Do → Check → Act cycle.

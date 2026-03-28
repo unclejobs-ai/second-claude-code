@@ -41,7 +41,7 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 # Verify all skills have SKILL.md
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
 
-# Run full test suite (194 tests including 72 MCP server tests)
+# Run full test suite (219 tests including 72 MCP server tests)
 npm test
 ```
 

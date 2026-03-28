@@ -1,0 +1,118 @@
+{
+  "$schema": "Stage contracts for PDCA phase transitions. Each phase defines domain-specific I/O requirements.",
+  "version": "0.6.0",
+  "contracts": {
+    "plan": {
+      "code": {
+        "input_files": [],
+        "output_files": ["plan.md"],
+        "dod": [
+          "Requirements decomposed into testable tasks",
+          "Complexity estimate per task provided",
+          "Previous cycle insights reviewed (if not first cycle)"
+        ],
+        "max_retries": 2,
+        "rollback_target": null
+      },
+      "content": {
+        "input_files": [],
+        "output_files": ["plan.md"],
+        "dod": [
+          "Target audience defined",
+          "Content outline with section estimates",
+          "Previous cycle insights reviewed (if not first cycle)"
+        ],
+        "max_retries": 2,
+        "rollback_target": null
+      }
+    },
+    "do": {
+      "code": {
+        "input_files": ["plan.md"],
+        "output_files": ["do.md"],
+        "dod": [
+          "Code compiles/parses without errors",
+          "New code has corresponding tests",
+          "No new lint warnings introduced"
+        ],
+        "max_retries": 2,
+        "rollback_target": "plan"
+      },
+      "content": {
+        "input_files": ["plan.md"],
+        "output_files": ["do.md"],
+        "dod": [
+          "Draft covers plan.md requirements",
+          "Readability appropriate for target audience",
+          "Word count within ±10% of target"
+        ],
+        "max_retries": 2,
+        "rollback_target": "plan"
+      }
+    },
+    "check": {
+      "code": {
+        "input_files": ["plan.md", "do.md"],
+        "output_files": ["check.md"],
+        "dod": [
+          "Multi-model review consensus > 7/10 (if mmbridge installed)",
+          "Zero critical/high severity issues",
+          "mmbridge gate passes (if installed, skip otherwise)"
+        ],
+        "max_retries": 1,
+        "rollback_target": "do"
+      },
+      "content": {
+        "input_files": ["plan.md", "do.md"],
+        "output_files": ["check.md"],
+        "dod": [
+          "Content reviewed for accuracy and completeness",
+          "Style and tone consistent with target audience",
+          "No placeholder or template text remains"
+        ],
+        "max_retries": 1,
+        "rollback_target": "do"
+      }
+    },
+    "act": {
+      "code": {
+        "input_files": ["plan.md", "do.md", "check.md"],
+        "output_files": ["act.md", "metrics.json"],
+        "dod": [
+          "All existing tests pass",
+          "Cycle insight recorded",
+          "Next cycle input defined"
+        ],
+        "max_retries": 1,
+        "rollback_target": "check"
+      },
+      "content": {
+        "input_files": ["plan.md", "do.md", "check.md"],
+        "output_files": ["act.md", "metrics.json"],
+        "dod": [
+          "All review feedback addressed",
+          "Cycle insight recorded",
+          "Next cycle input defined"
+        ],
+        "max_retries": 1,
+        "rollback_target": "check"
+      }
+    }
+  },
+  "decisions": {
+    "proceed": {
+      "description": "Quality criteria met. Advance to next phase.",
+      "condition": "All DoD items satisfied, no critical issues"
+    },
+    "refine": {
+      "description": "Same direction, quality improvement needed. Re-run current phase.",
+      "condition": "Some DoD items warn-level, no critical issues, improvement possible",
+      "max_consecutive": 3
+    },
+    "pivot": {
+      "description": "Direction change needed. Roll back to plan.",
+      "condition": "Critical issues found, fundamental design problem",
+      "max_total": 2
+    }
+  }
+}

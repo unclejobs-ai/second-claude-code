@@ -4,6 +4,18 @@ description: "Use when chaining multiple /scc commands into a reusable workflow"
 effort: medium
 ---
 
+## Iron Law
+
+> **Validate the manual workflow before automating.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Workflow
 
 Create, save, and run reusable multi-step workflows where each step passes files to the next. Workflows support runtime parameterization so a single definition serves multiple topics and contexts. Treat each workflow run as a **skill-attached task** that can later be scheduled, resumed, or routed through background infrastructure.

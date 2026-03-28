@@ -236,7 +236,10 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
   const total = reviewers.length;
   // Clamp threshold to a safe range to prevent trivially easy or impossible gates.
   const clampedThreshold = Math.max(0.5, Math.min(1.0, threshold));
-  const required = Math.ceil(clampedThreshold * total);
+  // Math.round (not ceil) so 0.67 * 3 = 2 (2/3 majority), not 3 (unanimity).
+  // ceil made 3-reviewer presets require 3/3 and 5-reviewer presets require 4/5,
+  // contradicting the documented 2/3 and 3/5 thresholds.
+  const required = Math.round(clampedThreshold * total);
   const pass_count = reviewers.filter((r) => r.is_pass).length;
   const any_critical = reviewers.some((r) => r.critical_count > 0);
 
@@ -254,11 +257,16 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
     verdict = "MUST FIX";
   } else if (average_score !== null) {
     // Score-based path: scores are available from schema-compliant reviewers.
-    if (average_score >= 0.7) {
+    // Both score AND vote-count must pass — high average alone cannot override
+    // a majority-reject outcome.
+    if (average_score >= 0.7 && pass_count >= required) {
       const has_major_findings = reviewers.some(
         (r) => r.warning_count > 0 || r.verdict === "MINOR FIXES"
       );
       verdict = has_major_findings ? "MINOR FIXES" : "APPROVED";
+    } else if (average_score >= 0.7 && pass_count < required) {
+      // High score but not enough votes — trust the votes.
+      verdict = "NEEDS IMPROVEMENT";
     } else {
       verdict = "NEEDS IMPROVEMENT";
     }

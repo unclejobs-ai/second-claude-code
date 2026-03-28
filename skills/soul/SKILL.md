@@ -4,6 +4,18 @@ description: "Use when observing user patterns and synthesizing a persistent ide
 effort: high
 ---
 
+## Iron Law
+
+> **Observation is not judgment. Record patterns only.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Soul
 
 Build and maintain a persistent user identity profile from behavioral signals observed across sessions. Every claim in SOUL.md must be evidence-backed. Contradictions become conditional rules, not averages.

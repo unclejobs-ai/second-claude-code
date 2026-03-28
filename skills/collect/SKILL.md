@@ -4,6 +4,18 @@ description: "Use when collecting URLs, notes, files, or excerpts into structure
 effort: low
 ---
 
+## Iron Law
+
+> **Collected knowledge must always be classified.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Collect
 
 Collect a source, reduce it, connect it to existing knowledge, and store it in a PARA-shaped knowledge base.

@@ -4,6 +4,18 @@ description: "Use when iteratively improving a draft until it meets a review tar
 effort: medium
 ---
 
+## Iron Law
+
+> **A fix without a review is not a fix.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Refine
 
 Run review-fix cycles until a draft meets a target score or verdict, with resumable state on disk.

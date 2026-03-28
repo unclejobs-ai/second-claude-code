@@ -4,7 +4,7 @@
  * SessionStart Hook — Second Claude Knowledge Work OS
  *
  * Injects core context on session startup:
- * - 12-command overview + routing rules
+ * - 13-command overview + routing rules
  * - Active loop/refine/workflow/PDCA state restoration
  * - Available environment capabilities
  */
@@ -123,11 +123,12 @@ function main() {
   lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
   lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
+  lines.push("| `/second-claude-code:translate` | Soul-aware EN↔KO translation with style and format control |");
   lines.push("| `/second-claude-code:batch` | Parallel decomposition for large homogeneous tasks |");
   lines.push("| `/second-claude-code:soul` | Persistent identity profile synthesis and adaptation |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul.");
+  lines.push("Or use individual skills: research, write, analyze, review, refine, loop, collect, workflow, discover, translate, batch, soul.");
   lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

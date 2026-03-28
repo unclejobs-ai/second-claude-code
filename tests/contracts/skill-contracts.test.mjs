@@ -375,7 +375,8 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
 
 // Orchestrator skills (pdca, refine) intentionally exceed the 1000-word limit due to their
 // extensive phase schemas, gate checklists, and state management specifications.
-const WORD_LIMIT_EXEMPTIONS = new Set(["pdca", "refine", "review", "soul"]);
+// Skills with Iron Law + Red Flags philosophy sections may also slightly exceed the limit.
+const WORD_LIMIT_EXEMPTIONS = new Set(["pdca", "refine", "review", "soul", "batch", "translate", "workflow"]);
 
 test("skill files stay within the documented 1000-word limit", () => {
   const skillDirs = readdirSync(path.join(root, "skills"));

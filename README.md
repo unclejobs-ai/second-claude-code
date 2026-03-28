@@ -166,7 +166,9 @@ The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound p
 
 A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 6 handler modules in `mcp/lib/`) manages persistent state across the session.
 
-**7 tools:**
+**21 tools** across PDCA state, soul, project memory, daemon control, and session recall surfaces.
+
+**Core PDCA tools:**
 
 | Tool | Purpose |
 |---|---|

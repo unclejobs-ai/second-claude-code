@@ -44,9 +44,10 @@ const SNAPSHOT_PATH = join(STATE_DIR, "compaction-snapshot.json");
 function buildSnapshot() {
   const pdca = readJsonSafe(join(STATE_DIR, "pdca-active.json"));
   const loop = readJsonSafe(join(STATE_DIR, "loop-active.json"));
+  const workflow = readJsonSafe(join(STATE_DIR, "workflow-active.json"));
   const pipeline = readJsonSafe(join(STATE_DIR, "pipeline-active.json"));
 
-  if (!pdca && !loop && !pipeline) return null;
+  if (!pdca && !loop && !workflow && !pipeline) return null;
 
   const snapshot = {};
 
@@ -74,6 +75,15 @@ function buildSnapshot() {
       status: sanitize(loop.status || "running"),
       best_score: Number(loop.best_score) || 0,
       scores: Array.isArray(loop.scores) ? loop.scores.map((s) => Number(s) || 0) : [],
+    };
+  }
+
+  if (workflow) {
+    snapshot.workflow = {
+      name: sanitize(workflow.name),
+      current_step: Number(workflow.current_step) || 0,
+      total_steps: Number(workflow.total_steps) || 0,
+      status: sanitize(workflow.status),
     };
   }
 
@@ -148,6 +158,13 @@ function formatRestorationContext(snapshot) {
     const { name, current_step, total_steps, status } = snapshot.pipeline;
     lines.push(
       `Active pipeline: "${name}" (step ${current_step}/${total_steps}, status: ${status})`
+    );
+  }
+
+  if (snapshot.workflow) {
+    const { name, current_step, total_steps, status } = snapshot.workflow;
+    lines.push(
+      `Active workflow: "${name}" (step ${current_step}/${total_steps}, status: ${status})`
     );
   }
 

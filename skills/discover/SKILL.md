@@ -4,6 +4,18 @@ description: "Use when the current skills cannot handle a task and new skills ar
 effort: low
 ---
 
+## Iron Law
+
+> **Check existing tools before installing new ones.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Discover
 
 Find existing skills first, then search external marketplaces only when needed and safe. Discovery is **registry-first**: prefer the official/local/verified registry path before broader community search.

@@ -4,6 +4,18 @@ description: "Use when producing newsletters, articles, reports, shorts, or soci
 effort: high
 ---
 
+## Iron Law
+
+> **Never publish content without research and review.**
+
+## Red Flags
+
+- "I can write tests later" → STOP. Write them now.
+- "This change is too small to review" → STOP. Small bugs become P0 incidents.
+- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
+- "This is good enough" → STOP. Check the checklist.
+- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+
 # Write
 
 Produce content with automatic research and review unless the caller explicitly skips those steps.
