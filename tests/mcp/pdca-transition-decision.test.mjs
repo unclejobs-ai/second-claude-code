@@ -134,3 +134,49 @@ test("check->act auto_gate returns PIVOT and increments pivot_count when critica
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test("check->act auto_gate forces PROCEED when refine_count has reached the cap", async () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-pdca-decision-"));
+
+  try {
+    const handlers = await prepareCheckPhase(tempDir, {
+      warning_count: 2,
+      top_improvements: ["Tighten opening", "Add source callout"],
+      refine_count: 3,
+      critical_findings: [],
+    });
+
+    const result = handlers.handleTransition({ target_phase: "act", auto_gate: true });
+
+    assert.equal(result.current_phase, "act");
+    assert.equal(result.auto_gate_result.decision, "PROCEED");
+    assert.equal(result.refine_count, 3);
+    assert.equal(result.pivot_count, 0);
+  } finally {
+    delete process.env.CLAUDE_PLUGIN_DATA;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("check->act auto_gate forces PROCEED when pivot_count has reached the cap", async () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-pdca-decision-"));
+
+  try {
+    const handlers = await prepareCheckPhase(tempDir, {
+      check_verdict: "MUST FIX",
+      warning_count: 1,
+      critical_findings: ["Broken evidence chain"],
+      pivot_count: 2,
+    });
+
+    const result = handlers.handleTransition({ target_phase: "act", auto_gate: true });
+
+    assert.equal(result.current_phase, "act");
+    assert.equal(result.auto_gate_result.decision, "PROCEED");
+    assert.equal(result.refine_count, 0);
+    assert.equal(result.pivot_count, 2);
+  } finally {
+    delete process.env.CLAUDE_PLUGIN_DATA;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
