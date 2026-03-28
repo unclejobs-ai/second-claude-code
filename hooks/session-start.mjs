@@ -109,7 +109,7 @@ function main() {
   lines.push("");
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
-  lines.push("12 commands for all knowledge work:");
+  lines.push("13 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");

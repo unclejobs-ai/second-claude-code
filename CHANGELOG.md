@@ -3,6 +3,18 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.5.8] - 2026-03-28
+
+### Added
+- **`translate` skill** — bidirectional EN↔KO translation with `--style` (formal/casual/technical), `--format` (preserve/plain/markdown), glossary support, and soul-aware tone adaptation
+- **`walnut.manifest.yaml`** — structured manifest for walnut integration
+
+### Changed
+- **MCP server modularization** — `pdca-state-server.mjs` refactored from 1311→553 lines; 6 handler modules extracted to `mcp/lib/` for maintainability
+- **Translate routing patterns** — auto-router updated with translate skill trigger patterns (EN+KR)
+- Skills: 12 → 13 (added translate), total tests: 194
+- Version surfaces aligned to `0.5.8` across plugin manifest, READMEs, CLAUDE.md, and CHANGELOG
+
 ## [0.5.7] - 2026-03-28
 
 ### Added

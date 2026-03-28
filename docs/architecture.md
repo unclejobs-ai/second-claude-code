@@ -71,7 +71,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state, playwright (optional)
-├── skills/                       # 12 skills (SKILL.md each)
+├── skills/                       # 13 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)

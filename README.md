@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.7-blue)
+![version](https://img.shields.io/badge/version-0.5.8-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -34,7 +34,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-12 commands for all knowledge work:
+13 commands for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -164,7 +164,7 @@ The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound p
 
 ### MCP State Layer
 
-A dedicated `pdca-state` MCP server (stdio transport) manages persistent state across the session.
+A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 6 handler modules in `mcp/lib/`) manages persistent state across the session.
 
 **7 tools:**
 
@@ -214,9 +214,10 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Chain skills into a reusable workflow | `workflow` | Custom multi-step automation |
 | Find and install new capabilities | `discover` | Skill discovery and installation |
 | Let the system learn your preferences | `soul` | Adaptive personalization across sessions |
+| Translate between English and Korean | `translate` | Soul-aware EN↔KO translation with style and format control |
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
 
-Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, etc. ~130 trigger patterns across English and Korean.
+Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:translate`, etc. ~130 trigger patterns across English and Korean.
 
 ### Karpathy-Style Loop for Maintainers
 
@@ -284,7 +285,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 
 Three ideas drive the system's design:
 
-**Twelve skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of twelve handles it.
+**Thirteen skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of thirteen handles it.
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. A draft that hasn't passed the consensus gate doesn't reach you.
 
