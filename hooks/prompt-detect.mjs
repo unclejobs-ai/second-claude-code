@@ -73,6 +73,65 @@ const WORKFLOW_KNOWLEDGE_PATTERNS = [
 const engineeringPrompt = matchesAny(lower, ENGINEERING_PATTERNS);
 const knowledgeWorkflowPrompt = matchesAny(lower, WORKFLOW_KNOWLEDGE_PATTERNS);
 
+/**
+ * Find the earliest match position for an array of patterns in a string.
+ * Returns Infinity if no pattern matches.
+ */
+function earliestMatchPos(value, patterns) {
+  let earliest = Infinity;
+  for (const p of patterns) {
+    const m = typeof p === "string" ? value.indexOf(p) : value.search(p);
+    if (m !== -1 && m < earliest) earliest = m;
+  }
+  return earliest;
+}
+
+// PDCA / knowledge-work keywords that signal primary intent
+const KNOWLEDGE_INTENT_PATTERNS = [
+  /\bresearch\b/, /\binvestigate\b/, /\blook up\b/, /\bsearch about\b/,
+  /\banalyze\b/, /\banalysis\b/, /\breview this\b/, /\breview my\b/, /\breview the\b/,
+  /\bwrite a report\b/, /\bwrite an article\b/, /\bwrite about\b/, /\bdraft a\b/,
+  /\bimprove this\b/, /\brefine this\b/, /\biterate on\b/, /\bpolish this\b/,
+  /\bswot\b/, /\brice analysis\b/, /\bokr\b/, /\bprd\b/, /\blean canvas\b/,
+  /\bnewsletter\b/, /\barticle about\b/, /\bcard news\b/,
+  /조사/, /리서치/, /찾아봐/, /알아봐/, /분석/, /리뷰/, /검토/,
+  /뉴스레터/, /보고서/, /아티클/, /전략/, /개선/, /다듬/,
+];
+
+// Strong engineering patterns — these indicate actual engineering work and should
+// NOT be overridden by a preceding knowledge keyword. "debug the auth flow" is
+// engineering even if "analyze" appears before it.
+const STRONG_ENGINEERING_PATTERNS = [
+  /\bauth flow\b/,
+  /\bstack trace\b/,
+  /\bcypress\b/,
+  /\bpostgres\b/,
+  /\bdebug\b/,
+  /\bbug\b/,
+  /\bcompile\b/,
+  /\bendpoint\b/,
+  /(?:^|[\s(])[\w./-]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|go|rs|java)\b/,
+];
+
+/**
+ * Determine if the primary intent is knowledge work despite engineering terms.
+ * True when:
+ * 1. A knowledge keyword appears BEFORE the first engineering term, AND
+ * 2. No strong engineering pattern is present anywhere in the prompt.
+ *
+ * e.g. "research React performance" → knowledge intent (React is weak/subject)
+ * e.g. "analyze our failing auth flow" → engineering (auth flow is strong)
+ */
+function knowledgeIntentBeforeEngineering(value) {
+  // If any strong engineering pattern is present, never override the guard
+  if (matchesAny(value, STRONG_ENGINEERING_PATTERNS)) return false;
+
+  const engPos = earliestMatchPos(value, ENGINEERING_PATTERNS);
+  if (engPos === Infinity) return false; // no engineering term → irrelevant
+  const kwPos = earliestMatchPos(value, KNOWLEDGE_INTENT_PATTERNS);
+  return kwPos < engPos;
+}
+
 // ──────────────────────────────────────────────
 // Layer 0: Soul observation (silent — no routing effect)
 // ──────────────────────────────────────────────
@@ -118,7 +177,8 @@ const pdcaCompound = [
 let pdcaMatch = null;
 let pdcaPos = Infinity;
 
-if (!engineeringPrompt) {
+// Allow PDCA routing if: no engineering terms, OR knowledge intent precedes engineering terms
+if (!engineeringPrompt || knowledgeIntentBeforeEngineering(lower)) {
   for (const entry of pdcaCompound) {
     const pos = lower.indexOf(entry.pattern);
     if (pos !== -1 && pos < pdcaPos) {
@@ -232,8 +292,12 @@ const routes = [
 let bestMatch = null;
 let bestPos = Infinity;
 
+const knowledgeLeadsEngineering = knowledgeIntentBeforeEngineering(lower);
+
 for (const route of routes) {
-  if (engineeringPrompt) {
+  // Only block knowledge routes for engineering if engineering is truly the primary intent
+  // (i.e., engineering term appears before any knowledge keyword)
+  if (engineeringPrompt && !knowledgeLeadsEngineering) {
     const blockedForEngineering = [
       "research",
       "review",

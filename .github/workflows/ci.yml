@@ -32,6 +32,7 @@ jobs:
           tests/integration/*.test.mjs
           tests/runtime/*.test.mjs
           tests/skill-tests/*.test.mjs
+          tests/mcp/*.test.mjs
 
       - name: Validate plugin manifests
         run: >
