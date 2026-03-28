@@ -360,6 +360,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
     "tests/hooks/",
     "skills/pdca/",
     "skills/soul/",
+    "skills/translate/",
   ];
 
   for (const file of files) {

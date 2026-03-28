@@ -368,6 +368,7 @@ const ko = {
   collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해"],
   workflow: ["파이프라인", "자동화", "워크플로우"],
   discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
+  translate: ["번역", "번역해", "영어로", "한국어로", "영문으로", "국문으로", "번역해줘"],
 };
 
 const routes = [
@@ -431,6 +432,11 @@ const routes = [
     skill: "second-claude-code:discover",
     label: "discover",
   },
+  {
+    patterns: [...ko.translate, "translate", "translate this", "translate to english", "translate to korean", "in english", "in korean"],
+    skill: "second-claude-code:translate",
+    label: "translate",
+  },
 ];
 
 let bestMatch = null;
@@ -450,6 +456,7 @@ for (const route of routes) {
       "refine",
       "collect",
       "discover",
+      "translate",
     ];
     if (blockedForEngineering.includes(route.label)) continue;
     if (route.label === "workflow") {
@@ -482,6 +489,7 @@ const genericGuide = `<skill-check>
 - 저장/캡처/메모/수집/clip → second-claude-code:collect
 - 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:workflow
 - 스킬 찾기/discover → second-claude-code:discover
+- 번역/translate/영어로/한국어로 → second-claude-code:translate
 - 복합요청 (조사+작성/리뷰+개선) → second-claude-code:pdca
 
 **Development (superpowers — use for coding/engineering tasks):**

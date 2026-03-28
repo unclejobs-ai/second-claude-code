@@ -1,0 +1,19 @@
+# walnut.world marketplace listing
+# Spec: https://walnut.world/manifest
+
+# Required
+name: "Second Claude Code"
+description: "PDCA Knowledge Work OS — Research, Write, Review, Refine in one automated cycle. Type one prompt and 17 Pokemon-themed agents run the full knowledge-work cycle: researchers crawl 20+ sources, a writer drafts 3,000 words, five specialized reviewers tear it apart, and a refiner polishes the output. 12 skills, 8 hooks, 2 MCP servers. Plan → Do → Check → Act with hard quality gates between every phase. No duct tape between plugins."
+tags: [plugin, knowledge-work, pdca, research, writing, review, automation, productivity, agents, workflow]
+author: "unclejobs-ai"
+
+# Category — one of: tool, skill, plugin, mcp, capsule, site, game, data
+category: "plugin"
+
+# URLs
+url: "https://github.com/unclejobs-ai/second-claude-code"
+repo: "https://github.com/unclejobs-ai/second-claude-code"
+
+# Metadata
+version: "0.5.7"
+license: "MIT"
