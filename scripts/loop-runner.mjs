@@ -19,6 +19,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const DEFAULT_SHELL = process.env.SHELL || "/bin/zsh";
 const execFileAsync = promisify(execFile);
+const ESTIMATED_COST_PER_1K_TOKENS_USD = Number(
+  process.env.LOOP_ESTIMATED_COST_PER_1K_TOKENS_USD || 0.01
+);
 const TARGET_PATTERNS = [
   /^skills\/[^/]+\/SKILL\.md$/,
   /^agents\/[^/]+\.md$/,
@@ -307,6 +310,54 @@ export function selectEliteCandidates(candidates, maxCount = 2) {
     .slice(0, maxCount);
 }
 
+export function median(values) {
+  if (!Array.isArray(values) || values.length === 0) return null;
+
+  const sorted = values
+    .map((value) => Number(value))
+    .filter((value) => Number.isFinite(value))
+    .sort((left, right) => left - right);
+
+  if (sorted.length === 0) return null;
+
+  const middle = Math.floor(sorted.length / 2);
+  if (sorted.length % 2 === 0) {
+    return Number(((sorted[middle - 1] + sorted[middle]) / 2).toFixed(4));
+  }
+  return sorted[middle];
+}
+
+export function medianAbsoluteDeviation(values) {
+  const center = median(values);
+  if (center === null) return null;
+
+  const deviations = values
+    .map((value) => Math.abs(Number(value) - center))
+    .filter((value) => Number.isFinite(value));
+
+  return median(deviations);
+}
+
+export function calculateConfidence(scores) {
+  if (!Array.isArray(scores) || scores.length < 3) return null;
+
+  const numericScores = scores
+    .map((score) => Number(score))
+    .filter((score) => Number.isFinite(score));
+  if (numericScores.length < 3) return null;
+
+  const baseline = numericScores[0];
+  const bestScore = Math.max(...numericScores);
+  const bestImprovement = Math.abs(bestScore - baseline);
+  const mad = medianAbsoluteDeviation(numericScores);
+  const value = mad === null || mad === 0
+    ? (bestImprovement > 0 ? Number.MAX_SAFE_INTEGER : 0)
+    : Number((bestImprovement / mad).toFixed(2));
+  const level = value >= 2 ? "strong" : value >= 1 ? "marginal" : "noise";
+
+  return { value, level };
+}
+
 function ensureGitIdentity(cwd) {
   const email = tryGit(cwd, ["config", "--get", "user.email"]);
   const name = tryGit(cwd, ["config", "--get", "user.name"]);
@@ -503,16 +554,21 @@ async function evaluateCase(caseDef, context, artifactDir) {
     );
     const score = parseEvaluatorOutput(output);
     writeFileSync(join(captureDir, `${caseDef.id}.log`), output, "utf8");
+    const estimatedTokens = estimateTokens(caseDef.prompt, caseDef.review_preset, command, output);
 
     if (score === null || Number.isNaN(score)) {
-      return { score: 0, failure: "critic-output" };
+      return { score: 0, failure: "critic-output", estimated_tokens: estimatedTokens };
     }
 
-    return { score, failure: null };
+    return { score, failure: null, estimated_tokens: estimatedTokens };
   } catch (error) {
     const text = [error.stdout, error.stderr, error.message].filter(Boolean).join("\n");
     writeFileSync(join(captureDir, `${caseDef.id}.log`), text, "utf8");
-    return { score: 0, failure: "critic-output" };
+    return {
+      score: 0,
+      failure: "critic-output",
+      estimated_tokens: estimateTokens(caseDef.prompt, caseDef.review_preset, command, text),
+    };
   }
 }
 
@@ -530,6 +586,7 @@ async function evaluateCandidate(suite, candidate, artifactDir) {
   }
 
   const scoreMap = new Map();
+  let estimatedTokens = 0;
   for (const caseDef of suite.cases) {
     const evaluated = await evaluateCase(caseDef, {
       candidate_id: candidate.candidate_id,
@@ -539,6 +596,7 @@ async function evaluateCandidate(suite, candidate, artifactDir) {
       hardGateFailures.push(evaluated.failure);
     }
     scoreMap.set(caseDef.id, evaluated.score);
+    estimatedTokens += Number(evaluated.estimated_tokens || 0);
   }
 
   const averageScore = hardGateFailures.length > 0
@@ -551,6 +609,7 @@ async function evaluateCandidate(suite, candidate, artifactDir) {
     average_score: averageScore,
     hard_gate_failed: hardGateFailures.length > 0,
     hard_gate_failures: [...new Set(hardGateFailures)],
+    estimated_tokens: estimatedTokens,
   };
 }
 
@@ -565,7 +624,21 @@ function summarizeRunState(state) {
     branch: state.branch,
     artifact_dir: state.artifact_dir,
     winner: state.winner,
+    confidence: state.confidence,
+    elapsed_ms: state.elapsed_ms,
+    estimated_tokens: state.estimated_tokens,
+    estimated_cost_usd: state.estimated_cost_usd,
   };
+}
+
+function estimateTokens(...parts) {
+  const text = parts.filter(Boolean).join("\n");
+  if (!text) return 0;
+  return Math.max(1, Math.ceil(text.length / 4));
+}
+
+function estimateCostUsd(tokens) {
+  return Number((((Number(tokens) || 0) / 1000) * ESTIMATED_COST_PER_1K_TOKENS_USD).toFixed(6));
 }
 
 function scoreChecks(filePath, checks) {
@@ -679,6 +752,8 @@ async function runLoop(root, suiteName, options) {
   const maxGenerations = Number(options["max-generations"] || suite.budget.max_generations || 1);
   const maxCandidates = Number(options.budget || suite.budget.max_candidates || 3);
   const parallel = Number(options.parallel || suite.budget.parallel || 1);
+  const costLimit = options["cost-limit"] === undefined ? null : Number(options["cost-limit"]);
+  const timeLimitMs = options["time-limit"] === undefined ? null : Number(options["time-limit"]) * 1000;
 
   if (!Number.isInteger(maxGenerations) || maxGenerations < 1) {
     throw new Error("max-generations must be a positive integer");
@@ -689,14 +764,22 @@ async function runLoop(root, suiteName, options) {
   if (!Number.isInteger(parallel) || parallel < 1) {
     throw new Error("parallel must be at least 1");
   }
+  if (costLimit !== null && (!Number.isFinite(costLimit) || costLimit < 0)) {
+    throw new Error("cost-limit must be a non-negative number");
+  }
+  if (timeLimitMs !== null && (!Number.isFinite(timeLimitMs) || timeLimitMs < 0)) {
+    throw new Error("time-limit must be a non-negative number of seconds");
+  }
 
   ensureDir(artifactDir);
   ensureDir(worktreesRoot);
 
   createWorktree(root, "HEAD", branch, runWorktree);
+  const startedAt = Date.now();
 
   const leaderboard = [];
   const scoreHistory = [];
+  let estimatedTokens = 0;
 
   let bestCandidate = {
     candidate_id: "baseline",
@@ -708,6 +791,7 @@ async function runLoop(root, suiteName, options) {
     targets,
   };
   bestCandidate = await evaluateCandidate(suite, bestCandidate, artifactDir);
+  estimatedTokens += Number(bestCandidate.estimated_tokens || 0);
   leaderboard.push(bestCandidate);
   scoreHistory.push({
     generation: 0,
@@ -718,9 +802,23 @@ async function runLoop(root, suiteName, options) {
   let plateauCount = 0;
   let elites = [bestCandidate];
   let completedGenerations = 0;
-  let terminationReason = "budget_exhausted";
+  let terminationReason = null;
 
-  for (let generation = 1; generation <= maxGenerations; generation += 1) {
+  const currentElapsedMs = () => Date.now() - startedAt;
+  const currentEstimatedCostUsd = () => estimateCostUsd(estimatedTokens);
+  const resolveBudgetTermination = () => {
+    if (costLimit !== null && currentEstimatedCostUsd() > costLimit) {
+      return "cost_limit_exceeded";
+    }
+    if (timeLimitMs !== null && currentElapsedMs() > timeLimitMs) {
+      return "time_limit_exceeded";
+    }
+    return null;
+  };
+
+  terminationReason = resolveBudgetTermination();
+
+  for (let generation = 1; generation <= maxGenerations && !terminationReason; generation += 1) {
     const parentCandidates = elites.slice(0, Math.min(2, elites.length));
     const candidatePlans = [];
 
@@ -761,6 +859,7 @@ async function runLoop(root, suiteName, options) {
     });
 
     for (const evaluated of generationCandidates) {
+      estimatedTokens += Number(evaluated.estimated_tokens || 0);
       leaderboard.push(evaluated);
       scoreHistory.push({
         generation,
@@ -781,17 +880,32 @@ async function runLoop(root, suiteName, options) {
 
     elites = newElites.length > 0 ? newElites : elites;
 
+    terminationReason = resolveBudgetTermination();
+    if (terminationReason) {
+      break;
+    }
+
     if (plateauCount >= 2) {
       terminationReason = "plateau";
       break;
     }
   }
 
+  if (!terminationReason) {
+    terminationReason = "budget_exhausted";
+  }
+
   const delta = Number((bestCandidate.average_score - leaderboard[0].average_score).toFixed(4));
   let status = terminationReason;
   let winner = null;
 
-  if (!bestCandidate.hard_gate_failed && bestCandidate.candidate_id !== "baseline" && delta >= suite.scoring.min_delta) {
+  if (
+    terminationReason !== "cost_limit_exceeded"
+    && terminationReason !== "time_limit_exceeded"
+    && !bestCandidate.hard_gate_failed
+    && bestCandidate.candidate_id !== "baseline"
+    && delta >= suite.scoring.min_delta
+  ) {
     promoteWinner(runWorktree, bestCandidate, artifactDir);
     status = "winner_promoted";
     winner = {
@@ -801,10 +915,18 @@ async function runLoop(root, suiteName, options) {
       changed_files: bestCandidate.changed_files,
       strategy_id: bestCandidate.strategy_id,
     };
-  } else if (terminationReason !== "plateau" && delta < suite.scoring.min_delta) {
+  } else if (
+    terminationReason !== "plateau"
+    && terminationReason !== "cost_limit_exceeded"
+    && terminationReason !== "time_limit_exceeded"
+    && delta < suite.scoring.min_delta
+  ) {
     status = "min_delta_not_met";
   }
 
+  const confidence = calculateConfidence(scoreHistory.map((entry) => entry.average_score));
+  const elapsedMs = currentElapsedMs();
+  const estimatedCostUsd = currentEstimatedCostUsd();
   const finalState = {
     run_id: runId,
     suite: suite.name,
@@ -819,6 +941,10 @@ async function runLoop(root, suiteName, options) {
     winner,
     leaderboard,
     score_history: scoreHistory,
+    confidence,
+    elapsed_ms: elapsedMs,
+    estimated_tokens: estimatedTokens,
+    estimated_cost_usd: estimatedCostUsd,
     updated_at: new Date().toISOString(),
   };
 

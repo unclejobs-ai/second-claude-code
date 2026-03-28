@@ -20,6 +20,7 @@
 
 import {
   existsSync,
+  readFileSync,
   unlinkSync,
 } from "fs";
 import { join, dirname } from "path";
@@ -171,6 +172,51 @@ function formatRestorationContext(snapshot) {
   lines.push(
     `Resume: continue from the current phase — state files are intact on disk.`
   );
+
+  // ── Iterative context preservation (Pi UPDATE_SUMMARIZATION pattern) ──────
+  // Inject accumulated insights so the post-compression agent doesn't lose
+  // cross-cycle learnings. This is the "merge, don't re-summarize" approach.
+  const insightsPath = join(DATA_DIR, "cycles", "insights.md");
+  if (existsSync(insightsPath)) {
+    try {
+      const raw = readJsonSafe(insightsPath);
+      const insights = (typeof raw === "string" ? raw : null) || String(
+        readFileSync(insightsPath, "utf8")
+      ).trim();
+      if (typeof insights === "string" && insights.length > 0) {
+        // Truncate to last 2000 chars to avoid bloating restored context.
+        const tail = insights.length > 2000
+          ? "…\n" + insights.slice(-2000)
+          : insights;
+        lines.push("");
+        lines.push("[Accumulated Insights From Previous Cycles]");
+        lines.push(tail);
+      }
+    } catch {
+      // Non-fatal — insights are supplementary context.
+    }
+  }
+
+  // Inject the previous compaction summary if it exists, so context
+  // accumulates across multiple compressions instead of being lost.
+  const prevSummaryPath = join(STATE_DIR, "compaction-prev-summary.txt");
+  if (existsSync(prevSummaryPath)) {
+    try {
+      const prevSummary = String(
+        readFileSync(prevSummaryPath, "utf8")
+      ).trim();
+      if (prevSummary.length > 0) {
+        const tail = prevSummary.length > 3000
+          ? "…\n" + prevSummary.slice(-3000)
+          : prevSummary;
+        lines.push("");
+        lines.push("[Previous Session Context Summary]");
+        lines.push(tail);
+      }
+    } catch {
+      // Non-fatal.
+    }
+  }
 
   return lines.join("\n");
 }

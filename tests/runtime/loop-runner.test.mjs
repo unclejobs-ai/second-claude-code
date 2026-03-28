@@ -13,6 +13,7 @@ import path from "node:path";
 
 import {
   aggregateCaseScores,
+  calculateConfidence,
   parseEvaluatorOutput,
   selectEliteCandidates,
 } from "../../scripts/loop-runner.mjs";
@@ -141,6 +142,22 @@ test("parseEvaluatorOutput extracts scores from JSON and critic markdown", () =>
   );
 });
 
+test("calculateConfidence uses MAD and classifies the result", () => {
+  assert.deepEqual(
+    calculateConfidence([0.5, 0.7, 0.6]),
+    { value: 2, level: "strong" }
+  );
+  assert.deepEqual(
+    calculateConfidence([0.5, 0.3, 0.4, 0.5, 0.6]),
+    { value: 1, level: "marginal" }
+  );
+  assert.deepEqual(
+    calculateConfidence([0.5, 0.2, 0.3, 0.4, 0.55]),
+    { value: 0.5, level: "noise" }
+  );
+  assert.equal(calculateConfidence([0.5, 0.6]), null);
+});
+
 test("run rejects explicit targets outside the suite allowlist", () => {
   const repoDir = initFixtureRepo("second-claude-loop-disallowed-");
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
@@ -184,6 +201,25 @@ test("run creates a winner branch and artifacts when a mutation improves score",
   assert.doesNotMatch(branches, /g1-c1|g1-c2|g1-c3/);
 });
 
+test("run reports MAD-based confidence after at least three benchmark scores", () => {
+  const repoDir = initFixtureRepo("second-claude-loop-confidence-");
+  const dataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
+  writeSuite(
+    repoDir,
+    "confidence-suite",
+    `${process.execPath} -e "const fs=require('fs');const state=process.env.CLAUDE_PLUGIN_DATA+'/score-counter.json';let index=0;try{index=JSON.parse(fs.readFileSync(state,'utf8')).index}catch{}const scores=[0.5,0.7,0.6,0.55];const score=scores[index] ?? scores[scores.length-1];fs.writeFileSync(state,JSON.stringify({index:index+1}));console.log(JSON.stringify({average_score:score}))"`
+  );
+
+  const output = runLoop(repoDir, dataDir, "run", "confidence-suite", "--max-generations", "1");
+  const parsed = JSON.parse(output);
+
+  assert.deepEqual(parsed.confidence, { value: 4, level: "strong" });
+
+  const statePath = path.join(dataDir, "state", "loop-active.json");
+  const state = JSON.parse(readFileSync(statePath, "utf8"));
+  assert.deepEqual(state.confidence, { value: 4, level: "strong" });
+});
+
 test("run plateaus when scores stay flat and resume returns saved state", () => {
   const repoDir = initFixtureRepo("second-claude-loop-plateau-");
   const dataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
@@ -222,6 +258,52 @@ test("run reports min_delta_not_met when budget ends without enough improvement"
   assert.equal(parsed.status, "min_delta_not_met");
   assert.equal(parsed.generation, 1);
   assert.equal(parsed.winner, null);
+});
+
+test("run stops when the estimated token cost exceeds --cost-limit", () => {
+  const repoDir = initFixtureRepo("second-claude-loop-cost-limit-");
+  const dataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
+  writeSuite(
+    repoDir,
+    "cost-limit-suite",
+    `${process.execPath} -e "console.log(JSON.stringify({average_score:0.5}))"`
+  );
+
+  const output = runLoop(repoDir, dataDir, "run", "cost-limit-suite", "--cost-limit", "0");
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.status, "cost_limit_exceeded");
+  assert.equal(parsed.generation, 0);
+  assert.equal(parsed.winner, null);
+  assert.equal(parsed.estimated_tokens > 0, true);
+
+  const statePath = path.join(dataDir, "state", "loop-active.json");
+  const state = JSON.parse(readFileSync(statePath, "utf8"));
+  assert.equal(state.status, "cost_limit_exceeded");
+  assert.equal(state.estimated_tokens > 0, true);
+});
+
+test("run stops when wall clock time exceeds --time-limit", () => {
+  const repoDir = initFixtureRepo("second-claude-loop-time-limit-");
+  const dataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
+  writeSuite(
+    repoDir,
+    "time-limit-suite",
+    `${process.execPath} -e "setTimeout(() => console.log(JSON.stringify({average_score:0.5})), 200)"`
+  );
+
+  const output = runLoop(repoDir, dataDir, "run", "time-limit-suite", "--time-limit", "0.05");
+  const parsed = JSON.parse(output);
+
+  assert.equal(parsed.status, "time_limit_exceeded");
+  assert.equal(parsed.generation, 0);
+  assert.equal(parsed.winner, null);
+  assert.equal(parsed.elapsed_ms >= 50, true);
+
+  const statePath = path.join(dataDir, "state", "loop-active.json");
+  const state = JSON.parse(readFileSync(statePath, "utf8"));
+  assert.equal(state.status, "time_limit_exceeded");
+  assert.equal(state.elapsed_ms >= 50, true);
 });
 
 test("parallel evaluations honor the requested concurrency budget", () => {
