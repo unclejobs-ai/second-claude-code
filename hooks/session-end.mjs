@@ -33,6 +33,7 @@ import {
   queueDaemonNotification,
   readDaemonStatus,
 } from "./lib/companion-daemon.mjs";
+import { readEvents } from "./lib/event-log.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -47,6 +48,10 @@ const GUARD_FILE = join(STATE_DIR, ".stop-hook-guard");
 
 // Sentinel is considered "recent" if written within the last 30 seconds.
 const GUARD_TTL_MS = 30_000;
+const ANSI_RESET = "\u001b[0m";
+const ANSI_GREEN = "\u001b[32m";
+const ANSI_YELLOW = "\u001b[33m";
+const ANSI_RED = "\u001b[31m";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Guard helpers
@@ -154,12 +159,27 @@ function collectActiveState() {
   const pdcaState = readJsonSafe(join(STATE_DIR, "pdca-active.json"));
   if (pdcaState) {
     result.pdca = {
+      run_id: sanitize(pdcaState.run_id),
       topic: sanitize(pdcaState.topic),
       current_phase: sanitize(pdcaState.current_phase),
       completed: Array.isArray(pdcaState.completed) ? pdcaState.completed : [],
       cycle_count: Number(pdcaState.cycle_count) || 0,
       check_verdict: pdcaState.check_verdict
         ? sanitize(String(pdcaState.check_verdict))
+        : null,
+      average_score:
+        pdcaState.average_score === null || pdcaState.average_score === undefined
+          ? null
+          : Number(pdcaState.average_score),
+      warning_count: Number(pdcaState.warning_count) || 0,
+      critical_findings: Array.isArray(pdcaState.critical_findings)
+        ? pdcaState.critical_findings
+        : [],
+      top_improvements: Array.isArray(pdcaState.top_improvements)
+        ? pdcaState.top_improvements
+        : [],
+      act_decision: pdcaState.act_decision
+        ? sanitize(String(pdcaState.act_decision))
         : null,
       session_id: pdcaState.session_id
         ? sanitize(String(pdcaState.session_id))
@@ -171,6 +191,107 @@ function collectActiveState() {
   }
 
   return result;
+}
+
+function stripAnsi(value) {
+  return String(value || "").replace(/\u001b\[[0-9;]*m/g, "");
+}
+
+function colorize(text, color) {
+  return `${color}${text}${ANSI_RESET}`;
+}
+
+function shouldPrintPdcaCycleSummary(pdca) {
+  if (!pdca) return false;
+  return Array.isArray(pdca.completed) && pdca.completed.includes("act");
+}
+
+function completedCycleNumber(pdca) {
+  const cycleCount = Number(pdca?.cycle_count) || 1;
+  if (String(pdca?.current_phase || "").toLowerCase() === "plan") {
+    return Math.max(1, cycleCount - 1);
+  }
+  return Math.max(1, cycleCount);
+}
+
+function computePdcaDurationMinutes(pdca) {
+  if (!pdca?.run_id) return 0;
+  const events = readEvents(DATA_DIR, pdca.run_id);
+  if (events.length === 0) return 0;
+
+  const firstTs = new Date(events[0].ts).getTime();
+  const lastTs = new Date(events[events.length - 1].ts).getTime();
+  if (Number.isNaN(firstTs) || Number.isNaN(lastTs) || lastTs < firstTs) {
+    return 0;
+  }
+
+  return Math.max(0, Math.round((lastTs - firstTs) / 60_000));
+}
+
+function computePdcaIssueCount(pdca) {
+  const warningCount = Number(pdca?.warning_count) || 0;
+  const criticalCount = Array.isArray(pdca?.critical_findings)
+    ? pdca.critical_findings.length
+    : 0;
+  const improvementCount = Array.isArray(pdca?.top_improvements)
+    ? pdca.top_improvements.length
+    : 0;
+  return criticalCount + Math.max(warningCount, improvementCount);
+}
+
+function formatPhaseStatus(label, symbol, color) {
+  return `${label} ${colorize(symbol, color)}`;
+}
+
+function formatCheckStatus(pdca) {
+  const verdict = String(pdca?.check_verdict || "").toUpperCase();
+  if (verdict === "MUST FIX") {
+    return formatPhaseStatus("Check", "✗", ANSI_RED);
+  }
+  if (verdict === "MINOR FIXES" || verdict === "NEEDS IMPROVEMENT") {
+    return formatPhaseStatus("Check", "⚠", ANSI_YELLOW);
+  }
+  return formatPhaseStatus("Check", "✓", ANSI_GREEN);
+}
+
+function buildPdcaSummaryBox(pdca) {
+  if (!shouldPrintPdcaCycleSummary(pdca)) return null;
+
+  const cycleNumber = completedCycleNumber(pdca);
+  const statusLine = [
+    formatPhaseStatus("Plan", "✓", ANSI_GREEN),
+    formatPhaseStatus("Do", "✓", ANSI_GREEN),
+    formatCheckStatus(pdca),
+    formatPhaseStatus("Act", "✓", ANSI_GREEN),
+  ].join("  ");
+
+  const scoreValue =
+    typeof pdca.average_score === "number" && Number.isFinite(pdca.average_score)
+      ? String(Math.round(pdca.average_score * 100))
+      : "--";
+  const statsLine =
+    `Time: ${computePdcaDurationMinutes(pdca)}m  ` +
+    `Issues: ${computePdcaIssueCount(pdca)}  ` +
+    `Score: ${scoreValue}`;
+  const header = `PDCA Cycle #${cycleNumber}`;
+
+  const innerWidth = Math.max(
+    header.length + 2,
+    stripAnsi(statusLine).length,
+    stripAnsi(statsLine).length
+  );
+  const centeredHeader = ` ${header} `;
+  const leftPad = Math.max(0, Math.floor((innerWidth - centeredHeader.length) / 2));
+  const rightPad = Math.max(0, innerWidth - centeredHeader.length - leftPad);
+
+  const top = `┌${"─".repeat(leftPad)}${centeredHeader}${"─".repeat(rightPad)}┐`;
+  const line = (content) => {
+    const visibleWidth = stripAnsi(content).length;
+    return `│ ${content}${" ".repeat(Math.max(0, innerWidth - visibleWidth))} │`;
+  };
+  const bottom = `└${"─".repeat(innerWidth + 2)}┘`;
+
+  return [top, line(statusLine), line(statsLine), bottom].join("\n");
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -601,6 +722,11 @@ function main() {
 
   // ── Channel notification (after HANDOFF, non-blocking) ────────────────────
   emitChannelNotification(state);
+
+  const pdcaSummaryBox = buildPdcaSummaryBox(state.pdca);
+  if (pdcaSummaryBox) {
+    console.error(pdcaSummaryBox);
+  }
 
   const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;
   if (hasActiveState) {

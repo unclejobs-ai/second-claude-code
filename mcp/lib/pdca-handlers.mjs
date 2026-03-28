@@ -126,6 +126,38 @@ function evaluateGate(gate, state) {
 }
 
 /**
+ * Classify the Act-stage decision once the check_to_act gate has passed.
+ * The counters cap repeated refinement/pivot recommendations to avoid
+ * unbounded loops; once the cap is exhausted, the run falls through to
+ * PROCEED so Act can close out intentionally.
+ *
+ * @param {object} state
+ * @returns {"PROCEED" | "REFINE" | "PIVOT"}
+ */
+function evaluateCheckToActDecision(state) {
+  const criticalCount =
+    (Array.isArray(state.critical_findings) ? state.critical_findings.length : 0) +
+    (Number(state.critical_count) || 0);
+  const warningCount = Math.max(
+    Number(state.warning_count) || 0,
+    Array.isArray(state.top_improvements) ? state.top_improvements.length : 0
+  );
+  const verdict = String(state.check_verdict || "").toUpperCase();
+  const hasCriticalIssues = criticalCount > 0 || verdict === "MUST FIX";
+  const hasWarnings =
+    !hasCriticalIssues &&
+    (warningCount > 0 || verdict === "MINOR FIXES" || verdict === "NEEDS IMPROVEMENT");
+
+  if (hasCriticalIssues && (state.pivot_count ?? 0) < 2) {
+    return "PIVOT";
+  }
+  if (hasWarnings && (state.refine_count ?? 0) < 3) {
+    return "REFINE";
+  }
+  return "PROCEED";
+}
+
+/**
  * Build the initial state object for a new run.
  * @param {string} topic
  * @param {number} maxCycles
@@ -167,6 +199,13 @@ function buildInitialState(topic, maxCycles) {
     do_artifact_complete: false,
     plan_findings_integrated: false,
     reviewer_count: 0,
+    warning_count: 0,
+    critical_count: 0,
+    average_score: null,
+    critical_findings: [],
+    top_improvements: [],
+    refine_count: 0,
+    pivot_count: 0,
     act_decision: null,
     act_root_cause: null,
   };
@@ -242,11 +281,19 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
     );
   }
 
+  let autoGateResult = null;
+
   // ── auto_gate: evaluate the gate for this transition first ──
   if (auto_gate) {
     const gateKey = PHASE_TO_GATE[`${current}_${target_phase}`];
     if (gateKey) {
       const gateResult = evaluateGate(gateKey, state);
+      autoGateResult = {
+        gate: gateKey,
+        passed: gateResult.passed,
+        missing: gateResult.missing,
+        decision: null,
+      };
 
       logEvent(DATA_DIR, state.run_id, {
         type: "gate_check",
@@ -266,10 +313,22 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
         return {
           transitioned: false,
           gate: gateKey,
-          gate_result: gateResult,
+          gate_result: { ...gateResult, decision: null },
+          auto_gate_result: autoGateResult,
           current_phase: current,
           target_phase,
         };
+      }
+
+      if (gateKey === "check_to_act") {
+        const decision = evaluateCheckToActDecision(state);
+        autoGateResult.decision = decision;
+
+        if (decision === "REFINE") {
+          state.refine_count = (state.refine_count ?? 0) + 1;
+        } else if (decision === "PIVOT") {
+          state.pivot_count = (state.pivot_count ?? 0) + 1;
+        }
       }
     }
   }
@@ -316,6 +375,13 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
     phase: target_phase,
     data: { cycle_count: state.cycle_count },
   });
+
+  if (autoGateResult) {
+    return {
+      ...state,
+      auto_gate_result: autoGateResult,
+    };
+  }
 
   return state;
 }
@@ -369,6 +435,8 @@ export function handleEndRun() {
     cycle_count: state.cycle_count,
     artifacts: state.artifacts,
     check_verdict: state.check_verdict,
+    refine_count: state.refine_count ?? 0,
+    pivot_count: state.pivot_count ?? 0,
     stuck_flags: state.stuck_flags,
     ended_at: endedAt,
   };
@@ -382,6 +450,8 @@ export function handleEndRun() {
       completed_phases: state.completed,
       cycle_count: state.cycle_count,
       check_verdict: state.check_verdict,
+      refine_count: state.refine_count ?? 0,
+      pivot_count: state.pivot_count ?? 0,
       stuck_flags: state.stuck_flags,
       event_stats: stats,
       ended_at: endedAt,

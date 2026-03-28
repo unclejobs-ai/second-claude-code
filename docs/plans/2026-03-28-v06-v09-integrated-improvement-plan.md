@@ -1,7 +1,7 @@
 # Second Claude Code — v0.6.0 ~ v0.9.0 통합 개선안
 
 > **작성일**: 2026-03-28
-> **기반 분석**: 프로젝트 전수 점검 + 외부 리서치 (유사 플러그인/워크플로우) + mmbridge CLI 소스코드 분석 + Hermes 에이전트 전면 해부 + AutoResearchClaw 아키텍처 분석
+> **기반 분석**: 프로젝트 전수 점검 + 외부 리서치 + mmbridge CLI 소스코드 분석 + Hermes 에이전트 전면 해부 + AutoResearchClaw + Pi coding agent + pi-autoresearch + pi-mono / pi-autoresearch 분석
 > **현황**: v0.5.8 / 299파일 / 24,720라인 / 194 tests / 13 skills / 17 agents / 8 hooks / 2 MCP servers
 >
 > **경계 원칙** (docs/plans/2026-03-23-hermes-boundary-and-memory-notes.md):
@@ -312,6 +312,58 @@ review, followup, resume, doctor, gate, handoff, diff, research, debate, securit
 - 문헌 검색 API 직접 호출 (우리는 mmbridge research)
 - Co-pilot 모드 / 멀티유저 협업
 
+### 2-F. pi-mono + pi-autoresearch 분석 (서브에이전트 #1 + 외부 확인)
+
+**중요한 정정:**
+- `pi-autoresearch`는 이름과 달리 웹 리서치 도구가 아니다.
+- 실제 정체성은 **Karpathy식 자율 실험/최적화 루프**다: 코드 변경 → 벤치마크 → 측정 → keep/discard → 반복.
+- `pi-mono`는 단일 CLI가 아니라 `pi-ai`, `pi-agent-core`, `pi-coding-agent`, `pi-web-ui`, `pi-mom`, `pi-pods`를 담은 **에이전트 툴킷 모노레포**다.
+
+**우리에게 직접 유효한 패턴 (`pi-autoresearch`):**
+
+1. **Auto-Resume on Context Exhaustion**
+   - 에이전트 종료 시 다음 턴을 자동 주입해 루프를 이어간다.
+   - 토큰 사용량을 이터레이션 단위로 추적해 소진 직전 graceful abort + 재시작한다.
+   - 장기 루프를 "한 세션"이 아니라 "재개 가능한 상태 기계"로 다룬다.
+
+2. **Two-File Persistence**
+   - `autoresearch.jsonl`: 머신 파서블 append-only 로그
+   - `autoresearch.md`: 사람이 읽는 내러티브 상태 문서
+   - cold-start 에이전트가 둘 다 읽고 바로 복구 가능하다.
+
+3. **ASI (Actionable Side Information)**
+   - 실패한 실험은 revert하되, 실패에서 얻은 교훈은 구조화해 남긴다.
+   - "실패한 변경"과 "배운 사실"을 분리 저장한다.
+
+4. **MAD-based Confidence Scoring**
+   - 3회 이상 실험 후 `|best_improvement| / MAD`로 개선 신뢰도를 계산한다.
+   - 노이즈 큰 벤치마크에서 "개선처럼 보이는 착시"를 줄인다.
+
+5. **Finalize-to-Branches**
+   - 실험 브랜치의 noisy commit들을 논리적 changeset 브랜치들로 재구성한다.
+   - "실험용 히스토리"와 "리뷰 가능한 결과"를 분리한다.
+
+**우리에게 선택적으로 유효한 패턴 (`pi-mono`):**
+- **File Mutation Queue**: 에디터/에이전트 변경을 즉시 난사하지 않고 순서화된 mutation 단위로 관리
+- **Iterative Compaction**: 한 번에 크게 압축하기보다, 세션 생존성을 해치지 않는 작은 단위의 반복 압축
+- **Session/Branching UX**: 대화 흐름과 브랜치를 명시적으로 다루는 세션 표면
+- **RPC/SDK Surface**: 별도 companion daemon이나 observer UI를 붙이기 쉬운 제어 채널
+
+**Second Claude Code 적용 원칙:**
+- `pi-autoresearch`에서는 **패턴만** 차용한다. 무한 최적화 루프 자체나 Pi 확장 API는 도입하지 않는다.
+- `pi-mono`에서는 **보조 표면**만 차용한다. `pi-agent-core`를 코어 런타임으로 넣지 않는다.
+- 코어는 계속 Claude Code plugin + PDCA + hooks + MCP state server 구조를 유지한다.
+
+**추가 점검 결론 (0.7.0 진입 이후 기준):**
+- `Two-File Persistence`: **채택 유지**. 다만 `0.6.0` cycle memory 참고 패턴으로만 유지하고, `0.9.0` 스코프로 끌어오지 않는다.
+- `Auto-Resume on Context Exhaustion`: **보류/비채택**. 현재 시스템은 `loop-active.json`, compaction snapshot, `HANDOFF.md`, `claude --resume`가 이미 존재한다. 여기에 Pi식 자동 자기-재시작까지 얹으면 runaway loop 위험이 크다.
+- `ASI`: **조건부 보류**. 개념은 좋지만, 현재 `PIVOT/REFINE`의 실제 운영 데이터가 부족하다. 반복 실패 패턴이 관찰될 때만 별도 구조화를 추가한다.
+- `MAD-based Confidence`: **채택**. 다만 `0.7.0` 핵심 기능이 아니라 `0.9.0` observability 보강 항목으로 배치한다.
+- `File Mutation Queue`: **채택**. 다만 `loop-runner`가 아니라 hook/file write race 방지 용도로만 적용한다.
+- `Iterative Compaction`: **비채택**. Claude Code가 compaction을 소유하고 있고, 현재 훅은 상태 복원 레이어만 담당한다. 별도 점진 요약 시스템은 중복이 크다.
+- `Finalize-to-Branches`: **비채택/후순위**. 현재 batch/worktree 결과 정리에 비해 복잡도가 크고 직접 수요가 없다.
+- `Token-per-Iteration Tracking`: **채택**. `0.9.0` observability에 가장 자연스럽게 들어간다.
+
 ---
 
 ## 3. v0.6.0 — "Philosophy & Foundation"
@@ -372,7 +424,7 @@ RED FLAGS — 이 생각이 들면 STOP:
 
 ### 3-2. PDCA Cycle Memory
 
-**출처**: Hermes Walnut/ALIVE의 zero-context standard + save protocol + read-before-speak
+**출처**: Hermes Walnut/ALIVE의 zero-context standard + save protocol + read-before-speak + pi-autoresearch의 JSONL+MD two-file persistence
 
 **현황**: .data/state/에 PDCA 상태 JSON만 저장. 사이클 간 컨텍스트 연속성 없음. 이전 사이클 교훈이 다음 사이클에 전달되지 않음.
 
@@ -385,6 +437,7 @@ RED FLAGS — 이 생각이 들면 STOP:
 │   ├── do.md          실행 기록 + 코드 변경 요약
 │   ├── check.md       리뷰 결과 + gate 판정 + mmbridge 스코어
 │   ├── act.md         조치 사항 + 다음 사이클 인풋
+│   ├── events.jsonl   append-only 이벤트 로그 (phase save, gate result, insight, decision)
 │   └── metrics.json   정량 데이터 (시간, 토큰, 이슈수, 스코어)
 ├── cycle-002/
 │   └── ...
@@ -400,6 +453,12 @@ RED FLAGS — 이 생각이 들면 STOP:
 - **Read-Before-Act**: 새 사이클 시작 시 이전 cycle/ + insights.md 필수 로드
 - **Save Protocol**: 각 페이즈 완료 시 즉시 해당 .md 저장
 - **Insight Accumulation**: Act 완료 시 insights.md에 교훈 append
+
+**Two-File Persistence 원칙 (pi-autoresearch에서 차용):**
+- **Narrative + Structured 분리**: `plan/do/check/act.md`는 사람이 읽는 맥락, `events.jsonl` + `metrics.json`은 기계가 읽는 상태
+- **Append-Only Raw Log**: 원시 이벤트는 수정하지 않고 `events.jsonl`에 누적한다
+- **Cold Resume Safety**: 새 에이전트는 `events.jsonl` + phase markdown만 읽어도 진행 맥락을 복원할 수 있어야 한다
+- **요약과 원본 분리**: `metrics.json`은 최종 요약, `events.jsonl`은 감사 추적(audit trail)
 
 **Self-Evolution 강화** (from ARC EvolutionStore 패턴):
 - **시간 감쇄**: 30일 이상 된 인사이트는 가중치 하락 (최신 교훈 우선)
@@ -615,6 +674,10 @@ pdca_get_insights
 - ✓ = 녹색, ⚠ = 노란색, ✗ = 빨간색
 - 스파크라인으로 최근 10 사이클 트렌드
 - Score는 mmbridge overallScore (미연동 시 gate 통과율로 대체)
+- loop 실험이 존재하면 confidence 배지 추가:
+  - `conf ≥ 2.0x` 녹색
+  - `1.0x ≤ conf < 2.0x` 노란색
+  - `conf < 1.0x` 빨간색
 
 **작업량**: session-end.mjs 확장 (~50줄 ANSI 출력 코드)
 
@@ -699,13 +762,17 @@ returns: {
 }
 ```
 
+**검토 메모**:
+- `ASI (Actionable Side Information)`은 개념상 유효하지만, `0.7.0`에 새 요구사항으로 넣기보다 실제 `pivot/refine` 반복 패턴이 관찰된 뒤 후속 개선으로 다루는 편이 낫다.
+- 현재 단계에서는 `act.md` + `insights.md`만으로도 교훈 기록 경로가 존재하므로, 별도 ASI 스키마는 즉시 필수는 아니다.
+
 **작업량**: pdca_transition 확장 + 판단 로직 + 아티팩트 버저닝 + 테스트
 
 ---
 
 ### 4-5. Convergence 감지 보강
 
-**출처**: ARC execute_iterative_pipeline의 수렴 감지기
+**출처**: ARC execute_iterative_pipeline의 수렴 감지기 + pi-autoresearch의 MAD confidence / token-per-iteration 패턴
 
 **현황**: loop-runner.mjs(912줄)에 이미 4가지 종료 조건이 구현되어 있음:
 - `winner_promoted`: 스코어가 min_delta 이상 개선되어 승격
@@ -723,13 +790,30 @@ returns: {
   1. 비용 한도: estimated_cost >= budget_limit (토큰/비용 기반 종료)
   2. 시간 한도: elapsed_time >= time_limit (wall clock 기반)
   3. 수렴 리포팅: session-end에 최종 종료 사유 + 스코어 추이 출력
+  4. 신뢰도 리포팅: MAD 기반 confidence score 출력
 ```
 
 **적용**: loop-runner.mjs의 기존 종료 로직에 비용/시간 한도 조건 추가
 - 각 이터레이션 비용을 .data/loop/scores.json에 함께 기록
 - session-end에 수렴 상태 리포팅 (터미널 ANSI 요약에 포함)
 
-**작업량**: loop-runner.mjs 확장 (~40줄, 기존 구조 활용) + 테스트 3개 추가
+**추가 설계 — MAD-based Confidence**
+- 3회 이상 측정 후 `confidence = |best_improvement| / MAD(all_scores)` 계산
+- 저장:
+  - `.data/loop/scores.json` 각 run entry
+  - session-end ANSI 요약
+  - cycle report HTML
+- 해석:
+  - `≥ 2.0x`: likely real
+  - `1.0x–2.0x`: marginal
+  - `< 1.0x`: likely noise
+
+**비채택 메모:**
+- `Auto-Resume on Context Exhaustion`은 현재 plugin 경계와 충돌 가능성이 있어 넣지 않는다. 이미 `resume` 명령과 compaction/handoff 경로가 존재한다.
+- `File Mutation Queue`는 loop-runner 확장이 아니라 hook 계층 파일 race 해결 항목으로 분리한다.
+- `Iterative Compaction`은 Claude Code의 내장 compaction과 역할이 겹치므로 별도 기능으로 만들지 않는다.
+
+**작업량**: loop-runner.mjs 확장 (~60줄, 기존 구조 활용) + observability 필드 추가 + 테스트 4개 추가
 
 ---
 
@@ -966,6 +1050,30 @@ class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 }
 ```
 
+**loop/experiment 옵저버빌리티 추가** (from pi-autoresearch):
+```json
+{
+  "iteration": 12,
+  "tokens_used": 14800,
+  "tokens_mean_recent": 12100,
+  "tokens_median_recent": 11750,
+  "confidence_mad": 2.3,
+  "termination_reason": "plateau"
+}
+```
+- token-per-iteration 추적
+- 최근 평균/중앙값 기반 안전 마진 계산
+- confidence와 종료 사유를 함께 보존
+
+**hook/file write 안정성 보강** (from pi core mutation queue pattern):
+- hook 간 동일 파일 read-modify-write 경쟁을 막기 위해 per-file mutex 적용
+- 대상:
+  - reviewer aggregation 파일
+  - soul observation/state 파일
+  - recall / daemon queue 파일
+- 범위:
+  - loop-runner 확장이 아니라 hook infrastructure hardening
+
 **MetaClaw PRM — 에이전트 효과 학습** (from ARC):
 ```json
 {
@@ -1078,6 +1186,7 @@ class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 | Cron 자율 실행 | GitHub Actions scheduled workflows (Hermes cron 아님) | 0.9.0 | P2 |
 | Session Memory (FTS5) | insights.md 누적 | 0.6.0 | P0 |
 | Stash System | 대화 중 인사이트 임시 추적 | 0.6.0 | P1 |
+| Iterative Compaction | 검토 결과 비채택 (Claude Code compaction과 중복) | - | - |
 
 ### AutoResearchClaw 차용
 
@@ -1092,6 +1201,18 @@ class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 | MetaClaw PRM | 에이전트별 효과 트래킹 (helped/neutral/hurt per phase) | 0.9.0 | P2 |
 | Knowledge Graph | 경량 지식 그래프 + Mermaid 시각화 (선택) | 0.9.0 | P3 |
 | Domain Auto-Detection | 프로젝트 유형 감지 → 리뷰 관점 커스텀 (선택) | 0.9.0 | P3 |
+
+### Pi / pi-autoresearch 차용
+
+| Pi / pi-autoresearch 기능 | 우리 적용 | 버전 | 우선순위 |
+|---|---|---|---|
+| Two-File Persistence (`jsonl` + `md`) | cycle memory의 `events.jsonl` + phase markdown 참고 패턴 | 0.6.0 | P0 |
+| Auto-Resume on Context Exhaustion | 검토 결과 비채택 (`resume` + compaction + handoff로 충분) | - | - |
+| ASI (Actionable Side Information) | 검토 결과 보류 (실패 패턴 데이터 축적 후 재평가) | - | - |
+| MAD-based Confidence Scoring | loop 벤치마크 신뢰도 계산 + ANSI/HTML 표시 | 0.9.0 | P1 |
+| File Mutation Queue | hook/file write race 방지용 per-file mutex | 0.9.0 | P1 |
+| Finalize-to-Branches | 검토 결과 비채택/후순위 | - | - |
+| Token-per-Iteration Tracking | loop 비용/토큰 옵저버빌리티 | 0.9.0 | P2 |
 
 ---
 
@@ -1124,6 +1245,17 @@ class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 | BenchmarkAgent / FigureAgent 서브 파이프라인 | 에이전트 수 증가 시 재고려 |
 | ACP (Agent Client Protocol) | Claude Code MCP로 충분 |
 
+**Pi / pi-autoresearch에서 가져오지 않는 것:**
+
+| 기능 | 이유 |
+|---|---|
+| 무한 최적화 루프 자체 | 우리는 PDCA 기반 품질 시스템이지 자동 튜닝 전용 도구가 아님 |
+| Pi Extension API 직접 사용 | 우리는 Claude Code hooks + MCP를 사용 |
+| git commit/revert 자동화 | 현재 worktree 기반 격리 흐름과 충돌 가능 |
+| TUI 위젯/풀스크린 대시보드 | 현재 플러그인 스코프 밖, 보조 표면으로만 고려 |
+| `autoresearch.sh` 자동 생성 | 범용 벤치마크 스크립트 생성은 현재 범위 초과 |
+| `pi-agent-core` 코어 도입 | Second Claude Code의 plugin 경계 원칙 위반 |
+
 ---
 
 ## 9. 기타 발견된 문제들 (버그/정리)
@@ -1145,6 +1277,8 @@ class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 
 **GitHub repos:**
 - aiming-lab/AutoResearchClaw — 23단계 자율 연구 파이프라인, Stage Contracts, PIVOT/REFINE, Self-Evolution, Anti-Fabrication
+- davebcn87/pi-autoresearch — 자율 실험 루프, JSONL+MD persistence, MAD confidence, auto-resume
+- badlogic/pi-mono — agent toolkit monorepo, mutation queue, iterative compaction, RPC/SDK 표면
 - aider-chat/aider — 멀티모델 architect/editor, 좋은 테스트 스위트
 - langchain-ai/langgraph — 에이전트 오케스트레이션, state machine, mermaid 출력
 - crewai/crewai — 멀티에이전트 크루, 태스크 검증
