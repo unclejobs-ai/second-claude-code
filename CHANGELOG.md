@@ -13,7 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **Portable spin wait** — spin-wait behavior is now portable across environments for more reliable CI execution
 
 ### Changed
-- Total test count: 194 → 315
+- Total test count: 194 → 318 (`317` passing, `1` skipped in the current suite)
 - Version surfaces aligned to `0.9.0` across plugin manifest, marketplace, package metadata, manuals, and CHANGELOG
 
 ## [0.8.0] - 2026-03-29

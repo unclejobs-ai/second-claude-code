@@ -24,7 +24,7 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ## What's New in v0.9.0
 
-- **315 tests, green locally** — release docs now reflect the current verified suite size
+- **318 tests, green locally** — release docs now reflect the current verified suite size
 - **Stage contracts at runtime** — domain-aware DoD and phase contracts now load directly from `config/stage-contracts.json`
 - **Cycle reporting upgrades** — HTML cycle reports, Mermaid/Chart.js visuals, and an ANSI summary box at session end
 - **Loop hardening** — file mutation queue, MAD-based confidence scoring, cost/time budgets, and iterative compaction
@@ -435,11 +435,11 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 <details>
 <summary><strong>Changelog</strong></summary>
 
-### v0.9.0 — MetaClaw Tracking, CI Portability, 315 Tests
+### v0.9.0 — MetaClaw Tracking, CI Portability, 318 Tests
 
 - **MetaClaw PRM effectiveness tracker** — release now records PRM agent effectiveness signals
 - **CI portability fixes** — `ensureDir` runs before lock creation and spin-wait behavior is portable across environments
-- **Suite growth** — total tests now sit at **315**
+- **Suite growth** — total tests now sit at **318** (`317` passing, `1` skipped)
 
 ### v0.8.0 — Runtime Contracts, MMBridge, Anti-Fabrication
 

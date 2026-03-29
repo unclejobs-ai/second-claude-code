@@ -66,7 +66,9 @@ const REVIEWER_CONTEXT = {
 
 function readPayload() {
   try {
-    const raw = readFileSync("/dev/stdin", "utf8");
+    // Use fd 0 directly instead of /dev/stdin for cross-platform compatibility.
+    // /dev/stdin may not exist in some CI/container environments.
+    const raw = readFileSync(0, "utf8");
     if (!raw.trim()) return null;
     return JSON.parse(raw);
   } catch {

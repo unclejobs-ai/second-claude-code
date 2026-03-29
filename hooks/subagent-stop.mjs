@@ -62,7 +62,8 @@ if (!existsSync(AGGREGATION_FILE)) {
 /** @returns {string} raw subagent output text, or "" on failure */
 function readSubagentOutput() {
   try {
-    const raw = readFileSync("/dev/stdin", "utf8");
+    // Use fd 0 directly instead of /dev/stdin for CI/container compatibility.
+    const raw = readFileSync(0, "utf8");
     if (!raw.trim()) return "";
     const payload = JSON.parse(raw);
     // The subagent's final text output lives at different paths depending on
