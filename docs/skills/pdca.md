@@ -33,12 +33,15 @@ Research and write a report on AI agent frameworks
 ## Options
 
 | Flag | Values | Default |
-|------|--------|---------|
+|------|--------|---------| 
 | `--phase` | `plan\|do\|check\|act\|full` | auto-detect |
 | `--depth` | `shallow\|medium\|deep` | `medium` |
 | `--target` | verdict or score | `APPROVED` |
 | `--max` | max Act iterations | `3` |
 | `--no-questions` | skip Question Protocol | `false` |
+| `--domain` | `code\|content\|analysis\|pipeline` | `code` |
+
+The `--domain` flag (new in v1.0.0) selects domain-specific stage contracts, Definition of Done criteria, and rollback targets for each phase transition.
 
 ## How It Works
 
@@ -89,6 +92,25 @@ At Plan entry, the orchestrator asks up to 3 scope-clarifying questions:
 | review | Called during Check phase with parallel reviewers |
 | refine | Called during Act phase when Action Router routes to Refine |
 | workflow | Can automate full PDCA cycles |
+
+## Cycle Memory
+
+The PDCA orchestrator integrates with the cycle memory layer (new in v1.0.0) to persist phase artifacts, metrics, and cross-cycle insights.
+
+- **Auto-save on transition**: When `pdca_transition` fires, the completed phase's artifact is saved to `.data/cycles/cycle-NNN/{phase}.md`.
+- **Auto-save on end**: When `pdca_end_run` fires, cycle metrics (domain, verdict, durations) are persisted to `metrics.json`.
+- **Read-Before-Act**: At `pdca_start_run`, the 10 most recent insights (weight ≥ 0.1) are loaded into the run context.
+- **Self-Evolution**: Critical insights recorded 3+ times auto-generate gotcha proposals.
+
+### Cycle Memory MCP Tools
+
+| Tool | Params | Returns |
+|------|--------|---------|
+| `pdca_get_cycle_history` | `cycle_id?: number`, `last_n?: number` | `{ cycles: [{ id, plan, do, check, act, metrics }] }` |
+| `pdca_save_insight` | `cycle_id: number` (required), `insight: string` (required), `category: "process"\|"technical"\|"quality"` (required), `severity: "info"\|"warning"\|"critical"` (required) | `{ total_insights: number, repeated_count: number }` |
+| `pdca_get_insights` | `category?: string`, `last_n?: number` (default 20), `min_weight?: number` (0–1) | `{ insights: [{ cycle_id, timestamp, category, severity, text, weight }] }` |
+
+Insights use a 30-day linear time-decay. The `weight` field ranges from 1.0 (just recorded) to 0.0 (30+ days old). Use `min_weight` to filter stale insights.
 
 ## Full Reference
 

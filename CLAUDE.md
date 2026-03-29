@@ -1,6 +1,6 @@
 # Second Claude Code
 
-Claude Code plugin (v1.0.0). PDCA-native knowledge work system — 13 skills, 17 agents, 8 hooks, 3 MCP servers.
+Claude Code plugin (v1.0.0). PDCA-native knowledge work system — 13 skills, 17 agents, 8 hooks, 24 MCP tools across 3 servers.
 
 ## Project Structure
 
@@ -10,9 +10,10 @@ skills/                     — 13 skill directories (pdca, research, write, ana
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
-mcp/pdca-state-server.mjs   — PDCA state MCP server (main entry + 6 handler modules in mcp/lib/)
+mcp/pdca-state-server.mjs   — MCP server (24 tools: PDCA state, cycle memory, soul, project memory, daemon, session recall)
+mcp/lib/cycle-memory.mjs    — Cycle memory persistence (phase snapshots, insights, metrics, self-evolution)
 hooks/lib/                  — Shared runtime modules: agent tracker, fact checker, file mutex sync, mmbridge adapter, report generator, soul observer
-mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, loop
+mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, loop, cycle-memory
 commands/                   — Slash commands
 config/                     — Runtime configuration
 references/                 — Integration docs (mmbridge, etc.)
@@ -26,6 +27,8 @@ docs/                       — Architecture docs (EN/KO bilingual)
 - **Agent naming**: Pokemon-themed (Arceus=orchestrator, Pikachu=soul, Eevee=researcher, etc.)
 - **Bilingual docs**: EN (.md) + KO (.ko.md) maintained independently, not translated
 - **PDCA phases**: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Ditto)
+- **Cycle memory**: Phase artifacts and insights persist across sessions in `.data/cycles/`
+- **Domain-aware PDCA**: `pdca_start_run` accepts `domain` (code|content|analysis|pipeline) for stage-specific contracts
 
 ## Verification
 

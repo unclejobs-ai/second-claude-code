@@ -41,6 +41,9 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 | `--target` | 판정 또는 점수 | `APPROVED` |
 | `--max` | 최대 Act 반복 횟수 | `3` |
 | `--no-questions` | 질문 프로토콜 건너뛰기 | `false` |
+| `--domain` | `code\|content\|analysis\|pipeline` | `code` |
+
+`--domain` 플래그(v1.0.0 신규)는 페이즈 전환마다 도메인별 단계 계약, 완료 정의(DoD), 롤백 대상을 선택합니다.
 
 ## 작동 원리
 
@@ -91,6 +94,25 @@ Plan 진입 시 최대 3개의 범위 확인 질문을 합니다:
 | review | Check 페이즈에서 병렬 리뷰어와 함께 호출 |
 | refine | Act 페이즈에서 액션 라우터가 Refine으로 라우팅할 때 호출 |
 | workflow | 전체 PDCA 사이클 자동화 가능 |
+
+## 사이클 메모리
+
+PDCA 오케스트레이터가 사이클 메모리 레이어(v1.0.0 신규)와 통합되어 페이즈 아티팩트, 메트릭스, 교차 사이클 인사이트를 영속합니다.
+
+- **전환 시 자동 저장**: `pdca_transition` 실행 시 완료된 페이즈의 아티팩트가 `.data/cycles/cycle-NNN/{phase}.md`에 저장됩니다.
+- **종료 시 자동 저장**: `pdca_end_run` 실행 시 사이클 메트릭스(도메인, 판정, 소요시간)가 `metrics.json`에 영속됩니다.
+- **Read-Before-Act**: `pdca_start_run` 시 최근 10개 인사이트(가중치 ≥ 0.1)가 실행 컨텍스트에 로드됩니다.
+- **자기 진화**: 치명적 인사이트가 3회 이상 기록되면 주의사항 제안이 자동 생성됩니다.
+
+### 사이클 메모리 MCP 도구
+
+| 도구 | 매개변수 | 반환값 |
+|------|---------|--------|
+| `pdca_get_cycle_history` | `cycle_id?: number`, `last_n?: number` | `{ cycles: [{ id, plan, do, check, act, metrics }] }` |
+| `pdca_save_insight` | `cycle_id: number` (필수), `insight: string` (필수), `category: "process"\|"technical"\|"quality"` (필수), `severity: "info"\|"warning"\|"critical"` (필수) | `{ total_insights: number, repeated_count: number }` |
+| `pdca_get_insights` | `category?: string`, `last_n?: number` (기본 20), `min_weight?: number` (0–1) | `{ insights: [{ cycle_id, timestamp, category, severity, text, weight }] }` |
+
+인사이트는 30일 선형 시간 감쇠를 사용합니다. `weight` 필드는 1.0(방금 기록)에서 0.0(30일 이상 경과)까지 범위입니다. `min_weight`로 오래된 인사이트를 필터링하세요.
 
 ## 전체 레퍼런스
 

@@ -22,16 +22,32 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ---
 
-## What's New in v0.9.0
+## What's New in v1.0.0
 
 - **323 tests, green locally** — current release verification is `322` passing, `1` skipped, `0` failing
-- **Domain-aware PDCA starts** — `pdca_start_run` now accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`) to enforce specialized stage contracts from the first phase
-- **Guardrails on every skill** — all 13 skills now ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
-- **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds now govern phase exits
+- **PDCA Cycle Memory** — every cycle now auto-saves to `.data/cycles/`, building a persistent learning archive. Start a run, transition phases, end the run — and the system remembers what worked, what failed, and what to watch for next time
+- **Read-Before-Act** — before entering any PDCA phase, the system reads prior cycle insights for the current domain. No cold starts. Every cycle benefits from the last
+- **Self-Evolution** — insights decay over time (stale lessons fade), and gotcha proposals bubble up from recurring failure patterns. The system gets smarter with use
+- **Domain-aware PDCA** — `pdca_start_run` accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`) to enforce specialized stage contracts from the first phase
+- **3 new MCP tools** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` bring the total to **24 tools**
+- **Guardrails on every skill** — all 13 skills ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
+- **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds govern phase exits
 - **Richer cycle outcomes** — `pdca_transition` can now `PROCEED`, `REFINE`, or `PIVOT`, with max-count caps to prevent infinite loops
 - **Visual feedback built in** — session end emits an ANSI summary box in the terminal and auto-generates dark-theme HTML cycle reports with Mermaid and Chart.js in `.data/reports/`
-- **Reliability upgrades across the loop** — File Mutation Queue fixes reviewer aggregation races, loop runner budgets cap time/cost, iterative compaction preserves insights, and MAD confidence scoring classifies benchmark results as strong, marginal, or noise
-- **Better integrations and observability** — optional `mmbridge` MCP registration, the MMBridge Adapter Protocol (`Cli`, `Stub`, `Recording`), and MetaClaw PRM effectiveness tracking make external review and measurement safer to operate
+
+<details>
+<summary><strong>What was new in v0.9.0</strong></summary>
+
+- **311-test release baseline** — suite sat at **311** total (`310` passing, `1` skipped)
+- **Domain-aware PDCA starts** — `pdca_start_run` gained the `domain` parameter
+- **Guardrails on every skill** — Iron Laws and Red Flags across all 13 skills
+- **Stronger gates** — stage contracts, corrected consensus rounding, dual gating
+- **Richer cycle outcomes** — `PROCEED`, `REFINE`, or `PIVOT` with bounded retries
+- **Visual feedback** — ANSI summary box and HTML cycle reports
+- **Reliability upgrades** — File Mutation Queue, loop budget caps, iterative compaction, MAD confidence scoring
+- **Better integrations** — optional `mmbridge` MCP registration, MMBridge Adapter Protocol, MetaClaw PRM tracking
+
+</details>
 
 ---
 
@@ -63,6 +79,58 @@ The auto-router picks the right skill. No slash commands to memorize. Korean wor
 ```
 AI 에이전트 알아보고 보고서 써줘
 ```
+
+---
+
+## Quick Start: Your First PDCA Cycle with Memory
+
+Here's what happens under the hood when you run a full cycle. The memory system records everything automatically.
+
+```
+You: "Research AI agents and write a report"
+
+1. pdca_start_run(domain="content", topic="AI agents report")
+   → Creates .data/cycles/2025-03-29T18-02-00-content.json
+   → Reads prior content-domain insights (Read-Before-Act)
+
+2. pdca_transition(phase="plan" → "do")
+   → Gate check passes, phase snapshot saved to cycle file
+   → Research brief persisted as cycle artifact
+
+3. pdca_transition(phase="do" → "check")
+   → Draft artifact saved, reviewers dispatched
+
+4. pdca_save_insight({
+     domain: "content",
+     type: "gotcha",
+     text: "Reviewers flagged unsourced market-size claims twice"
+   })
+   → Insight written to .data/cycles/insights/content.json
+   → Available to all future content cycles
+
+5. pdca_get_insights(domain="content")
+   → Returns ranked insights with freshness decay applied
+   → Stale lessons (>30 days) score lower; recent gotchas rank first
+
+6. pdca_end_run(verdict="PROCEED")
+   → Final cycle state saved to .data/cycles/
+   → ANSI summary box printed, HTML report generated
+```
+
+After a few cycles, `.data/cycles/` looks like this:
+
+```
+.data/cycles/
+├── 2025-03-29T18-02-00-content.json    # full cycle record
+├── 2025-03-29T19-15-00-code.json       # another cycle
+├── insights/
+│   ├── content.json    # accumulated content-domain insights
+│   ├── code.json       # code-domain insights
+│   ├── analysis.json   # analysis-domain insights
+│   └── pipeline.json   # pipeline-domain insights
+```
+
+Every cycle feeds the next. No manual knowledge management required.
 
 ---
 
@@ -100,6 +168,55 @@ You get the final output. Reviewed. Fact-checked. Refined.
 The key is the Action Router. When review finds problems, it classifies the root cause and routes back to the right phase. A research gap goes back to research, not to a generic "try again." That's why the second pass through PDCA is dramatically better than the first.
 
 ![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+---
+
+### PDCA Cycle Memory
+
+Every PDCA run is now a learning event, not a throwaway session.
+
+**Auto-save on transition and end.** Each phase transition snapshots the cycle state — gate results, scores, reviewer findings, artifacts — into `.data/cycles/<timestamp>-<domain>.json`. When the run ends, the final record is persisted automatically. No manual saves. No lost context.
+
+**Read-Before-Act.** Before entering any phase, the system queries `.data/cycles/insights/<domain>.json` for prior lessons. A content cycle reads content insights. A code cycle reads code insights. Cold starts disappear after your first run.
+
+**Self-Evolution.** Two mechanisms keep the insight pool healthy:
+
+- **Time decay** — insights older than 30 days score progressively lower in relevance rankings. Stale patterns don't crowd out fresh discoveries.
+- **Gotcha proposals** — when the same failure pattern appears across 3+ cycles, the system promotes it to a persistent gotcha. These rank highest and surface first in Read-Before-Act.
+
+The result: the 10th cycle in a domain is meaningfully smarter than the 1st.
+
+```
+.data/cycles/
+├── 2025-03-29T18-02-00-content.json   # cycle record with phases, gates, scores
+├── insights/
+│   └── content.json                    # accumulated insights for this domain
+│       ├── gotchas[]                   # promoted recurring failure patterns
+│       ├── lessons[]                   # one-off observations with decay scores
+│       └── preferences[]              # user-specific style/process signals
+```
+
+---
+
+### Domain-Aware PDCA
+
+Not all work is the same. Writing an article and shipping a code change have different quality criteria. Domain-aware PDCA enforces this from phase one.
+
+**4 domains, 4 sets of stage contracts:**
+
+| Domain | What it covers | Plan contract | Do contract | Check contract | Act contract |
+|---|---|---|---|---|---|
+| **code** | Features, bug fixes, refactors | Spec + test plan required | Implementation + tests pass | Code review: correctness, security, perf | Merge criteria met, CI green |
+| **content** | Articles, reports, newsletters | Research brief with sources | Full draft with citations | 5-reviewer consensus: logic, facts, tone | Editorial polish, publish-ready |
+| **analysis** | SWOT, frameworks, market intel | Data collection + framework selection | Structured analysis output | Validity check: methodology, numbers | Actionable recommendations |
+| **pipeline** | Workflows, automation, infra | Pipeline spec + rollback plan | Implementation + dry run | Integration test + load test | Deployment checklist verified |
+
+Each domain loads its contracts from `config/stage-contracts.json`. The contracts define:
+- **Entry criteria** — what must exist before a phase starts
+- **Exit criteria** — what must pass before the gate opens
+- **DoD (Definition of Done)** — the checklist that reviewers evaluate
+
+When you say `pdca_start_run(domain="code")`, the system loads code-specific contracts and enforces them at every transition. No manual configuration needed per run.
 
 ---
 
@@ -206,7 +323,7 @@ The HTML report is auto-generated on session end, so maintainers get a persisten
 
 A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 6 handler modules in `mcp/lib/`) manages persistent state across the session.
 
-**21 tools** across PDCA state, soul, project memory, daemon control, and session recall surfaces.
+**24 tools** across PDCA state, soul, project memory, cycle memory, daemon control, and session recall surfaces.
 
 **Core PDCA tools:**
 
@@ -219,6 +336,14 @@ A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 
 | `list_runs` | Query PDCA run history |
 | `end` | Complete the cycle |
 | `update_stuck` | Record a stuck/failed cycle |
+
+**Cycle Memory tools (new in v1.0.0):**
+
+| Tool | Purpose |
+|---|---|
+| `pdca_get_cycle_history` | Retrieve past cycle records — filter by domain, date range, or verdict |
+| `pdca_save_insight` | Persist a lesson, gotcha, or preference to the domain insight store |
+| `pdca_get_insights` | Fetch ranked insights for a domain with time-decay scoring applied |
 
 **Event sourcing:** Every PDCA cycle is logged — phase transitions, gate decisions, review scores, action routes. You can query run history and spot recurring failure patterns.
 
@@ -464,6 +589,15 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 <details>
 <summary><strong>Changelog</strong></summary>
+
+### v1.0.0 — PDCA Cycle Memory and Self-Evolution
+
+- **323-test release** — `322` passing, `1` skipped, `0` failing
+- **PDCA Cycle Memory** — auto-save on every transition and run end to `.data/cycles/`
+- **Read-Before-Act** — prior cycle insights loaded before each phase
+- **Self-Evolution** — time decay on stale insights, gotcha proposals from recurring failures
+- **Domain-Aware PDCA** — 4 domains (`code`, `content`, `analysis`, `pipeline`) with specialized stage contracts
+- **3 new MCP tools** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` (24 tools total)
 
 ### v0.9.0 — Visualization, Tracking, and Release Hardening
 

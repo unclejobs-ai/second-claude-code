@@ -2,6 +2,15 @@
 
 # Architecture
 
+## What's New in 1.0.0
+
+Four changes landed in this release:
+
+1. **Cycle Memory** — New persistence layer (`mcp/lib/cycle-memory.mjs`, 230 lines) stores per-cycle phase markdown, metrics, and cross-cycle insights under `.data/cycles/`. Three new MCP tools (`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`) expose the memory to any MCP client.
+2. **Domain-Aware Contracts** — `pdca_start_run` now accepts a `domain` parameter (`code | content | analysis | pipeline`) that selects stage-specific contracts, Definition of Done criteria, and rollback targets for each phase transition.
+3. **Read-Before-Act Wiring** — `handleStartRun` automatically loads the 10 most recent insights (weight ≥ 0.1) so each new cycle starts with accumulated learnings. `handleTransition` auto-saves phase artifacts to cycle memory. `handleEndRun` persists cycle metrics.
+4. **Self-Evolution** — When a critical insight is recorded 3+ times, `saveInsight` auto-generates a gotcha proposal under `.data/proposals/gotchas-{category}.md`, surfacing repeated failure patterns as reusable checklists.
+
 ## What's New in 0.5.3
 
 Three changes landed in this release:
@@ -70,7 +79,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state, playwright (optional)
+├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (24 tools), playwright (optional)
 ├── skills/                       # 13 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
@@ -102,6 +111,7 @@ second-claude/
 ├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
 ├── scripts/                      # Shell utilities
+├── mcp/lib/cycle-memory.mjs      # Cycle memory persistence (phase snapshots, insights, metrics)
 └── config/                       # User configuration
 ```
 
@@ -386,6 +396,50 @@ Research Dispatch
     ├── Gap analysis
     └── Writer synthesis → Research Brief
 ```
+
+---
+
+## Cycle Memory
+
+The cycle memory module (`mcp/lib/cycle-memory.mjs`) provides durable cross-cycle knowledge that survives session boundaries. It stores phase artifacts, metrics, and structured insights under `.data/cycles/`.
+
+### Storage Layout
+
+```
+.data/cycles/
+├── cycle-001/
+│   ├── plan.md          # Phase artifact snapshot
+│   ├── do.md
+│   ├── check.md
+│   ├── act.md
+│   ├── metrics.json     # Cycle-level metrics (domain, verdict, durations)
+│   └── events.jsonl     # Append-only event log
+├── cycle-002/
+│   └── ...
+├── insights.json        # Cross-cycle structured insights with time-decay weights
+└── proposals/           # Auto-generated gotcha proposals (self-evolution)
+    └── gotchas-{category}.md
+```
+
+### Integration Points
+
+| Handler | Trigger | Behavior |
+|---------|---------|----------|
+| `handleStartRun` | `pdca_start_run` | Read-Before-Act: loads 10 most recent insights (weight ≥ 0.1) into run context |
+| `handleTransition` | `pdca_transition` | Auto-saves completed phase artifact to `cycle-NNN/{phase}.md` |
+| `handleEndRun` | `pdca_end_run` | Persists cycle metrics to `cycle-NNN/metrics.json` |
+
+### MCP Tools (3 new)
+
+| Tool | Params | Returns |
+|------|--------|---------|
+| `pdca_get_cycle_history` | `cycle_id?`, `last_n?` | `{ cycles: [{ id, plan, do, check, act, metrics }] }` |
+| `pdca_save_insight` | `cycle_id`, `insight`, `category`, `severity` | `{ total_insights, repeated_count }` |
+| `pdca_get_insights` | `category?`, `last_n?`, `min_weight?` | `{ insights: [{ cycle_id, timestamp, category, severity, text, weight }] }` |
+
+### Self-Evolution
+
+Insights use a 30-day linear time-decay for weight. When a critical insight repeats 3+ times, `saveInsight` automatically writes a gotcha proposal to `.data/proposals/gotchas-{category}.md`. These proposals surface recurring failure patterns as actionable checklists that can be promoted to permanent project gotchas.
 
 ---
 
