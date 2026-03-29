@@ -24,6 +24,15 @@ jobs:
       - name: Syntax checks
         run: node --check hooks/*.mjs mcp/*.mjs daemon/*.mjs
 
+      - name: Debug hook subprocess
+        run: |
+          TMPDIR=$(mktemp -d)
+          mkdir -p "$TMPDIR/state"
+          node hooks/subagent-start.mjs <<< '{"subagent_name":"fact-checker"}' 2>&1 || true
+          echo "--- with CLAUDE_PLUGIN_DATA ---"
+          CLAUDE_PLUGIN_DATA="$TMPDIR" node hooks/subagent-start.mjs <<< '{"subagent_name":"fact-checker"}' 2>&1 || true
+          ls -la "$TMPDIR/state/" 2>&1 || true
+
       - name: Contract and runtime tests
         run: >
           node --test
