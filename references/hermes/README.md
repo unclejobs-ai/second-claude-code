@@ -13,6 +13,7 @@ reinterpreting the repo every time.
 - `skillpack/`: installable Hermes skills in category/skill directory structure
 - `OPERATIONS.md`: operator decision rules and execution order
 - `examples/`: ready-to-run JSON payloads for common scenarios
+- `PROMPTS.md`: ready-to-use Hermes operator prompts for common coding scenarios
 
 ## Boundary
 
