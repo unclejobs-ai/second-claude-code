@@ -23,3 +23,6 @@ tests/skill-tests/
 # Temp
 *.tmp
 *.log
+
+# Codex test artifacts (numbered dirs at root)
+/[0-9]*/

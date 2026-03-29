@@ -16,8 +16,16 @@ const PHASES = ["plan", "do", "check", "act"];
 const INSIGHT_CATEGORIES = new Set(["process", "technical", "quality"]);
 const INSIGHT_SEVERITIES = new Set(["info", "warning", "critical"]);
 
+function validateCycleId(cycleId) {
+  const n = Number(cycleId);
+  if (!Number.isInteger(n) || n < 0 || n > 9999) {
+    throw new Error("cycle_id must be an integer between 0 and 9999");
+  }
+  return n;
+}
+
 function padCycleId(cycleId) {
-  return String(cycleId).padStart(3, "0");
+  return String(validateCycleId(cycleId)).padStart(3, "0");
 }
 
 function getCyclesDir(dataDir) {
@@ -30,7 +38,11 @@ function getCycleDir(dataDir, cycleId) {
 
 function readJsonFile(filePath, fallback) {
   if (!existsSync(filePath)) return fallback;
-  return JSON.parse(readFileSync(filePath, "utf8"));
+  try {
+    return JSON.parse(readFileSync(filePath, "utf8"));
+  } catch {
+    return fallback;
+  }
 }
 
 function readTextFile(filePath) {
@@ -100,7 +112,7 @@ function writeGotchaProposal(dataDir, { category, insight, repeatedCount, cycleI
     "",
   ];
 
-  writeFileSync(proposalPath, lines.join("\n"), "utf8");
+  appendFileSync(proposalPath, lines.join("\n") + "\n---\n", "utf8");
 }
 
 export function appendCycleEvent(dataDir, { cycle_id, event }) {
@@ -156,7 +168,7 @@ export function getCycleHistory(dataDir, { cycle_id, last_n } = {}) {
     .filter((value) => value !== null)
     .sort((a, b) => b - a);
 
-  const limit = typeof last_n === "number" ? last_n : cycleIds.length;
+  const limit = typeof last_n === "number" && last_n > 0 ? last_n : cycleIds.length;
   const cycles = cycleIds.slice(0, limit).map((id) => loadCycle(dataDir, id)).filter(Boolean);
 
   return { cycles };
@@ -179,8 +191,11 @@ export function saveInsight(dataDir, { cycle_id, insight, category, severity }) 
   writeInsights(dataDir, insights);
 
   const repeatedCount = insights.filter((entry) => entry.text === record.text).length;
+  const criticalCount = insights.filter(
+    (entry) => entry.text === record.text && entry.severity === "critical"
+  ).length;
 
-  if (severity === "critical" && repeatedCount >= 3) {
+  if (severity === "critical" && criticalCount >= 3) {
     writeGotchaProposal(dataDir, {
       category,
       insight: record.text,
