@@ -23,6 +23,8 @@ import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
 } from "@modelcontextprotocol/sdk/types.js";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 // ---------------------------------------------------------------------------
 // Handler imports from focused modules
@@ -61,6 +63,15 @@ import {
 } from "./lib/daemon-handlers.mjs";
 
 import { handleSessionRecallSearch } from "./lib/session-handlers.mjs";
+import {
+  getCycleHistory,
+  getInsights,
+  saveInsight,
+} from "./lib/cycle-memory.mjs";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const PLUGIN_ROOT = join(__dirname, "..");
+const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA ?? join(PLUGIN_ROOT, ".data");
 
 // ---------------------------------------------------------------------------
 // Tool definitions
@@ -224,6 +235,78 @@ const TOOL_DEFINITIONS = [
         run_id: {
           type: "string",
           description: "UUID of the run to analyze. Omit to use the active or most recently completed run.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "pdca_get_cycle_history",
+    description:
+      "Return persisted PDCA cycle memory for a specific cycle or the most recent N cycles, including phase markdown and cycle metrics.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cycle_id: {
+          type: "number",
+          description: "Optional numeric cycle id to load, such as 1 for cycle-001.",
+        },
+        last_n: {
+          type: "number",
+          description: "Optional number of most recent cycles to return when cycle_id is omitted.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "pdca_save_insight",
+    description:
+      "Persist a structured PDCA insight for later recall across cycles. Critical repeated insights can emit gotcha proposals.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        cycle_id: {
+          type: "number",
+          description: "Numeric cycle id that produced the insight.",
+        },
+        insight: {
+          type: "string",
+          description: "The insight text to persist.",
+        },
+        category: {
+          type: "string",
+          enum: ["process", "technical", "quality"],
+          description: "Insight category.",
+        },
+        severity: {
+          type: "string",
+          enum: ["info", "warning", "critical"],
+          description: "Insight severity.",
+        },
+      },
+      required: ["cycle_id", "insight", "category", "severity"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "pdca_get_insights",
+    description:
+      "Query persisted PDCA insights with optional category filtering and minimum decayed weight threshold.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        category: {
+          type: "string",
+          description: "Optional category filter: process, technical, or quality.",
+        },
+        last_n: {
+          type: "number",
+          description: "Maximum number of most recent insights to return (default: 20).",
+        },
+        min_weight: {
+          type: "number",
+          description: "Optional minimum decayed weight threshold between 0 and 1.",
         },
       },
       additionalProperties: false,
@@ -499,6 +582,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "pdca_get_analytics":
         result = handleGetAnalytics(input);
+        break;
+      case "pdca_get_cycle_history":
+        result = getCycleHistory(DATA_DIR, input);
+        break;
+      case "pdca_save_insight":
+        result = saveInsight(DATA_DIR, input);
+        break;
+      case "pdca_get_insights":
+        result = getInsights(DATA_DIR, input);
         break;
       case "soul_get_profile":
         result = handleSoulGetProfile();
