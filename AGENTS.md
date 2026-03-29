@@ -5,7 +5,7 @@ Codex plugin (v0.9.0). PDCA-native knowledge work system — 13 skills, 17 agent
 ## Project Structure
 
 ```
-.Codex-plugin/plugin.json  — Plugin manifest (name, version, MCP servers)
+.claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
 skills/                     — 13 skill directories (pdca, research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul, translate)
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
@@ -29,10 +29,10 @@ docs/                       — Architecture docs (EN/KO bilingual)
 
 ```bash
 # Syntax check all hooks and MCP server
-node --check hooks/*.mjs mcp/*.mjs
+node --check hooks/*.mjs mcp/*.mjs daemon/*.mjs
 
 # Validate plugin manifest
-node -e "JSON.parse(require('fs').readFileSync('.Codex-plugin/plugin.json','utf8'))"
+node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'))"
 
 # Verify all agents have required frontmatter
 for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmatter: $f"; done

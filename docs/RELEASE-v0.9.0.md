@@ -26,7 +26,7 @@ All 13 skills now have behavioral guardrails:
 - Domain-aware: separate contracts for `code` vs `content` workflows
 - DoD (Definition of Done) per phase
 - Rollback targets for failure recovery
-- Wired to runtime: `pdca_transition` loads and enforces contracts
+- Wired to runtime: `pdca_transition` and `pdca_start_run` load and enforce contracts (via new `domain` parameter)
 
 ### Consensus Gate Fix (P0)
 Three critical bugs in the review voting system:
@@ -149,8 +149,8 @@ No P0 security issues in final review.
 | Integration | 3 | 3 | 0 |
 | Benchmarks | 9 | 17 | +8 |
 | E2E | 5 | 5 | 0 |
-| Skill Tests | 26 | 26 | 0 |
-| **Total** | **194** | **311** | **+117** |
+| Skill Tests | 26 | 0 | -26 |
+| **Total** | **194** | **289** | **+95** |
 
 ---
 
@@ -209,7 +209,6 @@ None. All changes are additive. Existing workflows continue to work unchanged.
 
 ## Known Limitations
 
-- Stage contracts `content` domain not reachable via `pdca_start_run` (no domain parameter yet)
 - `withFileLockSync` timeout path can force-break non-stale locks under extreme contention
 - mmbridge MCP server requires Node 25+ (node:sqlite FTS5) — optional, degrades gracefully
 - `loadContracts()` cache check has minor redundancy (non-functional)

@@ -72,10 +72,11 @@ function evaluateGate(gate, state) {
   return { passed: missing.length === 0, missing };
 }
 
-function buildInitialState(topic, maxCycles) {
+function buildInitialState(topic, maxCycles, domain = "code") {
   return {
     run_id: randomUUID(),
     topic,
+    domain,
     current_phase: "plan",
     completed: [],
     cycle_count: 1,
@@ -150,12 +151,16 @@ function createTestEnv() {
 /**
  * Simulate handleStartRun using temp dir.
  */
-function simulateStartRun(env, { topic, max_cycles = 3 }) {
+function simulateStartRun(env, { topic, max_cycles = 3, domain = "code" }) {
   if (typeof topic !== "string" || topic.trim() === "") {
     throw new Error("topic must be a non-empty string");
   }
   if (typeof max_cycles !== "number" || !Number.isInteger(max_cycles) || max_cycles < 1) {
     throw new Error("max_cycles must be a positive integer");
+  }
+  const validDomains = ["code", "content", "analysis", "pipeline"];
+  if (!validDomains.includes(domain)) {
+    throw new Error(`domain must be one of: ${validDomains.join(", ")}`);
   }
 
   const existing = readJson(env.activeFile);
@@ -166,13 +171,13 @@ function simulateStartRun(env, { topic, max_cycles = 3 }) {
     );
   }
 
-  const state = buildInitialState(topic.trim(), max_cycles);
+  const state = buildInitialState(topic.trim(), max_cycles, domain);
   writeJsonSync(env.activeFile, state);
 
   logEvent(env.tempDir, state.run_id, {
     type: "cycle_start",
     phase: "plan",
-    data: { topic: state.topic, max_cycles: state.max_cycles },
+    data: { topic: state.topic, max_cycles: state.max_cycles, domain: state.domain },
   });
 
   return state;
@@ -926,6 +931,23 @@ describe("PDCA State Server — Tool Input Validation", () => {
   it("start_run uses default max_cycles of 3", () => {
     const state = simulateStartRun(env, { topic: "Default cycles" });
     assert.equal(state.max_cycles, 3);
+  });
+
+  it("start_run uses default domain of 'code'", () => {
+    const state = simulateStartRun(env, { topic: "Default domain" });
+    assert.equal(state.domain, "code");
+  });
+
+  it("start_run accepts 'content' domain", () => {
+    const state = simulateStartRun(env, { topic: "Content domain", domain: "content" });
+    assert.equal(state.domain, "content");
+  });
+
+  it("start_run rejects invalid domain", () => {
+    assert.throws(
+      () => simulateStartRun(env, { topic: "Test", domain: "invalid" }),
+      /domain must be one of/
+    );
   });
 
   it("transition rejects invalid phase name", () => {

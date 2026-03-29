@@ -76,7 +76,7 @@ let _contracts = null;
  * Contracts are cached after first load.
  */
 function loadContracts() {
-  if (_contracts !== undefined && _contracts !== null) return _contracts;
+  if (_contracts) return _contracts;
   try {
     _contracts = JSON.parse(readFileSync(CONTRACTS_PATH, "utf8"));
     return _contracts;
@@ -210,12 +210,14 @@ function evaluateCheckToActDecision(state) {
  * Build the initial state object for a new run.
  * @param {string} topic
  * @param {number} maxCycles
+ * @param {string} [domain="code"]
  * @returns {object}
  */
-function buildInitialState(topic, maxCycles) {
+function buildInitialState(topic, maxCycles, domain = "code") {
   return {
     run_id: randomUUID(),
     topic,
+    domain,
     current_phase: "plan",
     completed: [],
     cycle_count: 1,
@@ -271,12 +273,16 @@ export function handleGetState() {
 }
 
 /** pdca_start_run */
-export function handleStartRun({ topic, max_cycles = 3 }) {
+export function handleStartRun({ topic, max_cycles = 3, domain = "code" }) {
   if (typeof topic !== "string" || topic.trim() === "") {
     throw new Error("topic must be a non-empty string");
   }
   if (typeof max_cycles !== "number" || !Number.isInteger(max_cycles) || max_cycles < 1) {
     throw new Error("max_cycles must be a positive integer");
+  }
+  const validDomains = ["code", "content", "analysis", "pipeline"];
+  if (!validDomains.includes(domain)) {
+    throw new Error(`domain must be one of: ${validDomains.join(", ")}`);
   }
 
   const existing = readJson(ACTIVE_FILE);
@@ -287,7 +293,7 @@ export function handleStartRun({ topic, max_cycles = 3 }) {
     );
   }
 
-  const state = buildInitialState(topic.trim(), max_cycles);
+  const state = buildInitialState(topic.trim(), max_cycles, domain);
   writeJsonAtomic(ACTIVE_FILE, state);
 
   logEvent(DATA_DIR, state.run_id, {

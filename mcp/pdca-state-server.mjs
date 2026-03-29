@@ -92,6 +92,11 @@ const TOOL_DEFINITIONS = [
           type: "number",
           description: "Maximum number of full PDCA re-cycles allowed (default: 3).",
         },
+        domain: {
+          type: "string",
+          enum: ["code", "content", "analysis", "pipeline"],
+          description: "The execution domain, which determines which stage contracts are enforced. Default: 'code'.",
+        },
       },
       required: ["topic"],
       additionalProperties: false,
