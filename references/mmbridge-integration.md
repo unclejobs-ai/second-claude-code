@@ -133,3 +133,67 @@ For review and security commands, map mmbridge severity labels to internal 3-tie
 ## Cleanup
 
 Delete the output file (`/tmp/mmbridge-*`) after successful parsing, or at end of skill invocation regardless of outcome.
+
+## Context Packet Integration (Phase 3)
+
+### Overview
+
+The `contextPacket` method provides lightweight context retrieval at session start. It queries
+the companion daemon for session boundaries, prior context, and active constraints — enabling
+hooks to make informed decisions before any review/gate/embrace calls.
+
+### Flow
+
+1. Hook system calls `adapter.contextPacket({ sessionId, ... })` at session initialization.
+2. The adapter invokes `mmbridge contextPacket --json` with a 5-second timeout.
+3. The daemon returns a context packet containing session boundaries, prior context, and a timestamp.
+4. If the daemon is unavailable or times out, a default empty packet is returned (no blocking).
+
+### ContextPacket Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `sessionId` | `string \| null` | Unique session identifier from the daemon |
+| `boundaries` | `string[]` | Active boundary rules for this session (e.g., file scope limits, skill constraints) |
+| `context` | `object` | Prior session context: decisions, findings, PDCA state carried forward |
+| `timestamp` | `string \| null` | ISO 8601 timestamp of when the packet was generated |
+
+### Companion Daemon Integration
+
+The contextPacket call targets the mmbridge companion daemon (long-running local process).
+Unlike review/gate/embrace which may invoke external models, contextPacket reads from the
+daemon's local state only. This is why the timeout is 5 seconds (vs 60–600s for other methods).
+
+If the daemon is not running, the adapter returns the default empty response:
+`{ sessionId: null, boundaries: [], context: {}, timestamp: null }`.
+
+### Session Start Integration
+
+Context packets are consumed at session start, before any skill dispatches:
+
+```
+session start
+  └→ contextPacket() ─── 5s timeout ───→ daemon local state
+       │
+       ├→ boundaries[] → applied as constraints to subsequent skill calls
+       ├→ context{}    → injected as prior-session context for review/gate
+       └→ sessionId    → used as correlation ID across all mmbridge calls
+```
+
+### Boundary Rules
+
+The `boundaries` array returned in the context packet contains string-encoded rules that
+constrain the current session. Examples:
+
+- `"scope:files=src/**/*.ts"` — limit review to matching files only
+- `"skill:disabled=research"` — skip research skill for this session
+- `"pdca:phase=act"` — current PDCA phase context
+
+Hooks MUST respect boundaries from the context packet. If boundaries is empty, no constraints
+are applied (full-scope session).
+
+### Error Handling
+
+Follows the same iron rule as all mmbridge methods: contextPacket failure NEVER blocks the
+pipeline. On timeout, parse error, or missing daemon, the default empty packet is returned
+and the session proceeds without daemon-sourced context.

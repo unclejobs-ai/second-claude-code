@@ -5,6 +5,7 @@ import {
   readFileSync,
 } from "fs";
 import { join } from "path";
+import { homedir } from "os";
 import { ensureDir, readJsonSafe, writeJsonAtomic } from "./utils.mjs";
 
 const DAEMON_DIRNAME = "daemon";
@@ -320,9 +321,49 @@ export function appendRecallEntry(dataDir, entry) {
   return payload;
 }
 
+/**
+ * Read context-tree entries from mmbridge (~/.mmbridge/context-trees/*.jsonl).
+ * Each entry is tagged with _source: 'mmbridge-context-tree' so callers can
+ * distinguish them from native daemon recall entries.
+ * Returns [] on any error — must never throw.
+ */
+function readContextTreeEntries() {
+  try {
+    const ctDir = join(homedir(), ".mmbridge", "context-trees");
+    if (!existsSync(ctDir)) return [];
+
+    const files = readdirSync(ctDir).filter((f) => f.endsWith(".jsonl"));
+    const entries = [];
+
+    for (const file of files) {
+      try {
+        const raw = readFileSync(join(ctDir, file), "utf8");
+        const lines = raw.split("\n").filter((l) => l.trim().length > 0);
+        for (const line of lines) {
+          try {
+            const obj = JSON.parse(line);
+            obj._source = "mmbridge-context-tree";
+            entries.push(obj);
+          } catch {
+            // skip malformed lines
+          }
+        }
+      } catch {
+        // skip unreadable files
+      }
+    }
+
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
 export function searchSessionRecall(dataDir, { query = "", limit = 5 } = {}) {
   const { recallIndexPath } = getDaemonPaths(dataDir);
-  const entries = readJsonl(recallIndexPath);
+  const daemonEntries = readJsonl(recallIndexPath);
+  const contextTreeEntries = readContextTreeEntries();
+  const entries = [...daemonEntries, ...contextTreeEntries];
   const normalizedQuery = String(query || "").trim().toLowerCase();
 
   const filtered = entries.filter((entry) => {

@@ -9,6 +9,7 @@ const DEFAULT_TIMEOUTS = {
   review: 120_000,
   gate: 60_000,
   embrace: 600_000,
+  contextPacket: 5_000,
 };
 
 export class TimeoutError extends Error {
@@ -118,6 +119,24 @@ function normalizeEmbraceResponse(value) {
   };
 }
 
+function normalizeContextPacketResponse(value) {
+  if (!isPlainObject(value)) {
+    return {
+      sessionId: null,
+      boundaries: [],
+      context: {},
+      timestamp: null,
+    };
+  }
+
+  return {
+    sessionId: typeof value.sessionId === "string" ? value.sessionId : null,
+    boundaries: Array.isArray(value.boundaries) ? value.boundaries : [],
+    context: isPlainObject(value.context) ? value.context : {},
+    timestamp: typeof value.timestamp === "string" ? value.timestamp : null,
+  };
+}
+
 function toErrorMessage(prefix, error) {
   return `${prefix}: ${error?.message || "unknown mmbridge error"}`;
 }
@@ -155,6 +174,15 @@ export class MmBridgeAdapter {
     };
   }
 
+  defaultContextPacketResponse() {
+    return {
+      sessionId: null,
+      boundaries: [],
+      context: {},
+      timestamp: null,
+    };
+  }
+
   async review() {
     throw new Error("MmBridgeAdapter.review() must be implemented by a subclass");
   }
@@ -165,6 +193,10 @@ export class MmBridgeAdapter {
 
   async embrace() {
     throw new Error("MmBridgeAdapter.embrace() must be implemented by a subclass");
+  }
+
+  async contextPacket() {
+    throw new Error("MmBridgeAdapter.contextPacket() must be implemented by a subclass");
   }
 }
 
@@ -232,6 +264,22 @@ export class MmBridgeCliAdapter extends MmBridgeAdapter {
     });
   }
 
+  async contextPacket(options = {}) {
+    return this.#runJsonCommand({
+      method: "contextPacket",
+      options,
+      extraArgs: ["--json"],
+      onSuccess: (parsed) => normalizeContextPacketResponse(parsed),
+      onFailure: (error) => {
+        if (!isMissingBinaryError(error)) {
+          this.logger(toErrorMessage("mmbridge contextPacket failed", error));
+        }
+
+        return this.defaultContextPacketResponse();
+      },
+    });
+  }
+
   async #runJsonCommand({ method, options, extraArgs, onSuccess, onFailure }) {
     const args = [method, ...buildCliArgs(options), ...extraArgs];
 
@@ -271,6 +319,10 @@ export class MmBridgeStubAdapter extends MmBridgeAdapter {
     return this.#resolve("embrace", options, this.defaultEmbraceResponse());
   }
 
+  async contextPacket(options = {}) {
+    return this.#resolve("contextPacket", options, this.defaultContextPacketResponse());
+  }
+
   async #resolve(method, options, fallback) {
     const behavior = this.config[method] ?? {};
 
@@ -295,6 +347,10 @@ export class MmBridgeStubAdapter extends MmBridgeAdapter {
 
     if (method === "gate") {
       return normalizeGateResponse(response, "warn");
+    }
+
+    if (method === "contextPacket") {
+      return normalizeContextPacketResponse(response);
     }
 
     return normalizeEmbraceResponse(response);
@@ -327,6 +383,10 @@ export class MmBridgeRecordingAdapter extends MmBridgeAdapter {
 
   async embrace(options = {}) {
     return this.#invoke("embrace", options);
+  }
+
+  async contextPacket(options = {}) {
+    return this.#invoke("contextPacket", options);
   }
 
   async #invoke(method, options) {

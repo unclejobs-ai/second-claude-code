@@ -101,6 +101,35 @@ function getActiveState() {
   return parts.length > 0 ? parts.join("\n") : null;
 }
 
+/**
+ * Fetch always-on memory from mmbridge context-broker.
+ * Runs `mmbridge context packet --json` with a 5 s timeout.
+ * Returns { alwaysOnMemory, freshness, gateWarnings } or null.
+ */
+function getMmBridgeAlwaysOnMemory() {
+  try {
+    const raw = execFileSync("mmbridge", ["context", "packet", "--json"], {
+      encoding: "utf8",
+      timeout: 5000,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    const packet = JSON.parse(raw);
+    const alwaysOnMemory = packet.alwaysOnMemory || packet.always_on_memory || null;
+    if (!alwaysOnMemory) return null;
+    return {
+      alwaysOnMemory,
+      freshness: packet.freshness || packet.freshness_label || null,
+      gateWarnings: Array.isArray(packet.gateWarnings)
+        ? packet.gateWarnings
+        : Array.isArray(packet.gate_warnings)
+          ? packet.gate_warnings
+          : [],
+    };
+  } catch {
+    return null;
+  }
+}
+
 function main() {
   const lines = [];
   const capabilities = getCapabilities();
@@ -162,6 +191,31 @@ function main() {
     }
   } catch {
     // Non-fatal — project memory injection errors must never break session start.
+  }
+
+  // ── MMBridge Context injection ───────────────────────────────────────────
+  try {
+    const mmCtx = getMmBridgeAlwaysOnMemory();
+    if (mmCtx) {
+      lines.push("");
+      lines.push("## MMBridge Context");
+      if (mmCtx.alwaysOnMemory) {
+        lines.push(mmCtx.alwaysOnMemory);
+      }
+      if (mmCtx.freshness) {
+        lines.push("");
+        lines.push(`Freshness: ${mmCtx.freshness}`);
+      }
+      if (Array.isArray(mmCtx.gateWarnings) && mmCtx.gateWarnings.length > 0) {
+        lines.push("");
+        lines.push("Gate warnings:");
+        for (const w of mmCtx.gateWarnings) {
+          lines.push(`  - ${w}`);
+        }
+      }
+    }
+  } catch {
+    // Non-fatal — mmbridge context errors must never break session start.
   }
 
   try {
