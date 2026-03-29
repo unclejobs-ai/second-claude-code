@@ -39,6 +39,29 @@ export function buildSummary(markdownInput) {
     lines.push("");
   }
 
+  if (markdownInput.mmbridge) {
+    lines.push(`## MMBridge`);
+    lines.push("");
+    if (markdownInput.mmbridge.skipped) {
+      lines.push(`- Status: skipped`);
+      lines.push(`- Reason: ${markdownInput.mmbridge.reason || "No reason recorded."}`);
+    } else {
+      if (markdownInput.mmbridge.review) {
+        lines.push(`- Review status: ${markdownInput.mmbridge.review.status}`);
+        lines.push(
+          `- Review findings: ${Array.isArray(markdownInput.mmbridge.review.findings) ? markdownInput.mmbridge.review.findings.length : 0}`
+        );
+      }
+      if (markdownInput.mmbridge.gate) {
+        lines.push(`- Gate status: ${markdownInput.mmbridge.gate.status}`);
+        lines.push(
+          `- Gate warnings: ${Array.isArray(markdownInput.mmbridge.gate.warnings) ? markdownInput.mmbridge.gate.warnings.length : 0}`
+        );
+      }
+    }
+    lines.push("");
+  }
+
   const failed = markdownInput.roles.filter((entry) => !entry.ok);
   lines.push(`## Recommendation`);
   lines.push("");
@@ -46,6 +69,10 @@ export function buildSummary(markdownInput) {
     lines.push(
       `One or more roles failed (${failed.map((entry) => entry.role).join(", ")}). Inspect their result and stderr artifacts before taking action.`
     );
+  } else if (markdownInput.mmbridge?.gate?.status === "fail") {
+    lines.push("MMBridge gate failed. Do not accept the run without a corrective implementation pass.");
+  } else if (markdownInput.mmbridge?.gate?.status === "warn") {
+    lines.push("MMBridge returned warnings. Review them before accepting the implementation result.");
   } else {
     lines.push(
       "All roles completed successfully. Read the review and docs outputs before accepting the implementation result."

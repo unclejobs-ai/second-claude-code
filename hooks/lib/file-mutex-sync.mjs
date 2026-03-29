@@ -75,9 +75,10 @@ export function withFileLockSync(filePath, fn, opts = {}) {
         throw new Error(`File lock timeout after ${maxWaitMs}ms on ${filePath}`);
       }
 
-      // Busy wait with exponential backoff (sync sleep via Atomics)
+      // Busy wait with exponential backoff (portable sync sleep)
       const sleepMs = Math.min(delay, 200);
-      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, sleepMs);
+      const end = Date.now() + sleepMs;
+      while (Date.now() < end) { /* spin */ }
       delay = Math.min(delay * 2, 200);
     }
   }

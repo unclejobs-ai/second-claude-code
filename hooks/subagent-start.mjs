@@ -114,6 +114,7 @@ function main() {
 
   // ── Locked read-modify-write of aggregation file ──────────────────────────
   // Serialized with subagent-stop to prevent reviewer record loss.
+  ensureDir(STATE_DIR); // Ensure directory exists before lock creation
   const state = withFileLockSync(AGGREGATION_FILE, () => {
     let s = readJsonSafe(AGGREGATION_FILE);
 

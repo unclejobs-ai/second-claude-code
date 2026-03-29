@@ -22,7 +22,45 @@ runtimes through `acpx`.
 - never auto-merge conflicting outputs
 - read `summary.md` first, then inspect per-role artifacts only if needed
 
-## Standard Invocation
+## Preferred Invocation
+
+Use the composite launcher when `mmbridge` should gate the run after fan-out:
+
+```bash
+node scripts/hermes-external-run.mjs run '{
+  "cwd": ".",
+  "task": "Implement the requested change, review it, and draft operator notes.",
+  "acpx": {
+    "roles": [
+      {
+        "role": "impl",
+        "agent": "codex",
+        "mode": "exec",
+        "prompt_template": "You are the implementation agent. You may edit files and run tests. Task: {{task}}"
+      },
+      {
+        "role": "review",
+        "agent": "claude",
+        "mode": "exec",
+        "prompt_template": "You are the reviewer. Do not edit files. Identify concrete regressions and missing tests for: {{task}}"
+      },
+      {
+        "role": "docs",
+        "agent": "gemini",
+        "mode": "exec",
+        "prompt_template": "You are the documentation agent. Do not edit files. Summarize user-visible changes and migration notes for: {{task}}"
+      }
+    ]
+  },
+  "mmbridge": {
+    "enabled": true,
+    "review_options": { "scope": "all" },
+    "gate_options": { "mode": "review" }
+  }
+}'
+```
+
+## Raw Fan-Out Invocation
 
 Run from the repository root:
 

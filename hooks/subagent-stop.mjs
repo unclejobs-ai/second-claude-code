@@ -302,6 +302,7 @@ function main() {
   // ── Locked read-modify-write of aggregation file ──────────────────────────
   // Multiple reviewer subagents may complete simultaneously. withFileLockSync
   // ensures the entire read→update→write cycle is atomic across processes.
+  ensureDir(STATE_DIR); // Ensure directory exists before lock creation
   const state = withFileLockSync(AGGREGATION_FILE, () => {
     const s = readJsonSafe(AGGREGATION_FILE);
     if (!s) return null;
