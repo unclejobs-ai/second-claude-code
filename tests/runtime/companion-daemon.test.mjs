@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from "node:fs";
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync } from "node:fs";
+import http from "node:http";
 import os from "node:os";
 import path from "node:path";
 
@@ -20,6 +21,55 @@ function runDaemon(tempDir, ...args) {
     encoding: "utf8",
   });
   return JSON.parse(output);
+}
+
+function requestHealthz(socketPath) {
+  return new Promise((resolve, reject) => {
+    const request = http.request(
+      {
+        socketPath,
+        path: "/healthz",
+        method: "GET",
+      },
+      (response) => {
+        let body = "";
+        response.setEncoding("utf8");
+        response.on("data", (chunk) => {
+          body += chunk;
+        });
+        response.on("end", () => {
+          resolve({
+            statusCode: response.statusCode,
+            body,
+          });
+        });
+      }
+    );
+
+    request.on("error", reject);
+    request.end();
+  });
+}
+
+async function waitForHealthz(socketPath, child, stderr) {
+  const deadline = Date.now() + 5_000;
+
+  while (Date.now() < deadline) {
+    if (child.exitCode !== null) {
+      throw new Error(`daemon exited before serving /healthz: ${stderr()}`);
+    }
+
+    try {
+      const response = await requestHealthz(socketPath);
+      if (response.statusCode === 200) {
+        return response;
+      }
+    } catch {}
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+
+  throw new Error(`timed out waiting for /healthz on socket ${socketPath}`);
 }
 
 test("companion daemon CLI writes heartbeat and background job state", () => {
@@ -111,4 +161,40 @@ test("companion daemon rejects path-traversal run identifiers", () => {
       ),
     /run_id/i
   );
+});
+
+test("companion daemon serves /healthz with status and uptime", async () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-daemon-"));
+  const socketPath = path.join(tempDir, "companion-daemon.sock");
+  rmSync(socketPath, { force: true });
+  let stderr = "";
+  const child = spawn(process.execPath, [daemonPath, "serve", socketPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: tempDir,
+    },
+    stdio: ["ignore", "ignore", "pipe"],
+  });
+
+  child.stderr.setEncoding("utf8");
+  child.stderr.on("data", (chunk) => {
+    stderr += chunk;
+  });
+
+  try {
+    const response = await waitForHealthz(socketPath, child, () => stderr.trim());
+    const body = JSON.parse(response.body);
+
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(Object.keys(body).sort(), ["status", "uptime"]);
+    assert.equal(body.status, "ok");
+    assert.equal(typeof body.uptime, "number");
+    assert.ok(body.uptime >= 0);
+  } finally {
+    if (child.exitCode === null) {
+      child.kill("SIGTERM");
+      await new Promise((resolve) => child.once("exit", resolve));
+    }
+  }
 });
