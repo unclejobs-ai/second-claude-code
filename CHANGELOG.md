@@ -6,19 +6,28 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ## [1.0.0] - 2026-03-29
 
 ### Added
+- **PDCA Cycle Memory** — structured memory that persists across PDCA cycles (`mcp/lib/cycle-memory.mjs`, 230+ lines)
+  - Per-cycle directories with phase markdown (plan/do/check/act.md), events.jsonl, metrics.json
+  - Zero-context standard: each file readable without prior context
+  - 30-day time decay on insights (weight 1.0 → 0.0)
+  - Category classification (process/technical/quality) with severity levels
+  - Critical insight repetition (3+) triggers gotchas proposal in `.data/proposals/` (append, not overwrite)
+  - `cycle_id` validation (integer 0-9999, path traversal prevention)
+  - Graceful JSON parsing fallback on corrupted state files
+- **3 new MCP tools**: `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`
 - **Domain-aware PDCA starts** — `pdca_start_run` now accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`) to enforce specialized stage contracts from the first phase
 - **Full stage contracts for analysis and pipeline domains** — `config/stage-contracts.json` now defines I/O contracts, DoD, and rollback targets for all 4 domains across all 4 PDCA phases
-- **MCP handler test coverage** — 4 new test files: `daemon-handlers.test.mjs` (6 tests), `session-handlers.test.mjs` (4 tests), `loop-handlers.test.mjs` (4 tests), `pdca-analytics.test.mjs` (6 tests)
-- **handleGetEvents and handleGetAnalytics tests** — previously untested MCP handlers now have dedicated coverage
+- **MCP handler test coverage** — 8 new test files: cycle-memory (14), daemon-handlers (6), session-handlers (4), loop-handlers (4), pdca-analytics (6)
 
 ### Fixed
 - **CI debug step removed** — stale "Debug hook subprocess" step removed from GitHub Actions workflow
 - **AGENTS.md path references** — corrected `.Codex-plugin` → `.claude-plugin`, added `daemon/*.mjs` to syntax check
-- **Test count alignment** — all documentation surfaces (README, README.ko, CLAUDE.md, CHANGELOG, RELEASE notes) now reflect actual test counts
+- **Test count alignment** — all documentation surfaces now reflect actual test counts
 - **Stage contracts version** — bumped from stale `0.6.0` to `1.0.0`
+- **Cycle memory hardening** — path traversal prevention, malformed JSON resilience, correct critical-only gotcha trigger, negative last_n guard
 
 ### Changed
-- Total test count: 194 → 309 (`308` passing, `1` skipped)
+- Total test count: 194 → 323 (`322` passing, `1` skipped)
 - Version surfaces aligned to `1.0.0` across plugin manifest, marketplace, package metadata, manuals, and CHANGELOG
 
 ## [0.9.0] - 2026-03-29
@@ -31,7 +40,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **Portable spin wait** — spin-wait behavior is now portable across environments for more reliable CI execution
 
 ### Changed
-- Total test count: 194 → 309 (`308` passing, `1` skipped in the current suite)
+- Total test count: 194 → 323 (`322` passing, `1` skipped in the current suite)
 - Version surfaces aligned to `0.9.0` across plugin manifest, marketplace, package metadata, manuals, and CHANGELOG
 
 ## [0.8.0] - 2026-03-29
