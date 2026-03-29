@@ -1,0 +1,35 @@
+{
+  "cwd": ".",
+  "task": "Fix the reported production bug, add a regression test, and summarize deployment risks.",
+  "acpx": {
+    "roles": [
+      {
+        "role": "impl",
+        "agent": "codex",
+        "mode": "exec",
+        "prompt_template": "You are the implementation agent. Fix the bug, add or update tests, and run relevant verification. Task: {{task}}"
+      },
+      {
+        "role": "review",
+        "agent": "claude",
+        "mode": "exec",
+        "prompt_template": "You are the reviewer. Do not edit files. Focus on regressions, missing edge cases, and risky assumptions for: {{task}}"
+      },
+      {
+        "role": "docs",
+        "agent": "gemini",
+        "mode": "exec",
+        "prompt_template": "You are the documentation agent. Do not edit files. Summarize the fix, blast radius, and rollback considerations for: {{task}}"
+      }
+    ]
+  },
+  "mmbridge": {
+    "enabled": true,
+    "review_options": {
+      "scope": "all"
+    },
+    "gate_options": {
+      "mode": "review"
+    }
+  }
+}

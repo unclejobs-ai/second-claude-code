@@ -1,0 +1,35 @@
+{
+  "cwd": ".",
+  "task": "Apply the requested security hardening changes, preserve behavior, and report remaining risk.",
+  "acpx": {
+    "roles": [
+      {
+        "role": "impl",
+        "agent": "codex",
+        "mode": "exec",
+        "prompt_template": "You are the implementation agent. Apply the requested security hardening changes, preserve behavior, and run targeted verification. Task: {{task}}"
+      },
+      {
+        "role": "review",
+        "agent": "claude",
+        "mode": "exec",
+        "prompt_template": "You are the reviewer. Do not edit files. Focus on security regressions, bypasses, and missing edge cases for: {{task}}"
+      },
+      {
+        "role": "docs",
+        "agent": "gemini",
+        "mode": "exec",
+        "prompt_template": "You are the documentation agent. Do not edit files. Summarize hardening impact, operational caveats, and residual risk for: {{task}}"
+      }
+    ]
+  },
+  "mmbridge": {
+    "enabled": true,
+    "review_options": {
+      "scope": "all"
+    },
+    "gate_options": {
+      "mode": "security"
+    }
+  }
+}

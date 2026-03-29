@@ -1,0 +1,35 @@
+{
+  "cwd": ".",
+  "task": "Implement the approved feature slice, verify behavior, and produce release notes.",
+  "acpx": {
+    "roles": [
+      {
+        "role": "impl",
+        "agent": "codex",
+        "mode": "exec",
+        "prompt_template": "You are the implementation agent. Build the approved feature slice, update tests, and verify behavior. Task: {{task}}"
+      },
+      {
+        "role": "review",
+        "agent": "claude",
+        "mode": "exec",
+        "prompt_template": "You are the reviewer. Do not edit files. Focus on correctness, regressions, and missing tests for: {{task}}"
+      },
+      {
+        "role": "docs",
+        "agent": "gemini",
+        "mode": "exec",
+        "prompt_template": "You are the documentation agent. Do not edit files. Produce concise release notes, migration notes, and operator guidance for: {{task}}"
+      }
+    ]
+  },
+  "mmbridge": {
+    "enabled": true,
+    "review_options": {
+      "scope": "all"
+    },
+    "gate_options": {
+      "mode": "review"
+    }
+  }
+}

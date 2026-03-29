@@ -11,6 +11,8 @@ reinterpreting the repo every time.
 - `acpx-orchestrator-skill.md`: use `acpx` as a multi-agent coding execution layer
 - `mmbridge-quality-skill.md`: use `mmbridge` for review, security, gate, and handoff flows
 - `skillpack/`: installable Hermes skills in category/skill directory structure
+- `OPERATIONS.md`: operator decision rules and execution order
+- `examples/`: ready-to-run JSON payloads for common scenarios
 
 ## Boundary
 
