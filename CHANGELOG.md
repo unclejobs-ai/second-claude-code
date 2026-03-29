@@ -3,6 +3,58 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.9.0] - 2026-03-29
+
+### Added
+- **MetaClaw PRM agent effectiveness tracker** — added tracking for PRM agent performance and effectiveness over time
+
+### Fixed
+- **CI lock initialization** — `ensureDir` now runs before lock acquisition to avoid startup races
+- **Portable spin wait** — spin-wait behavior is now portable across environments for more reliable CI execution
+
+### Changed
+- Total test count: 194 → 315
+- Version surfaces aligned to `0.9.0` across plugin manifest, marketplace, package metadata, manuals, and CHANGELOG
+
+## [0.8.0] - 2026-03-29
+
+### Added
+- **Stage contracts wired to runtime** — `loadContracts`, `getDoD`, and `getPhaseContract` now load `config/stage-contracts.json` at runtime
+- **Optional MMBridge MCP registration** — `mmbridge` server added to `.claude-plugin/plugin.json` as an optional MCP dependency
+- **MMBridge Adapter Protocol** — `Cli`, `Stub`, and `Recording` adapters added for controlled integration and testing
+- **Anti-fabrication layer** — `fact-checker.mjs` added to harden factual verification
+- **Soul and memory handler coverage** — new tests added for soul handlers and memory handlers
+
+## [0.7.0] - 2026-03-29
+
+### Added
+- **HTML cycle report generator** — rich cycle reports with Chart.js, Mermaid, and dark-theme presentation
+- **Terminal ANSI session summary** — session-end hook now emits an ANSI summary box in the terminal
+- **File Mutation Queue** — synchronous cross-process coordination with async per-file execution
+- **MAD-based confidence scoring** — loop benchmarks now use median absolute deviation for more robust confidence scoring
+- **Loop budget limits** — cost and time caps added to the loop runner
+- **Iterative compaction** — compaction preserves prior insights and previous summaries across repeated passes
+
+### Changed
+- **PDCA transition logic** — `pdca_transition` now supports `PIVOT` and `REFINE` decision paths
+
+## [0.6.0] - 2026-03-29
+
+### Added
+- **Iron Laws + Red Flags for all 13 skills** — English safety and rigor guidance added across every skill
+- **Stage Contracts** — added `config/stage-contracts.json` with domain-aware contracts for code vs. content workflows
+- **Review threshold resolver** — `hooks/lib/review-config.mjs` centralizes preset threshold resolution
+- **Translate glossary reference** — added `translate/references/glossary.md`
+- **Regression coverage for hook flows** — 4 new test files for `subagent-stop`, `compaction`, `subagent-start`, and `stop-failure`
+
+### Fixed
+- **Consensus gate rounding** — corrected `Math.ceil` → `Math.round` so 2/3 consensus no longer requires 3/3
+- **Score gate validation** — gate now requires both score and vote count before passing
+- **Quick preset threshold** — `quick` preset now requires unanimous approval (`0.67` → `1.0`)
+- **Compaction state preservation** — `workflow-active.json` is now preserved through compaction
+- **Session-start banner completeness** — banner now includes `translate`, restoring 13/13 commands
+- **Release hygiene** — fixed manifest `0.5.8` drift, 13-skill metadata, ghost directories, glossary issues, and Playwright pinning to `@0.0.68`
+
 ## [0.5.8] - 2026-03-28
 
 ### Added

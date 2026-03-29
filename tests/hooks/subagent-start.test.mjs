@@ -65,6 +65,16 @@ test("subagent start creates a safety-net aggregation file for reviewers", () =>
   const tempDir = makeTempDataDir();
   const result = runHook(tempDir, { subagent_name: "fact-checker" });
 
+  // CI debug: if hook fails silently, capture stderr
+  if (!existsSync(path.join(tempDir, "state", "review-aggregation.json"))) {
+    assert.fail(
+      `Hook did not create aggregation file.\n` +
+      `exit: ${result.status}\n` +
+      `stderr: ${(result.stderr || "").slice(0, 500)}\n` +
+      `stdout: ${(result.stdout || "").slice(0, 300)}`
+    );
+  }
+
   assert.equal(result.status, 0);
 
   const aggregation = readAggregation(tempDir);

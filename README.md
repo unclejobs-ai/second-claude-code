@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.5.8-blue)
+![version](https://img.shields.io/badge/version-0.9.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -19,6 +19,16 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 ![One prompt to finished output](docs/images/hero.svg)
 
 [Docs](docs/architecture.md) · [한국어 문서](docs/architecture.ko.md) · [User Manual](docs/notion-manual.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [Skill Guides](docs/skills/) · [GitHub Issues](https://github.com/unclejobs-ai/second-claude-code/issues) · [한국어 README](README.ko.md)
+
+---
+
+## What's New in v0.9.0
+
+- **315 tests, green locally** — release docs now reflect the current verified suite size
+- **Stage contracts at runtime** — domain-aware DoD and phase contracts now load directly from `config/stage-contracts.json`
+- **Cycle reporting upgrades** — HTML cycle reports, Mermaid/Chart.js visuals, and an ANSI summary box at session end
+- **Loop hardening** — file mutation queue, MAD-based confidence scoring, cost/time budgets, and iterative compaction
+- **Trust + observability** — optional MMBridge MCP registration, anti-fabrication checks, and MetaClaw PRM effectiveness tracking
 
 ---
 
@@ -425,49 +435,35 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 <details>
 <summary><strong>Changelog</strong></summary>
 
-### v0.5.7 — MCP Test Suite, Confidence Scoring, Academic Preset
+### v0.9.0 — MetaClaw Tracking, CI Portability, 315 Tests
 
-- **MCP server test suite (72 tests)** — comprehensive coverage for pdca-state-server
-- **`pdca_list_runs` tool** — query PDCA run history from the MCP state server
-- **`auto_gate` on `pdca_transition`** — automatic gate evaluation on phase transitions
-- **Academic review preset** — specialized reviewer configuration for academic papers
-- **Confidence scoring** — routing decisions include confidence scores for observability
-- **Routing correction soul observation** — soul system captures corrections for learning
-- **Benchmark CI** — automated benchmark suite in CI pipeline
-- **P0 fixes** — package.json alignment, audit cleanup, skill count fix, metadata fix, CI MCP coverage, routing guard fix
-- Total tests: 87 → 194
+- **MetaClaw PRM effectiveness tracker** — release now records PRM agent effectiveness signals
+- **CI portability fixes** — `ensureDir` runs before lock creation and spin-wait behavior is portable across environments
+- **Suite growth** — total tests now sit at **315**
 
-### v0.5.5 — MMBridge CLI Alignment, Reference Deduplication, Skill Completeness
+### v0.8.0 — Runtime Contracts, MMBridge, Anti-Fabrication
 
-- **MMBridge CLI alignment** — fixed invocation patterns across all skills to match mmbridge v0.6.3 CLI. `--export` is now correctly used only for `review`; other commands use `--json`, `--write`, or stdout redirect as appropriate
-- **Reference deduplication** — resolved 5 pairs of diverged reference files between top-level `references/` and skill-level `references/`. Both locations now stay in sync with the newer version as source of truth
-- **mmbridge-integration.md overhaul** — replaced incorrect universal `--export` pattern with per-command invocation table. Added `resume` (120s) and `embrace` (600s) commands with timeout and merge rules
-- **PDCA Subagents section** — added consolidated 11-agent YAML block to `pdca` SKILL.md (was the only skill missing it)
-- **MMBridge Embrace integration** — `pdca` skill now documents `mmbridge embrace` for full-cycle multi-model acceleration at `--depth deep`
-- **Soul templates** — added `developer`, `writer`, and `researcher` templates for the soul identity system (previously only `default` existed)
-- **Stray CLI fixes** — corrected `mmbridge gate` invocation in `check-phase.md` and `mmbridge memory search` flag in `plan-phase.md`
+- **Stage contracts wired to runtime** — `loadContracts`, `getDoD`, and `getPhaseContract` now load domain-aware contracts directly
+- **Optional MMBridge MCP registration** — `.claude-plugin/plugin.json` can register `mmbridge` as an optional server
+- **MMBridge Adapter Protocol** — `Cli`, `Stub`, and `Recording` adapters added for integration and testing
+- **Anti-fabrication layer** — `fact-checker.mjs` strengthens factual verification
+- **Coverage expansion** — soul handler and memory handler tests added
 
-### v0.5.4 — Daemon Hardening, Routing Guardrails, Release Alignment
+### v0.7.0 — Cycle Reports, Mutation Queue, Benchmark Hardening
 
-- **Daemon hardening** — background run IDs are path-safe and daemon job/run listing surfaces are exposed through CLI and MCP
-- **Project memory trust boundary** — instruction-like memory entries are rejected or redacted before session-start injection
-- **Routing guardrails** — workflow scheduling/recall prompts route correctly while engineering prompts avoid false knowledge-work routing
-- **Notification fallback** — stdout notification delivery remains active even when the daemon heartbeat is present
-- **State compatibility + release alignment** — legacy `pipeline-active.json` resume support restored and marketplace/plugin version surfaces re-aligned
+- **HTML cycle reports** — Chart.js + Mermaid reporting with a dark-theme presentation
+- **ANSI terminal summary** — session-end now emits a concise terminal summary box
+- **PIVOT / REFINE decisions** — `pdca_transition` handles richer decision paths
+- **File Mutation Queue** — synchronized cross-process coordination with async per-file execution
+- **Benchmark robustness** — MAD-based confidence scoring, loop budgets, and iterative compaction
 
-### v0.5.3 — Companion Daemon Foundation, Project Memory Boundary
+### v0.6.0 — Stage Contracts, Gate Fixes, Skill Guardrails
 
-- **Companion daemon foundation** — local daemon CLI and state helpers for scheduling, background runs, notifications, and recall indexing
-- **Project memory layer** — session-start context can inject durable project facts separately from soul identity memory
-- **Hermes boundary guidance** — documented that external runtime ideas can be borrowed without embedding a second agent runtime inside the plugin
-
-### v0.5.1 — Agent Upgrades, MMBridge Full Integration
-
-- **SubagentStart hook** — review session context auto-injection on agent spawn
-- **Agent model upgrades** — Eevee (researcher) and Porygon (fact-checker) promoted haiku → sonnet
-- **MMBridge full integration (Phase 1-3)** — 10 commands across all PDCA phases
-- **8 lifecycle hooks** (was 7) — SubagentStart and StopFailure added
-- Model distribution: 4 opus / 9 sonnet / 4 haiku (was 4/7/6)
+- **Iron Laws + Red Flags** — English rigor guidance added to all 13 skills
+- **Stage Contracts** — introduced `config/stage-contracts.json` for code vs. content workflows
+- **Critical gate fixes** — corrected consensus rounding, score/vote validation, and quick-preset unanimity
+- **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all 13 commands including `translate`
+- **Regression coverage** — new tests added for `subagent-stop`, `compaction`, `subagent-start`, and `stop-failure`
 
 ### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing
 

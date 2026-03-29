@@ -1,6 +1,6 @@
 # Second Claude Code
 
-Claude Code plugin (v0.5.8). PDCA-native knowledge work system — 13 skills, 17 agents, 8 hooks, 2 MCP servers.
+Claude Code plugin (v0.9.0). PDCA-native knowledge work system — 13 skills, 17 agents, 8 hooks, 3 MCP servers.
 
 ## Project Structure
 
@@ -41,7 +41,7 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 # Verify all skills have SKILL.md
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
 
-# Run full test suite (219 tests including 72 MCP server tests)
+# Run full test suite (315 tests)
 npm test
 ```
 
