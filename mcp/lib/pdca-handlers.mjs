@@ -14,6 +14,11 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { logEvent, readEvents, getEventStats, listRunIds } from "../../hooks/lib/event-log.mjs";
+import {
+  saveCyclePhase,
+  saveCycleMetrics,
+  getInsights,
+} from "./cycle-memory.mjs";
 
 // ---------------------------------------------------------------------------
 // Paths
@@ -299,10 +304,19 @@ export function handleStartRun({ topic, max_cycles = 3, domain = "code" }) {
   logEvent(DATA_DIR, state.run_id, {
     type: "cycle_start",
     phase: "plan",
-    data: { topic: state.topic, max_cycles: state.max_cycles },
+    data: { topic: state.topic, max_cycles: state.max_cycles, domain: state.domain },
   });
 
-  return state;
+  // ── Read-Before-Act: load previous insights for context ────────────────
+  let previousInsights = [];
+  try {
+    const result = getInsights(DATA_DIR, { last_n: 10, min_weight: 0.1 });
+    previousInsights = result.insights ?? [];
+  } catch {
+    // Non-fatal: missing insights should not block run start
+  }
+
+  return { ...state, previous_insights: previousInsights };
 }
 
 /** Map from "current_phase → target_phase" to the gate key. */
@@ -423,6 +437,27 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
 
   writeJsonAtomic(ACTIVE_FILE, state);
 
+  // ── Auto-save completed phase to cycle memory ──────────────────────────
+  try {
+    const artifactContent = state.artifacts[previousPhase]
+      ?? state.artifacts[`${previousPhase}_research`]
+      ?? state.artifacts[`${previousPhase}_analysis`]
+      ?? state.artifacts[`${previousPhase}_report`]
+      ?? state.artifacts[`${previousPhase}_final`]
+      ?? null;
+    if (artifactContent) {
+      saveCyclePhase(DATA_DIR, {
+        cycle_id: state.cycle_count ?? 1,
+        phase: previousPhase,
+        content: typeof artifactContent === "string"
+          ? artifactContent
+          : JSON.stringify(artifactContent, null, 2),
+      });
+    }
+  } catch {
+    // Non-fatal: cycle memory save failure should not block transitions
+  }
+
   logEvent(DATA_DIR, state.run_id, {
     type: "phase_end",
     phase: previousPhase,
@@ -534,6 +569,27 @@ export function handleEndRun() {
   });
 
   writeJsonAtomic(COMPLETED_FILE, { ...state, ended_at: endedAt });
+
+  // ── Auto-save cycle metrics to cycle memory ────────────────────────────
+  try {
+    saveCycleMetrics(DATA_DIR, {
+      cycle_id: state.cycle_count ?? 1,
+      metrics: {
+        run_id: state.run_id,
+        topic: state.topic,
+        domain: state.domain ?? "code",
+        completed_phases: state.completed,
+        cycle_count: state.cycle_count,
+        refine_count: state.refine_count ?? 0,
+        pivot_count: state.pivot_count ?? 0,
+        check_verdict: state.check_verdict,
+        event_stats: stats,
+        ended_at: endedAt,
+      },
+    });
+  } catch {
+    // Non-fatal: metrics save failure should not block run end
+  }
 
   // Remove active file after archiving
   if (existsSync(ACTIVE_FILE)) {
