@@ -1,6 +1,6 @@
 {
   "$schema": "Stage contracts for PDCA phase transitions. Each phase defines domain-specific I/O requirements.",
-  "version": "0.6.0",
+  "version": "1.0.0",
   "contracts": {
     "plan": {
       "code": {
@@ -20,6 +20,28 @@
         "dod": [
           "Target audience defined",
           "Content outline with section estimates",
+          "Previous cycle insights reviewed (if not first cycle)"
+        ],
+        "max_retries": 2,
+        "rollback_target": null
+      },
+      "analysis": {
+        "input_files": [],
+        "output_files": ["plan.md"],
+        "dod": [
+          "Analysis question and hypothesis clearly stated",
+          "Data sources identified and accessible",
+          "Previous cycle insights reviewed (if not first cycle)"
+        ],
+        "max_retries": 2,
+        "rollback_target": null
+      },
+      "pipeline": {
+        "input_files": [],
+        "output_files": ["plan.md"],
+        "dod": [
+          "Pipeline stages enumerated with I/O contracts",
+          "Stage ordering validated (no circular dependencies)",
           "Previous cycle insights reviewed (if not first cycle)"
         ],
         "max_retries": 2,
@@ -48,6 +70,28 @@
         ],
         "max_retries": 2,
         "rollback_target": "plan"
+      },
+      "analysis": {
+        "input_files": ["plan.md"],
+        "output_files": ["do.md"],
+        "dod": [
+          "Data collected and validated against plan",
+          "Analysis methodology applied consistently",
+          "Intermediate results reproducible"
+        ],
+        "max_retries": 2,
+        "rollback_target": "plan"
+      },
+      "pipeline": {
+        "input_files": ["plan.md"],
+        "output_files": ["do.md"],
+        "dod": [
+          "Each pipeline stage implemented and runnable",
+          "Stage I/O contracts satisfied",
+          "Error handling for each stage defined"
+        ],
+        "max_retries": 2,
+        "rollback_target": "plan"
       }
     },
     "check": {
@@ -72,6 +116,28 @@
         ],
         "max_retries": 1,
         "rollback_target": "do"
+      },
+      "analysis": {
+        "input_files": ["plan.md", "do.md"],
+        "output_files": ["check.md"],
+        "dod": [
+          "Results cross-validated with alternative method or source",
+          "Statistical significance verified where applicable",
+          "Conclusions supported by evidence (no unsupported claims)"
+        ],
+        "max_retries": 1,
+        "rollback_target": "do"
+      },
+      "pipeline": {
+        "input_files": ["plan.md", "do.md"],
+        "output_files": ["check.md"],
+        "dod": [
+          "End-to-end pipeline run completes without error",
+          "Output artifacts match expected format and content",
+          "Performance within acceptable bounds"
+        ],
+        "max_retries": 1,
+        "rollback_target": "do"
       }
     },
     "act": {
@@ -93,6 +159,28 @@
           "All review feedback addressed",
           "Cycle insight recorded",
           "Next cycle input defined"
+        ],
+        "max_retries": 1,
+        "rollback_target": "check"
+      },
+      "analysis": {
+        "input_files": ["plan.md", "do.md", "check.md"],
+        "output_files": ["act.md", "metrics.json"],
+        "dod": [
+          "Findings summarized with confidence levels",
+          "Cycle insight recorded",
+          "Next cycle input defined (refine hypothesis or new question)"
+        ],
+        "max_retries": 1,
+        "rollback_target": "check"
+      },
+      "pipeline": {
+        "input_files": ["plan.md", "do.md", "check.md"],
+        "output_files": ["act.md", "metrics.json"],
+        "dod": [
+          "Pipeline output artifacts delivered",
+          "Cycle insight recorded",
+          "Next cycle input defined (optimize or extend pipeline)"
         ],
         "max_retries": 1,
         "rollback_target": "check"

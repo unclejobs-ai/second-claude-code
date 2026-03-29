@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-0.9.0-blue)
+![version](https://img.shields.io/badge/version-1.0.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -24,7 +24,7 @@
 
 ## v0.9.0에서 달라진 점
 
-- **테스트 기준선 정리** — 현재 검증 기준은 총 `289`개, `288`개 통과, `1`개 스킵, 실패 `0`개예요
+- **테스트 기준선 정리** — 현재 검증 기준은 총 `309`개, `308`개 통과, `1`개 스킵, 실패 `0`개예요
 - **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
 - **13개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
 - **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
@@ -598,7 +598,7 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 ### v0.9.0 — 시각화, 추적, 릴리스 하드닝
 
-- **311개 테스트 기준선** — 현재 스위트는 총 **311개** (`310` 통과, `1` 스킵)
+- **311개 테스트 기준선** — 현재 스위트는 총 **309개** (`308` 통과, `1` 스킵)
 - **MetaClaw PRM effectiveness tracker** — PRM 에이전트 효과를 추적하는 관측 지표 추가
 - **시각화 레이어** — 세션 종료 시 ANSI 요약 박스 + HTML cycle report 자동 생성
 - **보안/안정성 수정** — HTML injection, ENOENT, stdin fd `0` 처리 이슈 정리

@@ -3,7 +3,7 @@
 > **Released**: 2026-03-29
 > **Commits**: 18 (v0.5.8 → v0.9.0)
 > **Changes**: 65 files, +6,932 / -164 lines
-> **Tests**: 194 → 311 (+117), CI green
+> **Tests**: 194 → 309 (+115), CI green
 > **Reviews**: 7+ rounds (Codex gpt-5.4 × 12, mmbridge kimi × 6)
 
 ---
@@ -150,7 +150,7 @@ No P0 security issues in final review.
 | Benchmarks | 9 | 17 | +8 |
 | E2E | 5 | 5 | 0 |
 | Skill Tests | 26 | 0 | -26 |
-| **Total** | **194** | **289** | **+95** |
+| **Total** | **194** | **309** | **+115** |
 
 ---
 

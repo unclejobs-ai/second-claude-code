@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-0.9.0-blue)
+![version](https://img.shields.io/badge/version-1.0.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -24,7 +24,7 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ## What's New in v0.9.0
 
-- **289 tests, green locally** — current release verification is `288` passing, `1` skipped, `0` failing
+- **309 tests, green locally** — current release verification is `308` passing, `1` skipped, `0` failing
 - **Domain-aware PDCA starts** — `pdca_start_run` now accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`) to enforce specialized stage contracts from the first phase
 - **Guardrails on every skill** — all 13 skills now ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
 - **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds now govern phase exits
