@@ -24,11 +24,13 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ## What's New in v0.9.0
 
-- **318 tests, green locally** — release docs now reflect the current verified suite size
-- **Stage contracts at runtime** — domain-aware DoD and phase contracts now load directly from `config/stage-contracts.json`
-- **Cycle reporting upgrades** — HTML cycle reports, Mermaid/Chart.js visuals, and an ANSI summary box at session end
-- **Loop hardening** — file mutation queue, MAD-based confidence scoring, cost/time budgets, and iterative compaction
-- **Trust + observability** — optional MMBridge MCP registration, anti-fabrication checks, and MetaClaw PRM effectiveness tracking
+- **311 tests, green locally** — current release verification is `310` passing, `1` skipped, `0` failing
+- **Guardrails on every skill** — all 13 skills now ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
+- **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds now govern phase exits
+- **Richer cycle outcomes** — `pdca_transition` can now `PROCEED`, `REFINE`, or `PIVOT`, with max-count caps to prevent infinite loops
+- **Visual feedback built in** — session end emits an ANSI summary box in the terminal and auto-generates dark-theme HTML cycle reports with Mermaid and Chart.js in `.data/reports/`
+- **Reliability upgrades across the loop** — File Mutation Queue fixes reviewer aggregation races, loop runner budgets cap time/cost, iterative compaction preserves insights, and MAD confidence scoring classifies benchmark results as strong, marginal, or noise
+- **Better integrations and observability** — optional `mmbridge` MCP registration, the MMBridge Adapter Protocol (`Cli`, `Stub`, `Recording`), and MetaClaw PRM effectiveness tracking make external review and measurement safer to operate
 
 ---
 
@@ -85,11 +87,11 @@ You: "Research AI agents and write a report"
 [Do]    Write a full draft grounded in the research
         ↓ gate: draft goes to review, not to you
 [Check] 3-5 specialized reviewers run in parallel
-        ↓ gate: average score >= 0.7 AND no Critical findings = approved
+        ↓ gate: score + vote thresholds + stage contract must pass; Critical still blocks
 [Act]   Action Router reads the review feedback:
-        → research gap? Back to Plan.
-        → missing section? Back to Do.
-        → polish issue? Refine and re-submit.
+        → local issue? Refine and re-submit.
+        → wrong phase or missing context? Pivot.
+        → fully clear? Proceed.
 
 You get the final output. Reviewed. Fact-checked. Refined.
 ```
@@ -137,17 +139,22 @@ PDCA Orchestrator
 
 ### Quality Gates
 
-Every phase transition is gated. Outputs don't reach you until they've cleared the gate.
+Every phase transition is gated. Outputs don't reach you until the review gate and the stage contract both clear.
 
 Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagged by severity — **Critical**, **Warning**, or **Nitpick**.
 
 **Consensus logic:**
-- Average score >= 0.7 AND no Critical findings → **APPROVED**
-- Average score >= 0.7 but Critical findings present → **MUST FIX**
-- Average score 0.5–0.7 → **NEEDS IMPROVEMENT** (routes back to Do)
-- Average score < 0.5 → **MINOR FIXES** (routes to refine)
+- Presets define both a minimum score threshold and a minimum pass-vote threshold
+- Vote thresholds use corrected `Math.round` behavior, so a `2/3` preset now means `2` approvals instead of accidental unanimity
+- Critical findings still block the transition regardless of score or votes
+- Gate evaluation is dual-track: score says how good the output is, votes say how many reviewers agree it is ready
 
-A Critical finding blocks the output regardless of score. The Action Router reads the severity distribution to determine which phase to re-enter — not just "try again from scratch."
+**Stage contracts:** `config/stage-contracts.json` defines domain-aware exit criteria for content work versus code work. That lets the same PDCA loop enforce different Definition-of-Done expectations depending on what the user asked for.
+
+**Transition outcomes:** `pdca_transition` now supports a three-way decision model:
+- **PROCEED** — gate passed, contract passed, move forward
+- **REFINE** — the artifact is close, so the editor gets another bounded improvement round
+- **PIVOT** — the failure points to the wrong phase or wrong approach, so the loop re-enters a different phase with max pivot/refine counts enforcing bounded retries
 
 **Definition of Done (DoD):** The `refine` skill accepts `--dod` — a semicolon-separated checklist of success criteria (e.g., `"no factual errors; every section has examples"`). Reviewers evaluate each criterion as PASS/FAIL per iteration. The editor prioritizes failing criteria, and refine only exits when all DoD criteria pass alongside the verdict target.
 
@@ -169,6 +176,28 @@ A Critical finding blocks the output regardless of score. The Action Router read
 | **PostCompact** | After context compression | PDCA state restoration, mid-cycle resume |
 
 The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound patterns (prompts that request research + writing + review together), then falls back to single-skill patterns. This ordering matters — "research and write" should route to `pdca`, not to `research` alone. Routing decisions now include **confidence scoring** for observability — corrections are captured as soul observations for long-term learning.
+
+---
+
+### Visualization
+
+Session end now produces two operator-facing views:
+
+- An ANSI summary box in the terminal for fast at-a-glance cycle status
+- A dark-theme HTML cycle report in `.data/reports/` with Mermaid flowcharts and Chart.js trend visuals
+
+Example terminal summary:
+
+```text
+┌──────────────── PDCA Summary ────────────────┐
+│ Cycle 2   Verdict: REFINE   Confidence: STRONG │
+│ Phases: Plan ✓  Do ✓  Check !  Act ↺          │
+│ Votes: 2/3  Score: 0.74  Time: 4m  Cost: $0.41 │
+│ Report: .data/reports/cycle-2.html            │
+└──────────────────────────────────────────────┘
+```
+
+The HTML report is auto-generated on session end, so maintainers get a persistent artifact instead of relying on transient terminal output.
 
 ---
 
@@ -287,7 +316,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 | `quick` | Advocate + Facts | Fast validation |
 | `full` | all 5 | Final pre-publish pass |
 
-`--external` adds cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex). Requires separate setup.
+`--external` adds cross-model review via MMBridge (Kimi, Qwen, Gemini, Codex). The MMBridge integration now sits behind the Adapter Protocol (`Cli`, `Stub`, `Recording`), so live external runs stay optional while tests keep a deterministic stubbed path. Separate setup is still required for real MMBridge execution.
 
 </details>
 
@@ -435,33 +464,33 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 <details>
 <summary><strong>Changelog</strong></summary>
 
-### v0.9.0 — MetaClaw Tracking, CI Portability, 318 Tests
+### v0.9.0 — Visualization, Tracking, and Release Hardening
 
+- **311-test release baseline** — current suite sits at **311** total (`310` passing, `1` skipped)
 - **MetaClaw PRM effectiveness tracker** — release now records PRM agent effectiveness signals
-- **CI portability fixes** — `ensureDir` runs before lock creation and spin-wait behavior is portable across environments
-- **Suite growth** — total tests now sit at **318** (`317` passing, `1` skipped)
+- **Visualization layer** — session-end ANSI summary boxes and HTML cycle reports give both fast terminal feedback and durable artifacts
+- **Security fixes** — HTML injection hardening, ENOENT handling, and file-descriptor `0` stdin handling closed reliability gaps
 
-### v0.8.0 — Runtime Contracts, MMBridge, Anti-Fabrication
+### v0.8.0 — Runtime Contracts, MMBridge, and Anti-Fabrication
 
 - **Stage contracts wired to runtime** — `loadContracts`, `getDoD`, and `getPhaseContract` now load domain-aware contracts directly
+- **Consensus gate fixes** — corrected `Math.round` handling, score + vote dual gating, and preset threshold behavior
 - **Optional MMBridge MCP registration** — `.claude-plugin/plugin.json` can register `mmbridge` as an optional server
 - **MMBridge Adapter Protocol** — `Cli`, `Stub`, and `Recording` adapters added for integration and testing
-- **Anti-fabrication layer** — `fact-checker.mjs` strengthens factual verification
-- **Coverage expansion** — soul handler and memory handler tests added
+- **Anti-fabrication layer** — `hooks/lib/fact-checker.mjs` verifies numeric claims before they survive review
 
-### v0.7.0 — Cycle Reports, Mutation Queue, Benchmark Hardening
+### v0.7.0 — Mutation Safety and Loop Hardening
 
-- **HTML cycle reports** — Chart.js + Mermaid reporting with a dark-theme presentation
-- **ANSI terminal summary** — session-end now emits a concise terminal summary box
-- **PIVOT / REFINE decisions** — `pdca_transition` handles richer decision paths
-- **File Mutation Queue** — synchronized cross-process coordination with async per-file execution
-- **Benchmark robustness** — MAD-based confidence scoring, loop budgets, and iterative compaction
+- **File Mutation Queue** — synchronized cross-process coordination fixes reviewer aggregation races
+- **MAD confidence scoring** — loop benchmarks now classify outcomes as strong, marginal, or noise
+- **Loop budget controls** — loop runner enforces cost and time caps
+- **Iterative compaction** — compression preserves prior summary context and reusable insights
+- **Three-way decisions** — `pdca_transition` can `PROCEED`, `REFINE`, or `PIVOT` with bounded retry counts
 
-### v0.6.0 — Stage Contracts, Gate Fixes, Skill Guardrails
+### v0.6.0 — Skill Guardrails and Phase Contracts
 
-- **Iron Laws + Red Flags** — English rigor guidance added to all 13 skills
-- **Stage Contracts** — introduced `config/stage-contracts.json` for code vs. content workflows
-- **Critical gate fixes** — corrected consensus rounding, score/vote validation, and quick-preset unanimity
+- **Iron Laws + Red Flags** — all 13 skills gained explicit guardrails
+- **Stage Contracts** — `config/stage-contracts.json` introduced code-vs-content phase requirements
 - **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all 13 commands including `translate`
 - **Regression coverage** — new tests added for `subagent-stop`, `compaction`, `subagent-start`, and `stop-failure`
 
@@ -473,7 +502,7 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 - **Playwright Dynamic Web Research** — JavaScript-heavy page navigation for modern sites
 - **Channels Notifications** — completion alerts to Slack, Telegram, or email
 - **7 lifecycle hooks** — pre/post hooks for each PDCA phase, plus crash recovery
-- **11 MCP tools** — state management, analytics, and cross-session context
+- **21 MCP tools** — state management, analytics, soul/project memory, daemon control, and session recall
 - **17 subagents** across 3 model tiers (4 opus / 7 sonnet / 6 haiku)
 - **2 new skills**: `soul` and `batch`
 

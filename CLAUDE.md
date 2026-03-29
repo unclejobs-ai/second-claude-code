@@ -10,8 +10,9 @@ skills/                     — 13 skill directories (pdca, research, write, ana
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
-mcp/pdca-state-server.mjs   — PDCA state MCP server (553 lines + 6 handler modules in mcp/lib/)
-mcp/lib/                    — Handler modules: transitions, gates, analytics, soul observations
+mcp/pdca-state-server.mjs   — PDCA state MCP server (main entry + 6 handler modules in mcp/lib/)
+hooks/lib/                  — Shared runtime modules: agent tracker, fact checker, file mutex sync, mmbridge adapter, report generator, soul observer
+mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, loop
 commands/                   — Slash commands
 config/                     — Runtime configuration
 references/                 — Integration docs (mmbridge, etc.)
@@ -30,7 +31,7 @@ docs/                       — Architecture docs (EN/KO bilingual)
 
 ```bash
 # Syntax check all hooks and MCP server
-node --check hooks/*.mjs mcp/*.mjs
+node --check hooks/*.mjs hooks/lib/*.mjs mcp/*.mjs mcp/lib/*.mjs
 
 # Validate plugin manifest
 node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'))"
@@ -41,7 +42,7 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 # Verify all skills have SKILL.md
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
 
-# Run full test suite (318 tests; 317 passing, 1 skipped)
+# Run full test suite (311 tests; 310 passing, 1 skipped)
 npm test
 ```
 
