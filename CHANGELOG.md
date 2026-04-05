@@ -3,6 +3,21 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.1.0] - 2026-04-06
+
+### Added
+- **Artifact Viewer** — local web UI that renders PDCA pipeline outputs as interactive artifacts (`ui/dist/`, `ui/scripts/server.cjs`)
+  - 4 artifact types: markdown, chart (bar/line/pie/radar via Nivo), flow diagram (SVG), code (Shiki syntax highlighting)
+  - WebSocket real-time updates via `fs.watch` on session artifact directory
+  - Responsive layout: desktop split panel (768px+), mobile draggable bottom sheet
+  - Auto-stop after 30 minutes idle or when parent Claude Code process exits
+  - Owner PID monitoring for automatic cleanup
+- **Viewer skill** — `/second-claude-code:viewer` command to start the artifact viewer for any PDCA session
+- **Viewer server** — zero-dependency Node.js HTTP + WebSocket server with SPA fallback, RFC 6455 frame encoding, and path traversal prevention
+
+### Changed
+- Version surfaces aligned to `1.1.0` across plugin manifest, package metadata, and documentation
+
 ## [1.0.0] - 2026-03-29
 
 ### Added

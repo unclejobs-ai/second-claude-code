@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,13 +22,22 @@
 
 ---
 
-## v1.0.0에서 달라진 점
+## v1.1.0에서 달라진 점
+
+- **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로 볼 수 있어요. `localhost`에 페이지가 뜨고, 왼쪽 타임라인에서 단계를 클릭하면 오른쪽에 아티팩트가 렌더링돼요. 마크다운, 레이더/바/파이 차트, 플로우 다이어그램, 코드 하이라이팅(Shiki) 4가지 타입을 지원합니다. WebSocket 실시간 연결이라 파이프라인이 돌아가는 동안 아티팩트가 계속 추가되고요
+- **Viewer 스킬** — `/second-claude-code:viewer`로 뷰어를 시작할 수 있어요. PDCA 세션 디렉토리를 지정하면 `start-server.sh`가 백그라운드로 서버를 띄우고, 30분 비활동 시 자동 종료돼요
+- **반응형 레이아웃** — 데스크톱(768px+)은 좌우 스플릿 패널, 모바일(<768px)은 드래그 가능한 바텀 시트로 전환돼요
+
+<details>
+<summary><strong>v1.0.0에서 달라진 점</strong></summary>
 
 - **PDCA 사이클 메모리** — 사이클이 끝나도 기억이 남아요. `.data/cycles/`에 페이즈별 마크다운, 이벤트 로그, 메트릭이 구조화돼서 저장돼요. 30일 시간 감쇠, 카테고리 분류, critical 반복 시 gotchas 자동 제안까지
 - **MCP 도구 3개 추가** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`가 들어와서 전체 **24개** 도구 표면이 됐어요
 - **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 이제 `code`, `content`, `analysis`, `pipeline` 4개 도메인 × 4개 페이즈 전부에 I/O 계약, DoD, 롤백 대상을 정의해요
 - **테스트 323개** — `322`개 통과, `1`개 스킵, 실패 `0`개
 - **사이클 메모리 하드닝** — 경로 순회 방지, 깨진 JSON 복구, critical-only gotcha 트리거, cycle_id 검증(정수 0–9999)
+
+</details>
 
 <details>
 <summary><strong>v0.9.0에서 달라진 점</strong></summary>

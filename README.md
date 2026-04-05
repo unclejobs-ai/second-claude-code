@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-1.0.0-blue)
+![version](https://img.shields.io/badge/version-1.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,7 +22,14 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ---
 
-## What's New in v1.0.0
+## What's New in v1.1.0
+
+- **Artifact Viewer** — PDCA pipeline outputs now render as an interactive local web UI. Run a pipeline, open `localhost` in your browser, and click through phases to see markdown, radar/bar/pie charts, flow diagrams, and syntax-highlighted code — all updating in real-time via WebSocket
+- **Viewer skill** — `/second-claude-code:viewer` starts the viewer for any PDCA session. The server auto-stops after 30 minutes of inactivity or when Claude Code exits
+- **Responsive layout** — desktop (768px+) shows a split panel (timeline left, artifact right); mobile (<768px) uses a draggable bottom sheet
+
+<details>
+<summary><strong>What was new in v1.0.0</strong></summary>
 
 - **323 tests, green locally** — current release verification is `322` passing, `1` skipped, `0` failing
 - **PDCA Cycle Memory** — every cycle now auto-saves to `.data/cycles/`, building a persistent learning archive. Start a run, transition phases, end the run — and the system remembers what worked, what failed, and what to watch for next time
@@ -34,6 +41,8 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 - **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds govern phase exits
 - **Richer cycle outcomes** — `pdca_transition` can now `PROCEED`, `REFINE`, or `PIVOT`, with max-count caps to prevent infinite loops
 - **Visual feedback built in** — session end emits an ANSI summary box in the terminal and auto-generates dark-theme HTML cycle reports with Mermaid and Chart.js in `.data/reports/`
+
+</details>
 
 <details>
 <summary><strong>What was new in v0.9.0</strong></summary>
