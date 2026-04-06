@@ -9,6 +9,10 @@ Thumbs.db
 # Node
 node_modules/
 
+# Build artifacts
+ui/dist/
+*.tsbuildinfo
+
 # Runtime artifacts
 .captures/
 .claude/agent-memory/

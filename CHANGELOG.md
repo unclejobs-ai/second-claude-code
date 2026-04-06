@@ -3,6 +3,28 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.2.0] - 2026-04-06
+
+### Added
+- **Dashboard artifact type** — composite `dashboard` artifact combining KPI cards, charts, and markdown in configurable grid layouts (`2x2`, `3x1`, `1x2`, etc.)
+- **KPI card component** — large numbers with change rate indicators, color coding (green/red/gray), and trend arrows for at-a-glance metrics
+- **Grid layout system** — artifacts positioned in responsive grids (`2x2`, `3x1`, `2x1`) instead of single-column stacking, with column span support
+- **Phase preview cards** — thumbnail summaries of each phase's artifacts visible in timeline view before clicking
+- **Concurrent chart + markdown display** — charts and text render side-by-side in the artifact grid without tab switching
+- **Chart hover tooltips** — interactive tooltips on all Nivo chart types (bar, line, pie, radar) with dark-themed styling
+- **Artifact type icons** — visual indicators for each artifact type in card headers
+- **Animated transitions** — Framer Motion enter/exit animations on artifacts, phase indicators, and connection status
+
+### Changed
+- **Viewer source code** — complete `ui/src` Vite + React + TypeScript project replacing the opaque pre-built bundle
+  - Modular component architecture: 13 components across 4 directories
+  - Type-safe artifact system with discriminated union types
+  - Code-split builds: Nivo, Shiki (lazy-loaded), and vendor chunks
+  - Path alias (`@/`) for clean imports
+- **Shiki lazy loading** — syntax highlighter loaded on-demand, reducing initial bundle from 1MB to 262KB
+- **Server improvements** — CORS headers, SPA fallback routing, API endpoints (`/api/state`, `/api/artifacts`), 5-minute idle auto-stop
+- Version surfaces aligned to `1.2.0` across plugin manifest, package metadata, marketplace, and documentation
+
 ## [1.1.0] - 2026-04-06
 
 ### Added
