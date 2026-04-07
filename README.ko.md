@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-1.1.0-blue)
+![version](https://img.shields.io/badge/version-1.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,20 +22,52 @@
 
 ---
 
-## v1.1.0에서 달라진 점
+## v1.3.0에서 달라진 점
 
-- **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로 볼 수 있어요. `localhost`에 페이지가 뜨고, 왼쪽 타임라인에서 단계를 클릭하면 오른쪽에 아티팩트가 렌더링돼요. 마크다운, 레이더/바/파이 차트, 플로우 다이어그램, 코드 하이라이팅(Shiki) 4가지 타입을 지원합니다. WebSocket 실시간 연결이라 파이프라인이 돌아가는 동안 아티팩트가 계속 추가되고요
-- **Viewer 스킬** — `/second-claude-code:viewer`로 뷰어를 시작할 수 있어요. PDCA 세션 디렉토리를 지정하면 `start-server.sh`가 백그라운드로 서버를 띄우고, 30분 비활동 시 자동 종료돼요
-- **반응형 레이아웃** — 데스크톱(768px+)은 좌우 스플릿 패널, 모바일(<768px)은 드래그 가능한 바텀 시트로 전환돼요
+**PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
+
+- **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — 아키텍처 명확화. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 **Do 페이즈 안에서 디스패치**돼요 (각자의 내부 페이즈가 Do 안에서 돌아감). PDCA를 대체하는 게 아닙니다. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아가요
+- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`
+- **포맷별 길이 floor** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 스레드 아티클 ≥ 4,000자. 뉴스레터 ≥ 10,000자. 전략 리포트 ≥ 5,000자. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치, vague한 "더 길게 써" 금지
+- **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새 minimum 추가: 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자. Thin Plan → thin Do 실패 체인 차단
+- **리뷰어 모델 다양성 룰 (false consensus 감지 포함)** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼서 Goodhart 스타일 "다들 괜찮대" 거짓 신호를 잡아요
+- **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 surgical 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정. 새 로직 6/6 routing 정확도 vs 이전 OR 3/6
+- **새 284줄 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점 표준화
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
+- **확장된 페이즈 출력 스키마** — `PlanOutput`, `DoOutput`, `CheckOutput` 모두 측정 가능한 검증 필드를 갖게 됐어요 (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed` 등). PDCA가 sub-skill self-report를 신뢰하지 않고 독립 검증
+
+**검증 (2026-04-07)**: generic 토픽으로 실제 PDCA 사이클 돌렸을 때 7,981자 Plan brief (floor 3,000), 6,962자 Do 아티클 (floor 4,000), 12개 출처 인용 (floor 5), Codex 포함 2 리뷰어 (diversity score 1.0), pre-v1.3.0 baseline에서는 놓쳤을 4개 P1 findings 발견. 전체 검증 리포트는 `docs/RELEASE-v1.3.0.ko.md` 참고.
+
+<details>
+<summary><strong>v1.2.0에서 달라진 점</strong></summary>
+
+- **Dashboard 아티팩트** — KPI 카드, 차트, 마크다운을 조합한 grid layout(`2x2`, `3x1`, `1x2`) 아티팩트 타입
+- **KPI 카드 컴포넌트** — 큰 숫자 + 변화율 지표, 색상 구분(초록/빨강/회색), 추세 화살표
+- **Grid layout 시스템** — 아티팩트를 single-column 스택이 아닌 반응형 grid에 배치
+- **페이즈 프리뷰 카드** — 타임라인 뷰에서 각 페이즈의 아티팩트 썸네일 요약
+- **차트 + 마크다운 동시 표시** — 탭 전환 없이 나란히 렌더링
+- **`ui/src` 전체 소스 코드** — Vite + React + TypeScript 프로젝트로 pre-built 번들 교체, 13 컴포넌트 × 4 디렉토리, Shiki lazy loading (번들 1MB → 262KB)
+
+</details>
+
+<details>
+<summary><strong>v1.1.0에서 달라진 점</strong></summary>
+
+- **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로. 마크다운, 레이더/바/파이 차트(Nivo), 플로우 다이어그램(SVG), 코드 하이라이팅(Shiki) 4가지 타입. WebSocket 실시간 연결
+- **Viewer 스킬** — `/second-claude-code:viewer`로 뷰어 시작, 30분 비활동 시 자동 종료
+- **반응형 레이아웃** — 데스크톱(768px+) 좌우 스플릿 패널, 모바일(<768px) 드래그 바텀 시트
+- **Zero-dependency 서버** — Node.js HTTP + WebSocket with SPA fallback, RFC 6455 frame encoding, path traversal prevention
+
+</details>
 
 <details>
 <summary><strong>v1.0.0에서 달라진 점</strong></summary>
 
-- **PDCA 사이클 메모리** — 사이클이 끝나도 기억이 남아요. `.data/cycles/`에 페이즈별 마크다운, 이벤트 로그, 메트릭이 구조화돼서 저장돼요. 30일 시간 감쇠, 카테고리 분류, critical 반복 시 gotchas 자동 제안까지
+- **PDCA 사이클 메모리** — 사이클이 끝나도 기억이 남아요. `.data/cycles/`에 페이즈별 마크다운, 이벤트 로그, 메트릭이 구조화돼서 저장돼요
 - **MCP 도구 3개 추가** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`가 들어와서 전체 **24개** 도구 표면이 됐어요
-- **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 이제 `code`, `content`, `analysis`, `pipeline` 4개 도메인 × 4개 페이즈 전부에 I/O 계약, DoD, 롤백 대상을 정의해요
+- **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 4개 도메인 × 4개 페이즈 전부에 I/O 계약, DoD, 롤백 대상을 정의해요
 - **테스트 323개** — `322`개 통과, `1`개 스킵, 실패 `0`개
-- **사이클 메모리 하드닝** — 경로 순회 방지, 깨진 JSON 복구, critical-only gotcha 트리거, cycle_id 검증(정수 0–9999)
+- **사이클 메모리 하드닝** — 경로 순회 방지, 깨진 JSON 복구, critical-only gotcha 트리거
 
 </details>
 

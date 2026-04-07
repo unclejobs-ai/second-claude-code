@@ -83,10 +83,14 @@ The `--skip-challenge` flag on analyze bypasses the devil's advocate challenge r
 All items must pass before proceeding to Do:
 
 - [ ] **Research Brief exists** — A structured brief with sections, not raw search results
-- [ ] **Sources identified** — At least 3 distinct, credible sources cited
-- [ ] **Key findings stated** — Clear takeaways, not just data dumps
-- [ ] **Gaps acknowledged** — Known unknowns are listed, not hidden
-- [ ] **Conflicts noted** — If sources disagree, the disagreement is documented
+- [ ] **Brief meets length floor** — At least 3,000 chars body (target 4,000-6,000). Below floor → fail gate, re-run research
+- [ ] **Sources identified** — At least 5 distinct, credible sources cited (was 3, raised because Do phase needs source variety to avoid single-narrative bias)
+- [ ] **Facts catalogued** — At least 8 discrete facts with dates, numbers, names, or direct quotes attached. Below 8 → fail gate
+- [ ] **Comparison table present** — At least one structured comparison (alternatives, before/after, or competing positions) with 3+ rows
+- [ ] **Quotes captured** — At least 1 direct quote with named source for use in Do phase. Quoted speakers must include role + organization + date
+- [ ] **Gaps acknowledged** — Known unknowns are listed explicitly, not hidden. At least 1 acknowledged gap (no research is exhaustive)
+- [ ] **Conflicts noted** — If sources disagree, the disagreement is documented with both positions and the reason for the divergence
+- [ ] **Media inventory** — For content output formats (article/threads/newsletter/shorts), at least 1 referenceable image/screenshot/diagram is downloaded or its source URL is verified accessible
 - [ ] **Analysis artifact exists** — Structured framework output from analyze skill
 - [ ] **Scope verified** — Question Protocol or user context confirms scope alignment
 
@@ -94,11 +98,47 @@ All items must pass before proceeding to Do:
 
 | Failure | Action |
 |---------|--------|
-| Brief is too thin | Re-run research with `--depth deep` |
-| Sources are low quality | Add `--sources academic` or `--sources news` |
-| Critical gap exists | Targeted research on the gap topic only |
+| Brief char_count < 3,000 | Re-run research with `--depth deep`. The brief is structurally too thin to support a 4,000+ char Do output. |
+| Sources < 5 | Continue research with broader query terms or add `--sources academic --sources news` |
+| Facts < 8 | Re-run research with explicit instruction to extract more discrete data points. A single 2-paragraph source rarely yields enough — pull from at least 3 sources. |
+| Comparison table missing | Add a comparison pass: ask the researcher to identify alternatives or competing positions and tabulate them |
+| No quotes | Re-run with explicit instruction to find 1+ named-source quotes (avoid anonymous "experts say" phrases) |
+| Media inventory empty | Run media collection: WebFetch images, OG screenshots, or reference diagrams |
+| Critical gap exists | Targeted research on the gap topic only — single focused query, not full re-run |
 | Scope drifted | Re-scope with user and re-research |
 | Analysis missing | Run analyze with explicit framework selection |
+
+## Research Brief Length Floors (Hard Contracts)
+
+The Research Brief is the foundation for the Do phase. A thin brief produces a thin artifact. PDCA enforces minimum brief substance to prevent the "shallow Plan → shallow Do" failure chain.
+
+| Brief Type | Min chars (body) | Target chars | Min facts | Min sources | Min quotes | Notes |
+|-----------|------------------|--------------|-----------|-------------|------------|-------|
+| Single-topic content brief (article, threads) | 3,000 | 4,000-6,000 | 8 | 5 | 1 | Must include 1 comparison table |
+| Multi-topic newsletter brief | 5,000 | 7,000-10,000 | 15 (3+/topic) | 8 | 2 | Must include topic-by-topic breakdown |
+| Strategy/analysis brief (SWOT, market scan) | 4,000 | 5,000-7,000 | 10 | 6 | 2 | Must include competing positions + counterevidence |
+| Code/technical brief (architecture, refactor) | 3,500 | 4,500-6,000 | 8 (incl. file/line refs) | 4 | 1 | Must include 1+ code snippets or architecture diagrams |
+| Shorts/video brief | 2,500 | 3,000-4,500 | 6 (visual + narrative) | 4 | 1 | Must include scene structure proposal |
+
+### Why Brief Floor Exceeds Output Floor in Some Cases
+
+A research brief is a **superset** of what ends up in the Do output. The brief contains:
+- Facts that DO use (kept)
+- Facts that DO discards (compressed or cut for length)
+- Source links (not all appear in output)
+- Notes about reliability and conflicts (rarely surface in final)
+
+Therefore the brief should be **at least 60-80% of the target Do output length** to give the writer enough material to select from. A brief equal in length to the Do output forces the writer to use everything, which leads to dump-all-data style writing instead of curated selection.
+
+### Brief Quality Signals (Reviewed at Gate)
+
+Beyond length floors, the brief must demonstrate:
+
+1. **Source diversity** — sources should not all be from the same publisher, same author, or same date. At least 2 distinct publishers, at least 2 distinct dates if topic is news.
+2. **Triangulation** — at least one fact must be confirmed by 2+ independent sources. The brief should mark which facts are single-source vs cross-verified.
+3. **Cutoff awareness** — for time-sensitive topics, the brief must include the latest verified date and explicitly note any older facts that may need re-verification.
+4. **Korean source presence** — for Korean audience output, at least 1 Korean-language source if the topic has any Korean coverage. (Not required for niche English-only topics.)
+5. **Structured frontmatter** — brief must have YAML frontmatter with `topic`, `date`, `slug`, `source_count`, `fact_count`, `gap_count` for downstream automation.
 
 ## Gotchas
 

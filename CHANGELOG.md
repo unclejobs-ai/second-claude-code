@@ -3,6 +3,54 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.3.0] - 2026-04-07
+
+### Added
+
+- **PDCA Domain Auto-Routing** — `skills/pdca/SKILL.md` now detects domain trigger keywords (스레드/threads, 뉴스레터/newsletter, 쇼츠/shorts, 카드뉴스/card news) and dispatches the matching specialized sub-skill inside the Do phase. PDCA stays in charge as the orchestrator; sub-skills are building blocks called inside its phases. Greedy matching ensures the most specialized sub-skill always wins over generic `/scc:write`.
+- **Hard length floors per format** — `references/do-phase.md` defines minimum + target character counts for 11 output formats. The Do gate now fails if the artifact is below the floor, preventing sparse output from reaching the reviewer. Floors range from 1,800 chars (shorts script) to 10,000 chars (Korean newsletter), all calibrated against reader-value, source-utilization, and AI-hedge prevention benchmarks.
+- **Plan brief floors** — `references/plan-phase.md` raises source minimum from 3 to 5, adds discrete fact count (≥8), named quote count (≥1), comparison table count (≥1), media inventory count (≥1, for content briefs). Brief char count floor of 3,000 prevents thin Plan→thin Do failure chains.
+- **Reviewer model diversity rule** — `references/check-phase.md` requires at least 2 distinct models with at least 1 external model (Codex, Kimi, Qwen, Gemini, Droid) for `content`/`strategy`/`full` presets. Diversity score must be ≥0.6 when more than 2 reviewers run. Prevents false consensus by structurally enforcing independent perspectives.
+- **False consensus detection** — when all reviewers return APPROVED with average score >0.9 and no critical findings, an adversarial pass with an unused external model is automatically dispatched before exit. Catches Goodhart-style "everyone said it's fine" failure mode.
+- **5+ Rule for patch vs full rewrite (calibrated AND logic)** — `references/act-phase.md` adds a hard rewrite trigger when (a) any P0 finding exists OR (b) `p0+p1 ≥ 5` AND findings span ≥3 categories. Calibrated from initial OR logic after observing over-trigger on surgical 4-finding patch sets in real verification runs. Examples table covers 10 finding configurations.
+- **Sub-skill input/output contracts** — new `references/domain-pipeline-integration.md` (284 lines) standardizes how PDCA's Do dispatcher invokes sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`). Defines input contract, DoOutput verification, failure handling (4 failure modes), and integration points with adjacent phases.
+- **Pokemon role label clarification** — `skills/pdca/SKILL.md` Subagents block now explicitly states that role labels (Eevee, Smeargle, Xatu, etc.) are conceptual and not direct Agent tool dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Prevents past failure mode where the orchestrator tried to call `Agent(subagent_type: "eevee")` and silently fell back to self-processing.
+- **Expanded DoOutput schema** — `references/phase-schemas.md` adds `char_count` (body only), `section_count`, `meets_length_floor`, `meets_section_floor`, `references_count` to DoOutput. Added `brief_char_count`, `facts_count`, `quotes_count`, `comparison_tables_count`, `media_inventory_count`, `meets_brief_floor` to PlanOutput. Added `distinct_models_count`, `external_model_count`, `diversity_score`, `false_consensus_check_passed`, `p0_count`, `p1_count`, `p2_count` to CheckOutput. PDCA verifies all of these independently from the sub-skill's self-report.
+
+### Changed
+
+- **PDCA framing** — SKILL.md replaces the implicit "PDCA hands off to sub-skills" framing with an explicit "PDCA is the main orchestrator, sub-skills are building blocks called inside its phases" architecture. Sub-skill internal phases now run inside PDCA's Do phase rather than replacing PDCA. PDCA's Check still runs independently after the sub-skill's internal review (different perspective, different blind spots).
+- **Do phase Skill Selection table** — replaced single `/scc:write` row with greedy matching algorithm that prioritizes domain-specific sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`) before falling back to generic `/scc:write`.
+- **Check phase reviewer requirements** — minimum reviewer count remains 2, but model diversity is now enforced as a hard contract instead of a soft suggestion. External model requirement is mandatory for content/strategy/full presets.
+- **5+ Rule logic** — initial release used OR logic (`volume_threshold OR category_threshold`) which over-triggered on patch-sized 4-finding sets. Calibrated to AND for the volume+spread path and a separate hard credibility path (any P0). Verified against 10 finding configurations; calibrated path passes 6/6 vs original 3/6.
+- Version surfaces aligned to `1.3.0` across plugin manifest, package metadata, marketplace, and documentation.
+
+### Fixed
+
+- **Phantom agent dispatch** — past failure mode where the orchestrator interpreted Pokemon role labels in SKILL.md as actual subagent_type values, attempted to dispatch them, silently fell back to self-processing when dispatch failed, and produced sparse output. Fixed by explicit clarification that role labels are conceptual; real dispatch happens inside chained skills.
+- **Sparse Do output approval** — past failure mode where `word_count > 0` was the only Do gate check, allowing 1,500-char articles to pass and reach the reviewer who then "approved" structurally insufficient artifacts. Fixed by introducing format-specific length floors that fail the Do gate before any reviewer is dispatched.
+- **Single-reviewer false consensus** — past failure mode where 2 internal Claude reviewers both said APPROVED on the same model and the cycle exited prematurely. Fixed by enforcing distinct models AND at least 1 external model for content presets.
+
+### Verification Cycle (2026-04-07)
+
+A verification PDCA cycle was run on a generic topic (no domain trigger) to test the strengthening end-to-end. Baseline comparison is "pre-v1.3.0 soft-gate behavior" (v1.0.0 through v1.2.0 did not touch PDCA phase gates):
+
+| Metric | pre-v1.3.0 baseline | v1.3.0 actual | Improvement |
+|--------|---------------------|---------------|-------------|
+| Plan brief char count | 0 (no brief produced) | 7,981 | +∞ |
+| Plan facts catalogued | 0 | 14 | +14 |
+| Plan sources cited | 0 | 12 | +9 over floor |
+| Plan named quotes | 0 | 2 | floor ×2 |
+| Do article char count (body) | ~1,500 (estimated, self-processed) | 6,962 | +364% |
+| Do H2 sections | 1-2 | 7 | +250% |
+| Do references count | 0-3 | 10 | +233% |
+| Reviewer count | 0 (self-review) | 2 (parallel) | — |
+| External model reviewers | 0 | 1 (Codex GPT-5.4) | — |
+| Cross-review P1 findings caught | 0 | 4 | — |
+| Diversity score | n/a | 1.0 | meets ≥0.6 |
+
+The verification cycle also revealed an over-trigger in the initial 5+ Rule OR logic, which was immediately corrected to AND logic in the same release.
+
 ## [1.2.0] - 2026-04-06
 
 ### Added

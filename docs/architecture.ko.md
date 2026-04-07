@@ -2,6 +2,22 @@
 
 # 아키텍처
 
+## 1.3.0 변경사항
+
+PDCA 하드 게이트 릴리스. PDCA 오케스트레이터에 9개 구체 강화를 박아서, v1.0.0의 약한 게이트로 셀프 처리 fallback과 sparse 출력이 슬쩍 통과하던 구조적 구멍을 막았어요.
+
+1. **PDCA가 메인 오케스트레이터 (아키텍처 명확화)** — Sub-skill(`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`)은 PDCA의 Do 페이즈 안에서 호출되는 빌딩 블록이지 PDCA를 대체하는 게 아닙니다. Sub-skill 내부 멀티 페이즈 파이프라인은 PDCA의 Do 안에서 돌아가고, sub-skill 자체 계약으로 게이팅되며, PDCA의 Plan + Check + Act가 그 위아래를 감싸요.
+2. **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 그리디 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`. 가장 specialized한 sub-skill이 항상 우선이고, specialized가 있을 때 generic으로 가는 건 절대 금지.
+3. **포맷별 길이 floor 강제** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 11개 포맷에 보정된 `min_chars`, `target_chars`, `min_sections`. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치. Generic "더 길게 써" 프롬프트는 명시적으로 금지돼요.
+4. **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새로 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
+5. **리뷰어 모델 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. >2 리뷰어일 때 diversity score ≥ 0.6.
+6. **False consensus 감지** — 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
+7. **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정.
+8. **새 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점을 정의한 284줄 표준.
+9. **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능.
+
+검증 사이클 (2026-04-07): generic 토픽 PDCA 실행으로 7,981자 Plan brief, 6,962자 Do 아티클, Codex+sonnet 다양 리뷰어, v1.0.0 baseline에서는 놓쳤을 4 P1 findings 발견.
+
 ## 1.0.0 변경사항
 
 이번 릴리스에는 네 가지가 추가됐어요.
@@ -235,17 +251,84 @@ second-claude/
 
 ---
 
-## PDCA 페이즈 게이트
+## PDCA 페이즈 게이트 (v1.3.0 강화)
 
-`pdca` 메타스킬은 페이즈 전환마다 품질 게이트를 적용해요.
+`pdca` 메타스킬은 페이즈 전환마다 측정 가능한 계약 기반 게이트를 적용해요. v1.3.0부터 모든 게이트가 "완성된 것 같음" 같은 soft 판단이 아니라 구체 numeric/boolean 필드를 요구합니다.
 
 ```
-Plan ──[게이트: 브리프 있나? 분석 있나? 출처 3개 이상?]──→ Do
-  Do ──[게이트: 아티팩트 완성? 포맷 OK? 리서치 반영?]──→ Check
-Check ──[게이트: 판정 라우팅]──→ Act (또는 APPROVED면 종료)
-  Act ──[액션 라우터: 근본원인 분류]──→ Plan / Do / Refine
+Plan  ──[게이트: brief_char_count ≥ 3,000, 출처 ≥ 5, 사실 ≥ 8,
+              인용 ≥ 1, 비교표 ≥ 1, 미디어 ≥ 1,
+              meets_brief_floor: true]──→ Do
+Do    ──[게이트: meets_length_floor: true (포맷별 최소치),
+              meets_section_floor: true, references_count ≥ 3,
+              plan_findings_integrated: true, sections_complete: true]──→ Check
+Check ──[게이트: distinct_models ≥ 2, external_model_count ≥ 1,
+              diversity_score ≥ 0.6, false_consensus_check_passed: true,
+              verdict ∈ {APPROVED, MINOR FIXES, NEEDS IMPROVEMENT, MUST FIX}]──→ Act (또는 APPROVED면 종료)
+Act   ──[5+ 룰 fire? → full rewrite | 아니면 액션 라우터 분류]──→ Plan / Do / Refine
 Refine ──[게이트: 목표 충족? DoD 전체 PASS?]──→ 종료 (또는 선택지 제시)
 ```
+
+### 길이 Floor (Do 게이트)
+
+Do 페이즈가 아티팩트가 포맷별 길이 계약을 충족 못 하면 게이트 통과 안 돼요. Sub-skill이 구체 scope direction(어떤 Plan finding을 expand할지, 어떤 새 sub-section을 추가할지)과 함께 다시 디스패치됩니다. Vague한 "더 길게 써" 지시는 금지.
+
+| 포맷 | 최소 글자 (본문) | 목표 | 최소 섹션 | Do에서 호출되는 sub-skill |
+|------|----------------|------|----------|------------------------|
+| 스레드 아티클 (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 | `/threads` |
+| 한국어 테크 뉴스레터 | 10,000 | 12,000-15,000 | 6 토픽 | `/newsletter` |
+| 일반 아티클 | 4,000 | 5,000-7,000 | 5 H2 | `/scc:write` |
+| 전략/분석 리포트 | 5,000 | 6,000-9,000 | 6 섹션 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | 4 사분면 | `/scc:analyze` |
+| 쇼츠 대본 (60-90초) | 1,800 | 2,200-2,800 | 12 씬 | `/academy-shorts` |
+| 카드뉴스 (캐러셀) | 8-10 카드 | 9-12 카드 | hook + body + CTA | `/card-news` |
+| PRD | 4,000 | 5,000-7,000 | 7 섹션 | `/scc:write --format prd` |
+| 코드 리뷰 리포트 | 2,500 | 3,500-5,000 | 5 차원 | `/scc:review` |
+| 리서치 brief | 3,000 | 4,000-6,000 | n/a | `/scc:research` |
+| 미팅 노트 | 2,000 | 2,500-3,500 | 5 섹션 | `/scc:write --format decision` |
+
+전체 표와 보정 원칙은 `skills/pdca/references/do-phase.md`에.
+
+### 도메인 자동 라우팅 (Pre-Do Sub-Skill Selection)
+
+PDCA가 Do 페이즈에 진입할 때 디스패처가 사용자 프롬프트를 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 골라요. Greedy matching이 룰: specialized가 있을 때는 무조건 specialized, generic은 fallback일 때만.
+
+| 트리거 | Sub-skill |
+|--------|-----------|
+| 스레드 / threads / @unclejobs.ai | `/threads` |
+| 뉴스레터 / newsletter | `/newsletter` |
+| 쇼츠 / shorts / 릴스 / Reels | `/academy-shorts` |
+| 카드뉴스 / card news / 캐러셀 | `/card-news` |
+| (specialized 매치 없음) | `/scc:write` (fallback) |
+
+Sub-skill 입출력 계약과 실패 처리는 `skills/pdca/references/domain-pipeline-integration.md` (284줄)에 정리.
+
+### 리뷰어 다양성 (Check 게이트)
+
+Check 페이즈가 false consensus 방지를 위해 리뷰어 모델 다양성을 강제해요:
+
+- **최소 2 리뷰어** (`--depth deep`은 3)
+- **모델당 1 리뷰어 최대** — 같은 모델 2개는 correlated error 생산이지 independent perspective 아님
+- **최소 1 외부 모델** for `content`, `strategy`, `full` preset — Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, Droid
+- **Diversity score ≥ 0.6** when >2 리뷰어 — `distinct_models / total_reviewers`
+
+모든 리뷰어가 평균 점수 0.9 초과 + critical 0개로 APPROVED를 반환하면 사이클이 자동 종료되지 않아요. 대신 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
+
+### 5+ 룰 (Patch vs Full Rewrite)
+
+Act 페이즈가 plurality routing 전에 5+ 룰을 먼저 체크해요. Finding density가 임계값을 넘으면 패치 대신 통째 재작성을 강제합니다.
+
+세 가지 트리거 조건, 어느 하나라도 만족하면 발동:
+
+1. **Hard credibility 트리거**: any `P0_count ≥ 1` — 단일 신뢰도 killer로 강제 재작성
+2. **Volume + spread 트리거** (BOTH 필요):
+   - `P0_count + P1_count ≥ 5` 총 finding 수, AND
+   - Findings가 ≥ 3개 distinct quality category에 걸침 (factual, source integrity, voice, structure, length, reader value)
+3. (그 외) 룰 발동 안 함 — 정상 액션 라우터 plurality routing
+
+초기 OR 로직에서 4-finding patch set이 3개 카테고리에 걸친 surgical patch 영역인데도 full rewrite로 잘못 트리거한 걸 발견하고 보정. Volume+spread를 AND로 전환해서 over-trigger 해소; hard credibility 트리거(any P0)는 별도 보존 — 신뢰도 손상은 표면 fix가 작아 보여도 누적되니까요.
+
+
 
 ### 액션 라우터 (Act 페이즈)
 

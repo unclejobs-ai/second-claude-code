@@ -22,9 +22,71 @@ This is the quality gate that determines whether work ships or iterates.
 2. **Dispatch review**: Run `/second-claude-code:review --preset {selected}`.
    - Reviewers: Xatu (deep-reviewer), Absol (devil-advocate), Porygon (fact-checker), Jigglypuff (tone-guardian), Unown (structure-analyst)
    - Preset determines which subset is dispatched (see below)
+   - **Reviewer diversity is enforced** — see "Reviewer Model Diversity Rule" section below
    - For `--depth deep` PDCA cycles, add `--team-review` to enable interactive deliberation. In team review, reviewers complete independent assessments first, then enter a challenge round where they dispute or reinforce each other's findings. This catches issues that independent parallel reviews miss — particularly contradictory findings where one reviewer's blind spot cancels another's valid concern.
 3. **Read verdict**: The review skill returns one of four verdicts.
 4. **Route based on verdict**: See Gate Checklist below.
+
+## Reviewer Model Diversity Rule (Hard Contract)
+
+PDCA's Check phase **enforces reviewer model diversity** to prevent false consensus. Two reviewers running on the same model are not actually independent — they share the same training data, the same biases, and the same blind spots. They will agree on things they should disagree on.
+
+### Diversity Requirements
+
+| Requirement | Threshold | Why |
+|------------|-----------|-----|
+| Minimum reviewer count | **2** (3 for `--depth deep`) | Single-reviewer = no consensus check |
+| Maximum same-model reviewers | **1 per model** | Two reviewers on the same model produce correlated errors |
+| External model required | **At least 1** for `content`, `strategy`, `full` presets | Internal model perspective alone misses issues that external models catch |
+| Model diversity score | **≥ 0.6** (if >2 reviewers) | Computed as (distinct models / total reviewers) |
+
+### Approved External Models for Cross-Review
+
+When the Check phase requires an external model (per the rule above), use one of:
+
+- **Codex GPT-5.4** (via `codex:codex-rescue` agent or `mmbridge_review --tool codex`)
+- **Kimi K2.5** (via `kimi-reviewer` agent or `mmbridge_review --tool kimi`)
+- **Qwen** (via `qwen-reviewer` agent or `mmbridge_review --tool qwen`)
+- **Gemini** (via `gemini-design-reviewer` agent or `mmbridge_review --tool gemini`)
+- **Droid** (via `mmbridge_review --tool droid`)
+
+The orchestrator picks 1 external model based on artifact type:
+- Code → Codex (best for code reasoning)
+- Korean content → Kimi or Qwen (best Korean understanding)
+- Strategy/analysis → Codex or Gemini (best for structured reasoning)
+- General content → any of the above; rotate to avoid model staleness
+
+### Reviewer Composition Examples
+
+| Preset + Depth | Reviewers Dispatched | Diversity Check |
+|---------------|---------------------|-----------------|
+| `content`, shallow | Internal sonnet (Xatu) + External Kimi | 2 reviewers, 2 distinct models, 1 external ✓ |
+| `content`, medium | Internal sonnet (Xatu) + Internal opus (Absol) + External Codex | 3 reviewers, 3 distinct models, 1 external ✓ |
+| `content`, deep | Internal sonnet (Xatu) + Internal opus (Absol) + External Codex + External Kimi | 4 reviewers, 4 distinct models, 2 external ✓ |
+| `strategy`, medium | Internal opus (Mewtwo perspective) + Internal sonnet (Porygon) + External Gemini | 3 reviewers, 3 distinct models, 1 external ✓ |
+| `code`, medium | Internal sonnet (general) + External Codex + Internal haiku (Unown) | 3 reviewers, 3 distinct models, 1 external ✓ |
+
+### Diversity Failure Actions
+
+| Failure | Action |
+|---------|--------|
+| Only 1 reviewer responded | Re-dispatch — single reviewer is structurally invalid (was already a rule, kept) |
+| 2 reviewers but same model | Re-dispatch with explicit model assignment for the second reviewer (force diversity) |
+| No external model included for `content`/`strategy`/`full` presets | Add 1 external model reviewer before passing the gate |
+| All reviewers agree (false consensus signal) | Run 1 additional external model in adversarial mode (`--devil-advocate`) to surface what the others missed |
+
+### False Consensus Detection
+
+When all reviewers return `APPROVED` with high agreement (avg score > 0.9, no critical findings, no top improvements), PDCA treats this as **suspicious** rather than confirming. Real artifacts almost always have some tension between reviewers — perfect agreement usually means they're all looking at the same surface and missing the same depth.
+
+In false consensus state:
+
+1. Log: "Reviewers in unanimous high agreement — running adversarial pass"
+2. Dispatch 1 additional reviewer using `--mode adversarial` and an external model that wasn't already used
+3. If adversarial reviewer also returns APPROVED → genuine consensus, ship
+4. If adversarial reviewer returns MINOR/NEEDS/MUST → re-evaluate with the new findings
+
+This prevents "everyone said it's fine" from being a Goodharted exit signal.
 
 ## Verdict Routing
 

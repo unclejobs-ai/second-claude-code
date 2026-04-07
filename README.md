@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-1.1.0-blue)
+![version](https://img.shields.io/badge/version-1.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,25 +22,57 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ---
 
-## What's New in v1.1.0
+## What's New in v1.3.0
 
-- **Artifact Viewer** — PDCA pipeline outputs now render as an interactive local web UI. Run a pipeline, open `localhost` in your browser, and click through phases to see markdown, radar/bar/pie charts, flow diagrams, and syntax-highlighted code — all updating in real-time via WebSocket
-- **Viewer skill** — `/second-claude-code:viewer` starts the viewer for any PDCA session. The server auto-stops after 30 minutes of inactivity or when Claude Code exits
-- **Responsive layout** — desktop (768px+) shows a split panel (timeline left, artifact right); mobile (<768px) uses a draggable bottom sheet
+**PDCA Hard Gates** — length floors, reviewer diversity, and the calibrated 5+ Rule. v1.1.0 and v1.2.0 shipped the Artifact Viewer UI on top of PDCA's existing soft gates. v1.3.0 closes the structural holes at those gates with nine specific strengthenings, all verified end-to-end on a real generic-topic cycle.
+
+- **PDCA is the main orchestrator, sub-skills are building blocks** — explicit architecture clarification. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news` are dispatched **inside** PDCA's Do phase (their internal phases run inside Do), not as replacements for PDCA. PDCA's Check still runs after the sub-skill's internal review for an outside-perspective second pass
+- **Domain Auto-Routing (greedy)** — Do phase matches user prompts against domain trigger keywords and dispatches the most specialized sub-skill. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`
+- **Hard length floors per format** — Do gate fails if artifact is below format minimum. Threads articles ≥ 4,000 chars. Newsletters ≥ 10,000. Strategy reports ≥ 5,000. Below floor = sub-skill re-dispatched with specific scope expansion, not vague "make it longer"
+- **Plan brief floors** — Sources raised from 3 to 5, plus new minimums: 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000 chars body. Prevents thin-Plan → thin-Do failure chains
+- **Reviewer model diversity rule (with false consensus detection)** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced. When all reviewers return APPROVED with avg > 0.9 and zero critical findings, an adversarial pass with an unused external model is automatically dispatched to catch the Goodhart-style "everyone said it's fine" failure mode
+- **5+ Rule (calibrated AND logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on surgical 4-finding patch sets in real verification. 6/6 routing accuracy under new logic vs 3/6 under original
+- **New 284-line `domain-pipeline-integration.md`** — standardizes sub-skill input/output contracts, failure handling (4 modes), and integration points with adjacent phases
+- **Pokemon role label clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct `Agent` tool dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible
+- **Expanded phase output schemas** — `PlanOutput`, `DoOutput`, `CheckOutput` all gained measurable verification fields (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed`, etc.). PDCA verifies all of them independently from the sub-skill's self-report
+
+**Verification (2026-04-07)**: a real PDCA cycle on a generic topic achieved 7,981-char Plan brief (floor 3,000), 6,962-char Do article (floor 4,000), 12 sources cited (floor 5), 2 reviewers including Codex (diversity score 1.0), and surfaced 4 P1 findings that the pre-v1.3.0 baseline would have missed. See `docs/RELEASE-v1.3.0.md` for the full verification report.
+
+<details>
+<summary><strong>What was new in v1.2.0</strong></summary>
+
+- **Dashboard artifact type** — composite artifact combining KPI cards, charts, and markdown in configurable grid layouts (`2x2`, `3x1`, `1x2`)
+- **KPI card component** — large numbers with change rate indicators, color coding (green/red/gray), and trend arrows
+- **Grid layout system** — artifacts positioned in responsive grids instead of single-column stacking
+- **Phase preview cards** — thumbnail summaries of each phase's artifacts visible in timeline view
+- **Concurrent chart + markdown display** — renders side-by-side without tab switching
+- **Full `ui/src` source code** — Vite + React + TypeScript project replacing the pre-built bundle; 13 components across 4 directories; Shiki lazy loading (bundle 1MB → 262KB)
+
+</details>
+
+<details>
+<summary><strong>What was new in v1.1.0</strong></summary>
+
+- **Artifact Viewer** — PDCA pipeline outputs render as an interactive local web UI. Markdown, radar/bar/pie charts (Nivo), flow diagrams (SVG), and syntax-highlighted code (Shiki), updating in real-time via WebSocket
+- **Viewer skill** — `/second-claude-code:viewer` starts the viewer for any PDCA session. Auto-stops after 30 minutes of inactivity or when Claude Code exits
+- **Responsive layout** — desktop (768px+) split panel, mobile (<768px) draggable bottom sheet
+- **Zero-dependency server** — Node.js HTTP + WebSocket with SPA fallback, RFC 6455 frame encoding, path traversal prevention
+
+</details>
 
 <details>
 <summary><strong>What was new in v1.0.0</strong></summary>
 
 - **323 tests, green locally** — current release verification is `322` passing, `1` skipped, `0` failing
-- **PDCA Cycle Memory** — every cycle now auto-saves to `.data/cycles/`, building a persistent learning archive. Start a run, transition phases, end the run — and the system remembers what worked, what failed, and what to watch for next time
-- **Read-Before-Act** — before entering any PDCA phase, the system reads prior cycle insights for the current domain. No cold starts. Every cycle benefits from the last
-- **Self-Evolution** — insights decay over time (stale lessons fade), and gotcha proposals bubble up from recurring failure patterns. The system gets smarter with use
-- **Domain-aware PDCA** — `pdca_start_run` accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`) to enforce specialized stage contracts from the first phase
+- **PDCA Cycle Memory** — every cycle now auto-saves to `.data/cycles/`, building a persistent learning archive
+- **Read-Before-Act** — before entering any PDCA phase, the system reads prior cycle insights for the current domain
+- **Self-Evolution** — insights decay over time (stale lessons fade), and gotcha proposals bubble up from recurring failure patterns
+- **Domain-aware PDCA** — `pdca_start_run` accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`)
 - **3 new MCP tools** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` bring the total to **24 tools**
-- **Guardrails on every skill** — all 13 skills ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
-- **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds govern phase exits
-- **Richer cycle outcomes** — `pdca_transition` can now `PROCEED`, `REFINE`, or `PIVOT`, with max-count caps to prevent infinite loops
-- **Visual feedback built in** — session end emits an ANSI summary box in the terminal and auto-generates dark-theme HTML cycle reports with Mermaid and Chart.js in `.data/reports/`
+- **Guardrails on every skill** — all 13 skills ship with Iron Laws and Red Flags
+- **Stronger gates** — stage contracts, corrected consensus rounding, dual gating
+- **Richer cycle outcomes** — `pdca_transition` can `PROCEED`, `REFINE`, or `PIVOT`
+- **Visual feedback built in** — ANSI summary box and HTML cycle reports
 
 </details>
 

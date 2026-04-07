@@ -2,6 +2,22 @@
 
 # Architecture
 
+## What's New in 1.3.0
+
+PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
+
+1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
+2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
+3. **Hard Length Floors per Format** — Do gate fails if artifact is below format minimum. 11 formats with calibrated `min_chars`, `target_chars`, `min_sections`. Below floor → sub-skill re-dispatched with specific scope expansion. Generic "make it longer" prompts are explicitly forbidden.
+4. **Plan Brief Floors** — Sources raised from 3 to 5; 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000-char body now mandatory.
+5. **Reviewer Model Diversity Rule** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced for >2 reviewers.
+6. **False Consensus Detection** — All reviewers APPROVED with avg > 0.9 and zero critical findings triggers an automatic adversarial pass with an unused external model before exit.
+7. **5+ Rule (Calibrated AND Logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on a real 4-finding patch set.
+8. **New `domain-pipeline-integration.md`** — 284-line standard for sub-skill input/output contracts, failure handling (4 modes), integration points with adjacent phases.
+9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
+
+Verification cycle (2026-04-07): generic-topic PDCA run achieved 7,981-char Plan brief, 6,962-char Do article, Codex+sonnet diverse reviewers, surfaced 4 P1 findings the v1.0.0 baseline would have missed.
+
 ## What's New in 1.0.0
 
 Four changes landed in this release:
@@ -228,17 +244,84 @@ The maintainer-facing `loop` command adds a second optimization loop around the 
 
 ---
 
-## PDCA Phase Gates
+## PDCA Phase Gates (v1.3.0 Hardened)
 
-The `pdca` meta-skill enforces quality gates at each phase transition:
+The `pdca` meta-skill enforces measurable, contract-based gates at each phase transition. As of v1.3.0, every gate requires specific numeric or boolean fields rather than soft "looks complete" judgments:
 
 ```
-Plan ──[Gate: Brief exists? Analysis exists? Sources ≥3?]──→ Do
-  Do ──[Gate: Artifact complete? Format OK? Research used?]──→ Check
-Check ──[Gate: Verdict routing]──→ Act (or Exit if APPROVED)
-  Act ──[Action Router: classify root cause]──→ Plan / Do / Refine
+Plan  ──[Gate: brief_char_count ≥ 3,000, sources ≥ 5, facts ≥ 8,
+              quotes ≥ 1, comparison_tables ≥ 1, media ≥ 1,
+              meets_brief_floor: true]──→ Do
+Do    ──[Gate: meets_length_floor: true (format-specific minimum),
+              meets_section_floor: true, references_count ≥ 3,
+              plan_findings_integrated: true, sections_complete: true]──→ Check
+Check ──[Gate: distinct_models ≥ 2, external_model_count ≥ 1,
+              diversity_score ≥ 0.6, false_consensus_check_passed: true,
+              verdict ∈ {APPROVED, MINOR FIXES, NEEDS IMPROVEMENT, MUST FIX}]──→ Act (or Exit if APPROVED)
+Act   ──[5+ Rule fires? → full rewrite | else Action Router classifies]──→ Plan / Do / Refine
 Refine ──[Gate: Target met? DoD all PASS?]──→ Exit (or present options)
 ```
+
+### Length Floors (Do Gate)
+
+The Do phase fails the gate when the artifact does not meet a format-specific length contract. Sub-skills are re-dispatched with explicit scope direction (which Plan finding to expand, what new sub-section to add) rather than vague "make it longer" instructions.
+
+| Format | Min chars (body) | Target | Min sections | Sub-skill in Do |
+|--------|-----------------|--------|--------------|----------------|
+| Threads article (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 | `/threads` |
+| Korean tech newsletter | 10,000 | 12,000-15,000 | 6 topics | `/newsletter` |
+| Generic article | 4,000 | 5,000-7,000 | 5 H2 | `/scc:write` |
+| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections | `/scc:write` |
+| SWOT/RICE/OKR doc | 3,000 | 4,000-5,000 | 4 quadrants | `/scc:analyze` |
+| Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes | `/academy-shorts` |
+| Card news (carousel) | 8-10 cards | 9-12 cards | hook + body + CTA | `/card-news` |
+| PRD | 4,000 | 5,000-7,000 | 7 sections | `/scc:write --format prd` |
+| Code review report | 2,500 | 3,500-5,000 | 5 dimensions | `/scc:review` |
+| Research brief | 3,000 | 4,000-6,000 | n/a | `/scc:research` |
+| Meeting notes | 2,000 | 2,500-3,500 | 5 sections | `/scc:write --format decision` |
+
+Full table and calibration principles in `skills/pdca/references/do-phase.md`.
+
+### Domain Auto-Routing (Pre-Do Sub-Skill Selection)
+
+When PDCA enters the Do phase, the dispatcher matches the user prompt against trigger keywords and picks the most specialized sub-skill. Greedy matching is the rule: pick the most specialized sub-skill that fits, never the generic one when a specialized one exists.
+
+| Triggers | Sub-skill |
+|---------|-----------|
+| 스레드 / threads / @unclejobs.ai | `/threads` |
+| 뉴스레터 / newsletter | `/newsletter` |
+| 쇼츠 / shorts / 릴스 / Reels | `/academy-shorts` |
+| 카드뉴스 / card news / 캐러셀 | `/card-news` |
+| (no specialized match) | `/scc:write` (fallback) |
+
+Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md` (284 lines).
+
+### Reviewer Diversity (Check Gate)
+
+The Check phase enforces reviewer model diversity to prevent false consensus:
+
+- **Minimum 2 reviewers** (3 for `--depth deep`)
+- **Maximum 1 reviewer per model** — two reviewers on the same model produce correlated errors, not independent perspectives
+- **At least 1 external model** for `content`, `strategy`, `full` presets — Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, or Droid
+- **Diversity score ≥ 0.6** when more than 2 reviewers run — `distinct_models / total_reviewers`
+
+When all reviewers return APPROVED with average score > 0.9 and no critical findings, the cycle does NOT exit. Instead, an adversarial pass with an unused external model is automatically dispatched. Catches Goodhart-style "everyone said it's fine" failure modes.
+
+### 5+ Rule (Patch vs Full Rewrite)
+
+The Act phase checks the 5+ Rule before plurality routing. The rule fires a full rewrite (instead of patching) when finding density crosses a threshold.
+
+Three trigger conditions, any one fires the rule:
+
+1. **Hard credibility trigger**: any `P0_count ≥ 1` — single credibility-killer forces rewrite
+2. **Volume + spread trigger** (BOTH required):
+   - `P0_count + P1_count ≥ 5` total findings, AND
+   - Findings span ≥ 3 distinct quality categories (factual, source integrity, voice, structure, length, reader value)
+3. (Otherwise) no rule fire — normal Action Router plurality routing
+
+Calibrated from initial OR logic after observing over-trigger on a 4-finding patch set spanning 3 categories — clearly surgical patch territory but flagged as full rewrite. Switching to AND for the volume+spread path resolved the over-trigger; the hard credibility path is preserved separately because credibility damage compounds even when surface fixes look small.
+
+
 
 ### Action Router (Act Phase)
 

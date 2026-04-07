@@ -29,9 +29,85 @@ See `references/action-router.md` for the full classification matrix.
 1. Extract Critical and Major findings from review report
 2. Classify each finding by signal keywords (see `references/action-router.md`)
 3. Tally: PLAN_ISSUES vs DO_ISSUES vs LOOP_ISSUES
-4. Route by plurality (highest count wins)
-5. Near-tie (within 5pt) → ask user (2 questions max) → route to highest-count category
-6. Exact tie → PLAN > DO > LOOP (most conservative wins)
+4. **Apply 5+ Rule first** (see below) — if triggered, skip plurality routing and go straight to full rewrite
+5. Route by plurality (highest count wins)
+6. Near-tie (within 5pt) → ask user (2 questions max) → route to highest-count category
+7. Exact tie → PLAN > DO > LOOP (most conservative wins)
+
+## 5+ Rule: Patch vs Full Rewrite
+
+**The 5+ Rule overrides the Action Router when finding density crosses a threshold.** Below the threshold, patches work. Above the threshold, patches leave residue and the artifact must be rewritten from scratch.
+
+### Rule Definition (Calibrated 2026-04-07)
+
+The 5+ Rule triggers when **any** of these conditions is met:
+
+1. **Hard credibility trigger**: `P0_count >= 1` (any single credibility-killer finding forces rewrite — broken trust cannot be patched)
+2. **Volume + spread trigger** (BOTH conditions required):
+   - `P0_count + P1_count >= 5` total findings, **AND**
+   - Findings span **3 or more distinct quality categories** from the list below
+
+The two sub-conditions of #2 must both hold. Volume alone (5+ findings in a single category) does NOT fire — that's still patch territory because the fix is concentrated. Spread alone (3 categories with only 4 findings) does NOT fire — that's the calibration we corrected after observing over-triggering on surgical patch sets.
+
+**Quality categories**:
+- Factual accuracy (wrong numbers, dates, attributions, math errors)
+- Source integrity (vague attributions, unverified claims, broken links, fabricated sources)
+- Voice / tone (AI smell, passive voice, forbidden patterns, ending repetition)
+- Structure (missing sections, wrong hierarchy, broken format, sub-skill output mis-shaped)
+- Length (below floor, above range, unbalanced sections)
+- Reader value (unclear, redundant, missing context, no concrete takeaway)
+
+### Calibration Note
+
+The original rule used OR logic: either 5+ findings OR 3+ categories triggered rewrite. In testing (PDCA strengthening v2 verification, 2026-04-07), this was found to over-trigger on patch-sized finding sets. A real run with 4 P1 findings spanning 3 categories (factual + completeness + framing) was clearly surgical patch territory — each finding had a single-sentence fix — yet the OR rule classified it as full rewrite.
+
+Switching to AND for the volume+spread condition fixes the over-trigger. The hard credibility trigger (any P0 → rewrite) is preserved separately because credibility damage compounds even when the surface fix looks small.
+
+### When Triggered: Full Rewrite from Scratch
+
+When the 5+ Rule fires, **do NOT route to REFINE or DO with patches**. Instead:
+
+1. **Snapshot current artifact** as `{filename}-rejected-v{N}.md` for diff comparison later
+2. **Re-extract the core message** in one sentence — what is this artifact actually trying to communicate? Write this sentence at the top of a new fresh draft buffer.
+3. **Re-enter Plan phase** with the snapshot + finding list as input. The Plan phase reviews whether the original brief was insufficient (which is usually the case when 5+ findings exist downstream).
+4. If Plan determines the brief was sufficient → re-enter Do phase with a **clean rewrite mandate**: the writer ignores the rejected draft and starts fresh from the brief, with the finding list as constraints to avoid.
+5. The new artifact must pass the same Do gate (length floor, references, etc.) as a fresh write, not a relaxed version.
+
+### Why 5+ Triggers Rewrite (Not More Patches)
+
+Past failure mode: when 5+ P0/P1 findings exist, patching them one-by-one usually introduces new issues at the seams. Each patch changes context for surrounding sentences, which causes downstream issues that the previous review didn't see. Three rounds of patching often produces an artifact with the original 5 findings replaced by 7 new ones.
+
+Full rewrite from scratch, with the finding list as **what to avoid**, produces a coherent artifact in one pass. The cost (one full re-write) is lower than the cost (3-5 patch rounds + re-reviews + still imperfect).
+
+### 5+ Rule Examples (Calibrated)
+
+| Finding count | Categories | Trigger reason | Action |
+|--------------|-----------|----------------|--------|
+| 2 P0 + 1 P1 | factual, voice | Hard P0 trigger (P0 ≥ 1) | **Full rewrite** |
+| 5 P1 | voice only (1 category) | Volume met but spread not met | Plurality routing → likely REFINE |
+| 1 P0 + 2 P1 | factual, voice, structure | Hard P0 trigger | **Full rewrite** |
+| 4 P1 | factual, completeness, framing | Spread met but volume not met (4 < 5) | Plurality routing → DO/REFINE |
+| 8 P1 + 4 P2 | voice, length, reader value | Volume ≥5 AND categories ≥3 | **Full rewrite** |
+| 0 P0 + 6 P1 | structure only | Volume met but spread not met | Plurality routing → DO |
+| 0 P0 + 5 P1 | factual, voice, structure | Volume met AND spread met | **Full rewrite** |
+| 1 P0 | factual only | Hard P0 trigger | **Full rewrite** |
+| 0 P0 + 0 P1 + 12 P2 | style polish only | No trigger | Plurality routing → REFINE |
+| 4 P1 | factual, completeness, framing, voice (4 categories) | 4 categories but volume 4 < 5 | Plurality routing → DO |
+
+### Anti-Patterns the 5+ Rule Prevents
+
+| Anti-Pattern | Why It's Bad |
+|-------------|--------------|
+| Patching 7 findings one-by-one | Each patch creates new context drift; 3-5 rounds later, more issues exist than at the start |
+| "Just fix the worst 3 and ship" | The remaining 4+ findings are still real problems; shipping is premature |
+| Re-running Refine 5 times to chase a moving target | Refine is for polish, not for substance; Refine cannot fix what Do produced wrong |
+| Treating 5+ findings as a Refine problem | Almost certainly a Plan or Do problem — Refine cannot rebuild missing scope |
+
+### How the 5+ Rule Interacts with Action Router
+
+The 5+ Rule **fires before** the Action Router runs. If 5+ triggers, the Action Router is bypassed entirely for this iteration — the route is forced to PLAN (with full rewrite mandate). The Action Router resumes its normal role on the next Check after the rewrite.
+
+This prevents the Action Router from over-classifying small subsets of findings into REFINE when the overall artifact needs a much deeper intervention.
 
 ## Route: Act → PLAN
 
