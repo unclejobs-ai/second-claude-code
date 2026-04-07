@@ -1,6 +1,17 @@
 # PDCA
 
-> Full Plan → Do → Check → Act cycle orchestrator with quality gates, Action Router, and 16 Pokemon-themed agents.
+> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), Action Router, and 16 Pokemon-themed conceptual roles.
+
+## What's New in v1.3.0
+
+- **PDCA is the main orchestrator, sub-skills are building blocks** — `/threads`, `/newsletter`, `/academy-shorts`, `/card-news` run **inside** PDCA's Do phase via greedy domain auto-routing. PDCA's Check still runs after the sub-skill's internal review for an outside-perspective second pass.
+- **Hard length floors per format** — Do gate fails below minimum: threads ≥ 4,000 chars, newsletter ≥ 10,000, strategy report ≥ 5,000, shorts script ≥ 1,800. Sub-skill re-dispatched with specific scope expansion instructions.
+- **Plan brief floors** — sources raised from 3 to 5, plus 8 facts, 1 named quote, 1 comparison table, 1 media item, 3,000 chars body minimum.
+- **Reviewer diversity rule** — Check requires ≥ 2 distinct models and ≥ 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6. False consensus detection triggers adversarial pass.
+- **5+ Rule (calibrated AND logic)** — patch vs full rewrite threshold. Fires on any P0 OR (P0+P1 ≥ 5 AND findings span ≥ 3 categories). Calibrated from initial OR logic after observing over-trigger on real 4-finding patch sets.
+- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`.
+
+See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec and verification cycle metrics.
 
 ## Quick Example
 
@@ -47,14 +58,64 @@ The `--domain` flag (new in v1.0.0) selects domain-specific stage contracts, Def
 
 ![PDCA Cycle](../images/pdca-cycle.svg)
 
-### Phase Gates
+### Phase Gates (v1.3.0 Hardened)
 
-| Gate | Requirements |
-|------|-------------|
-| Plan → Do | Research Brief exists, 3+ sources, analysis artifact complete |
-| Do → Check | Artifact exists and complete (no TODO/TBD), plan findings integrated |
-| Check → Act | Verdict routing: APPROVED exits, others route to Act |
-| Act → Exit/Cycle | Action Router classifies root cause → Plan, Do, or Loop |
+Every gate now requires measurable numeric or boolean fields, not soft "looks complete" judgments.
+
+| Gate | Hard Requirements |
+|------|------------------|
+| Plan → Do | `brief_char_count ≥ 3,000`, `sources_count ≥ 5`, `facts_count ≥ 8`, `quotes_count ≥ 1` (named speaker), `comparison_tables_count ≥ 1`, `media_inventory_count ≥ 1` (for content briefs), `meets_brief_floor: true` |
+| Do → Check | `meets_length_floor: true` (format-specific min), `meets_section_floor: true`, `references_count ≥ 3`, `plan_findings_integrated: true`, `sections_complete: true` |
+| Check → Act | `distinct_models_count ≥ 2`, `external_model_count ≥ 1` (content/strategy/full presets), `diversity_score ≥ 0.6`, `false_consensus_check_passed: true`, verdict routing: APPROVED exits, others route to Act |
+| Act → Exit/Cycle | **5+ Rule first** (P0 ≥ 1 or volume+spread trigger), then Action Router classifies root cause → Plan, Do, or Refine |
+
+### Length Floors by Format (Do Gate)
+
+| Format | Min chars | Target | Sub-skill dispatched |
+|--------|-----------|--------|---------------------|
+| Threads article | 4,000 | 5,000-7,000 | `/threads` |
+| Newsletter | 10,000 | 12,000-15,000 | `/newsletter` |
+| Generic article | 4,000 | 5,000-7,000 | `/scc:write` |
+| Strategy report | 5,000 | 6,000-9,000 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
+| Shorts script | 1,800 | 2,200-2,800 | `/academy-shorts` |
+| Card news | 8-10 cards | 9-12 cards | `/card-news` |
+| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
+
+Full table in `skills/pdca/references/do-phase.md`.
+
+### Domain Auto-Routing
+
+Do phase greedy-matches user prompts against trigger keywords and dispatches the most specialized sub-skill. Specialized always wins over generic.
+
+| Trigger | Sub-skill |
+|---------|-----------|
+| 스레드, threads, @unclejobs.ai | `/threads` |
+| 뉴스레터, newsletter | `/newsletter` |
+| 쇼츠, shorts, 릴스 | `/academy-shorts` |
+| 카드뉴스, card news, 캐러셀 | `/card-news` |
+| (no specialized match) | `/scc:write` |
+
+Sub-skill standard: `skills/pdca/references/domain-pipeline-integration.md` (input/output contracts, 4 failure modes).
+
+### Reviewer Diversity (Check Gate)
+
+Check phase enforces reviewer model diversity to prevent false consensus:
+
+- ≥ 2 distinct models (no two reviewers on the same model)
+- ≥ 1 external model for `content`/`strategy`/`full` presets (Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, Droid)
+- Diversity score ≥ 0.6 when more than 2 reviewers run
+- **False consensus detection**: all reviewers APPROVED with avg > 0.9 and no critical findings → automatic adversarial pass with unused external model
+
+### 5+ Rule (Act Phase)
+
+Patch vs full rewrite trigger. Runs before Action Router plurality routing.
+
+**Fires on**:
+1. Any P0 finding (hard credibility trigger — single P0 forces rewrite)
+2. OR (P0+P1 ≥ 5 AND findings span ≥ 3 quality categories) — both conditions required
+
+Calibrated from initial OR logic after observing over-trigger on a 4-finding patch set spanning 3 categories during v1.3.0 verification. New AND logic: 6/6 routing accuracy vs 3/6 under original OR.
 
 ### Action Router
 

@@ -4,15 +4,15 @@
     "name": "unclejobs-ai"
   },
   "metadata": {
-    "description": "PDCA-native Knowledge Work OS — 14 skills, 17 Pokemon agents, 24 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution",
-    "version": "1.2.0"
+    "description": "PDCA-native Knowledge Work OS — 14 skills, 17 Pokemon agents, 24 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Hard Length Floors + Reviewer Diversity Gates",
+    "version": "1.3.0"
   },
   "plugins": [
     {
       "name": "second-claude-code",
       "source": "./",
-      "description": "PDCA-native Knowledge Work OS — 14 skills, 17 Pokemon agents, 24 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution",
-      "version": "1.2.0",
+      "description": "PDCA-native Knowledge Work OS — 14 skills, 17 Pokemon agents, 24 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Hard Length Floors + Reviewer Diversity Gates",
+      "version": "1.3.0",
       "author": {
         "name": "unclejobs-ai"
       },

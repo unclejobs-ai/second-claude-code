@@ -2,7 +2,18 @@
 
 # PDCA
 
-> 품질 게이트, 액션 라우터, 16개 포켓몬 테마 에이전트를 갖춘 Plan → Do → Check → Act 전체 사이클 오케스트레이터.
+> **하드** 품질 게이트(길이 floor, 리뷰어 모델 다양성, 보정된 5+ 룰), 액션 라우터, 16개 포켓몬 테마 conceptual role을 갖춘 Plan → Do → Check → Act 전체 사이클 오케스트레이터.
+
+## v1.3.0에서 달라진 점
+
+- **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 Do 페이즈 **안에서** greedy 도메인 자동 라우팅을 통해 돌아가요. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아갑니다.
+- **포맷별 하드 길이 floor** — Do 게이트가 최소치 미달이면 통과 안 돼요: 스레드 ≥ 4,000자, 뉴스레터 ≥ 10,000자, 전략 리포트 ≥ 5,000자, 쇼츠 대본 ≥ 1,800자. Sub-skill이 구체 scope expansion 지시와 함께 재디스패치됩니다.
+- **Plan brief floor** — source 최소를 3 → 5로 올렸고, 사실 8개, named-source 인용 1개, 비교표 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
+- **리뷰어 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. False consensus 감지 시 adversarial pass 자동 디스패치.
+- **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. any P0 OR (P0+P1 ≥ 5 AND finding이 ≥ 3개 카테고리에 걸침)일 때 발동. 초기 OR 로직이 실제 4-finding patch set에서 over-trigger한 걸 발견하고 보정.
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요.
+
+전체 강화 사양과 검증 사이클 메트릭은 [RELEASE-v1.3.0.ko.md](../RELEASE-v1.3.0.ko.md) 참고.
 
 ## 빠른 예시
 
@@ -49,14 +60,64 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 
 ![PDCA Cycle](../images/pdca-cycle.svg)
 
-### 페이즈 게이트
+### 페이즈 게이트 (v1.3.0 강화)
 
-| 게이트 | 요구사항 |
-|--------|----------|
-| Plan → Do | 리서치 브리프 존재, 3개 이상 출처, 분석 아티팩트 완성 |
-| Do → Check | 아티팩트 존재 + 완성(TODO/TBD 없음), Plan 결과 반영됨 |
-| Check → Act | 판정 라우팅: APPROVED는 종료, 나머지는 Act로 |
-| Act → 종료/사이클 | 액션 라우터가 근본원인 분류 → Plan, Do, 또는 Loop |
+모든 게이트가 이제 soft 판단이 아니라 측정 가능한 numeric/boolean 필드를 요구합니다.
+
+| 게이트 | 하드 요구사항 |
+|--------|-------------|
+| Plan → Do | `brief_char_count ≥ 3,000`, `sources_count ≥ 5`, `facts_count ≥ 8`, `quotes_count ≥ 1` (named speaker), `comparison_tables_count ≥ 1`, `media_inventory_count ≥ 1` (콘텐츠 brief), `meets_brief_floor: true` |
+| Do → Check | `meets_length_floor: true` (포맷별 최소치), `meets_section_floor: true`, `references_count ≥ 3`, `plan_findings_integrated: true`, `sections_complete: true` |
+| Check → Act | `distinct_models_count ≥ 2`, `external_model_count ≥ 1` (content/strategy/full preset), `diversity_score ≥ 0.6`, `false_consensus_check_passed: true`, 판정 라우팅: APPROVED는 종료, 나머지는 Act로 |
+| Act → 종료/사이클 | **5+ 룰 먼저** (P0 ≥ 1 또는 volume+spread 트리거), 그다음 액션 라우터가 근본원인 분류 → Plan, Do, 또는 Refine |
+
+### 포맷별 길이 Floor (Do 게이트)
+
+| 포맷 | 최소 글자 | 목표 | 디스패치되는 sub-skill |
+|------|---------|------|---------------------|
+| 스레드 아티클 | 4,000 | 5,000-7,000 | `/threads` |
+| 뉴스레터 | 10,000 | 12,000-15,000 | `/newsletter` |
+| 일반 아티클 | 4,000 | 5,000-7,000 | `/scc:write` |
+| 전략 리포트 | 5,000 | 6,000-9,000 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
+| 쇼츠 대본 | 1,800 | 2,200-2,800 | `/academy-shorts` |
+| 카드뉴스 | 8-10 카드 | 9-12 카드 | `/card-news` |
+| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
+
+전체 표는 `skills/pdca/references/do-phase.md`에.
+
+### 도메인 자동 라우팅
+
+Do 페이즈가 사용자 프롬프트를 트리거 키워드와 그리디 매칭해서 가장 specialized한 sub-skill을 디스패치해요. Specialized가 항상 generic보다 우선.
+
+| 트리거 | Sub-skill |
+|--------|-----------|
+| 스레드, threads, @unclejobs.ai | `/threads` |
+| 뉴스레터, newsletter | `/newsletter` |
+| 쇼츠, shorts, 릴스 | `/academy-shorts` |
+| 카드뉴스, card news, 캐러셀 | `/card-news` |
+| (specialized 매치 없음) | `/scc:write` |
+
+Sub-skill 표준: `skills/pdca/references/domain-pipeline-integration.md` (입출력 계약, 4가지 실패 모드).
+
+### 리뷰어 다양성 (Check 게이트)
+
+Check 페이즈가 false consensus 방지를 위해 리뷰어 모델 다양성을 강제합니다:
+
+- ≥ 2 distinct 모델 (같은 모델 2개 금지)
+- ≥ 1 외부 모델 for `content`/`strategy`/`full` preset (Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, Droid)
+- Diversity score ≥ 0.6 (리뷰어 2개 초과 시)
+- **False consensus 감지**: 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED → 사용 안 한 외부 모델로 adversarial pass 자동 디스패치
+
+### 5+ 룰 (Act 페이즈)
+
+Patch vs full rewrite 트리거. 액션 라우터 plurality routing 전에 먼저 체크합니다.
+
+**발동 조건**:
+1. Any P0 finding (hard credibility 트리거 — 단일 P0만으로 강제 재작성)
+2. OR (P0+P1 ≥ 5 AND findings가 ≥ 3개 quality category에 걸침) — 두 조건 모두 필요
+
+v1.3.0 검증 사이클에서 4-finding patch set이 3개 카테고리에 걸친 surgical 케이스인데도 초기 OR 로직이 over-trigger한 걸 발견하고 AND로 보정. 새 AND 로직: 6/6 routing 정확도 vs 이전 OR 3/6.
 
 ### 액션 라우터
 
