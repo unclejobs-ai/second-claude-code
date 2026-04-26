@@ -27,13 +27,13 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 **PDCA Hard Gates** — length floors, reviewer diversity, and the calibrated 5+ Rule. v1.1.0 and v1.2.0 shipped the Artifact Viewer UI on top of PDCA's existing soft gates. v1.3.0 closes the structural holes at those gates with nine specific strengthenings, all verified end-to-end on a real generic-topic cycle.
 
 - **PDCA is the main orchestrator, sub-skills are building blocks** — explicit architecture clarification. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news` are dispatched **inside** PDCA's Do phase (their internal phases run inside Do), not as replacements for PDCA. PDCA's Check still runs after the sub-skill's internal review for an outside-perspective second pass
-- **Domain Auto-Routing (greedy)** — Do phase matches user prompts against domain trigger keywords and dispatches the most specialized sub-skill. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`
+- **Domain Auto-Routing (greedy)** — Do phase matches user prompts against domain trigger keywords and dispatches the most specialized sub-skill. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/second-claude-code:write`
 - **Hard length floors per format** — Do gate fails if artifact is below format minimum. Threads articles ≥ 4,000 chars. Newsletters ≥ 10,000. Strategy reports ≥ 5,000. Below floor = sub-skill re-dispatched with specific scope expansion, not vague "make it longer"
 - **Plan brief floors** — Sources raised from 3 to 5, plus new minimums: 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000 chars body. Prevents thin-Plan → thin-Do failure chains
 - **Reviewer model diversity rule (with false consensus detection)** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced. When all reviewers return APPROVED with avg > 0.9 and zero critical findings, an adversarial pass with an unused external model is automatically dispatched to catch the Goodhart-style "everyone said it's fine" failure mode
 - **5+ Rule (calibrated AND logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on surgical 4-finding patch sets in real verification. 6/6 routing accuracy under new logic vs 3/6 under original
 - **New 284-line `domain-pipeline-integration.md`** — standardizes sub-skill input/output contracts, failure handling (4 modes), and integration points with adjacent phases
-- **Pokemon role label clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct `Agent` tool dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible
+- **Pokemon role label clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct `Agent` tool dispatch targets. Real subagent dispatch happens inside `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible
 - **Expanded phase output schemas** — `PlanOutput`, `DoOutput`, `CheckOutput` all gained measurable verification fields (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed`, etc.). PDCA verifies all of them independently from the sub-skill's self-report
 
 **Verification (2026-04-07)**: a real PDCA cycle on a generic topic achieved 7,981-char Plan brief (floor 3,000), 6,962-char Do article (floor 4,000), 12 sources cited (floor 5), 2 reviewers including Codex (diversity score 1.0), and surfaced 4 P1 findings that the pre-v1.3.0 baseline would have missed. See `docs/RELEASE-v1.3.0.md` for the full verification report.
@@ -69,10 +69,11 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 - **Self-Evolution** — insights decay over time (stale lessons fade), and gotcha proposals bubble up from recurring failure patterns
 - **Domain-aware PDCA** — `pdca_start_run` accepts a `domain` parameter (`code`, `content`, `analysis`, `pipeline`)
 - **3 new MCP tools** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` bring the total to **24 tools**
-- **Guardrails on every skill** — all 13 skills ship with Iron Laws and Red Flags
-- **Stronger gates** — stage contracts, corrected consensus rounding, dual gating
-- **Richer cycle outcomes** — `pdca_transition` can `PROCEED`, `REFINE`, or `PIVOT`
-- **Visual feedback built in** — ANSI summary box and HTML cycle reports
+- **`investigate` skill** — systematic root-cause debugging with 4-phase workflow (investigate → analyze → hypothesize → fix), 3-strike escalation, and blast radius gates. Maps to PDCA Check phase.
+- **Guardrails on every skill** — all 15 skills ship with Iron Laws and Red Flags, plus an anti-fabrication layer in `hooks/lib/fact-checker.mjs` for numeric-claim verification
+- **Stronger gates, fewer false approvals** — stage contracts in `config/stage-contracts.json`, corrected consensus rounding (`2/3` means `2`, not `3`), score + vote dual gating, and preset-specific thresholds govern phase exits
+- **Richer cycle outcomes** — `pdca_transition` can now `PROCEED`, `REFINE`, or `PIVOT`, with max-count caps to prevent infinite loops
+- **Visual feedback built in** — session end emits an ANSI summary box in the terminal and auto-generates dark-theme HTML cycle reports with Mermaid and Chart.js in `.data/reports/`
 
 </details>
 
@@ -81,7 +82,7 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 - **311-test release baseline** — suite sat at **311** total (`310` passing, `1` skipped)
 - **Domain-aware PDCA starts** — `pdca_start_run` gained the `domain` parameter
-- **Guardrails on every skill** — Iron Laws and Red Flags across all 13 skills
+- **Guardrails on every skill** — Iron Laws and Red Flags across all 15 skills
 - **Stronger gates** — stage contracts, corrected consensus rounding, dual gating
 - **Richer cycle outcomes** — `PROCEED`, `REFINE`, or `PIVOT` with bounded retries
 - **Visual feedback** — ANSI summary box and HTML cycle reports
@@ -104,7 +105,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-13 commands for all knowledge work:
+14 slash commands and 15 skills for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -417,6 +418,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Write an article, report, or newsletter | `write` | Research-backed, review-verified output |
 | Get 3-5 independent perspectives on a draft | `review` | Parallel review with consensus voting |
 | Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass — supports `--dod` for structured success criteria |
+| Debug a failing workflow before fixing it | `investigate` | Root-cause report with evidence, hypotheses, and verification |
 | Benchmark and evolve prompt assets | `loop` | Fixed-suite optimization with isolated winner branches |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom multi-step automation |
@@ -493,7 +495,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 
 Three ideas drive the system's design:
 
-**Thirteen skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of thirteen handles it.
+**Fifteen skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of fifteen handles it.
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. A draft that hasn't passed the consensus gate doesn't reach you.
 
@@ -665,9 +667,9 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 ### v0.6.0 — Skill Guardrails and Phase Contracts
 
-- **Iron Laws + Red Flags** — all 13 skills gained explicit guardrails
+- **Iron Laws + Red Flags** — all 15 skills gained explicit guardrails
 - **Stage Contracts** — `config/stage-contracts.json` introduced code-vs-content phase requirements
-- **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all 13 commands including `translate`
+- **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all 14 commands including `investigate` and `translate`
 - **Regression coverage** — new tests added for `subagent-stop`, `compaction`, `subagent-start`, and `stop-failure`
 
 ### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing

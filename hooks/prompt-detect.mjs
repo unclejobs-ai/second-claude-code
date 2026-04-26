@@ -368,10 +368,16 @@ const ko = {
   collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해"],
   workflow: ["파이프라인", "자동화", "워크플로우"],
   discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
+  investigate: ["디버그", "버그", "에러", "원인", "실패", "고장", "문제"],
   translate: ["번역", "번역해", "영어로", "한국어로", "영문으로", "국문으로", "번역해줘"],
 };
 
 const routes = [
+  {
+    patterns: [...ko.investigate, "debug", "bug", "error", "root cause", "failing", "failure", "broken", "unexpected behavior"],
+    skill: "second-claude-code:investigate",
+    label: "investigate",
+  },
   {
     patterns: [...ko.research, "research", "investigate", "look up", "search about", "search for information", "find out about"],
     skill: "second-claude-code:research",
@@ -456,6 +462,7 @@ for (const route of routes) {
       "refine",
       "collect",
       "discover",
+      "investigate",
       "translate",
     ];
     if (blockedForEngineering.includes(route.label)) continue;
@@ -489,6 +496,7 @@ const genericGuide = `<skill-check>
 - 저장/캡처/메모/수집/clip → second-claude-code:collect
 - 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:workflow
 - 스킬 찾기/discover → second-claude-code:discover
+- 디버그/버그/에러/root cause (비코드 문서/분석) → second-claude-code:investigate
 - 번역/translate/영어로/한국어로 → second-claude-code:translate
 - 복합요청 (조사+작성/리뷰+개선) → second-claude-code:pdca
 

@@ -27,13 +27,13 @@
 **PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
 
 - **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — 아키텍처 명확화. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 **Do 페이즈 안에서 디스패치**돼요 (각자의 내부 페이즈가 Do 안에서 돌아감). PDCA를 대체하는 게 아닙니다. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아가요
-- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`
+- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/second-claude-code:write`
 - **포맷별 길이 floor** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 스레드 아티클 ≥ 4,000자. 뉴스레터 ≥ 10,000자. 전략 리포트 ≥ 5,000자. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치, vague한 "더 길게 써" 금지
 - **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새 minimum 추가: 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자. Thin Plan → thin Do 실패 체인 차단
 - **리뷰어 모델 다양성 룰 (false consensus 감지 포함)** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼서 Goodhart 스타일 "다들 괜찮대" 거짓 신호를 잡아요
 - **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 surgical 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정. 새 로직 6/6 routing 정확도 vs 이전 OR 3/6
 - **새 284줄 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점 표준화
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
 - **확장된 페이즈 출력 스키마** — `PlanOutput`, `DoOutput`, `CheckOutput` 모두 측정 가능한 검증 필드를 갖게 됐어요 (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed` 등). PDCA가 sub-skill self-report를 신뢰하지 않고 독립 검증
 
 **검증 (2026-04-07)**: generic 토픽으로 실제 PDCA 사이클 돌렸을 때 7,981자 Plan brief (floor 3,000), 6,962자 Do 아티클 (floor 4,000), 12개 출처 인용 (floor 5), Codex 포함 2 리뷰어 (diversity score 1.0), pre-v1.3.0 baseline에서는 놓쳤을 4개 P1 findings 발견. 전체 검증 리포트는 `docs/RELEASE-v1.3.0.ko.md` 참고.
@@ -76,7 +76,7 @@
 
 - **테스트 기준선 정리** — 현재 검증 기준은 총 `323`개, `322`개 통과, `1`개 스킵, 실패 `0`개예요
 - **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
-- **13개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
+- **15개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
 - **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
 - **PDCA 결정이 3갈래가 됐어요** — `pdca_transition`이 이제 `PROCEED`, `REFINE`, `PIVOT`를 구분하고, refine/pivot 최대 횟수로 무한루프를 막아요
 - **세션 끝나면 시각화까지 남아요** — 터미널 ANSI 요약 박스가 뜨고, `.data/reports/`에 Mermaid + Chart.js 기반 다크 테마 HTML 리포트가 자동 생성돼요
@@ -107,7 +107,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-13 commands for all knowledge work:
+14 commands and 15 skills for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -626,7 +626,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 대부분의 AI 도구는 수동적이에요 — 시키면 해요. Second Claude Code는 품질에 대한 의견이 있고, 그걸 강제해요. 세 가지 생각이 전부를 관통해요.
 
-**스킬 13개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 13개 중 하나가 알아서 잡아요.
+**스킬 15개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 15개 중 하나가 알아서 잡아요.
 
 **모든 산출물은 리뷰를 거쳐요.** 이건 권장이 아니에요. 품질 게이트가 건너뛰기를 막아요. 합의 게이트를 안 통과한 초안은 물리적으로 저한테 안 와요.
 
@@ -833,9 +833,9 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 ### v0.6.0 — 스킬 가드레일과 페이즈 계약
 
-- **Iron Laws + Red Flags** — 13개 스킬 전체에 강한 운영 규칙 추가
+- **Iron Laws + Red Flags** — 15개 스킬 전체에 강한 운영 규칙 추가
 - **Stage Contracts** — `config/stage-contracts.json` 도입, code vs content 경로 분리
-- **워크플로우 보존 수정** — compaction 중 `workflow-active.json` 보존, session-start에서 13개 커맨드 복원
+- **워크플로우 보존 수정** — compaction 중 `workflow-active.json` 보존, session-start에서 14개 커맨드 복원
 - **회귀 테스트 보강** — `subagent-stop`, `compaction`, `subagent-start`, `stop-failure` 범위 테스트 추가
 
 ### v0.5.7 — MCP 테스트 스위트, 신뢰도 점수, 학술 프리셋

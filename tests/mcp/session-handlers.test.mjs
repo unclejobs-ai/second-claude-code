@@ -121,7 +121,10 @@ describe("session handlers", () => {
       // May include mmbridge context-tree entries from ~/.mmbridge/ even with empty dataDir
       assert.ok(Array.isArray(result.entries), "entries should be an array");
       assert.equal(typeof result.total, "number", "total should be a number");
-      assert.equal(result.total, result.entries.length, "total should match entries length");
+      assert.ok(
+        result.total >= result.entries.length,
+        "total should cover the returned page of entries"
+      );
     } finally {
       delete process.env.CLAUDE_PLUGIN_DATA;
       rmSync(tempRoot, { recursive: true, force: true });

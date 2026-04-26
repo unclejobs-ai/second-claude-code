@@ -146,19 +146,10 @@ test("analyze supports exactly the framework templates it advertises", () => {
 });
 
 test("command wrappers map each /scc command to the matching bare skill", () => {
-  const commandNames = [
-    "batch",
-    "soul",
-    "loop",
-    "research",
-    "write",
-    "analyze",
-    "review",
-    "refine",
-    "collect",
-    "workflow",
-    "discover",
-  ];
+  const commandNames = readdirSync(path.join(root, "commands"))
+    .filter((fileName) => fileName.endsWith(".md"))
+    .map((fileName) => fileName.replace(/\.md$/, ""))
+    .sort();
 
   for (const name of commandNames) {
     const content = read(path.join("commands", `${name}.md`));
@@ -180,6 +171,24 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
   }
 });
 
+test("session-start command banner matches command files", () => {
+  const commandNames = readdirSync(path.join(root, "commands"))
+    .filter((fileName) => fileName.endsWith(".md"))
+    .map((fileName) => fileName.replace(/\.md$/, ""))
+    .sort();
+  const sessionStart = read(path.join("hooks", "session-start.mjs"));
+  const advertised = [...sessionStart.matchAll(/`\/second-claude-code:([a-z-]+)`/g)]
+    .map((match) => match[1])
+    .sort();
+
+  assert.deepEqual(advertised, commandNames);
+  assert.match(
+    sessionStart,
+    new RegExp(`${commandNames.length} commands for all knowledge work`),
+    "session-start should keep its command count aligned with commands/*.md"
+  );
+});
+
 test("loop surfaces are documented across primary docs", () => {
   const readme = read("README.md");
   const readmeKo = read("README.ko.md");
@@ -190,7 +199,7 @@ test("loop surfaces are documented across primary docs", () => {
   for (const doc of [readme, readmeKo, architecture, architectureKo, claude]) {
     assert.match(
       doc,
-      /13 skills|13 commands|13\uAC1C \uC2A4\uD0AC|13\uAC1C \uC2AC\uB798\uC2DC/i,
+      /14 commands|15 skills|15\uAC1C \uC2A4\uD0AC|14\uAC1C \uC2AC\uB798\uC2DC/i,
       "top-level docs should reflect the new loop surface"
     );
     assert.match(

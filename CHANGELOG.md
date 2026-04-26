@@ -164,7 +164,7 @@ The verification cycle also revealed an over-trigger in the initial 5+ Rule OR l
 - **Score gate validation** — gate now requires both score and vote count before passing
 - **Quick preset threshold** — `quick` preset now requires unanimous approval (`0.67` → `1.0`)
 - **Compaction state preservation** — `workflow-active.json` is now preserved through compaction
-- **Session-start banner completeness** — banner now includes `translate`, restoring 13/13 commands
+- **Session-start banner completeness** — banner now includes `investigate` and `translate`, restoring 14/14 commands
 - **Release hygiene** — fixed manifest `0.5.8` drift, 13-skill metadata, ghost directories, glossary issues, and Playwright pinning to `@0.0.68`
 
 ## [0.5.8] - 2026-03-28

@@ -58,6 +58,23 @@ test("prompt detect routes session recall prompts to /second-claude-code:workflo
   assertRoutesTo(output, "workflow");
 });
 
+test("prompt detect routes root-cause debugging prompts to /second-claude-code:investigate", () => {
+  const output = runPrompt("investigate the root cause of conflicting claims in this report");
+  assertRoutesTo(output, "investigate");
+});
+
+test("prompt detect keeps code bug prompts on development guidance", () => {
+  const output = runPrompt("fix this bug in src/app.js");
+  assert.doesNotMatch(output, /skill: \\\"second-claude-code:investigate\\\"/);
+  assert.match(output, /버그·에러·테스트 실패 → systematic-debugging/);
+  assert.match(output, /root cause \(비코드 문서\/분석\)/);
+});
+
+test("prompt detect routes general investigate prompts to /second-claude-code:research", () => {
+  const output = runPrompt("investigate ai market trends");
+  assertRoutesTo(output, "research");
+});
+
 // ── PDCA compound pattern tests ──
 
 test("PDCA: Korean compound '알아보고' routes to full PDCA", () => {

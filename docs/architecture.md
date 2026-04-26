@@ -82,9 +82,11 @@ directly to `Plan → Do → Check → Act`.
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
+| Check | Debug | `investigate` |
 | **Optimization** | **Evolve** | **`loop`** |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
+| **Artifacts** | **View** | **`viewer`** |
 
 The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
 It auto-detects which phase to enter from natural language and chains the appropriate skills.
@@ -96,7 +98,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (24 tools), playwright (optional)
-├── skills/                       # 13 skills (SKILL.md each)
+├── skills/                       # 15 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
@@ -111,10 +113,13 @@ second-claude/
 │   ├── loop/                     # Karpathy-style prompt optimization loop
 │   ├── batch/                    # Parallel task decomposition and execution
 │   │   └── references/           # Decomposition guide, split strategies, merge patterns
-│   └── soul/                     # User identity profile synthesis
-│       └── references/           # Observation signals, synthesis algorithm, templates
+│   ├── soul/                     # User identity profile synthesis
+│   │   └── references/           # Observation signals, synthesis algorithm, templates
+│   ├── translate/                # Soul-aware EN↔KO translation
+│   ├── investigate/              # Root-cause debugging
+│   └── viewer/                   # Local artifact viewer
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 12 slash command wrappers
+├── commands/                     # 14 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
