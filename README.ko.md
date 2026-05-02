@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-1.3.0-blue)
+![version](https://img.shields.io/badge/version-1.4.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,7 +22,37 @@
 
 ---
 
-## v1.3.0에서 달라진 점
+## v1.4.0에서 달라진 점
+
+**크로스-플러그인 오케스트레이터** — 이제 Second Claude Code가 당신의 Claude Code에 설치된 *모든* 플러그인을 실시간으로 찾아내고 명령합니다.
+
+"코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit-code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅.
+
+하드코딩된 레지스트리 없음. 수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. 유지보수 제로.
+
+```mermaid
+graph LR
+    U[사용자 입력] --> PD[prompt-detect 훅]
+    PD --> P[PDCA 라우터]
+    P --> |check 페이즈| OC[오케스트레이터]
+    OC --> |스캔| PL{플러그인 생태계}
+    PL --> CR[coderabbit<br/>code-review]
+    PL --> CC[commit-commands<br/>commit]
+    PL --> FD[frontend-design<br/>design]
+    PL --> CX[codex<br/>review]
+    PL --> AT[agent-teams<br/>team-review]
+    OC --> |디스패치| SK[Skill: 플러그인-스킬]
+    SK --> |실행| RS[결과]
+```
+
+- **MCP 도구 4종 신규** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
+- **런타임 플러그인 탐지** — 세션 시작 시 `~/.claude/plugins/` 스캔, 파일시스템에서 capability map 자동 구축 (설정 불필요)
+- **동적 디스패치 가이드** — `prompt-detect` 훅의 하드코딩된 skill-check 블록을 실시간 플러그인 라우팅 테이블로 교체
+- **PDCA 페이즈 자동 라우팅** — check → coderabbit/codex, act → commit-commands, do → frontend-design
+- **소울 피드백 바인딩** — 시각적 진행 게이지, git shipping 메트릭(`soul_retro`), synthesis 준비도, retro 트렌드 감지
+- **354개 테스트** (343개 통과, 0개 실패, 1개 스킵) — 실제 14개 플러그인 / 67개 스킬로 검증 완료
+
+> **이전 v1.3.0에서는...**
 
 **PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
 

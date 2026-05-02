@@ -2,6 +2,71 @@
 
 # 아키텍처
 
+## 1.4.0 변경사항 — 크로스-플러그인 오케스트레이션
+
+Second Claude Code가 이제 당신의 Claude Code에 설치된 **모든 플러그인을 실시간으로 찾아내고 명령**합니다. 두 개 레이어로 동작합니다.
+
+### 레이어 1: 런타임 플러그인 탐지
+
+`hooks/lib/plugin-discovery.mjs`가 세션 시작 시 `~/.claude/plugins/installed_plugins.json`을 스캔하고 각 플러그인의 파일시스템을 검사:
+
+```
+플러그인 파일시스템          → 추출되는 능력
+─────────────────────────────────────────────
+.claude-plugin/plugin.json  → 이름, 버전, 설명, mcpServers
+skills/*/SKILL.md           → 스킬명 + 설명 (frontmatter 파싱)
+commands/*.md               → 커맨드명 + 설명
+agents/*.md                 → 에이전트명
+.mcp.json                   → 대체 MCP 서버 선언
+```
+
+하드코딩 레지스트리 없음. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. Capability map은 매 세션 재구축.
+
+### 레이어 2: 능동적 자동 디스패치
+
+```
+사용자: "코드 리뷰해줘"
+  ↓
+prompt-detect 훅 (UserPromptSubmit)
+  ├── 의도 감지 → PDCA check 페이즈
+  ├── 동적 디스패치 가이드 주입 (실시간 플러그인 라우팅 테이블)
+  └── Claude가 읽음: "check phase → Skill: coderabbit-code-review"
+  ↓
+PDCA Check 페이즈 진입
+  ├── orchestrator_route phase=check
+  ├── 탐지 결과: coderabbit (code-review), codex (review), agent-teams (team-review)
+  └── 자동 디스패치: "Skill: coderabbit-code-review"
+  ↓
+결과 반환 → PDCA Act 페이즈로
+  ├── orchestrator_route phase=act
+  └── 자동 디스패치: "/commit-commands:commit"
+```
+
+### 신규 MCP 도구
+
+| 도구 | 목적 | 자동 디스패치 |
+|------|------|-------------|
+| `orchestrator_list_plugins` | 전체 생태계 인벤토리 | 아니오 |
+| `orchestrator_get_plugin` | 단일 플러그인 상세 | 아니오 |
+| `orchestrator_route` | 키워드/페이즈 → 매칭 플러그인 | **예** — `Skill:` 문자열 반환 |
+| `orchestrator_health` | 생태계 건전성 점검 | 아니오 |
+
+### 신규 서브시스템
+
+```
+hooks/lib/plugin-discovery.mjs       — 파일시스템 스캐너 + capability 매퍼 + 디스패치 가이드 생성기
+mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
+```
+
+### 소울 피드백 바인딩 (Phase 5)
+
+- `soul_retro` — git shipping 메트릭 수집 (커밋 수, streak, peak hours, 트렌드 감지)
+- `soul_get_synthesis_context` — synthesis 단계용 관측 데이터 준비
+- `soul_get_readiness` — synthesis 임계값 도달 여부 확인 (관측 30건 또는 세션 10회)
+- 세션 시작 시 시각적 진행 게이지 + retro 요약 + synthesis CTA 주입
+
+---
+
 ## 1.3.0 변경사항
 
 PDCA 하드 게이트 릴리스. PDCA 오케스트레이터에 9개 구체 강화를 박아서, v1.0.0의 약한 게이트로 셀프 처리 fallback과 sparse 출력이 슬쩍 통과하던 구조적 구멍을 막았어요.

@@ -2,6 +2,82 @@
 
 # Architecture
 
+## What's New in 1.4.0
+
+**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through two layers:
+
+### Layer 1: Runtime Plugin Discovery
+
+`hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json` at session start and inspects each plugin's filesystem:
+
+```
+Plugin filesystem          → Capability extraction
+─────────────────────────────────────────────────
+.claude-plugin/plugin.json → name, version, description, mcpServers
+skills/*/SKILL.md          → skill names + descriptions (frontmatter parsed)
+commands/*.md              → command names + descriptions
+agents/*.md                → agent names
+.mcp.json                  → alternative MCP server declarations
+```
+
+No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls them. The capability map is rebuilt every session.
+
+### Layer 2: Proactive Auto-Dispatch
+
+The orchestrator operates at three touchpoints:
+
+```
+User types "리뷰해줘"
+  ↓
+prompt-detect hook (UserPromptSubmit)
+  ├── Detects intent → PDCA check phase
+  ├── Injects dynamic dispatch guide (Live plugin routing table)
+  └── Claude reads: "check phase → Skill: coderabbit-code-review"
+  ↓
+PDCA enters Check phase
+  ├── orchestrator_route phase=check
+  ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
+  └── Auto-dispatches top pick: "Skill: coderabbit-code-review"
+  ↓
+Result returned → PDCA proceeds to Act phase
+  ├── orchestrator_route phase=act
+  └── Auto-dispatches: "/commit-commands:commit"
+```
+
+### MCP Tools (orchestrator_*)
+
+| Tool | Purpose | Auto-Dispatch |
+|------|---------|---------------|
+| `orchestrator_list_plugins` | Full ecosystem inventory | No |
+| `orchestrator_get_plugin` | Single plugin deep inspection | No |
+| `orchestrator_route` | Keyword/phase → matching plugins | **Yes** — returns `Skill:` strings |
+| `orchestrator_health` | Ecosystem readiness check | No |
+
+### New Subsystems
+
+```
+hooks/lib/plugin-discovery.mjs       — Filesystem scanner + capability mapper + dispatch guide generator
+mcp/lib/orchestrator-handlers.mjs    — 4 MCP tool handler implementations
+```
+
+### What Changed in Session-Start
+
+The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin Dispatch** section that pre-computes per-phase routing:
+
+```
+## Active Plugin Dispatch
+🔍 check → coderabbit, codex, agent-teams, caveman
+🚀 act → commit-commands, caveman, coderabbit
+🔨 do → frontend-design, frontend-design-pro, codex
+📋 plan → claude-mem, agent-teams, frontend-design-pro
+```
+
+### What Changed in prompt-detect
+
+The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. When plugins change, the dispatch guide changes automatically. No maintenance needed.
+
+---
+
 ## What's New in 1.3.0
 
 PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
@@ -122,6 +198,19 @@ second-claude/
 ├── commands/                     # 14 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
+│   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)
+│   ├── prompt-detect.mjs         # Intent detection + dynamic plugin dispatch injection
+│   └── lib/                      # Shared hook modules
+│       ├── plugin-discovery.mjs  # Runtime plugin scanner + dispatch guide generator [NEW 1.4.0]
+│       ├── soul-observer.mjs     # Soul signal detection + readiness/retro utilities
+│       ├── mmbridge-adapter.mjs  # MMBridge CLI adapter
+│       └── ...                   # agent-tracker, fact-checker, file-mutex, etc.
+├── mcp/
+│   ├── pdca-state-server.mjs     # 28-tool MCP server (24 core + 4 orchestrator [NEW 1.4.0])
+│   └── lib/
+│       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers [NEW 1.4.0]
+│       ├── soul-handlers.mjs          # soul_* tool handlers (inc. retro, synthesis, readiness)
+│       └── ...                        # pdca-handlers, memory-handlers, etc.
 │   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
 │   ├── session-start.mjs         # Session banner + state init (SessionStart)
 │   ├── subagent-start.mjs        # Review session context init (SubagentStart)

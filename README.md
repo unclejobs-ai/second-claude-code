@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-1.3.0-blue)
+![version](https://img.shields.io/badge/version-1.4.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -22,7 +22,39 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ---
 
-## What's New in v1.3.0
+## What's New in v1.4.0
+
+**Cross-Plugin Orchestrator** — Second Claude Code now discovers and commands *all* your installed Claude Code plugins automatically.
+
+You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running your own review, it auto-dispatches: `Skill: coderabbit-code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`.
+
+No hardcoded registry. No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears. Zero maintenance.
+
+```mermaid
+graph LR
+    U[User Prompt] --> PD[prompt-detect hook]
+    PD --> P[PDCA Router]
+    P --> |check phase| OC[Orchestrator]
+    OC --> |scan| PL{Plugin Ecosystem}
+    PL --> CR[coderabbit<br/>code-review]
+    PL --> CC[commit-commands<br/>commit]
+    PL --> FD[frontend-design<br/>design]
+    PL --> CX[codex<br/>review]
+    PL --> AT[agent-teams<br/>team-review]
+    OC --> |dispatch| SK[Skill: plugin-skill]
+    SK --> |execute| RS[Result]
+```
+
+- **4 new MCP tools** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
+- **Runtime plugin discovery** — scans `~/.claude/plugins/` at session start, builds capability map from filesystem (no config)
+- **Dynamic dispatch guide** — `prompt-detect` hook replaced its hardcoded skill-check block with live plugin routing table
+- **PDCA phase auto-routing** — check → coderabbit/codex, act → commit-commands, do → frontend-design
+- **Soul feedback binding** — visual progress gauges, git shipping metrics (`soul_retro`), synthesis readiness, retro trend detection
+- **354 tests** (343 pass, 0 fail, 1 skipped) — verified against 14 real plugins / 67 skills
+
+> **Previously in v1.3.0...**
+
+> **Previously in v1.3.0...**
 
 **PDCA Hard Gates** — length floors, reviewer diversity, and the calibrated 5+ Rule. v1.1.0 and v1.2.0 shipped the Artifact Viewer UI on top of PDCA's existing soft gates. v1.3.0 closes the structural holes at those gates with nine specific strengthenings, all verified end-to-end on a real generic-topic cycle.
 
