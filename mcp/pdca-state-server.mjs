@@ -46,6 +46,9 @@ import {
   handleSoulGetProfile,
   handleSoulRecordObservation,
   handleSoulGetObservations,
+  handleSoulRetro,
+  handleSoulGetSynthesisContext,
+  handleSoulGetReadiness,
 } from "./lib/soul-handlers.mjs";
 
 import {
@@ -378,6 +381,47 @@ const TOOL_DEFINITIONS = [
     },
   },
   {
+    name: "soul_retro",
+    description:
+      "Collect git shipping metrics across projects for a specified period. Appends a machine-generated shipping observation to the soul observation log. Returns a structured retro report with per-project metrics, streak data, peak hours, and optional trend detection (accelerating/steady/decelerating) when previous retro data exists.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        period: {
+          type: "string",
+          enum: ["week", "month", "quarter"],
+          description: "Time range for retro metrics. Default: 'week'.",
+        },
+        projects: {
+          type: "array",
+          items: { type: "string" },
+          description: "Optional explicit project directory paths. When omitted, auto-detects sibling git repos with recent commits.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "soul_get_synthesis_context",
+    description:
+      "Prepare all data needed for the soul-keeper agent to execute soul propose (the synthesis phase). Returns recency-weighted observations (last 5 sessions verbatim), shipping retro entries, current profile, drift pre-check between latest archive and current profile, and readiness assessment.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "soul_get_readiness",
+    description:
+      "Lightweight check whether the soul observation pool meets the minimum threshold for synthesis (10 sessions OR 30 observations). Returns readiness status, counts, shortfall, proposal_due flag, and a recommendation string.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
     name: "project_memory_get",
     description:
       "Read the current project memory layer. Returns both the rendered PROJECT_MEMORY.md snapshot and the structured JSON index.",
@@ -600,6 +644,15 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "soul_get_observations":
         result = handleSoulGetObservations(input);
+        break;
+      case "soul_retro":
+        result = handleSoulRetro(input);
+        break;
+      case "soul_get_synthesis_context":
+        result = handleSoulGetSynthesisContext();
+        break;
+      case "soul_get_readiness":
+        result = handleSoulGetReadiness();
         break;
       case "project_memory_get":
         result = handleProjectMemoryGet();

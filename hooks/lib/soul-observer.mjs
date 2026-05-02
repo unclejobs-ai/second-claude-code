@@ -13,6 +13,7 @@ import {
   appendFileSync,
   renameSync,
   mkdirSync,
+  readdirSync,
 } from "fs";
 import { join } from "path";
 
@@ -176,4 +177,102 @@ export function updateSoulState(dataDir, updates) {
   const tmp = `${filePath}.tmp.${process.pid}`;
   writeFileSync(tmp, JSON.stringify(state, null, 2), "utf8");
   renameSync(tmp, filePath);
+}
+
+/**
+ * Compute soul synthesis readiness from actual observation files.
+ * Fast count without loading all data into memory.
+ *
+ * @param {string} dataDir
+ * @returns {{ ready: boolean, observation_count: number, session_count: number, observation_shortfall: number, session_shortfall: number, proposal_due: boolean, learning_active: boolean, recommendation: string }}
+ */
+export function readSoulReadiness(dataDir) {
+  const obsDir = join(dataDir, "soul", "observations");
+  let totalObs = 0;
+  const sessionSet = new Set();
+
+  if (existsSync(obsDir)) {
+    try {
+      const files = readdirSync(obsDir).filter((f) => f.endsWith(".jsonl"));
+      for (const file of files) {
+        try {
+          const content = readFileSync(join(obsDir, file), "utf8");
+          const lines = content.split("\n").filter((l) => l.trim().length > 0);
+          totalObs += lines.length;
+          for (const line of lines) {
+            try {
+              const obj = JSON.parse(line);
+              if (obj.session_id) sessionSet.add(obj.session_id);
+            } catch { /* skip malformed */ }
+          }
+        } catch { /* skip unreadable */ }
+      }
+    } catch { /* non-fatal */ }
+  }
+
+  const sessionCount = sessionSet.size;
+  const thresholdMet = totalObs >= 30 || sessionCount >= 10;
+
+  let proposalDue = false;
+  let learningActive = false;
+  const activeFilePath = join(dataDir, "soul", "soul-active.json");
+  if (existsSync(activeFilePath)) {
+    try {
+      const state = JSON.parse(readFileSync(activeFilePath, "utf8"));
+      proposalDue = state.proposal_due === true;
+      const mode = String(state.mode || "").toLowerCase();
+      learningActive = mode === "learning" || mode === "hybrid";
+    } catch { /* non-fatal */ }
+  }
+
+  return {
+    ready: thresholdMet,
+    observation_count: totalObs,
+    session_count: sessionCount,
+    observation_shortfall: Math.max(0, 30 - totalObs),
+    session_shortfall: Math.max(0, 10 - sessionCount),
+    proposal_due: proposalDue,
+    learning_active: learningActive,
+    recommendation: thresholdMet
+      ? "Synthesis threshold met. Run soul propose to generate a proposed SOUL.md."
+      : `Need ${Math.max(0, 30 - totalObs)} more observations or ${Math.max(0, 10 - sessionCount)} more sessions.`,
+  };
+}
+
+/**
+ * Read the most recent shipping/retro observation if one exists.
+ *
+ * @param {string} dataDir
+ * @returns {{ ts: string, raw_text: string } | null}
+ */
+export function readLatestRetro(dataDir) {
+  const obsDir = join(dataDir, "soul", "observations");
+  if (!existsSync(obsDir)) return null;
+
+  /** @type {{ ts: string, raw_text: string } | null} */
+  let latest = null;
+
+  try {
+    const files = readdirSync(obsDir)
+      .filter((f) => f.endsWith(".jsonl"))
+      .sort()
+      .reverse(); // newest first
+    for (const file of files) {
+      try {
+        const content = readFileSync(join(obsDir, file), "utf8");
+        const lines = content.split("\n").filter((l) => l.trim().length > 0);
+        // Iterate in reverse so the last line (most recent) is checked first
+        for (let i = lines.length - 1; i >= 0; i--) {
+          try {
+            const obj = JSON.parse(lines[i]);
+            if (obj.signal_type === "shipping") {
+              return { ts: obj.ts || "", raw_text: obj.raw_text || "" };
+            }
+          } catch { /* skip malformed */ }
+        }
+      } catch { /* skip unreadable */ }
+    }
+  } catch { /* non-fatal */ }
+
+  return null;
 }

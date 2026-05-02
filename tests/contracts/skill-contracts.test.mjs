@@ -177,8 +177,8 @@ test("session-start command banner matches command files", () => {
     .map((fileName) => fileName.replace(/\.md$/, ""))
     .sort();
   const sessionStart = read(path.join("hooks", "session-start.mjs"));
-  const advertised = [...sessionStart.matchAll(/`\/second-claude-code:([a-z-]+)`/g)]
-    .map((match) => match[1])
+  const advertised = [...new Set([...sessionStart.matchAll(/`\/second-claude-code:([a-z-]+)`/g)]
+    .map((match) => match[1]))]
     .sort();
 
   assert.deepEqual(advertised, commandNames);

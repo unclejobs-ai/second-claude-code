@@ -13,7 +13,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { execFileSync } from "child_process";
 import { sanitize, readJsonSafe } from "./lib/utils.mjs";
-import { readSoulProfile, readSoulState, isSoulLearning } from "./lib/soul-observer.mjs";
+import { readSoulProfile, readSoulState, isSoulLearning, readSoulReadiness, readLatestRetro } from "./lib/soul-observer.mjs";
 import { readProjectMemorySnapshot } from "./lib/project-memory.mjs";
 import { readDaemonStatus } from "./lib/companion-daemon.mjs";
 
@@ -238,9 +238,10 @@ function main() {
     // Non-fatal — daemon status errors must never break session start.
   }
 
-  // ── Soul profile injection ─────────────────────────────────────────────────
-  // Inject SOUL.md content (truncated) so the model's personality is primed
-  // at session start. Appends learning status and proposal notice if relevant.
+  // ── Soul injection — profile + feedback loop binding ──────────────────
+  // Injects SOUL.md (truncated), readiness gauge, retro/shipping summary,
+  // and next-action guidance. This binds the full feedback loop:
+  // observe → retro → readiness → propose → evolve.
   try {
     const soulProfile = readSoulProfile(DATA_DIR);
     if (soulProfile) {
@@ -249,17 +250,42 @@ function main() {
       lines.push(soulProfile);
 
       if (isSoulLearning(DATA_DIR)) {
-        const soulState = readSoulState(DATA_DIR);
-        const obsCount = Number(soulState?.observation_count) || 0;
-        const sessCount = Number(soulState?.session_count) || 0;
-        lines.push("");
-        lines.push(
-          `Soul learning active (${obsCount} observations across ${sessCount} sessions)`
-        );
+        const readiness = readSoulReadiness(DATA_DIR);
 
-        if (soulState?.proposal_due === true) {
+        // Progress bar style readiness gauge
+        const obsPct = Math.min(100, Math.round((readiness.observation_count / 30) * 100));
+        const sessPct = Math.min(100, Math.round((readiness.session_count / 10) * 100));
+        const obsBar = "█".repeat(Math.floor(obsPct / 5)) + "░".repeat(20 - Math.floor(obsPct / 5));
+        const sessBar = "█".repeat(Math.floor(sessPct / 5)) + "░".repeat(20 - Math.floor(sessPct / 5));
+
+        lines.push("");
+        lines.push("### Feedback Loop");
+        lines.push(`Observations: [${obsBar}] ${readiness.observation_count}/30 (${obsPct}%)`);
+        lines.push(`Sessions:     [${sessBar}] ${readiness.session_count}/10 (${sessPct}%)`);
+
+        // Retro / shipping summary
+        const latestRetro = readLatestRetro(DATA_DIR);
+        if (latestRetro && latestRetro.raw_text) {
+          try {
+            const retroData = JSON.parse(latestRetro.raw_text);
+            lines.push(
+              `Last retro: ${retroData.period || "?"} — ${retroData.total_commits || 0} commits, ${retroData.streak_days || 0}-day streak`
+            );
+          } catch { /* parse fail, skip retro line */ }
+        } else {
+          lines.push("No retro yet — run `/second-claude-code:soul retro` to collect shipping metrics.");
+        }
+
+        // Synthesis readiness call-to-action
+        if (readiness.ready && readiness.proposal_due) {
+          lines.push("");
+          lines.push("**Soul evolution proposal ready** — run `/second-claude-code:soul propose`");
+        } else if (readiness.ready) {
+          lines.push("");
+          lines.push("Synthesis threshold met. Next step: `/second-claude-code:soul` to manage profile.");
+        } else {
           lines.push(
-            "Soul evolution proposal ready — run `/second-claude-code:soul propose`"
+            `Feedback gap: ${readiness.observation_shortfall} more observations or ${readiness.session_shortfall} more sessions needed for synthesis.`
           );
         }
       }
