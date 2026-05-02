@@ -359,3 +359,85 @@ export function routeTask(keyword) {
 
   return matches;
 }
+
+/**
+ * Generate a dynamic <skill-check> dispatch guide for the prompt-detect hook.
+ * Replaces the old hardcoded genericGuide. Groups external plugins by
+ * task category and includes exact Skill tool invocation strings.
+ *
+ * @returns {string}
+ */
+export function generateDispatchGuide() {
+  const all = discoverAllPlugins();
+  if (all.total_plugins === 0) return "";
+
+  // Phase-to-plugin mapping with explicit priority ordering
+  /** @type {{ [phase: string]: { plugin: string, skills: string[], commands: string[] }[] }} */
+  const phaseMap = { plan: [], do: [], check: [], act: [] };
+
+  for (const p of all.plugins) {
+    const skillNames = p.skills.map(/** @param {{name:string}} s */ (s) => s.name);
+    const cmdNames = p.commands.map(/** @param {{name:string}} c */ (c) => c.name);
+    const allText = [p.name, p.description, ...skillNames, ...cmdNames].join(" ").toLowerCase();
+
+    // Plan: research, search, explore, find, strategy
+    if (/\b(research|search|explore|find|strategy|know?ledge|learn|discover|memory|pathfinder)\b/.test(allText)) {
+      phaseMap.plan.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
+    }
+    // Do: write, build, create, design, generate, implement, component, ui
+    if (/\b(write|build|creat|generat|design|compon|ui\b|frontend|implement|codex|gpt)\b/.test(allText)) {
+      phaseMap.do.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
+    }
+    // Check: review, test, audit, validate, lint, security, check, quality
+    if (/\b(review|test|audit|valid|lint|secur|check|quality|debug|inspect|rabbit|experiment|flag)\b/.test(allText)) {
+      phaseMap.check.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
+    }
+    // Act: commit, deploy, push, simplify, refactor, fix, format, release
+    if (/\b(commit|deploy|push|simplif|refactor|fix|format|releas|autofix|merge)\b/.test(allText)) {
+      phaseMap.act.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
+    }
+  }
+
+  const lines = [];
+  lines.push("<skill-check>");
+  lines.push("[MANDATORY] Active dispatch guide — external plugins detected at session start:");
+  lines.push("");
+
+  const phaseLabels = {
+    plan: "PLAN (research / explore / strategy)",
+    do: "DO (write / build / create / design)",
+    check: "CHECK (review / test / audit / validate)",
+    act: "ACT (commit / deploy / fix / format)",
+  };
+
+  for (const [phase, label] of Object.entries(phaseLabels)) {
+    const entries = phaseMap[phase];
+    if (entries.length === 0) continue;
+    lines.push(`## ${label}`);
+    // Deduplicate: same plugin may appear in multiple skill matches
+    const seen = new Set();
+    for (const e of entries) {
+      if (seen.has(e.plugin)) continue;
+      seen.add(e.plugin);
+      for (const s of e.skills) {
+        lines.push(`- \`${e.plugin}:${s}\` → Skill: "${e.plugin}-${s}"`);
+      }
+      for (const c of e.commands) {
+        lines.push(`- \`/${e.plugin}:${c}\` → command: "${c}"`);
+      }
+    }
+    lines.push("");
+  }
+
+  // Auto-dispatch rules
+  lines.push("## Auto-dispatch rules");
+  lines.push("When PDCA routing fires:");
+  lines.push("- **check phase**: before writing your own review, MUST invoke Skill tool with top-matched plugin from CHECK list");
+  lines.push("- **act phase**: after completing work, invoke commit/dispatch plugin from ACT list");
+  lines.push("- **do phase**: for frontend/design tasks, prefer external design plugins over internal write skill");
+  lines.push("");
+  lines.push("Match found? → Invoke Skill tool FIRST, then respond.");
+  lines.push("</skill-check>");
+
+  return lines.join("\n");
+}

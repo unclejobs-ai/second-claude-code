@@ -66,8 +66,9 @@ test("prompt detect routes root-cause debugging prompts to /second-claude-code:i
 test("prompt detect keeps code bug prompts on development guidance", () => {
   const output = runPrompt("fix this bug in src/app.js");
   assert.doesNotMatch(output, /skill: \\\"second-claude-code:investigate\\\"/);
-  assert.match(output, /버그·에러·테스트 실패 → systematic-debugging/);
-  assert.match(output, /root cause \(비코드 문서\/분석\)/);
+  // Dynamic dispatch guide replaces old hardcoded dev guidance — verify it's present
+  assert.match(output, /<skill-check>/);
+  assert.match(output, /coderabbit.*code-review/);
 });
 
 test("prompt detect routes general investigate prompts to /second-claude-code:research", () => {

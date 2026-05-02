@@ -99,12 +99,33 @@ export function handleOrchestratorRoute({ keyword, phase } = {}) {
     }
   }
 
+  // Build actionable dispatch instructions
+  /** @type {{ plugin: string, invoke: string, type: string }[]} */
+  const dispatchInstructions = [];
+  for (const r of routes) {
+    for (const skill of r.skills) {
+      dispatchInstructions.push({
+        plugin: r.plugin,
+        invoke: `Skill: ${r.plugin}-${skill}`,
+        type: "skill",
+      });
+    }
+    for (const cmd of r.commands) {
+      dispatchInstructions.push({
+        plugin: r.plugin,
+        invoke: `/${r.plugin}:${cmd}`,
+        type: "command",
+      });
+    }
+  }
+
   return {
     search: searchTerm,
     phase: phase || null,
     routes,
+    dispatch: dispatchInstructions.slice(0, 10), // Top 10 most relevant
     recommendation: routes.length > 0
-      ? `Found ${routes.length} plugin(s) for "${searchTerm}". Use Skill tool to invoke their skills directly.`
+      ? `Found ${routes.length} plugin(s). Auto-dispatch top pick: ${dispatchInstructions[0]?.invoke || "none"}. Invoke the Skill tool with this exact name.`
       : `No matching plugins found for "${searchTerm}". Consider installing plugins with relevant skills.`,
   };
 }

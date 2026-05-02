@@ -14,7 +14,8 @@
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { detectSignals, appendObservation, isSoulLearning } from "./lib/soul-observer.mjs";
+import { detectSignals, appendObservation, isSoulLearning, readSoulReadiness } from "./lib/soul-observer.mjs";
+import { generateDispatchGuide } from "./lib/plugin-discovery.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -481,46 +482,14 @@ for (const route of routes) {
 }
 
 // ──────────────────────────────────────────────
-// Generic skill-check fallback (always included)
+// Dynamic skill-check dispatch guide (built from plugin discovery)
+// Replaces the old hardcoded genericGuide — updates automatically when
+// plugins are installed or uninstalled.
 // ──────────────────────────────────────────────
 
-const genericGuide = `<skill-check>
-[MANDATORY] Before responding, scan this request against skill triggers:
+const dispatchGuide = generateDispatchGuide();
 
-**Knowledge Work (second-claude-code — use these FIRST for content/research tasks):**
-- 리서치/조사/알아봐/research → second-claude-code:research
-- 뉴스레터/보고서/글쓰기/아티클/write report → second-claude-code:write
-- 분석/SWOT/RICE/OKR/전략/analyze → second-claude-code:analyze
-- 리뷰/검토/품질/피드백 (비코드) → second-claude-code:review
-- 개선/반복/다듬어/다듬/iterate/refine/polish → second-claude-code:refine
-- 저장/캡처/메모/수집/clip → second-claude-code:collect
-- 파이프라인/워크플로우/자동화 (비코드) → second-claude-code:workflow
-- 스킬 찾기/discover → second-claude-code:discover
-- 디버그/버그/에러/root cause (비코드 문서/분석) → second-claude-code:investigate
-- 번역/translate/영어로/한국어로 → second-claude-code:translate
-- 복합요청 (조사+작성/리뷰+개선) → second-claude-code:pdca
-
-**Development (superpowers — use for coding/engineering tasks):**
-- 기능·컴포넌트·창의적 코드 작업 → brainstorming → 구현 스킬
-- 버그·에러·테스트 실패 → systematic-debugging
-- 3+ 스텝 구현 계획 → writing-plans
-- 계획 실행 → executing-plans
-- 코드 작성 → test-driven-development
-- UI/프론트엔드 구축 → frontend-design
-- 완료 선언 → verification-before-completion
-- 커밋 → commit-commands:commit
-- 코드리뷰 (PR/코드) → coderabbit:code-review
-- 배포 → vercel:deploy
-- 다이어그램 → excalidraw-skill
-- 병렬 작업 → dispatching-parallel-agents
-
-**Priority rule:** Content/research/analysis tasks → second-claude-code. Code/engineering tasks → superpowers.
-Match found? → Invoke Skill tool FIRST, then respond.
-No match? → Proceed normally.
-</skill-check>`;
-
-// Only inject genericGuide for substantive prompts (> 10 chars).
-// Short follow-ups like "ok", "yes", "고마워" don't benefit from ~400-token routing context.
+// Only inject dispatchGuide for substantive prompts (> 10 chars).
 const shouldInjectGuide = input.trim().length > 10;
 
 if (bestMatch) {
@@ -536,15 +505,15 @@ if (bestMatch) {
   console.log(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: shouldInjectGuide ? routing + "\n\n" + genericGuide : routing,
+      additionalContext: shouldInjectGuide ? routing + "\n\n" + dispatchGuide : routing,
     },
   }));
 } else if (shouldInjectGuide) {
-  // No specific match — still provide generic guidance for substantive prompts
+  // No specific match — still provide dispatch guidance for substantive prompts
   console.log(JSON.stringify({
     hookSpecificOutput: {
       hookEventName: "UserPromptSubmit",
-      additionalContext: genericGuide,
+      additionalContext: dispatchGuide,
     },
   }));
 }

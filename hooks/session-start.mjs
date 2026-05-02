@@ -16,7 +16,7 @@ import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 import { readSoulProfile, readSoulState, isSoulLearning, readSoulReadiness, readLatestRetro } from "./lib/soul-observer.mjs";
 import { readProjectMemorySnapshot } from "./lib/project-memory.mjs";
 import { readDaemonStatus } from "./lib/companion-daemon.mjs";
-import { discoverAllPlugins } from "./lib/plugin-discovery.mjs";
+import { discoverAllPlugins, generateDispatchGuide } from "./lib/plugin-discovery.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -295,21 +295,40 @@ function main() {
     // Non-fatal — soul injection errors must never break session start.
   }
 
-  // ── Orchestrator Plugin Discovery ─────────────────────────────────────
-  // Dynamically scan the user's installed plugin ecosystem so the PDCA
-  // orchestrator can route phases to external plugins when appropriate.
+  // ── Orchestrator — Active Plugin Dispatch ───────────────────────────
+  // Dynamic plugin discovery at session start. Routes PDCA phases to
+  // external plugins and generates actionable Skill invocation strings.
   try {
     const ecosystem = discoverAllPlugins();
     if (ecosystem.total_plugins > 0) {
       lines.push("");
-      lines.push("## Plugin Orchestrator");
+      lines.push("## Active Plugin Dispatch");
       lines.push(
-        `${ecosystem.total_plugins} external plugin(s) available: ${ecosystem.plugins.map((p) => `\`${p.name}\` (${p.skills.length} skills, ${p.commands.length} commands, ${p.mcp_servers.length} MCP)`).join(", ")}`
+        `${ecosystem.total_plugins} external plugins available: ${ecosystem.plugins.slice(0, 8).map((p) => `\`${p.name}\``).join(", ")}${ecosystem.plugins.length > 8 ? ` +${ecosystem.plugins.length - 8} more` : ""}`
       );
       lines.push("");
-      lines.push("PDCA routing: use the Skill tool to invoke external plugin skills directly.");
-      lines.push("- `/orchestrator_route phase=check` to find reviewers, `/orchestrator_route phase=do` for builders");
-      lines.push("- External skills are called by name — e.g., `Skill: coderabbit-code-review`");
+      lines.push("**How dispatch works:** When PDCA routes to a phase, the orchestrator automatically selects the best-matching external plugin and instructs you to invoke it via the Skill tool. You don't need to decide — the dispatch is pre-computed:");
+      lines.push("");
+
+      // Quick summary of key dispatch routes
+      const routeSummary = {};
+      for (const p of ecosystem.plugins) {
+        const allText = [p.name, p.description, ...p.skills.map((/** @type {{name:string}} */ s) => s.name), ...p.commands.map((/** @type {{name:string}} */ c) => c.name)].join(" ").toLowerCase();
+        let category = null;
+        if (/\b(review|test|audit|valid|lint|secur|rabbit|code.?review)\b/.test(allText)) category = "check";
+        else if (/\b(commit|deploy|push|autofix|release)\b/.test(allText)) category = "act";
+        else if (/\b(design|build|creat|writ|generat|frontend)\b/.test(allText)) category = "do";
+        else if (/\b(research|search|explor|discover|learn|memor)\b/.test(allText)) category = "plan";
+        if (category) {
+          if (!routeSummary[category]) routeSummary[category] = [];
+          routeSummary[category].push(p.name);
+        }
+      }
+
+      const phaseIcons = { plan: "📋", do: "🔨", check: "🔍", act: "🚀" };
+      for (const [phase, plugins] of Object.entries(routeSummary)) {
+        lines.push(`- ${phaseIcons[phase] || ""} **${phase}** → ${plugins.map((n) => `\`${n}\``).join(", ")}`);
+      }
     }
   } catch {
     // Non-fatal — orchestrator discovery must never break session start.
