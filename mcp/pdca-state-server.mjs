@@ -57,6 +57,13 @@ import {
 } from "./lib/memory-handlers.mjs";
 
 import {
+  handleOrchestratorListPlugins,
+  handleOrchestratorGetPlugin,
+  handleOrchestratorRoute,
+  handleOrchestratorHealth,
+} from "./lib/orchestrator-handlers.mjs";
+
+import {
   handleDaemonGetStatus,
   handleDaemonScheduleWorkflow,
   handleDaemonListJobs,
@@ -577,6 +584,62 @@ const TOOL_DEFINITIONS = [
       additionalProperties: false,
     },
   },
+  {
+    name: "orchestrator_list_plugins",
+    description:
+      "Discover all installed Claude Code plugins and their capabilities (skills, commands, MCP servers, agents). Returns a structured capability map for the entire plugin ecosystem.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "orchestrator_get_plugin",
+    description:
+      "Get detailed capabilities for a specific plugin by name or ID. Returns skills, commands, MCP servers, agents, version, and install metadata.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        plugin: {
+          type: "string",
+          description: "Plugin name (e.g. 'coderabbit') or full plugin ID.",
+        },
+      },
+      required: ["plugin"],
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "orchestrator_route",
+    description:
+      "Route a task keyword or PDCA phase to matching external plugins. PDCA phases map to: plan=research/strategy, do=implement/build, check=review/test, act=commit/deploy. Returns plugins with matching skills and commands.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        keyword: {
+          type: "string",
+          description: "Freeform keyword to search across plugin skills and descriptions (e.g. 'review', 'commit', 'design').",
+        },
+        phase: {
+          type: "string",
+          enum: ["plan", "do", "check", "act"],
+          description: "PDCA phase name. Maps to phase-specific keywords for routing.",
+        },
+      },
+      additionalProperties: false,
+    },
+  },
+  {
+    name: "orchestrator_health",
+    description:
+      "Quick health check of the plugin ecosystem. Returns counts of available plugins, skills, MCP servers, and readiness status.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+      additionalProperties: false,
+    },
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -680,6 +743,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         break;
       case "daemon_queue_notification":
         result = handleDaemonQueueNotification(input);
+        break;
+      case "orchestrator_list_plugins":
+        result = handleOrchestratorListPlugins();
+        break;
+      case "orchestrator_get_plugin":
+        result = handleOrchestratorGetPlugin(input);
+        break;
+      case "orchestrator_route":
+        result = handleOrchestratorRoute(input);
+        break;
+      case "orchestrator_health":
+        result = handleOrchestratorHealth();
         break;
       default:
         return {

@@ -16,6 +16,7 @@ import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 import { readSoulProfile, readSoulState, isSoulLearning, readSoulReadiness, readLatestRetro } from "./lib/soul-observer.mjs";
 import { readProjectMemorySnapshot } from "./lib/project-memory.mjs";
 import { readDaemonStatus } from "./lib/companion-daemon.mjs";
+import { discoverAllPlugins } from "./lib/plugin-discovery.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -292,6 +293,26 @@ function main() {
     }
   } catch {
     // Non-fatal — soul injection errors must never break session start.
+  }
+
+  // ── Orchestrator Plugin Discovery ─────────────────────────────────────
+  // Dynamically scan the user's installed plugin ecosystem so the PDCA
+  // orchestrator can route phases to external plugins when appropriate.
+  try {
+    const ecosystem = discoverAllPlugins();
+    if (ecosystem.total_plugins > 0) {
+      lines.push("");
+      lines.push("## Plugin Orchestrator");
+      lines.push(
+        `${ecosystem.total_plugins} external plugin(s) available: ${ecosystem.plugins.map((p) => `\`${p.name}\` (${p.skills.length} skills, ${p.commands.length} commands, ${p.mcp_servers.length} MCP)`).join(", ")}`
+      );
+      lines.push("");
+      lines.push("PDCA routing: use the Skill tool to invoke external plugin skills directly.");
+      lines.push("- `/orchestrator_route phase=check` to find reviewers, `/orchestrator_route phase=do` for builders");
+      lines.push("- External skills are called by name — e.g., `Skill: coderabbit-code-review`");
+    }
+  } catch {
+    // Non-fatal — orchestrator discovery must never break session start.
   }
 
   console.log(lines.join("\n"));
