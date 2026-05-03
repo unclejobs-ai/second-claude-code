@@ -3,6 +3,17 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.2] - 2026-05-03
+
+### Fixed
+
+- **Artifact Viewer relative paths** — normalized viewer server runtime paths so `--dist-dir` and `--session-dir` work when provided as relative paths. This prevents the static file guard from returning 403 for valid viewer assets.
+
+### Verification
+
+- `node --test tests/runtime/viewer-server.test.mjs`
+- `node --test tests/contracts/skill-contracts.test.mjs tests/runtime/plugin-smoke.test.mjs tests/runtime/viewer-server.test.mjs`
+
 ## [1.4.1] - 2026-05-03
 
 ### Fixed

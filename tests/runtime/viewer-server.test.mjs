@@ -44,6 +44,18 @@ function readHttpJson(url) {
   });
 }
 
+function readHttpText(url) {
+  return new Promise((resolve, reject) => {
+    const req = http.get(url, (res) => {
+      let body = "";
+      res.setEncoding("utf8");
+      res.on("data", (chunk) => { body += chunk; });
+      res.on("end", () => resolve({ statusCode: res.statusCode, body }));
+    });
+    req.on("error", reject);
+  });
+}
+
 test("artifact viewer start and stop scripts manage a background server", async () => {
   const sessionDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-viewer-session-"));
   const distDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-viewer-dist-"));
@@ -65,9 +77,9 @@ test("artifact viewer start and stop scripts manage a background server", async 
       [
         startScript,
         "--session-dir",
-        sessionDir,
+        path.relative(root, sessionDir),
         "--dist-dir",
-        distDir,
+        path.relative(root, distDir),
         "--port",
         String(port),
       ],
@@ -82,6 +94,10 @@ test("artifact viewer start and stop scripts manage a background server", async 
     const response = await readHttpJson(`${startInfo.url}/api/state`);
     assert.equal(response.statusCode, 200);
     assert.deepEqual(response.json, { phase: "check", topic: "viewer smoke" });
+
+    const staticResponse = await readHttpText(`${startInfo.url}/`);
+    assert.equal(staticResponse.statusCode, 200);
+    assert.match(staticResponse.body, /<title>SCC<\/title>/);
 
     const persistedInfo = JSON.parse(
       readFileSync(path.join(sessionDir, "state", "server-info.json"), "utf8")

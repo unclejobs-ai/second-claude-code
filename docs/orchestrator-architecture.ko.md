@@ -1,6 +1,6 @@
 [English](orchestrator-architecture.md) | **한국어**
 
-# 오케스트레이터 아키텍처 - v1.4.1
+# 오케스트레이터 아키텍처 - v1.4.2
 
 Second Claude Code v1.4.x의 크로스-플러그인 오케스트레이터는 설치된 Claude Code 플러그인을 런타임에 발견하고, 사용자 의도와 점수화한 뒤, 자체 PDCA 스킬로 fallback하기 전에 정확한 `Skill:` 또는 슬래시 커맨드 호출 지시를 주입합니다.
 

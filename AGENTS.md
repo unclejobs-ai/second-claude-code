@@ -1,6 +1,6 @@
 # Second Codex
 
-Codex plugin (v1.4.1). PDCA-native knowledge work system — 15 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
+Codex plugin (v1.4.2). PDCA-native knowledge work system — 15 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
 
 ## Project Structure
 

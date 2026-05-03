@@ -1,6 +1,6 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture - v1.4.1
+# Orchestrator Architecture - v1.4.2
 
 Second Claude Code v1.4.x adds a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
 

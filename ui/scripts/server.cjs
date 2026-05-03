@@ -25,11 +25,15 @@ function getArg(name) {
   return idx >= 0 && idx + 1 < args.length ? args[idx + 1] : null
 }
 
+function resolveOptionalPath(value) {
+  return value ? path.resolve(value) : null
+}
+
 const PORT = parseInt(getArg('port') || '3847', 10)
-const SESSION_DIR = getArg('session-dir') || process.env.SCC_SESSION_DIR || '/tmp/scc-session'
-const DIST_DIR = getArg('dist-dir') || path.resolve(__dirname, '..', 'dist')
-const PID_FILE = getArg('pid-file')
-const INFO_FILE = getArg('info-file')
+const SESSION_DIR = path.resolve(getArg('session-dir') || process.env.SCC_SESSION_DIR || '/tmp/scc-session')
+const DIST_DIR = path.resolve(getArg('dist-dir') || path.resolve(__dirname, '..', 'dist'))
+const PID_FILE = resolveOptionalPath(getArg('pid-file'))
+const INFO_FILE = resolveOptionalPath(getArg('info-file'))
 
 // --- MIME types ---
 const MIME = {
