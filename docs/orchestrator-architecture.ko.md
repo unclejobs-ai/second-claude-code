@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | **한국어**
 
-# 오케스트레이터 아키텍처 - v1.4.0
+# 오케스트레이터 아키텍처 - v1.4.1
 
-Second Claude Code v1.4.0의 크로스-플러그인 오케스트레이터는 설치된 Claude Code 플러그인을 런타임에 발견하고, 사용자 의도와 점수화한 뒤, 자체 PDCA 스킬로 fallback하기 전에 정확한 `Skill:` 또는 슬래시 커맨드 호출 지시를 주입합니다.
+Second Claude Code v1.4.x의 크로스-플러그인 오케스트레이터는 설치된 Claude Code 플러그인을 런타임에 발견하고, 사용자 의도와 점수화한 뒤, 자체 PDCA 스킬로 fallback하기 전에 정확한 `Skill:` 또는 슬래시 커맨드 호출 지시를 주입합니다.
 
 ## 디스패치 레이어
 
@@ -99,7 +99,7 @@ second-claude/
 
 ## 검증 범위
 
-- `npm test`: 총 367개 테스트, 366개 통과, 1개 스킵.
+- `npm test`: 총 368개 테스트, 367개 통과, 1개 스킵.
 - `tests/hooks/prompt-detect.test.mjs`: 한국어 리뷰, 커밋, 디자인, 리서치 프롬프트가 내부 fallback 전에 외부 capability로 디스패치되는지 검증합니다.
 - `tests/mcp/orchestrator-handlers.test.mjs`: 실제 발견된 플러그인 데이터, preferred phase routing, 일반 플러그인 매칭, 짧은 키워드 경계 guard를 검증합니다.
 - `tests/integration/skill-flow.test.mjs`: 더 강한 외부 플러그인 라우트가 없을 때 기존 PDCA 복합 라우팅이 유지되는지 검증합니다.

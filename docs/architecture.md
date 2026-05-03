@@ -347,6 +347,23 @@ Supporting commands reinforce the same loop:
 - `workflow` automates full Gather → Produce → Verify → Refine runs
 - `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
+- `viewer` starts the local artifact viewer for saved PDCA/session artifacts and returns a browser URL
+
+### Artifact Viewer Lifecycle
+
+```mermaid
+flowchart LR
+    CMD["/second-claude-code:viewer"] --> SKILL[skills/viewer/SKILL.md]
+    SKILL --> START[ui/scripts/start-server.sh]
+    START --> SERVER[server.cjs background process]
+    SERVER --> META[server.pid + server-info.json]
+    SERVER --> API["/api/state + WebSocket"]
+    API --> UI[Browser artifact viewer]
+    STOP[ui/scripts/stop-server.sh] --> SERVER
+    SERVER --> IDLE[30-minute idle shutdown]
+```
+
+The viewer command is intentionally a thin wrapper: it delegates to the skill, which starts the zero-dependency Node server in the background, records runtime metadata for follow-up commands, streams artifact state through HTTP/WebSocket, and shuts down through either the stop script or the idle timeout.
 
 ### Loop Runner Architecture
 

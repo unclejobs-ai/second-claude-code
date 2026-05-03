@@ -346,6 +346,23 @@ second-claude/
 - `workflow` — Gather → Produce → Verify → Refine 전체 흐름을 자동화
 - `batch` — 큰 동종 작업을 병렬 단위로 분해하고 격리된 worktree에서 동시 실행
 - `soul` — 관찰된 행동 시그널로부터 사용자 정체성 프로필을 구축하고 유지
+- `viewer` — 저장된 PDCA/session 아티팩트를 로컬 뷰어로 띄우고 브라우저 URL을 반환
+
+### Artifact Viewer 라이프사이클
+
+```mermaid
+flowchart LR
+    CMD["/second-claude-code:viewer"] --> SKILL[skills/viewer/SKILL.md]
+    SKILL --> START[ui/scripts/start-server.sh]
+    START --> SERVER[server.cjs 백그라운드 프로세스]
+    SERVER --> META[server.pid + server-info.json]
+    SERVER --> API["/api/state + WebSocket"]
+    API --> UI[브라우저 아티팩트 뷰어]
+    STOP[ui/scripts/stop-server.sh] --> SERVER
+    SERVER --> IDLE[30분 비활동 자동 종료]
+```
+
+Viewer 커맨드는 얇은 래퍼입니다. 스킬이 zero-dependency Node 서버를 백그라운드로 시작하고, 후속 커맨드가 재사용할 런타임 메타데이터를 기록하며, HTTP/WebSocket으로 아티팩트 상태를 스트리밍합니다. 종료는 stop script 또는 idle timeout 경로를 탑니다.
 
 ### Loop Runner 아키텍처
 

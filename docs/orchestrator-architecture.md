@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture - v1.4.0
+# Orchestrator Architecture - v1.4.1
 
-Second Claude Code v1.4.0 adds a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
+Second Claude Code v1.4.x adds a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
 
 ## Dispatch Layers
 
@@ -99,7 +99,7 @@ second-claude/
 
 ## Validation Coverage
 
-- `npm test`: 367 tests total, 366 passing, 1 skipped.
+- `npm test`: 368 tests total, 367 passing, 1 skipped.
 - `tests/hooks/prompt-detect.test.mjs`: Korean review, commit, design, and research prompts dispatch to external capabilities before internal fallback.
 - `tests/mcp/orchestrator-handlers.test.mjs`: plugin list/get/route/health handlers cover real discovered plugin data, preferred phase routing, generic plugin matches, and short-keyword boundary guards.
 - `tests/integration/skill-flow.test.mjs`: confirms the prompt router still preserves PDCA compound routing when no stronger external plugin route wins.
