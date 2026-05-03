@@ -22,6 +22,26 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ---
 
+## System at a Glance
+
+```mermaid
+flowchart TB
+    U[One user prompt] --> R[Prompt router]
+    R --> O{External plugin wins?}
+    O -->|yes| E[Installed plugin capability]
+    O -->|no| P[Second Claude PDCA]
+    E --> P
+    P --> PLAN[Plan: research and analyze]
+    PLAN --> DO[Do: write or build]
+    DO --> CHECK[Check: review and verify]
+    CHECK --> ACT[Act: refine, commit, or route back]
+    ACT --> OUT[Finished artifact plus cycle memory]
+```
+
+Second Claude Code is the control loop. The v1.4.0 orchestrator sits in front of that loop and gives installed plugins the first shot when they are a stronger fit.
+
+---
+
 ## What's New in v1.4.0
 
 **Cross-Plugin Orchestrator** — Second Claude Code now discovers and commands *all* your installed Claude Code plugins automatically.

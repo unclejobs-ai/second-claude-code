@@ -22,6 +22,26 @@
 
 ---
 
+## 한눈에 보는 구조
+
+```mermaid
+flowchart TB
+    U[사용자 한 줄 입력] --> R[프롬프트 라우터]
+    R --> O{외부 플러그인이 더 적합?}
+    O -->|예| E[설치된 플러그인 capability]
+    O -->|아니오| P[Second Claude PDCA]
+    E --> P
+    P --> PLAN[Plan: 조사와 분석]
+    PLAN --> DO[Do: 작성 또는 구현]
+    DO --> CHECK[Check: 리뷰와 검증]
+    CHECK --> ACT[Act: 개선, 커밋, 재라우팅]
+    ACT --> OUT[완성 결과물 + 사이클 메모리]
+```
+
+Second Claude Code는 제어 루프입니다. v1.4.0 오케스트레이터는 그 루프 앞에서 설치된 플러그인이 더 적합한 경우 먼저 실행되도록 길을 터줍니다.
+
+---
+
 ## v1.4.0에서 달라진 점
 
 **크로스-플러그인 오케스트레이터** — 이제 Second Claude Code가 당신의 Claude Code에 설치된 *모든* 플러그인을 실시간으로 찾아내고 명령합니다.

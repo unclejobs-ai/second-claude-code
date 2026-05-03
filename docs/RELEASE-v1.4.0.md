@@ -4,6 +4,29 @@
 
 v1.4.0 adds the Cross-Plugin Orchestrator. Second Claude Code now discovers installed Claude Code plugins at runtime, scores their skills and commands against the current prompt or PDCA phase, and injects exact dispatch instructions before internal fallback.
 
+## Before / After Flow
+
+```mermaid
+flowchart LR
+    subgraph Before[v1.3 and earlier]
+        B1[User prompt] --> B2[Second Claude router]
+        B2 --> B3[Internal PDCA skill]
+        B3 --> B4[Manual plugin handoff if needed]
+    end
+
+    subgraph After[v1.4.0]
+        A1[User prompt] --> A2[prompt-detect]
+        A2 --> A3[getDispatchPlan]
+        A3 --> A4[Installed plugin scan]
+        A4 --> A5{Best route}
+        A5 -->|external wins| A6[Skill or slash command]
+        A5 -->|fallback| A7[Internal PDCA skill]
+        A6 --> A7
+    end
+```
+
+The behavioral change is front-loaded routing: installed plugin capabilities are discovered and scored before Second Claude falls back to its internal PDCA path.
+
 ## What Changed
 
 - **Runtime plugin discovery**: `hooks/lib/plugin-discovery.mjs` scans installed plugins, skills, commands, agents, and MCP declarations from the filesystem.

@@ -4,6 +4,29 @@
 
 v1.4.0은 Cross-Plugin Orchestrator를 추가합니다. Second Claude Code가 설치된 Claude Code 플러그인을 런타임에 발견하고, 현재 프롬프트나 PDCA 페이즈와 스킬/커맨드를 점수화한 뒤, 내부 fallback 전에 정확한 디스패치 지시를 주입합니다.
 
+## 이전 / 이후 흐름
+
+```mermaid
+flowchart LR
+    subgraph Before[v1.3 이전]
+        B1[사용자 프롬프트] --> B2[Second Claude 라우터]
+        B2 --> B3[내부 PDCA 스킬]
+        B3 --> B4[필요하면 수동 플러그인 연결]
+    end
+
+    subgraph After[v1.4.0]
+        A1[사용자 프롬프트] --> A2[prompt-detect]
+        A2 --> A3[getDispatchPlan]
+        A3 --> A4[설치 플러그인 스캔]
+        A4 --> A5{최적 라우트}
+        A5 -->|외부 우선| A6[Skill 또는 슬래시 커맨드]
+        A5 -->|fallback| A7[내부 PDCA 스킬]
+        A6 --> A7
+    end
+```
+
+핵심 변화는 앞단 라우팅입니다. 설치된 플러그인 capability를 먼저 발견하고 점수화한 뒤, 더 나은 외부 경로가 없을 때 내부 PDCA 경로로 내려갑니다.
+
 ## 바뀐 점
 
 - **런타임 플러그인 발견**: `hooks/lib/plugin-discovery.mjs`가 설치된 플러그인, 스킬, 커맨드, 에이전트, MCP 선언을 파일시스템에서 스캔합니다.
