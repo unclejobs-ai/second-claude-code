@@ -160,7 +160,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-14 commands and 15 skills for all knowledge work:
+15 commands and 15 skills for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -897,7 +897,7 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 - **Iron Laws + Red Flags** — 15개 스킬 전체에 강한 운영 규칙 추가
 - **Stage Contracts** — `config/stage-contracts.json` 도입, code vs content 경로 분리
-- **워크플로우 보존 수정** — compaction 중 `workflow-active.json` 보존, session-start에서 14개 커맨드 복원
+- **워크플로우 보존 수정** — compaction 중 `workflow-active.json` 보존, session-start에서 전체 커맨드 복원
 - **회귀 테스트 보강** — `subagent-stop`, `compaction`, `subagent-start`, `stop-failure` 범위 테스트 추가
 
 ### v0.5.7 — MCP 테스트 스위트, 신뢰도 점수, 학술 프리셋

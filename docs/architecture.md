@@ -217,7 +217,7 @@ second-claude/
 │   ├── investigate/              # Root-cause debugging
 │   └── viewer/                   # Local artifact viewer
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 14 slash command wrappers
+├── commands/                     # 15 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)

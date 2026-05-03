@@ -14,7 +14,7 @@ mcp/pdca-state-server.mjs   — MCP server (31 tools: PDCA state, cycle memory, 
 mcp/lib/cycle-memory.mjs    — Cycle memory persistence (phase snapshots, insights, metrics, self-evolution)
 hooks/lib/                  — Shared runtime modules: agent tracker, fact checker, file mutex sync, mmbridge adapter, report generator, soul observer
 mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, loop, cycle-memory
-commands/                   — Slash commands
+commands/                   — 15 slash commands
 config/                     — Runtime configuration
 references/                 — Integration docs (mmbridge, etc.)
 docs/                       — Architecture docs (EN/KO bilingual)
@@ -45,7 +45,7 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 # Verify all skills have SKILL.md
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
 
-# Run full test suite (323 tests; 322 passing, 1 skipped)
+# Run full test suite
 npm test
 ```
 

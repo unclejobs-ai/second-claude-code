@@ -199,7 +199,7 @@ test("loop surfaces are documented across primary docs", () => {
   for (const doc of [readme, readmeKo, architecture, architectureKo, claude]) {
     assert.match(
       doc,
-      /14 commands|15 skills|15\uAC1C \uC2A4\uD0AC|14\uAC1C \uC2AC\uB798\uC2DC/i,
+      /15 commands|15 slash commands|15 skills|15\uAC1C \uC2A4\uD0AC|15\uAC1C \uC2AC\uB798\uC2DC/i,
       "top-level docs should reflect the new loop surface"
     );
     assert.match(

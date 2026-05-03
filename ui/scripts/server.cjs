@@ -28,6 +28,8 @@ function getArg(name) {
 const PORT = parseInt(getArg('port') || '3847', 10)
 const SESSION_DIR = getArg('session-dir') || process.env.SCC_SESSION_DIR || '/tmp/scc-session'
 const DIST_DIR = getArg('dist-dir') || path.resolve(__dirname, '..', 'dist')
+const PID_FILE = getArg('pid-file')
+const INFO_FILE = getArg('info-file')
 
 // --- MIME types ---
 const MIME = {
@@ -115,6 +117,7 @@ const wsClients = new Set()
 let lastState = null
 let lastArtifacts = []
 const MAX_FRAME_BUFFER = 1024 * 1024 // 1MB cap per socket
+let shuttingDown = false
 
 // Cache index.html in memory for SPA fallback
 let indexHtmlCache = null
@@ -378,17 +381,45 @@ function startPing() {
 
 // --- Auto-stop ---
 let idleTimer = null
-const IDLE_TIMEOUT = 5 * 60 * 1000 // 5 minutes
+const IDLE_TIMEOUT = 30 * 60 * 1000 // 30 minutes
 
 function resetIdleTimer() {
   if (idleTimer) clearTimeout(idleTimer)
   idleTimer = setTimeout(() => {
     if (wsClients.size === 0) {
-      console.log('[SCC Viewer] No clients connected for 5 minutes. Shutting down.')
-      process.exit(0)
+      console.log('[SCC Viewer] No clients connected for 30 minutes. Shutting down.')
+      shutdown()
+      return
     }
     resetIdleTimer()
   }, IDLE_TIMEOUT)
+}
+
+function writeRuntimeFiles(port) {
+  const info = {
+    ok: true,
+    status: 'running',
+    url: `http://localhost:${port}`,
+    pid: process.pid,
+    port,
+    session_dir: SESSION_DIR,
+    dist_dir: DIST_DIR,
+  }
+
+  for (const filePath of [PID_FILE, INFO_FILE]) {
+    if (!filePath) continue
+    fs.mkdirSync(path.dirname(filePath), { recursive: true })
+  }
+
+  if (PID_FILE) fs.writeFileSync(PID_FILE, `${process.pid}\n`, 'utf8')
+  if (INFO_FILE) fs.writeFileSync(INFO_FILE, `${JSON.stringify(info, null, 2)}\n`, 'utf8')
+}
+
+function cleanupRuntimeFiles() {
+  for (const filePath of [PID_FILE, INFO_FILE]) {
+    if (!filePath) continue
+    try { fs.rmSync(filePath, { force: true }) } catch { /* ignore */ }
+  }
 }
 
 // --- Main ---
@@ -407,22 +438,35 @@ const watchers = startWatching()
 const pingInterval = startPing()
 resetIdleTimer()
 
+server.on('error', (err) => {
+  cleanupRuntimeFiles()
+  console.error(`[SCC Viewer] Failed to start: ${err.message}`)
+  process.exit(1)
+})
+
 server.listen(PORT, () => {
-  console.log(`[SCC Artifact Viewer] http://localhost:${PORT}`)
+  const address = server.address()
+  const actualPort = typeof address === 'object' && address ? address.port : PORT
+  writeRuntimeFiles(actualPort)
+  console.log(`[SCC Artifact Viewer] http://localhost:${actualPort}`)
   console.log(`[SCC Artifact Viewer] Session: ${SESSION_DIR}`)
   console.log(`[SCC Artifact Viewer] Dist: ${DIST_DIR}`)
 })
 
 // Graceful shutdown
 function shutdown() {
+  if (shuttingDown) return
+  shuttingDown = true
   console.log('\n[SCC Viewer] Shutting down...')
   clearInterval(pingInterval)
   if (idleTimer) clearTimeout(idleTimer)
   for (const w of watchers) { try { w.close() } catch { /* ignore */ } }
   for (const client of wsClients) { try { client.end() } catch { /* ignore */ } }
+  cleanupRuntimeFiles()
   server.close(() => process.exit(0))
   setTimeout(() => process.exit(0), 2000)
 }
 
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
+process.on('exit', cleanupRuntimeFiles)

@@ -230,7 +230,7 @@ second-claude/
 │   ├── investigate/              # 원인 조사 중심 디버깅
 │   └── viewer/                   # PDCA 산출물 로컬 뷰어
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
-├── commands/                     # 14개 슬래시 커맨드 래퍼
+├── commands/                     # 15개 슬래시 커맨드 래퍼
 ├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (8개 훅)
 │   ├── hooks.json                # 훅 설정
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)

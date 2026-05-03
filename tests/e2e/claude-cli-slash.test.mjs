@@ -37,6 +37,7 @@ if (!enabled) {
       "/second-claude-code:batch",
       "/second-claude-code:soul",
       "/second-claude-code:loop",
+      "/second-claude-code:pdca",
       "/second-claude-code:research",
       "/second-claude-code:write",
       "/second-claude-code:analyze",
@@ -45,6 +46,9 @@ if (!enabled) {
       "/second-claude-code:collect",
       "/second-claude-code:workflow",
       "/second-claude-code:discover",
+      "/second-claude-code:investigate",
+      "/second-claude-code:translate",
+      "/second-claude-code:viewer",
     ]) {
       assert.match(output, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }

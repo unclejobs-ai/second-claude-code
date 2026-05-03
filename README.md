@@ -158,7 +158,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-14 slash commands and 15 skills for all knowledge work:
+15 slash commands and 15 skills for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -731,7 +731,7 @@ Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-
 
 - **Iron Laws + Red Flags** — all 15 skills gained explicit guardrails
 - **Stage Contracts** — `config/stage-contracts.json` introduced code-vs-content phase requirements
-- **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all 14 commands including `investigate` and `translate`
+- **Workflow preservation fixes** — compaction preserves `workflow-active.json`, and session-start restores all commands including `investigate` and `translate`
 - **Regression coverage** — new tests added for `subagent-stop`, `compaction`, `subagent-start`, and `stop-failure`
 
 ### v0.5.0 — Soul System, Batch Parallelism, Event Sourcing
