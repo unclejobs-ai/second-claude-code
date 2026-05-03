@@ -5,7 +5,8 @@
  *
  * Layer 0: Soul observation — silently captures user signals (no routing effect)
  * Layer 1: PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
- * Layer 2: Skill layer — detects single-skill intent → routes to individual skill
+ * Layer 2: External plugin layer — routes strong installed-plugin matches first
+ * Layer 3: Skill layer — detects single-skill intent → routes to individual skill
  *
  * Output: JSON additionalContext injected into system-reminder so Claude
  * sees an authoritative routing instruction, not just a hint.
@@ -15,7 +16,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { detectSignals, appendObservation, isSoulLearning, readSoulReadiness } from "./lib/soul-observer.mjs";
-import { generateDispatchGuide } from "./lib/plugin-discovery.mjs";
+import { generateDispatchGuide, getDispatchPlan } from "./lib/plugin-discovery.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -175,6 +176,27 @@ function computePdcaConfidence(value, compounds) {
 /** Format a confidence annotation for medium-confidence routing. */
 function confidenceNote(confidence) {
   return ` (confidence: ${Math.round(confidence * 100)}%)`;
+}
+
+function buildExternalDispatchContext(plan) {
+  const top = plan?.dispatch?.[0];
+  if (!top) return null;
+
+  const action = top.type === "skill"
+    ? `the Skill tool with skill: "${top.name}"`
+    : `the slash command "${top.invoke}"`;
+
+  return `[ORCHESTRATOR] External capability selected for ${plan.intent}: ${top.invoke}. ` +
+    `You MUST invoke ${action} before self-processing. ` +
+    `After it returns, integrate the plugin result into the final answer instead of redoing the same work inline.`;
+}
+
+function shouldExternalDispatch(plan) {
+  if (!plan || !Array.isArray(plan.dispatch) || plan.dispatch.length === 0) return false;
+  if (["review", "commit", "frontend-design", "memory-research", "plan"].includes(plan.intent)) return true;
+
+  const topScore = Number(plan.dispatch[0]?.score || 0);
+  return plan.intent === "generic" && topScore >= 45;
 }
 
 const ENGINEERING_PATTERNS = [
@@ -341,9 +363,14 @@ if (pdcaResult.confidence >= 0.5 && pdcaResult.entry) {
     ? confidenceNote(pdcaResult.confidence)
     : "";
 
-  const ctx = `[ROUTING] This is a knowledge-work request requiring ${phaseHint}${confNote}. ` +
+  let ctx = `[ROUTING] This is a knowledge-work request requiring ${phaseHint}${confNote}. ` +
     `You MUST invoke the Skill tool with skill: "second-claude-code:pdca" BEFORE any other response. ` +
     `This takes priority over brainstorming, debugging, or other development skills.`;
+
+  const dispatchGuide = generateDispatchGuide();
+  if (dispatchGuide) {
+    ctx += "\n\n" + dispatchGuide;
+  }
 
   writeLastAutoRoute("second-claude-code:pdca");
 
@@ -491,8 +518,25 @@ const dispatchGuide = generateDispatchGuide();
 
 // Only inject dispatchGuide for substantive prompts (> 10 chars).
 const shouldInjectGuide = input.trim().length > 10;
+let externalPlan = null;
 
-if (bestMatch) {
+try {
+  externalPlan = getDispatchPlan({ keyword: input });
+} catch {
+  externalPlan = null;
+}
+
+if (shouldExternalDispatch(externalPlan)) {
+  const routing = buildExternalDispatchContext(externalPlan);
+  writeLastAutoRoute(externalPlan.dispatch[0].name);
+
+  console.log(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: "UserPromptSubmit",
+      additionalContext: shouldInjectGuide && dispatchGuide ? routing + "\n\n" + dispatchGuide : routing,
+    },
+  }));
+} else if (bestMatch) {
   const confNote = bestConfidence < 0.8
     ? confidenceNote(bestConfidence)
     : "";

@@ -1,167 +1,105 @@
-# Orchestrator Architecture — v1.4.0
+[English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-## Plugin Discovery Flow
+# Orchestrator Architecture - v1.4.0
+
+Second Claude Code v1.4.0 adds a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
+
+## Dispatch Layers
 
 ```mermaid
 flowchart TB
-    subgraph Session["Session Start"]
-        SS[SessionStart Hook]
-        PD[plugin-discovery.mjs]
-        SS --> PD
-    end
-
-    subgraph Scan["Filesystem Scan"]
-        PJ[~/.claude/plugins/installed_plugins.json]
-        SK1[skills/*/SKILL.md]
-        CM1[commands/*.md]
-        AG1[agents/*.md]
-        MC[.claude-plugin/plugin.json → mcpServers]
-        PD --> PJ --> SK1
-        PJ --> CM1
-        PJ --> AG1
-        PJ --> MC
-    end
-
-    subgraph Map["Capability Map"]
-        CM2[{Plugin → Skills/Commands/MCP map}]
-        SK1 --> CM2
-        CM1 --> CM2
-        AG1 --> CM2
-        MC --> CM2
-    end
-
-    SS --> |injects| CTX[Active Plugin Dispatch<br/>in system-reminder]
-    CM2 --> CTX
+    U[User prompt] --> H[prompt-detect.mjs]
+    H --> G[getDispatchPlan]
+    G --> D[Runtime plugin discovery]
+    D --> C[Capability map]
+    C --> S[Intent scoring]
+    S --> E{External dispatch wins?}
+    E -->|yes| O[[ORCHESTRATOR instruction]]
+    E -->|no| P[PDCA compound router]
+    P --> I[Internal single-skill router]
 ```
 
-## Auto-Dispatch Flow
+1. **Runtime discovery** - `hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json`, plugin `skills/`, `commands/`, `agents/`, and `.claude-plugin/plugin.json` files.
+2. **Intent scoring** - `getDispatchPlan()` normalizes a keyword or PDCA phase, scores plugin capabilities, applies preferred-plugin boosts, and returns ranked invocation instructions.
+3. **Prompt dispatch** - `hooks/prompt-detect.mjs` injects an `[ORCHESTRATOR]` block when the top external match is a lifecycle intent or a strong generic plugin match.
+
+## Verified Routes
+
+| Input | Intent | Top dispatch |
+| --- | --- | --- |
+| `phase=plan` | PDCA Plan | `Skill: claude-mem-knowledge-agent` |
+| `phase=do` | PDCA Do | `Skill: frontend-design-frontend-design` |
+| `phase=check` | PDCA Check | `Skill: coderabbit-code-review` |
+| `phase=act` | PDCA Act | `/commit-commands:commit` |
+| `코드 리뷰해줘` | review lifecycle intent | `Skill: coderabbit-code-review` |
+| `커밋해줘` | act lifecycle intent | `/commit-commands:commit` |
+| `posthog event analysis` | direct generic plugin match | `Skill: posthog-exploring-autocapture-events` |
+
+Short keyword matches are guarded by word-boundary logic so small terms do not accidentally match inside larger words, such as `bug` inside `debugging`.
+
+## Session-Start Context
 
 ```mermaid
 flowchart LR
-    subgraph User["User Action"]
-        U["'코드 리뷰해줘'"]
-    end
-
-    subgraph Hook["prompt-detect hook"]
-        INT[Intent Detection]
-        DG[Dynamic Dispatch Guide]
-        INT --> |PDCA check phase| DG
-        DG --> |Skill: coderabbit-code-review| CLI[Claude reads instruction]
-    end
-
-    subgraph PDCA["PDCA Orchestrator"]
-        CHK[Check Phase]
-        RT[orchestrator_route<br/>phase=check]
-        CHK --> RT
-    end
-
-    subgraph Plugins["External Plugin Ecosystem"]
-        CR[coderabbit<br/>code-review, autofix]
-        CX[codex<br/>review, adversarial-review]
-        AT[agent-teams<br/>team-review, multi-reviewer]
-        CV[caveman<br/>caveman-review]
-        CC[commit-commands<br/>commit, commit-push-pr]
-        FD[frontend-design<br/>frontend-design]
-        FDP[frontend-design-pro<br/>design-wizard, etc.]
-    end
-
-    U --> INT
-    CLI --> CHK
-    RT --> |dispatch| CR
-    RT --> |dispatch| CX
-    RT --> |dispatch| AT
-
-    CHK --> ACT[Act Phase]
-    ACT --> |orchestrator_route<br/>phase=act| CC
+    SS[SessionStart hook] --> PD[plugin-discovery.mjs]
+    PD --> MAP[Capability map]
+    MAP --> GUIDE[Active Plugin Dispatch]
+    GUIDE --> CTX[System reminder]
 ```
 
-## Plugin Ecosystem (real-time scan results as of 2026-05-02)
+At session start, the hook injects a compact "Active Plugin Dispatch" table. It is advisory context for the model and includes per-phase top picks, plugin names, capability counts, and exact invocation strings.
 
-```mermaid
-pie title 14 External Plugins by Phase Routing
-    "CHECK (coderabbit, codex, agent-teams, caveman, posthog, claude-md-mgmt)" : 9
-    "DO (frontend-design, frontend-design-pro, codex, claude-mem, agent-teams)" : 8
-    "ACT (commit-commands, caveman, coderabbit, codex)" : 7
-    "PLAN (claude-mem, agent-teams, frontend-design-pro, codex)" : 6
+## Prompt-Level Dispatch
+
+For substantive prompts, `prompt-detect` calls `getDispatchPlan()`. If the top match should run externally, it injects an instruction shaped like:
+
+```text
+[ORCHESTRATOR]
+Invoke this installed plugin capability before self-processing:
+Skill: coderabbit-code-review
 ```
 
-## MCP Tool Surface — 28 Tools Total
+The model must then call the external skill or command first and integrate the result. If no external route wins, prompt detection continues to the older PDCA compound router and then the internal single-skill router.
 
-```mermaid
-graph TB
-    subgraph Core["PDCA Core (11 tools)"]
-        P1[pdca_get_state]
-        P2[pdca_start_run]
-        P3[pdca_transition]
-        P4[pdca_check_gate]
-        P5[pdca_end_run]
-        P6[pdca_update_stuck]
-        P7[pdca_get_cycle_history]
-        P8[pdca_save_insight]
-        P9[pdca_get_insights]
-        P10[pdca_update_insight]
-        P11[pdca_get_metrics]
-    end
+## MCP Tool Surface - 31 Tools Total
 
-    subgraph Soul["Soul (6 tools)"]
-        S1[soul_get_profile]
-        S2[soul_record_observation]
-        S3[soul_get_observations]
-        S4[soul_retro]
-        S5[soul_get_synthesis_context]
-        S6[soul_get_readiness]
-    end
+| Area | Count | Tools |
+| --- | ---: | --- |
+| PDCA state | 9 | `pdca_get_state`, `pdca_start_run`, `pdca_transition`, `pdca_check_gate`, `pdca_end_run`, `pdca_update_stuck_flags`, `pdca_list_runs`, `pdca_get_events`, `pdca_get_analytics` |
+| Cycle memory | 3 | `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` |
+| Soul | 6 | `soul_get_profile`, `soul_record_observation`, `soul_get_observations`, `soul_retro`, `soul_get_synthesis_context`, `soul_get_readiness` |
+| Project memory | 2 | `project_memory_get`, `project_memory_upsert` |
+| Daemon and session | 7 | `daemon_get_status`, `daemon_schedule_workflow`, `daemon_list_jobs`, `daemon_start_background_run`, `daemon_list_background_runs`, `daemon_queue_notification`, `session_recall_search` |
+| Orchestrator | 4 | `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health` |
 
-    subgraph Memory["Memory (2 tools)"]
-        M1[project_memory_get]
-        M2[project_memory_upsert]
-    end
-
-    subgraph Daemon["Daemon (5 tools)"]
-        D1[daemon_get_status]
-        D2[daemon_schedule_workflow]
-        D3[daemon_list_jobs]
-        D4[daemon_start_background_run]
-        D5[daemon_list_background_runs]
-        D6[daemon_queue_notification]
-    end
-
-    subgraph Session["Session (1 tool)"]
-        SE1[session_recall_search]
-    end
-
-    subgraph Orchestrator["Orchestrator (4 tools) — NEW v1.4.0"]
-        O1[orchestrator_list_plugins]
-        O2[orchestrator_get_plugin]
-        O3[orchestrator_route]
-        O4[orchestrator_health]
-    end
-```
+The four `orchestrator_*` tools are the public MCP surface for plugin inventory, single-plugin inspection, route planning, and ecosystem health.
 
 ## File Architecture
 
-```
+```text
 second-claude/
-│
 ├── hooks/
-│   ├── session-start.mjs          ← Active Plugin Dispatch injection
-│   ├── prompt-detect.mjs          ← Dynamic dispatch guide (replaced hardcoded skill-check)
+│   ├── session-start.mjs              # Active Plugin Dispatch injection
+│   ├── prompt-detect.mjs              # prompt-level external dispatch
 │   └── lib/
-│       ├── plugin-discovery.mjs   ← ★ Runtime scanner + dispatch guide generator
-│       ├── soul-observer.mjs      ← readSoulReadiness(), readLatestRetro()
-│       └── ...
-│
+│       ├── plugin-discovery.mjs       # runtime scanner, scorer, dispatch planner
+│       └── soul-observer.mjs          # hook-side soul readiness helpers
 ├── mcp/
-│   ├── pdca-state-server.mjs      ← 28 tools (24 core + 4 orchestrator)
+│   ├── pdca-state-server.mjs          # 31 MCP tools
 │   └── lib/
-│       ├── orchestrator-handlers.mjs  ← ★ orchestrator_* tool implementations
-│       ├── soul-handlers.mjs          ← soul_retro, get_synthesis_context, get_readiness
+│       ├── orchestrator-handlers.mjs  # orchestrator_* tool implementations
+│       ├── soul-handlers.mjs
 │       └── ...
-│
 ├── tests/
-│   ├── mcp/orchestrator-handlers.test.mjs  ← 11 tests
-│   └── mcp/soul-handlers.test.mjs          ← +9 soul tests
-│
+│   ├── hooks/prompt-detect.test.mjs   # 29 tests
+│   └── mcp/orchestrator-handlers.test.mjs  # 17 tests
 └── config/
-    └── stage-contracts.json        ← PDCA phase contracts (applies to external dispatch too)
+    └── stage-contracts.json           # PDCA phase contracts
 ```
+
+## Validation Coverage
+
+- `npm test`: 367 tests total, 366 passing, 1 skipped.
+- `tests/hooks/prompt-detect.test.mjs`: Korean review, commit, design, and research prompts dispatch to external capabilities before internal fallback.
+- `tests/mcp/orchestrator-handlers.test.mjs`: plugin list/get/route/health handlers cover real discovered plugin data, preferred phase routing, generic plugin matches, and short-keyword boundary guards.
+- `tests/integration/skill-flow.test.mjs`: confirms the prompt router still preserves PDCA compound routing when no stronger external plugin route wins.

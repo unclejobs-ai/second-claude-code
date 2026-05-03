@@ -19,8 +19,187 @@ import { homedir } from "os";
 // Paths
 // ---------------------------------------------------------------------------
 
-const PLUGINS_ROOT = join(homedir(), ".claude", "plugins");
-const INSTALLED_PLUGINS = join(PLUGINS_ROOT, "installed_plugins.json");
+const DEFAULT_PLUGINS_ROOT = join(homedir(), ".claude", "plugins");
+
+function getPluginsRoot() {
+  return process.env.__SCC_TEST_PLUGINS_ROOT || DEFAULT_PLUGINS_ROOT;
+}
+
+function getInstalledPluginsPath() {
+  return join(getPluginsRoot(), "installed_plugins.json");
+}
+
+const INTENT_PROFILES = {
+  review: {
+    search: "review code quality security audit",
+    keywords: ["review", "code-review", "code review", "quality", "security", "audit", "bug"],
+    preferred_plugins: ["coderabbit"],
+    preferred_skills: ["code-review"],
+    preferred_commands: ["coderabbit-review", "review"],
+    deprioritized_skills: ["autofix"],
+  },
+  commit: {
+    search: "commit git push changes",
+    keywords: ["commit", "git", "changes"],
+    preferred_plugins: ["commit-commands"],
+    preferred_skills: [],
+    preferred_commands: ["commit"],
+  },
+  "frontend-design": {
+    search: "frontend design ui component page interface",
+    keywords: ["frontend", "design", "ui", "component", "page", "interface"],
+    preferred_plugins: ["frontend-design"],
+    preferred_skills: ["frontend-design"],
+    preferred_commands: ["design"],
+  },
+  "memory-research": {
+    search: "knowledge memory research search previous session",
+    keywords: ["knowledge", "memory", "mem", "research", "search", "previous", "session"],
+    preferred_plugins: ["claude-mem"],
+    preferred_skills: ["knowledge-agent"],
+    preferred_commands: [],
+  },
+  "plan": {
+    search: "research analyze brief strategy knowledge memory",
+    keywords: ["research", "analyze", "brief", "strategy", "knowledge", "memory"],
+    preferred_plugins: ["claude-mem"],
+    preferred_skills: ["knowledge-agent", "mem-search", "pathfinder"],
+    preferred_commands: [],
+  },
+  "do": {
+    search: "write create build implement design develop generate frontend",
+    keywords: ["write", "create", "build", "implement", "design", "develop", "generate", "frontend"],
+    preferred_plugins: ["frontend-design"],
+    preferred_skills: ["frontend-design"],
+    preferred_commands: ["design"],
+  },
+  "act": {
+    search: "commit deploy simplify refactor fix apply format push",
+    keywords: ["commit", "deploy", "simplify", "refactor", "fix", "format", "push"],
+    preferred_plugins: ["commit-commands"],
+    preferred_skills: [],
+    preferred_commands: ["commit"],
+  },
+};
+
+function uniqueStrings(values) {
+  return [...new Set(values.filter(Boolean))];
+}
+
+function normalizeSearchText(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function textHasKeyword(text, keyword) {
+  if (!keyword) return false;
+  if (text === keyword) return true;
+  if (keyword.length <= 3) {
+    return new RegExp(`(^|[^a-z0-9])${escapeRegExp(keyword)}([^a-z0-9]|$)`, "i").test(text);
+  }
+  return text.includes(keyword);
+}
+
+function makeIntent(name, profile) {
+  return {
+    name,
+    search: profile.search || "",
+    keywords: profile.keywords || [],
+    preferred_plugins: profile.preferred_plugins || [],
+    preferred_skills: profile.preferred_skills || [],
+    preferred_commands: profile.preferred_commands || [],
+    deprioritized_skills: profile.deprioritized_skills || [],
+  };
+}
+
+/**
+ * Infer the user's orchestration intent from natural language or a PDCA phase.
+ *
+ * @param {string} keyword
+ * @param {string | undefined} phase
+ * @returns {{ name: string, search: string, keywords: string[], preferred_plugins: string[], preferred_skills: string[], preferred_commands: string[], deprioritized_skills: string[] }}
+ */
+export function inferTaskIntent(keyword = "", phase = undefined) {
+  const lower = normalizeSearchText(keyword);
+
+  if (phase === "check") return makeIntent("review", INTENT_PROFILES.review);
+  if (phase === "act") return makeIntent("commit", INTENT_PROFILES.act);
+  if (phase === "do") return makeIntent("frontend-design", INTENT_PROFILES.do);
+  if (phase === "plan") return makeIntent("plan", INTENT_PROFILES.plan);
+
+  if (/(\uCEE4\uBC0B|commit|git commit)/i.test(lower)) {
+    return makeIntent("commit", INTENT_PROFILES.commit);
+  }
+
+  if (/(\uB514\uC790\uC778|\uD504\uB860\uD2B8|\uD504\uB7F0\uD2B8|ui|ux|\uD654\uBA74|\uC778\uD130\uD398\uC774\uC2A4|frontend|front-end|design)/i.test(lower)) {
+    return makeIntent("frontend-design", INTENT_PROFILES["frontend-design"]);
+  }
+
+  if (/(\uB9AC\uBDF0|\uAC80\uD1A0|\uCF54\uB4DC\s*\uB9AC\uBDF0|review|quality check|code review)/i.test(lower)) {
+    return makeIntent("review", INTENT_PROFILES.review);
+  }
+
+  if (/(\uC870\uC0AC\uD574|\uC870\uC0AC\uD574\uC918|\uB9AC\uC11C\uCE58|\uCC3E\uC544\uBD10|\uC54C\uC544\uBD10|\uBA54\uBAA8\uB9AC|\uAE30\uC5B5|\uC774\uC804|\uC9C0\uB09C|knowledge|memory|previous session|past work)/i.test(lower)) {
+    return makeIntent("memory-research", INTENT_PROFILES["memory-research"]);
+  }
+
+  return {
+    name: "generic",
+    search: lower,
+    keywords: uniqueStrings(lower.split(/\s+/)),
+    preferred_plugins: [],
+    preferred_skills: [],
+    preferred_commands: [],
+    deprioritized_skills: [],
+  };
+}
+
+function scoreTextAgainstKeywords(name, description, keywords) {
+  const n = normalizeSearchText(name);
+  const d = normalizeSearchText(description);
+  let score = 0;
+
+  for (const kw of keywords) {
+    const k = normalizeSearchText(kw);
+    if (!k) continue;
+    if (n === k) score += 45;
+    else if (textHasKeyword(n, k)) score += 24;
+    if (textHasKeyword(d, k)) score += 10;
+  }
+
+  return score;
+}
+
+function scoreCapability(plugin, item, kind, intent) {
+  let score = 0;
+  const pluginName = normalizeSearchText(plugin.name);
+
+  if (intent.preferred_plugins.includes(plugin.name) || intent.preferred_plugins.includes(pluginName)) {
+    score += 60;
+  }
+
+  if (kind === "skill") {
+    const idx = intent.preferred_skills.indexOf(item.name);
+    if (idx !== -1) score += 120 - idx * 20;
+  }
+  if (kind === "command") {
+    const idx = intent.preferred_commands.indexOf(item.name);
+    if (idx !== -1) score += 120 - idx * 20;
+  }
+  if (kind === "skill" && intent.deprioritized_skills.includes(item.name)) score -= 60;
+
+  score += scoreTextAgainstKeywords(item.name, item.description, intent.keywords);
+  score += Math.floor(scoreTextAgainstKeywords(plugin.name, plugin.description, intent.keywords) / 2);
+
+  // A generic route should still match direct names/descriptions, but not every
+  // plugin that merely has a vague description hit.
+  if (intent.name === "generic" && score < 10) return 0;
+
+  return Math.max(score, 0);
+}
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -209,15 +388,16 @@ function readManifest(pluginRoot) {
 export function discoverAllPlugins() {
   /** @type {object[]} */
   const plugins = [];
+  const installedPluginsPath = getInstalledPluginsPath();
 
-  if (!existsSync(INSTALLED_PLUGINS)) {
+  if (!existsSync(installedPluginsPath)) {
     return { plugins: [], capability_map: {}, total_plugins: 0, total_skills: 0, total_mcp_servers: 0 };
   }
 
   /** @type {{ [pluginId: string]: object[] }} */
   let installed;
   try {
-    installed = JSON.parse(readFileSync(INSTALLED_PLUGINS, "utf8")).plugins || {};
+    installed = JSON.parse(readFileSync(installedPluginsPath, "utf8")).plugins || {};
   } catch {
     return { plugins: [], capability_map: {}, total_plugins: 0, total_skills: 0, total_mcp_servers: 0 };
   }
@@ -306,58 +486,124 @@ export function getPluginCapabilities(identifier) {
  * Returns plugins whose skills/commands/descriptions match the keyword.
  *
  * @param {string} keyword — task keyword like "review", "commit", "design"
- * @returns {{ plugin: string, skills: string[], commands: string[], match_source: string }[]}
+ * @param {{ intent?: ReturnType<typeof inferTaskIntent>, phase?: string }} options
+ * @returns {{ plugin: string, skills: string[], commands: string[], match_source: string, score: number, matched_items: { skills: object[], commands: object[] } }[]}
  */
-export function routeTask(keyword) {
+export function routeTask(keyword, options = {}) {
   const all = discoverAllPlugins();
-  const lower = keyword.toLowerCase();
+  const intent = options.intent || inferTaskIntent(keyword, options.phase);
 
-  /** @type {{ plugin: string, skills: string[], commands: string[], match_source: string }[]} */
+  /** @type {{ plugin: string, skills: string[], commands: string[], match_source: string, score: number, matched_items: { skills: object[], commands: object[] } }[]} */
   const matches = [];
 
   for (const p of all.plugins) {
     const matchedSkills = [];
     const matchedCommands = [];
-    let matchSource = "";
 
-    // Check skills
     for (const s of p.skills) {
-      if (
-        s.name.toLowerCase().includes(lower) ||
-        s.description.toLowerCase().includes(lower)
-      ) {
-        matchedSkills.push(s.name);
+      const score = scoreCapability(p, s, "skill", intent);
+      if (score > 0) {
+        matchedSkills.push({ name: s.name, score });
       }
     }
 
-    // Check commands
     for (const c of p.commands) {
-      if (
-        c.name.toLowerCase().includes(lower) ||
-        c.description.toLowerCase().includes(lower)
-      ) {
-        matchedCommands.push(c.name);
+      const score = scoreCapability(p, c, "command", intent);
+      if (score > 0) {
+        matchedCommands.push({ name: c.name, score });
       }
     }
 
-    // Check plugin description
-    if (p.description.toLowerCase().includes(lower)) {
-      matchSource = matchSource || "description";
-    }
-    if (matchedSkills.length > 0) matchSource = matchSource || "skill";
-    if (matchedCommands.length > 0) matchSource = matchSource || "command";
+    matchedSkills.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
+    matchedCommands.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
 
-    if (matchedSkills.length > 0 || matchedCommands.length > 0 || matchSource === "description") {
+    if (matchedSkills.length > 0 || matchedCommands.length > 0) {
+      const bestSkillScore = matchedSkills[0]?.score || 0;
+      const bestCommandScore = matchedCommands[0]?.score || 0;
+      const score = Math.max(bestSkillScore, bestCommandScore);
       matches.push({
         plugin: p.name,
-        skills: matchedSkills,
-        commands: matchedCommands,
-        match_source: matchSource,
+        skills: matchedSkills.map((s) => s.name),
+        commands: matchedCommands.map((c) => c.name),
+        match_source: matchedSkills.length > 0 ? "skill" : "command",
+        score,
+        matched_items: {
+          skills: matchedSkills,
+          commands: matchedCommands,
+        },
       });
     }
   }
 
-  return matches;
+  return matches.sort((a, b) => b.score - a.score || a.plugin.localeCompare(b.plugin));
+}
+
+/**
+ * Build actionable Skill/slash-command instructions from sorted routes.
+ *
+ * @param {{ plugin: string, skills: string[], commands: string[], matched_items?: { skills?: object[], commands?: object[] } }[]} routes
+ * @returns {{ plugin: string, name: string, invoke: string, type: string, score: number }[]}
+ */
+export function buildDispatchInstructions(routes) {
+  /** @type {{ plugin: string, name: string, invoke: string, type: string, score: number }[]} */
+  const dispatchInstructions = [];
+
+  for (const r of routes) {
+    const skills = r.matched_items?.skills || r.skills.map((name) => ({ name, score: r.score || 0 }));
+    const commands = r.matched_items?.commands || r.commands.map((name) => ({ name, score: r.score || 0 }));
+
+    for (const skill of skills) {
+      const name = `${r.plugin}-${skill.name}`;
+      dispatchInstructions.push({
+        plugin: r.plugin,
+        name,
+        invoke: `Skill: ${name}`,
+        type: "skill",
+        score: skill.score || 0,
+      });
+    }
+    for (const cmd of commands) {
+      const invoke = `/${r.plugin}:${cmd.name}`;
+      dispatchInstructions.push({
+        plugin: r.plugin,
+        name: invoke,
+        invoke,
+        type: "command",
+        score: cmd.score || 0,
+      });
+    }
+  }
+
+  return dispatchInstructions.sort((a, b) => b.score - a.score || a.invoke.localeCompare(b.invoke));
+}
+
+/**
+ * Build a complete routing plan for an MCP request or prompt-detect hook.
+ *
+ * @param {{ keyword?: string, phase?: string }} input
+ */
+export function getDispatchPlan({ keyword, phase } = {}) {
+  const intent = inferTaskIntent(keyword || "", phase);
+  const search = keyword || intent.search || "";
+
+  if (!search) {
+    throw new Error("Either 'keyword' or 'phase' (plan|do|check|act) is required.");
+  }
+
+  const routes = routeTask(search, { intent, phase });
+  const dispatch = buildDispatchInstructions(routes).slice(0, 10);
+  const top = dispatch[0] || null;
+
+  return {
+    search,
+    phase: phase || null,
+    intent: intent.name,
+    routes,
+    dispatch,
+    recommendation: top
+      ? `Found ${routes.length} plugin(s). Auto-dispatch top pick: ${top.invoke}. ${top.type === "skill" ? "Invoke the Skill tool with this exact name." : "Invoke this slash command."}`
+      : `No matching plugins found for "${search}". Consider installing plugins with relevant skills.`,
+  };
 }
 
 /**
@@ -370,33 +616,6 @@ export function routeTask(keyword) {
 export function generateDispatchGuide() {
   const all = discoverAllPlugins();
   if (all.total_plugins === 0) return "";
-
-  // Phase-to-plugin mapping with explicit priority ordering
-  /** @type {{ [phase: string]: { plugin: string, skills: string[], commands: string[] }[] }} */
-  const phaseMap = { plan: [], do: [], check: [], act: [] };
-
-  for (const p of all.plugins) {
-    const skillNames = p.skills.map(/** @param {{name:string}} s */ (s) => s.name);
-    const cmdNames = p.commands.map(/** @param {{name:string}} c */ (c) => c.name);
-    const allText = [p.name, p.description, ...skillNames, ...cmdNames].join(" ").toLowerCase();
-
-    // Plan: research, search, explore, find, strategy
-    if (/\b(research|search|explore|find|strategy|know?ledge|learn|discover|memory|pathfinder)\b/.test(allText)) {
-      phaseMap.plan.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
-    }
-    // Do: write, build, create, design, generate, implement, component, ui
-    if (/\b(write|build|creat|generat|design|compon|ui\b|frontend|implement|codex|gpt)\b/.test(allText)) {
-      phaseMap.do.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
-    }
-    // Check: review, test, audit, validate, lint, security, check, quality
-    if (/\b(review|test|audit|valid|lint|secur|check|quality|debug|inspect|rabbit|experiment|flag)\b/.test(allText)) {
-      phaseMap.check.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
-    }
-    // Act: commit, deploy, push, simplify, refactor, fix, format, release
-    if (/\b(commit|deploy|push|simplif|refactor|fix|format|releas|autofix|merge)\b/.test(allText)) {
-      phaseMap.act.push({ plugin: p.name, skills: skillNames, commands: cmdNames });
-    }
-  }
 
   const lines = [];
   lines.push("<skill-check>");
@@ -411,20 +630,11 @@ export function generateDispatchGuide() {
   };
 
   for (const [phase, label] of Object.entries(phaseLabels)) {
-    const entries = phaseMap[phase];
-    if (entries.length === 0) continue;
+    const plan = getDispatchPlan({ phase });
+    if (plan.dispatch.length === 0) continue;
     lines.push(`## ${label}`);
-    // Deduplicate: same plugin may appear in multiple skill matches
-    const seen = new Set();
-    for (const e of entries) {
-      if (seen.has(e.plugin)) continue;
-      seen.add(e.plugin);
-      for (const s of e.skills) {
-        lines.push(`- \`${e.plugin}:${s}\` → Skill: "${e.plugin}-${s}"`);
-      }
-      for (const c of e.commands) {
-        lines.push(`- \`/${e.plugin}:${c}\` → command: "${c}"`);
-      }
+    for (const d of plan.dispatch.slice(0, 8)) {
+      lines.push(`- ${d.invoke} (${d.plugin}, score ${d.score})`);
     }
     lines.push("");
   }
@@ -432,9 +642,11 @@ export function generateDispatchGuide() {
   // Auto-dispatch rules
   lines.push("## Auto-dispatch rules");
   lines.push("When PDCA routing fires:");
+  lines.push("- **plan phase**: before planning from scratch, invoke the top research/memory plugin from PLAN list when available");
   lines.push("- **check phase**: before writing your own review, MUST invoke Skill tool with top-matched plugin from CHECK list");
   lines.push("- **act phase**: after completing work, invoke commit/dispatch plugin from ACT list");
   lines.push("- **do phase**: for frontend/design tasks, prefer external design plugins over internal write skill");
+  lines.push("- **direct plugin match**: if a user prompt strongly matches an installed plugin skill/command, dispatch that external capability first");
   lines.push("");
   lines.push("Match found? → Invoke Skill tool FIRST, then respond.");
   lines.push("</skill-check>");

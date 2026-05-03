@@ -8,15 +8,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Added — Cross-Plugin Orchestration (Phase 6)
 
 - **Plugin Discovery Engine** (`hooks/lib/plugin-discovery.mjs`) — runtime scan of `~/.claude/plugins/installed_plugins.json` builds a dynamic capability map of all user-installed Claude Code plugins. Discovers skills, commands, MCP servers, and agents from any plugin's filesystem structure. No hardcoded registry — plugins appear and disappear as the user installs/uninstalls them.
+- **Intent Scoring and Dispatch Planner** (`getDispatchPlan`) — keywords and PDCA phases are normalized into routing intents, scored against plugin names, skill names, command names, and descriptions, then sorted into actionable `Skill:` / slash-command instructions. Preferred plugin rules keep review on `coderabbit-code-review`, act on `/commit-commands:commit`, design on `frontend-design-frontend-design`, and memory/research on `claude-mem-knowledge-agent`.
 - **4 New Orchestrator MCP Tools** (`mcp/lib/orchestrator-handlers.mjs`):
   - `orchestrator_list_plugins` — discover all installed plugins with full capability listings
   - `orchestrator_get_plugin` — detailed info on a specific plugin (skills, commands, MCP, agents, version, install path)
   - `orchestrator_route` — route task keywords or PDCA phases (plan/do/check/act) to matching external plugins. Returns actionable `Skill: plugin-skillname` dispatch instructions with auto-recommended top pick
   - `orchestrator_health` — ecosystem health check (plugin count, skill count, MCP availability)
-- **Dynamic Dispatch Guide** — `generateDispatchGuide()` replaces the old hardcoded `<skill-check>` block in `prompt-detect.mjs` with a dynamically-generated per-phase plugin dispatch table. When plugins are installed or removed, the dispatch guide updates automatically. Each entry includes the exact `Skill: plugin-skillname` invocation string.
+- **Dynamic Dispatch Guide** — `generateDispatchGuide()` replaces the old hardcoded `<skill-check>` block in `prompt-detect.mjs` with a dynamically-generated per-phase plugin dispatch table. When plugins are installed or removed, the dispatch guide updates automatically. Each entry includes the exact `Skill: plugin-skillname` or slash-command invocation string and score.
 - **Active Plugin Dispatch in Session-Start** — session-start now injects a proactive `## Active Plugin Dispatch` section showing per-phase plugin routing. The orchestrator pre-computes which plugins handle which PDCA phases so Claude doesn't have to guess.
 - **Actionable Auto-Dispatch** — `orchestrator_route` responses include a `dispatch` array with the top 10 most relevant `Skill:` / `/command:` invocation strings. Auto-recommendation tells Claude the top pick (e.g., `"Auto-dispatch top pick: Skill: coderabbit-code-review"`).
-- **PDCA Phase Auto-Routing** — check phase → coderabbit/codex/agent-teams/caveman, act phase → commit-commands/caveman, do phase → frontend-design/frontend-design-pro, plan phase → claude-mem/agent-teams
+- **Prompt-Level External Dispatch** — `prompt-detect` now injects an `[ORCHESTRATOR]` instruction when an external capability is the best match, telling Claude to invoke the external Skill or slash command before self-processing and to integrate the plugin result afterward.
+- **Direct Plugin Match Routing** — strong generic matches route to installed plugin capabilities even when the prompt is not one of the built-in review/commit/design/research intents. Example: `posthog event analysis` → `Skill: posthog-exploring-autocapture-events`. Short-keyword boundary checks prevent accidental matches such as `bug` inside `debugging`.
+- **PDCA Phase Auto-Routing** — plan phase → `Skill: claude-mem-knowledge-agent`, do phase → `Skill: frontend-design-frontend-design`, check phase → `Skill: coderabbit-code-review`, act phase → `/commit-commands:commit`
 
 ### Added — Soul Feedback Binding (Phase 5)
 
@@ -36,10 +39,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Verification
 
-- **354 tests** (343 pass, 0 fail, 1 skipped) — 12 new tests for orchestrator handlers, 9 new tests for soul handlers
+- **367 tests** (366 pass, 0 fail, 1 skipped) — includes prompt-level external dispatch, generic plugin match, short-keyword overmatch guard, and real handler coverage for orchestrator list/get/route
 - Verified against 14 real Claude Code plugins (67 discovered skills, 3 MCP servers)
 - `orchestrator_route phase=check` correctly dispatches → `Skill: coderabbit-code-review`
-- `orchestrator_route phase=act` correctly dispatches → `/commit-commands:commit-push-pr`
+- `orchestrator_route phase=act` correctly dispatches → `/commit-commands:commit`
+- `prompt-detect` dispatches Korean review/commit/design/research prompts to external capabilities before internal second-claude skills
 
 ## [1.3.0] - 2026-04-07
 

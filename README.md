@@ -26,7 +26,7 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 **Cross-Plugin Orchestrator** — Second Claude Code now discovers and commands *all* your installed Claude Code plugins automatically.
 
-You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running your own review, it auto-dispatches: `Skill: coderabbit-code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`.
+You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit-code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog-exploring-autocapture-events` when that plugin is installed.
 
 No hardcoded registry. No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears. Zero maintenance.
 
@@ -47,12 +47,13 @@ graph LR
 
 - **4 new MCP tools** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
 - **Runtime plugin discovery** — scans `~/.claude/plugins/` at session start, builds capability map from filesystem (no config)
-- **Dynamic dispatch guide** — `prompt-detect` hook replaced its hardcoded skill-check block with live plugin routing table
-- **PDCA phase auto-routing** — check → coderabbit/codex, act → commit-commands, do → frontend-design
+- **Dynamic dispatch guide** — `prompt-detect` injects a live plugin routing table and exact `Skill:` / slash-command invocation strings
+- **PDCA phase auto-routing** — plan → `claude-mem-knowledge-agent`, do → `frontend-design-frontend-design`, check → `coderabbit-code-review`, act → `/commit-commands:commit`
+- **Direct plugin match routing** — strong natural-language matches to installed plugin skills/commands dispatch externally before self-processing
 - **Soul feedback binding** — visual progress gauges, git shipping metrics (`soul_retro`), synthesis readiness, retro trend detection
-- **354 tests** (343 pass, 0 fail, 1 skipped) — verified against 14 real plugins / 67 skills
+- **367 tests** (366 pass, 0 fail, 1 skipped) — verified against 14 real plugins / 67 skills / 3 MCP servers
 
-> **Previously in v1.3.0...**
+See `docs/RELEASE-v1.4.0.md` for the full release notes and validation summary.
 
 > **Previously in v1.3.0...**
 
@@ -359,7 +360,7 @@ Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagg
 | Hook | When it fires | What it does |
 |---|---|---|
 | **SessionStart** | Session opens | Banner display, PDCA state initialization |
-| **UserPromptSubmit** | Every prompt | Auto-router: 2-layer pattern matching (~130 EN+KR triggers) |
+| **UserPromptSubmit** | Every prompt | Auto-router: external plugin dispatch + PDCA compound + single-skill patterns |
 | **SubagentStart** | Agent spawns | Review session context injection into agent system prompt |
 | **SubagentStop** | Agent completes | Reviewer consensus aggregation, score accumulation |
 | **Stop** | Session ends | State cleanup, output save |
@@ -367,7 +368,7 @@ Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagg
 | **PreCompact** | Before context compression | PDCA state serialization |
 | **PostCompact** | After context compression | PDCA state restoration, mid-cycle resume |
 
-The two-layer auto-router in `UserPromptSubmit` first checks for PDCA compound patterns (prompts that request research + writing + review together), then falls back to single-skill patterns. This ordering matters — "research and write" should route to `pdca`, not to `research` alone. Routing decisions now include **confidence scoring** for observability — corrections are captured as soul observations for long-term learning.
+The `UserPromptSubmit` auto-router first checks installed plugin capabilities through `getDispatchPlan()`. If a prompt strongly matches an external skill or command, it injects an `[ORCHESTRATOR]` instruction to invoke that capability before self-processing. If no external dispatch wins, it falls back to PDCA compound patterns, then single-skill patterns. This ordering matters — "research and write" should route to `pdca`, while "posthog event analysis" should use the installed PostHog plugin when available. Routing decisions include **confidence scoring** for observability, and corrections are captured as soul observations for long-term learning.
 
 ---
 
@@ -397,7 +398,7 @@ The HTML report is auto-generated on session end, so maintainers get a persisten
 
 A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 6 handler modules in `mcp/lib/`) manages persistent state across the session.
 
-**24 tools** across PDCA state, soul, project memory, cycle memory, daemon control, and session recall surfaces.
+**31 tools** across PDCA state, cycle memory, soul, project memory, daemon control, session recall, and plugin orchestration surfaces.
 
 **Core PDCA tools:**
 
@@ -418,6 +419,15 @@ A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 
 | `pdca_get_cycle_history` | Retrieve past cycle records — filter by domain, date range, or verdict |
 | `pdca_save_insight` | Persist a lesson, gotcha, or preference to the domain insight store |
 | `pdca_get_insights` | Fetch ranked insights for a domain with time-decay scoring applied |
+
+**Orchestrator tools (new in v1.4.0):**
+
+| Tool | Purpose |
+|---|---|
+| `orchestrator_list_plugins` | Inventory installed plugin skills, commands, MCP servers, and agents |
+| `orchestrator_get_plugin` | Inspect one plugin's discovered capabilities |
+| `orchestrator_route` | Return ranked `Skill:` / slash-command dispatch instructions for a keyword or PDCA phase |
+| `orchestrator_health` | Summarize plugin ecosystem readiness |
 
 **Event sourcing:** Every PDCA cycle is logged — phase transitions, gate decisions, review scores, action routes. You can query run history and spot recurring failure patterns.
 

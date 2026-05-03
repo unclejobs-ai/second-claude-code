@@ -11,6 +11,7 @@ import os from "node:os";
 import path from "node:path";
 
 const root = process.cwd();
+const emptyPluginsRoot = path.join(root, "tests", "fixtures", "empty-plugins-root");
 
 function read(relPath) {
   return readFileSync(path.join(root, relPath), "utf8");
@@ -21,6 +22,7 @@ function runPrompt(userPrompt) {
     cwd: root,
     env: {
       ...process.env,
+      __SCC_TEST_PLUGINS_ROOT: emptyPluginsRoot,
       USER_PROMPT: userPrompt,
     },
     encoding: "utf8",

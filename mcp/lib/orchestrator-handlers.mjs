@@ -6,7 +6,7 @@
  * phase routing.
  */
 
-import { discoverAllPlugins, getPluginCapabilities, routeTask } from "../../hooks/lib/plugin-discovery.mjs";
+import { discoverAllPlugins, getPluginCapabilities, getDispatchPlan } from "../../hooks/lib/plugin-discovery.mjs";
 
 // ---------------------------------------------------------------------------
 // Tool handlers
@@ -73,61 +73,7 @@ export function handleOrchestratorGetPlugin({ plugin } = {}) {
  * @param {{ keyword?: string, phase?: string }} input
  */
 export function handleOrchestratorRoute({ keyword, phase } = {}) {
-  // Phase-to-keyword mapping for PDCA routing
-  const phaseKeywords = {
-    plan: "research analyze brief strategy",
-    do: "write create build implement design develop generate",
-    check: "review audit test validate check lint security",
-    act: "commit deploy simplify refactor fix apply format push",
-  };
-
-  const searchTerm = keyword || phaseKeywords[phase] || "";
-
-  if (!searchTerm) {
-    throw new Error("Either 'keyword' or 'phase' (plan|do|check|act) is required.");
-  }
-
-  const routes = [];
-
-  for (const kw of searchTerm.split(/\s+/)) {
-    const matches = routeTask(kw.trim());
-    for (const m of matches) {
-      // Deduplicate by plugin name
-      if (!routes.find((r) => r.plugin === m.plugin)) {
-        routes.push(m);
-      }
-    }
-  }
-
-  // Build actionable dispatch instructions
-  /** @type {{ plugin: string, invoke: string, type: string }[]} */
-  const dispatchInstructions = [];
-  for (const r of routes) {
-    for (const skill of r.skills) {
-      dispatchInstructions.push({
-        plugin: r.plugin,
-        invoke: `Skill: ${r.plugin}-${skill}`,
-        type: "skill",
-      });
-    }
-    for (const cmd of r.commands) {
-      dispatchInstructions.push({
-        plugin: r.plugin,
-        invoke: `/${r.plugin}:${cmd}`,
-        type: "command",
-      });
-    }
-  }
-
-  return {
-    search: searchTerm,
-    phase: phase || null,
-    routes,
-    dispatch: dispatchInstructions.slice(0, 10), // Top 10 most relevant
-    recommendation: routes.length > 0
-      ? `Found ${routes.length} plugin(s). Auto-dispatch top pick: ${dispatchInstructions[0]?.invoke || "none"}. Invoke the Skill tool with this exact name.`
-      : `No matching plugins found for "${searchTerm}". Consider installing plugins with relevant skills.`,
-  };
+  return getDispatchPlan({ keyword, phase });
 }
 
 /**

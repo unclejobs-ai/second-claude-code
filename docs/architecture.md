@@ -4,7 +4,7 @@
 
 ## What's New in 1.4.0
 
-**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through two layers:
+**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through three layers:
 
 ### Layer 1: Runtime Plugin Discovery
 
@@ -22,7 +22,21 @@ agents/*.md                → agent names
 
 No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls them. The capability map is rebuilt every session.
 
-### Layer 2: Proactive Auto-Dispatch
+### Layer 2: Intent Scoring and Dispatch Planning
+
+`getDispatchPlan()` converts a keyword or PDCA phase into an intent profile, scores every installed plugin skill/command, and returns ranked invocation instructions:
+
+| Input | Intent | Current top dispatch with the verified plugin set |
+|-------|--------|---------------------------------------------------|
+| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
+| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
+| `phase=check` | `review` | `Skill: coderabbit-code-review` |
+| `phase=act` | `commit` | `/commit-commands:commit` |
+| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
+
+Preferred-plugin scoring keeps common lifecycle intents stable, while generic scoring still lets newly installed plugins win when their skill or command text strongly matches the prompt. Short keywords use word-boundary checks so `bug` does not accidentally match `debugging`.
+
+### Layer 3: Proactive Auto-Dispatch
 
 The orchestrator operates at three touchpoints:
 
@@ -30,10 +44,18 @@ The orchestrator operates at three touchpoints:
 User types "리뷰해줘"
   ↓
 prompt-detect hook (UserPromptSubmit)
-  ├── Detects intent → PDCA check phase
-  ├── Injects dynamic dispatch guide (Live plugin routing table)
-  └── Claude reads: "check phase → Skill: coderabbit-code-review"
+  ├── Calls getDispatchPlan(keyword="리뷰해줘")
+  ├── Top dispatch: Skill: coderabbit-code-review
+  └── Injects [ORCHESTRATOR]: invoke that Skill before self-processing
   ↓
+External plugin result returns
+  ↓
+Claude integrates result into the final answer
+```
+
+PDCA still uses the same dispatcher when a full cycle enters a phase:
+
+```
 PDCA enters Check phase
   ├── orchestrator_route phase=check
   ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
@@ -66,15 +88,15 @@ The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin 
 
 ```
 ## Active Plugin Dispatch
-🔍 check → coderabbit, codex, agent-teams, caveman
-🚀 act → commit-commands, caveman, coderabbit
-🔨 do → frontend-design, frontend-design-pro, codex
-📋 plan → claude-mem, agent-teams, frontend-design-pro
+📋 plan → Skill: claude-mem-knowledge-agent
+🔨 do → Skill: frontend-design-frontend-design
+🔍 check → Skill: coderabbit-code-review
+🚀 act → /commit-commands:commit
 ```
 
 ### What Changed in prompt-detect
 
-The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. When plugins change, the dispatch guide changes automatically. No maintenance needed.
+The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. In addition, prompt-detect now calls `getDispatchPlan()` for each substantive prompt. If the top external match is a known lifecycle intent or a strong generic plugin match, it injects an `[ORCHESTRATOR]` instruction that requires invoking that Skill/command before self-processing. When plugins change, both the guide and the immediate dispatch target change automatically.
 
 ---
 
@@ -173,7 +195,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (24 tools), playwright (optional)
+├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional)
 ├── skills/                       # 15 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
@@ -206,7 +228,7 @@ second-claude/
 │       ├── mmbridge-adapter.mjs  # MMBridge CLI adapter
 │       └── ...                   # agent-tracker, fact-checker, file-mutex, etc.
 ├── mcp/
-│   ├── pdca-state-server.mjs     # 28-tool MCP server (24 core + 4 orchestrator [NEW 1.4.0])
+│   ├── pdca-state-server.mjs     # 31-tool MCP server (27 core + 4 orchestrator [NEW 1.4.0])
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers [NEW 1.4.0]
 │       ├── soul-handlers.mjs          # soul_* tool handlers (inc. retro, synthesis, readiness)
@@ -460,7 +482,7 @@ before falling through to single-skill matching.
 | Event | Hook file | Behavior |
 |-------|-----------|----------|
 | `SessionStart` | `session-start.mjs` | Session banner + PDCA state initialization |
-| `UserPromptSubmit` | `prompt-detect.mjs` | Natural language auto-router (PDCA compound + single-skill patterns) |
+| `UserPromptSubmit` | `prompt-detect.mjs` | External plugin dispatch + PDCA compound + single-skill patterns |
 | `SubagentStart` | `subagent-start.mjs` | Review session context injection (added in 0.5.1) |
 | `SubagentStop` | `subagent-stop.mjs` | Reviewer consensus aggregation |
 | `Stop` | `session-end.mjs` | Session cleanup |

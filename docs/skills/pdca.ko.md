@@ -2,7 +2,17 @@
 
 # PDCA
 
-> **하드** 품질 게이트(길이 floor, 리뷰어 모델 다양성, 보정된 5+ 룰), 액션 라우터, 16개 포켓몬 테마 conceptual role을 갖춘 Plan → Do → Check → Act 전체 사이클 오케스트레이터.
+> **하드** 품질 게이트(길이 floor, 리뷰어 모델 다양성, 보정된 5+ 룰), 외부 플러그인 디스패치, 액션 라우터, 16개 포켓몬 테마 conceptual role을 갖춘 Plan → Do → Check → Act 전체 사이클 오케스트레이터.
+
+## v1.4.0에서 달라진 점
+
+- **크로스-플러그인 페이즈 디스패치** — 더 강한 외부 capability가 설치되어 있으면 PDCA 페이즈가 플러그인 생태계를 먼저 경유합니다.
+- **검증된 페이즈 1순위** — Plan → `Skill: claude-mem-knowledge-agent`, Do → `Skill: frontend-design-frontend-design`, Check → `Skill: coderabbit-code-review`, Act → `/commit-commands:commit`.
+- **프롬프트 레벨 외부 디스패치** — `prompt-detect`가 내부 fallback 전에 `getDispatchPlan()`을 호출합니다. `posthog event analysis`처럼 강한 외부 매칭은 설치된 플러그인을 먼저 호출해요.
+- **하드코딩된 플러그인 레지스트리 없음** — `~/.claude/plugins/`에서 capability를 런타임 발견하고 정확한 `Skill:` / 슬래시 커맨드 호출 문자열로 바꿉니다.
+- **짧은 키워드 안전장치** — `bug`가 `debugging` 안에서 우연히 매칭되는 것 같은 작은 키워드 overmatch를 단어 경계 검사로 막습니다.
+
+v1.4.0 디스패치 구조와 검증 범위는 [orchestrator-architecture.ko.md](../orchestrator-architecture.ko.md) 참고.
 
 ## v1.3.0에서 달라진 점
 
@@ -21,7 +31,7 @@
 AI 에이전트 프레임워크 알아보고 보고서 써줘
 ```
 
-**동작 방식:** PDCA 오케스트레이터가 복합 의도(리서치 + 작성)를 감지하고 전체 사이클에 진입합니다. Plan(리서치 + 분석) → Do(작성) → Check(리뷰) → Act(루프 또는 재라우팅)을 품질 게이트를 사이에 두고 체이닝합니다.
+**동작 방식:** PDCA 오케스트레이터가 복합 의도(리서치 + 작성)를 감지하고 전체 사이클에 진입합니다. Plan(리서치 + 분석) → Do(작성) → Check(리뷰) → Act(루프 또는 재라우팅)을 품질 게이트를 사이에 두고 체이닝합니다. v1.4.0부터는 각 페이즈가 내부 Second Claude 스킬을 실행하기 전에 더 강한 설치 플러그인 capability를 먼저 호출할 수 있어요.
 
 ## 실전 예시
 
@@ -31,13 +41,13 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 ```
 
 **진행 과정:**
-1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 이브이(Eevee, 리서처)가 심층 웹 리서치를 실행합니다. 후딘(Alakazam, 애널리스트) + 뮤츠(Mewtwo, 전략가)가 결과를 구조화합니다.
+1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 가능하면 외부 메모리/리서치 디스패치가 `Skill: claude-mem-knowledge-agent`를 먼저 사용하고, 이후 이브이(Eevee), 후딘(Alakazam), 뮤츠(Mewtwo)가 결과를 구조화합니다.
 2. **Plan→Do 게이트**: 3개 이상의 출처가 포함된 리서치 브리프와 분석 아티팩트를 검증합니다.
-3. **Do**: 루브도(Smeargle, 라이터)가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다.
+3. **Do**: 루브도(Smeargle, 라이터)가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다. 디자인 성격이 강한 실행은 설치되어 있을 때 `Skill: frontend-design-frontend-design`로 먼저 갈 수 있어요.
 4. **Do→Check 게이트**: 아티팩트 완성도, 포맷 준수, Plan 결과 반영을 검증합니다.
-5. **Check**: 5마리 리뷰어(네이티오, 앱솔, 폴리곤, 푸린, 안농)가 합의 게이트와 함께 병렬 리뷰를 실행합니다.
+5. **Check**: 5마리 리뷰어(네이티오, 앱솔, 폴리곤, 푸린, 안농)가 합의 게이트와 함께 병렬 리뷰를 실행합니다. 코드 리뷰 프롬프트는 설치되어 있으면 `Skill: coderabbit-code-review`를 우선합니다.
 6. **Check→Act 게이트**: APPROVED → 출하. 그 외 → 액션 라우터.
-7. **Act**: 액션 라우터가 소견을 근본원인별로 분류합니다:
+7. **Act**: 액션 라우터가 소견을 근본원인별로 분류합니다. 출하/커밋 프롬프트는 설치되어 있으면 `/commit-commands:commit`을 우선합니다:
    - 소스/가정 갭 → **Plan**으로 복귀
    - 완성도/포맷 문제 → **Do**로 복귀
    - 실행 품질 → **Loop** (메타몽 에디터)
@@ -149,6 +159,7 @@ Plan 진입 시 최대 3개의 범위 확인 질문을 합니다:
 
 | 스킬 | 관계 |
 |------|------|
+| 외부 플러그인 | `getDispatchPlan()`이 더 강한 페이즈/키워드 매칭을 찾으면 내부 fallback 전에 호출 |
 | research | Plan 페이즈에서 데이터 수집에 호출 |
 | analyze | Plan 페이즈에서 구조화된 분석에 호출 |
 | write | Do 페이즈에서 순수 실행 모드로 호출 |

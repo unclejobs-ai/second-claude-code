@@ -1,16 +1,21 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "prompt-detect.mjs");
+const emptyPluginsRoot = path.join(root, "tests", "fixtures", "empty-plugins-root");
 
-function runPrompt(userPrompt) {
+function runPrompt(userPrompt, env = {}) {
   return execFileSync(process.execPath, [hookPath], {
     cwd: root,
     env: {
       ...process.env,
+      __SCC_TEST_PLUGINS_ROOT: emptyPluginsRoot,
+      ...env,
       USER_PROMPT: userPrompt,
     },
     encoding: "utf8",
@@ -19,6 +24,68 @@ function runPrompt(userPrompt) {
 
 function assertRoutesTo(output, skill) {
   assert.match(output, new RegExp(`skill: \\\\\"second-claude-code:${skill}\\\\\"`));
+}
+
+function setupPluginsRoot() {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "scc-prompt-test-"));
+  const pluginsDir = path.join(tmp, ".claude", "plugins");
+  mkdirSync(pluginsDir, { recursive: true });
+  return { tmp, pluginsDir };
+}
+
+function createMockPlugin(pluginsDir, name, opts = {}) {
+  const { skills = [], commands = [], description = "", version = "1.0.0" } = opts;
+  const pluginRoot = path.join(pluginsDir, "cache", "test", name, version);
+  mkdirSync(path.join(pluginRoot, ".claude-plugin"), { recursive: true });
+  writeFileSync(
+    path.join(pluginRoot, ".claude-plugin", "plugin.json"),
+    JSON.stringify({ name, version, description }, null, 2),
+    "utf8"
+  );
+
+  for (const s of skills) {
+    const skillDir = path.join(pluginRoot, "skills", s.name);
+    mkdirSync(skillDir, { recursive: true });
+    writeFileSync(
+      path.join(skillDir, "SKILL.md"),
+      `---\nname: ${s.name}\ndescription: "${s.description}"\n---\n`,
+      "utf8"
+    );
+  }
+
+  if (commands.length > 0) {
+    const commandsDir = path.join(pluginRoot, "commands");
+    mkdirSync(commandsDir, { recursive: true });
+    for (const c of commands) {
+      writeFileSync(
+        path.join(commandsDir, `${c.name}.md`),
+        `---\ndescription: "${c.description}"\n---\n`,
+        "utf8"
+      );
+    }
+  }
+
+  return pluginRoot;
+}
+
+function writeInstalledPlugins(pluginsDir, entries) {
+  const plugins = {};
+  for (const e of entries) {
+    plugins[e.id] = [
+      {
+        scope: "user",
+        installPath: e.installPath,
+        version: e.version || "1.0.0",
+        installedAt: "2026-05-01T00:00:00.000Z",
+        lastUpdated: "2026-05-01T00:00:00.000Z",
+      },
+    ];
+  }
+  writeFileSync(
+    path.join(pluginsDir, "installed_plugins.json"),
+    JSON.stringify({ version: 2, plugins }, null, 2),
+    "utf8"
+  );
 }
 
 // ── Existing single-skill routing tests ──
@@ -66,9 +133,6 @@ test("prompt detect routes root-cause debugging prompts to /second-claude-code:i
 test("prompt detect keeps code bug prompts on development guidance", () => {
   const output = runPrompt("fix this bug in src/app.js");
   assert.doesNotMatch(output, /skill: \\\"second-claude-code:investigate\\\"/);
-  // Dynamic dispatch guide replaces old hardcoded dev guidance — verify it's present
-  assert.match(output, /<skill-check>/);
-  assert.match(output, /coderabbit.*code-review/);
 });
 
 test("prompt detect routes general investigate prompts to /second-claude-code:research", () => {
@@ -153,4 +217,127 @@ test("engineering prompt with iterate until tests pass does not misroute to refi
 test("engineering prompt with CI deployment workflow does not misroute to workflow", () => {
   const output = runPrompt("automate this workflow in our CI deployment pipeline");
   assert.doesNotMatch(output, /skill: \\"second-claude-code:workflow\\"/);
+});
+
+test("external dispatch: Korean review prompt routes to coderabbit before internal review", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const coderabbit = createMockPlugin(pluginsDir, "coderabbit", {
+    description: "AI code review tool",
+    skills: [
+      { name: "autofix", description: "Safely review and apply CodeRabbit PR feedback" },
+      { name: "code-review", description: "AI-powered code review using CodeRabbit" },
+    ],
+    commands: [
+      { name: "coderabbit-review", description: "Run CodeRabbit review" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "coderabbit@test", installPath: coderabbit }]);
+
+  try {
+    const output = runPrompt("리뷰해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.match(output, /External capability selected for review/);
+    assert.match(output, /coderabbit-code-review/);
+    assert.doesNotMatch(output, /second-claude-code:review/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("external dispatch: Korean commit prompt routes to commit-commands", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const commitCommands = createMockPlugin(pluginsDir, "commit-commands", {
+    description: "Git commit helper commands",
+    commands: [
+      { name: "commit-push-pr", description: "Commit, push, and open PR" },
+      { name: "commit", description: "Create a git commit" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "commit-commands@test", installPath: commitCommands }]);
+
+  try {
+    const output = runPrompt("커밋해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.match(output, /External capability selected for commit/);
+    assert.match(output, /\/commit-commands:commit/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("external dispatch: design improvement prompt routes to frontend-design", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const frontendDesign = createMockPlugin(pluginsDir, "frontend-design", {
+    description: "Create production-grade frontend interfaces with high design quality",
+    skills: [
+      { name: "frontend-design", description: "Create distinctive frontend UI and application designs" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "frontend-design@test", installPath: frontendDesign }]);
+
+  try {
+    const output = runPrompt("디자인 개선해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.match(output, /External capability selected for frontend-design/);
+    assert.match(output, /frontend-design-frontend-design/);
+    assert.doesNotMatch(output, /second-claude-code:refine/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("external dispatch: Korean research prompt routes to claude-mem knowledge-agent", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const claudeMem = createMockPlugin(pluginsDir, "claude-mem", {
+    description: "Persistent memory and knowledge agents",
+    skills: [
+      { name: "mem-search", description: "Search persistent cross-session memory database" },
+      { name: "knowledge-agent", description: "Build and query AI-powered knowledge bases from claude-mem observations" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "claude-mem@test", installPath: claudeMem }]);
+
+  try {
+    const output = runPrompt("조사해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.match(output, /External capability selected for memory-research/);
+    assert.match(output, /claude-mem-knowledge-agent/);
+    assert.doesNotMatch(output, /second-claude-code:research/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("external dispatch: strong generic match routes to installed plugin skill", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const posthog = createMockPlugin(pluginsDir, "posthog", {
+    description: "Product analytics and event analysis",
+    skills: [
+      { name: "exploring-autocapture-events", description: "Analyze PostHog autocapture events and product analytics" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "posthog@test", installPath: posthog }]);
+
+  try {
+    const output = runPrompt("posthog event analysis", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.match(output, /External capability selected for generic/);
+    assert.match(output, /posthog-exploring-autocapture-events/);
+    assert.doesNotMatch(output, /second-claude-code:/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("external dispatch: code bug prompt does not match debugging by substring", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const agentTeams = createMockPlugin(pluginsDir, "agent-teams", {
+    description: "Team coordination helpers",
+    skills: [
+      { name: "parallel-debugging", description: "Coordinate multiple agents for debugging complex issues" },
+    ],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "agent-teams@test", installPath: agentTeams }]);
+
+  try {
+    const output = runPrompt("fix this bug in src/app.js", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
+    assert.doesNotMatch(output, /External capability selected/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
 });

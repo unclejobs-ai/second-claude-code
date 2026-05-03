@@ -1,6 +1,16 @@
 # PDCA
 
-> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), Action Router, and 16 Pokemon-themed conceptual roles.
+> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), external plugin dispatch, Action Router, and 16 Pokemon-themed conceptual roles.
+
+## What's New in v1.4.0
+
+- **Cross-plugin phase dispatch** — PDCA phases now route through the installed plugin ecosystem when a stronger external capability is available.
+- **Verified phase top picks** — Plan → `Skill: claude-mem-knowledge-agent`, Do → `Skill: frontend-design-frontend-design`, Check → `Skill: coderabbit-code-review`, Act → `/commit-commands:commit`.
+- **Prompt-level external dispatch** — `prompt-detect` calls `getDispatchPlan()` before internal fallback. Strong external matches such as `posthog event analysis` dispatch to the installed plugin first.
+- **No hardcoded plugin registry** — plugin capabilities are discovered from `~/.claude/plugins/` at runtime and converted into exact `Skill:` / slash-command invocation strings.
+- **Short-keyword safety** — boundary checks prevent small keyword overmatches, such as `bug` accidentally matching inside `debugging`.
+
+See [orchestrator-architecture.md](../orchestrator-architecture.md) for the v1.4.0 dispatch architecture and validation coverage.
 
 ## What's New in v1.3.0
 
@@ -19,7 +29,7 @@ See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec an
 Research and write a report on AI agent frameworks
 ```
 
-**What happens:** The PDCA orchestrator detects compound intent (research + write), enters the full cycle, and chains Plan (research + analyze) → Do (write) → Check (review) → Act (loop or route back) with quality gates between each transition.
+**What happens:** The PDCA orchestrator detects compound intent (research + write), enters the full cycle, and chains Plan (research + analyze) → Do (write) → Check (review) → Act (loop or route back) with quality gates between each transition. In v1.4.0, each phase can first dispatch to a stronger installed plugin capability before internal Second Claude skills run.
 
 ## Real-World Example
 
@@ -29,13 +39,13 @@ Research and write a report on AI agent frameworks
 ```
 
 **Process:**
-1. **Plan**: Question Protocol asks up to 3 clarifying questions. Eevee (researcher) runs deep web research. Alakazam (analyst) + Mewtwo (strategist) structure findings.
+1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem-knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
 2. **Plan→Do Gate**: Verifies research brief with 3+ sources and analysis artifact.
-3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts.
+3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design-frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
-5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate.
+5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit-code-review` when installed.
 6. **Check→Act Gate**: APPROVED → ship. Others → Action Router.
-7. **Act**: Action Router classifies findings by root cause:
+7. **Act**: Action Router classifies findings by root cause. Shipping prompts prefer `/commit-commands:commit` when installed:
    - Source/assumption gaps → back to **Plan**
    - Completeness/format issues → back to **Do**
    - Execution quality → **Loop** (Ditto editor)
@@ -147,6 +157,7 @@ At Plan entry, the orchestrator asks up to 3 scope-clarifying questions:
 
 | Skill | Relationship |
 |-------|-------------|
+| external plugins | Called before internal fallback when `getDispatchPlan()` finds a stronger phase or keyword match |
 | research | Called during Plan phase for data collection |
 | analyze | Called during Plan phase for structured analysis |
 | write | Called during Do phase in pure execution mode |
