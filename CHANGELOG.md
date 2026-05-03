@@ -3,6 +3,20 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.4.1] - 2026-05-03
+
+### Fixed
+
+- **Artifact Viewer command surface** — added the missing `/second-claude-code:viewer` wrapper so the documented viewer skill is actually registered by Claude Code.
+- **Viewer server lifecycle** — `ui/scripts/start-server.sh` now starts the viewer in the background, writes JSON runtime metadata, and returns the URL without blocking the slash command. Added `ui/scripts/stop-server.sh` for clean shutdown from the recorded PID.
+- **Command count alignment** — session-start, README, architecture docs, and contract tests now agree on 15 slash commands and 15 skills.
+
+### Verification
+
+- `node --test tests/runtime/viewer-server.test.mjs`
+- `env RUN_CLAUDE_CLI_E2E=1 node --test tests/e2e/claude-cli-slash.test.mjs`
+- `npm test` — 368 tests (367 pass, 0 fail, 1 skipped)
+
 ## [1.4.0] - 2026-05-02
 
 ### Added — Cross-Plugin Orchestration (Phase 6)
