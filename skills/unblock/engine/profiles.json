@@ -1,0 +1,53 @@
+{
+  "$comment": "Generic WAF and probe profiles. NO site-specific brand names or selectors. Per R1 in SKILL.md, site-specific hints must flow via --user-hint at runtime, not be stored here.",
+  "challenges": {
+    "$comment": "Substrings that indicate a challenge/bot-protection body returned with 200 status",
+    "patterns": [
+      "Just a moment...",
+      "Checking your browser",
+      "cf-browser-verification",
+      "challenge-platform",
+      "Access denied",
+      "Pardon Our Interruption",
+      "Attention Required",
+      "verify you are human",
+      "captcha",
+      "g-recaptcha",
+      "h-captcha",
+      "px-captcha",
+      "_Incapsula_Resource",
+      "Reference&#32;&#35;",
+      "blocked by network security",
+      "bot detection",
+      "request unsuccessful"
+    ]
+  },
+  "user_agents": {
+    "chrome_desktop": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "chrome_mobile": "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36",
+    "safari_desktop": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Safari/605.1.15",
+    "safari_mobile": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.4 Mobile/15E148 Safari/604.1",
+    "firefox_desktop": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0",
+    "googlebot": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+  },
+  "url_transforms": {
+    "$comment": "Generic transforms applied as Phase 1 variants",
+    "rules": [
+      { "kind": "subdomain", "from": "www", "to": "m" },
+      { "kind": "subdomain", "prepend": "m" },
+      { "kind": "path_suffix", "append": "/rss" },
+      { "kind": "path_suffix", "append": "/feed" },
+      { "kind": "path_suffix", "append": ".json" },
+      { "kind": "path_suffix", "append": ".rss" },
+      { "kind": "path_prefix", "prepend": "/amp" }
+    ]
+  },
+  "impersonate_targets": ["chrome131", "chrome124", "safari17_0", "firefox133"],
+  "lightpanda": { "min_version": "0.5.0" },
+  "playwright": { "device_emulations": ["Desktop Chrome", "iPhone 15", "Pixel 8"] },
+  "validators": {
+    "min_body_chars": 200,
+    "min_text_after_strip_chars": 80,
+    "max_challenge_density": 0.02
+  }
+}

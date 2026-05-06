@@ -139,7 +139,7 @@ function main() {
   lines.push("");
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
-  lines.push("15 commands for all knowledge work:");
+  lines.push("16 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
@@ -158,6 +158,7 @@ function main() {
   lines.push("| `/second-claude-code:batch` | Parallel decomposition for large homogeneous tasks |");
   lines.push("| `/second-claude-code:soul` | Persistent identity profile synthesis and adaptation |");
   lines.push("| `/second-claude-code:viewer` | Local artifact viewer for PDCA session outputs |");
+  lines.push("| `/second-claude-code:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
   lines.push("Or use individual skills: research, write, analyze, review, refine, loop, collect, workflow, discover, investigate, translate, batch, soul, viewer.");

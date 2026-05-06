@@ -158,7 +158,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-15 slash commands and 15 skills for all knowledge work:
+15 slash commands and 16 skills for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -488,6 +488,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Let the system learn your preferences | `soul` | Adaptive personalization across sessions |
 | Translate between English and Korean | `translate` | Soul-aware EN↔KO translation with style and format control |
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
+| Fetch a URL that WebFetch cannot crack | `unblock` | Zero-key adaptive chain through public APIs, TLS impersonation, headless browsers, and free archives |
 
 Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:translate`, etc. ~130 trigger patterns across English and Korean.
 

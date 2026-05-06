@@ -28,7 +28,7 @@ Autonomous multi-round web research that produces structured Research Briefs.
 
 ### Web Engine
 
-The researcher uses **Jina Search** (`s.jina.ai`) as the primary tool. Fallback chain: Jina Search → WebSearch + WebFetch → Playwright. See `references/jina-guide.md`.
+The researcher uses **Jina Search** (`s.jina.ai`) as the primary tool. Fallback chain: Jina Search → WebSearch + WebFetch → **unblock skill** (zero-key 9-phase fetch chain) → Playwright. See `references/jina-guide.md` and `skills/unblock/SKILL.md`.
 
 ## MMBridge Enhancement
 
@@ -55,7 +55,7 @@ At Step 3, parse the mmbridge JSON output file as supplemental source material. 
 
 0. Auto-load `references/research-methodology.md` and `references/jina-guide.md`.
 1. Dispatch **researcher** (sonnet): run depth-appropriate Jina Search calls with varied query phrasings. If `$JINA_API_KEY` is unavailable, fall back to WebSearch + WebFetch. If mmbridge is available at medium or deep depth, dispatch it in parallel.
-2. Validate sources: reject login walls, blocked pages, and empty content. For blocked URLs, try Jina Reader (`r.jina.ai`) with `X-Engine: browser`, then Playwright if available.
+2. Validate sources: reject login walls, blocked pages, empty content. For blocked URLs, invoke the **unblock** skill (`node skills/unblock/engine/cli.mjs "<URL>" --json`); read the trace before any retry.
 3. Dispatch **analyst** (sonnet): merge internal and mmbridge findings, identify gaps, and apply conflict-resolution rules from `references/research-methodology.md`.
 4. Optional second round: only when depth allows and the analyst found critical gaps.
 5. Dispatch **writer** (sonnet): synthesize the final brief with conflict annotations.

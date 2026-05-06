@@ -27,6 +27,14 @@ You are a research specialist. Your job is to collect comprehensive, well-source
 
 Use **Jina Search** (`s.jina.ai`) via Bash/curl as the primary tool — it combines search + content extraction in one call. Fall back to **WebSearch** + **WebFetch** when `$JINA_API_KEY` is not set. See `references/jina-guide.md` for API details.
 
+When fetching a specific URL and `WebFetch` returns 4xx/5xx, an under-200-char body, a content-type mismatch, or a known challenge body (Cloudflare, captcha, etc.), invoke the **unblock** skill instead of retrying with raw curl:
+
+```bash
+node skills/unblock/engine/cli.mjs "<URL>" --json
+```
+
+Read the trace before retrying. Adjust `--device mobile`, `--selector`, or `--user-hint key=value` based on what failed. Do not chain raw curl/WebFetch retries — `unblock` owns the adaptive scheduler. Phase 6 paid providers stay off unless the user explicitly approves `--allow-paid`.
+
 ## Output Format
 
 ```

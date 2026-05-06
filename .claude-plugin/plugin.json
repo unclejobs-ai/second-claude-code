@@ -1,7 +1,7 @@
 {
   "name": "second-claude-code",
-  "description": "PDCA-native Knowledge Work OS with Cross-Plugin Orchestrator — 15 skills, 17 Pokemon agents, 31 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Hard Length Floors + Reviewer Diversity Gates, and runtime plugin ecosystem dispatch",
-  "version": "1.4.2",
+  "description": "PDCA-native Knowledge Work OS with Cross-Plugin Orchestrator — 16 skills, 17 Pokemon agents, 31 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Hard Length Floors + Reviewer Diversity Gates, runtime plugin ecosystem dispatch, and a zero-key adaptive fetch chain (unblock) for hostile URLs",
+  "version": "1.5.0",
   "author": {
     "name": "Unclejobs",
     "email": "parkeungje@gmail.com"
@@ -18,7 +18,10 @@
     "review",
     "workflow",
     "second-brain",
-    "automation"
+    "automation",
+    "web-fetch",
+    "anti-block",
+    "scraping"
   ],
   "mcpServers": {
     "pdca-state": {

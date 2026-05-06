@@ -398,6 +398,7 @@ const ko = {
   discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
   investigate: ["디버그", "버그", "에러", "원인", "실패", "고장", "문제"],
   translate: ["번역", "번역해", "영어로", "한국어로", "영문으로", "국문으로", "번역해줘"],
+  unblock: ["차단됨", "안 열려", "안열려", "본문 못", "캡차", "긁어줘", "긁어줄", "스크래핑 우회", "차단 우회", "사이트 우회", "url 우회"],
 };
 
 const routes = [
@@ -470,6 +471,20 @@ const routes = [
     patterns: [...ko.translate, "translate", "translate this", "translate to english", "translate to korean", "in english", "in korean"],
     skill: "second-claude-code:translate",
     label: "translate",
+  },
+  {
+    patterns: [
+      ...ko.unblock,
+      "blocked url", "blocked site", "blocked page", "captcha challenge",
+      "cloudflare challenge", "waf bypass", "bypass block",
+      "fetch this url", "scrape this", "scrape the page",
+      "page won't load", "this site is blocked",
+      "tls fingerprint", "anti-bot",
+      "linkedin article", "twitter post", "x.com post", "naver blog post",
+      "youtube transcript", "youtube subtitles", "reddit thread",
+    ],
+    skill: "second-claude-code:unblock",
+    label: "unblock",
   },
 ];
 

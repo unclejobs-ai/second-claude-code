@@ -1,12 +1,12 @@
 # Second Claude Code
 
-Claude Code plugin (v1.4.2). PDCA-native knowledge work system — 15 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
+Claude Code plugin (v1.5.0). PDCA-native knowledge work system — 16 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json  — Plugin manifest (name, version, MCP servers)
-skills/                     — 15 skill directories (pdca, research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul, translate, investigate, viewer)
+skills/                     — 16 skill directories (pdca, research, write, analyze, review, refine, loop, collect, workflow, discover, batch, soul, translate, investigate, viewer, unblock)
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
