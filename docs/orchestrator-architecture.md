@@ -1,8 +1,10 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture - v1.4.2
+# Orchestrator Architecture - v1.5.0
 
-Second Claude Code v1.4.x adds a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
+Second Claude Code v1.4.x added a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
+
+v1.5.0 extends this with the `unblock` skill — a 9-phase zero-key fetch chain that the auto-router and Eevee researcher invoke when a URL returns 4xx, captcha, WAF, or empty SPA body. See `skills/unblock/` and `commands/unblock.md` for the slash-command surface, and the auto-router patterns in `hooks/prompt-detect.mjs`.
 
 ## Dispatch Layers
 

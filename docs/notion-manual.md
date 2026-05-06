@@ -204,6 +204,7 @@ You do not need to memorize skill names. Type your request in natural language a
 | Save a URL, note, or excerpt | `collect` | PARA-based knowledge capture and classification |
 | Chain multiple skills into a pipeline | `workflow` | Reusable multi-step automation |
 | Find and install new capabilities | `discover` | Marketplace search with relevance and safety scoring |
+| Fetch a URL that WebFetch cannot crack | `unblock` | Zero-key 9-phase adaptive chain through public APIs, TLS impersonation, headless browsers, and free archives |
 | Run the full research-write-review-improve cycle | `pdca` | Plan-Do-Check-Act: the complete loop from one prompt |
 
 Both English and Korean prompts work. The system has approximately 50 Korean trigger patterns and 77 English trigger patterns built in. You can mix languages freely.

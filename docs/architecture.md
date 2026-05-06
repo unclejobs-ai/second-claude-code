@@ -196,7 +196,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional)
-├── skills/                       # 15 skills (SKILL.md each)
+├── skills/                       # 16 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
@@ -215,9 +215,12 @@ second-claude/
 │   │   └── references/           # Observation signals, synthesis algorithm, templates
 │   ├── translate/                # Soul-aware EN↔KO translation
 │   ├── investigate/              # Root-cause debugging
-│   └── viewer/                   # Local artifact viewer
+│   ├── viewer/                   # Local artifact viewer
+│   └── unblock/                  # Zero-key adaptive 9-phase fetch chain (anti-WAF, captcha, SPA)
+│       ├── engine/               # CLI + chain + 10 probes + orchestrator
+│       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 15 slash command wrappers
+├── commands/                     # 16 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)

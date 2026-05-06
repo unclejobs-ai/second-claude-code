@@ -3,6 +3,43 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.0] - 2026-05-06
+
+### Added — Unblock Skill (16th skill)
+
+- **`unblock` skill** (`skills/unblock/`) — adaptive 9-phase fetch chain for URLs that WebFetch can't crack (4xx, captcha, WAF, JS-heavy SPAs). Zero API keys end-to-end; paid providers are gated behind explicit `--allow-paid`.
+- **Phases 0a–6**:
+  - 0a: 11 public-API routes (Reddit / HN / arXiv / Bluesky / GitHub / NPM / Stack Exchange / Wikipedia / Mastodon any host / Lemmy any host / oEmbed fallback discovery)
+  - 0b: Jina Reader (`r.jina.ai`, key-optional, 20 RPM free tier)
+  - 0c: yt-dlp metadata + transcript single-call (1800+ media sites)
+  - 0d: Jina Search keyword routing with optional `--follow` recursion
+  - 1: curl with rotating UA × Accept-Language × Sec-Ch-Ua × URL transforms; early-bail after 3 consecutive 4xx
+  - 2: curl-impersonate TLS rotation across chrome131 / safari17_0 / firefox133 with cookie warming + locale-matched referrer chain
+  - 3: LightPanda headless (cheap browser tier)
+  - 4: Playwright real Chrome with same-origin XHR network intercept surfacing discovered hidden API endpoints
+  - 5: Free archive cluster — Wayback + archive.today + AMP cache raced in parallel, plus RSS/Atom feed discovery + OG-tag rescue
+  - 6: Optional paid (Tavily / Exa / Firecrawl) gated by `--allow-paid`
+- **Operational hardening** — SSRF guard rejects RFC1918 / loopback / link-local / cloud metadata hosts (including IPv6-mapped IPv4); opt-out `UNBLOCK_ALLOW_PRIVATE_HOSTS=1`. `schema_version` + `idempotency_key` envelope contract. Stagnation detection: same fail reason ×3 jumps to archive. Phase 0 reordering by URL host priors. Signal-driven dynamic skip (Phase 1 stripped_too_short → Phase 4 direct). `decisions[]` orchestration audit log.
+- **Cross-plugin orchestration** — `/second-claude-code:unblock` slash command. Auto-router patterns in `hooks/prompt-detect.mjs` (Korean + English, narrowed triggers to avoid false positives on `403` / `긁어` etc.). `skills/research/SKILL.md` falls back to unblock on blocked URLs. `agents/eevee.md` researcher invokes unblock on WebFetch failures.
+- **Auto-install** — first-run discovery and one-shot install of `curl-impersonate`, `lightpanda`, `yt-dlp`, `playwright` when each phase needs them. Failure to install is logged and the chain proceeds — never blocks.
+- **Bias-check enforcement** — `tests/skills/unblock/no-brand-hardcode.test.mjs` greps `engine/**` for forbidden brand names with word-boundary matching, allowlisting only the documented Phase 0a public-API routing modules.
+- **References** — `skills/unblock/references/` covers WAF detection, TLS impersonation, archive fallbacks, and the Eevee fallback flow.
+
+### Changed
+
+- **`skills/research/SKILL.md`** — Web Engine fallback chain now lists unblock between WebFetch and Playwright.
+- **`agents/eevee.md`** — Process step 2 documents the unblock invocation pattern with R5 (read trace before retry) enforcement.
+- **`hooks/prompt-detect.mjs`** — added `unblock` route with English + Korean trigger patterns.
+- **`hooks/session-start.mjs`** — banner advertises 16 commands.
+- **README.md / README.ko.md / CLAUDE.md / docs/architecture.md / docs/architecture.ko.md / docs/orchestrator-architecture.md / docs/orchestrator-architecture.ko.md** — skill catalog adds `unblock`; v1.4.2 → 1.5.0 references updated.
+
+### Verification
+
+- `npm test` — 397 tests (394 pass, 0 fail, 3 skipped with network disabled)
+- Live SSRF guard verified: `http://169.254.169.254/...` and `http://[::ffff:c0a8:0101]/...` both blocked with `ssrf_guard:private_host_blocked`
+- Live HN smoke: Phase 0a wins in 298ms with `schema_version: 1` and `idempotency_key` populated
+- Live GitHub smoke: Phase 0a hits rate-limit 403, chain correctly escalates to Phase 0b Jina Reader
+
 ## [1.4.2] - 2026-05-03
 
 ### Fixed

@@ -187,7 +187,7 @@ Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 
 ---
 
-## 4. 9개 스킬 한눈에 보기
+## 4. 16개 스킬 한눈에 보기
 
 | 이걸 하고 싶으면 | 스킬 | 설명 |
 |---|---|---|
@@ -199,6 +199,7 @@ Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 | URL, 메모, 자료를 저장할 때 | **수집** (`collect`) | PARA 분류 기반 지식 캡처 |
 | 여러 스킬을 자동화할 때 | **워크플로우** (`workflow`) | 스킬 체이닝, 저장/재사용 가능 |
 | 새 스킬을 찾고 싶을 때 | **탐색** (`discover`) | 마켓플레이스 검색, 점수 평가, 승인 후 설치 |
+| WebFetch가 안 풀리는 차단/WAF/캡차 URL | **언블록** (`unblock`) | zero-key 9-phase fetch chain — 공개 API → Jina → curl-impersonate → LightPanda → Playwright → 무료 아카이브 |
 | 리서치부터 퍼블리시까지 전체를 돌릴 때 | **전체 사이클** (`pdca`) | Plan-Do-Check-Act 자동 순환 |
 
 자연어로 말하면 자동 라우팅이 맞는 스킬을 골라줘요. 정확도 약 95%. 직접 지정하고 싶으면 슬래시 명령어(`/second-claude-code:write` 등)를 쓸 수도 있어요.
