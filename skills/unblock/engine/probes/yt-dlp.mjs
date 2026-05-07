@@ -56,6 +56,7 @@ function runYtDlpCombined(bin, url, subDir) {
       "--convert-subs", "srt",
       "--paths", `home:${subDir}`,
       "--print", "after_video:%(subtitles_filepath)s",
+      "--ignore-no-formats-error",
       "--no-warnings",
       "--no-call-home",
       url,
