@@ -98,6 +98,6 @@ Breaking change 없음. v1.4.x 배포는 투명하게 업그레이드.
 
 1. `mcp/lib/*-handlers.mjs`의 **Result-typed gate plumbing**
 2. PDCA Plan/Do/Check 출력에 대한 **frozen, schema-validated phase artifacts**
-3. Plan-entry 게이트로의 **사전 실행 ambiguity scoring** (Big Bang 스타일)
+3. Plan-entry 게이트로의 **사전 실행 ambiguity scoring**
 
 unblock 자체가 아닌 PDCA 레벨 개선 사항.

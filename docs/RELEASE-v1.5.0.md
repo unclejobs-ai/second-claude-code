@@ -99,11 +99,11 @@ prior Jina-only behavior.
 
 ## What's Next
 
-The architecture-review pass surfaced three borrow-worthy patterns deferred
+The architecture review surfaced three borrow-worthy patterns deferred
 to the next milestone:
 
 1. **Result-typed gate plumbing** in `mcp/lib/*-handlers.mjs`
 2. **Frozen, schema-validated phase artifacts** for PDCA Plan/Do/Check outputs
-3. **Pre-execution ambiguity scoring** as a Plan-entry gate (Big Bang style)
+3. **Pre-execution ambiguity scoring** as a Plan-entry gate
 
 These are PDCA-level improvements, not unblock-specific.
