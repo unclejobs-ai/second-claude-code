@@ -236,10 +236,10 @@ If you (the orchestrator) try to call `Agent(subagent_type: "eevee")`, it will f
 # Roles handled inside /scc:research
 researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 3 distinct sources" }
 analyst: { model: sonnet, role: alakazam, purpose: "apply frameworks with evidence, no generic claims" }
-strategist: { model: opus, role: mewtwo, purpose: "strategic synthesis, challenge assumptions" }
+strategist: { model: sonnet, role: mewtwo, purpose: "strategic synthesis, challenge assumptions" }
 
 # Role handled inside /scc:write
-writer: { model: sonnet, role: smeargle, purpose: "produce artifact from plan, skip-research skip-review" }
+writer: { model: opus, role: smeargle, purpose: "produce artifact from plan, skip-research skip-review" }
 
 # Roles handled inside /scc:review (parallel dispatch)
 deep-reviewer: { model: opus, role: xatu, purpose: "thorough quality review with structured critic output" }
@@ -249,10 +249,10 @@ structure-analyst: { model: haiku, role: jigglypuff, purpose: "check organizatio
 consistency-checker: { model: haiku, role: unown, purpose: "cross-reference internal consistency, flag contradictions" }
 
 # Role handled inside /scc:refine
-editor: { model: sonnet, role: ditto, purpose: "apply top 3 fixes per iteration, verify improvement" }
+editor: { model: opus, role: ditto, purpose: "apply top 3 fixes per iteration, verify improvement" }
 
 # Orchestration meta-role (the PDCA orchestrator itself)
-orchestrator: { model: opus, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
+orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
 ```
 
 **How PDCA actually executes**: The orchestrator calls `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` as Skill invocations. Each of those skills internally dispatches the right subagents (`general-purpose`, `code-reviewer`, etc.) using the Agent tool. PDCA never bypasses this layer.

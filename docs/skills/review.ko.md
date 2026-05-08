@@ -53,7 +53,7 @@
 |--------|------|----------|
 | `deep-reviewer` | opus | 논리, 구조, 완성도 |
 | `devil-advocate` | sonnet | 취약점 및 사각지대 |
-| `fact-checker` | haiku | 주장, 수치, 출처 |
+| `fact-checker` | sonnet | 주장, 수치, 출처 |
 | `tone-guardian` | haiku | 문체 및 독자 적합성 |
 | `structure-analyst` | haiku | 구성 및 가독성 |
 

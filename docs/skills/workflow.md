@@ -1,4 +1,4 @@
-# Pipeline
+# Workflow
 
 > Use when chaining multiple /scc commands into a reusable PDCA workflow.
 
@@ -86,7 +86,7 @@ Pipeline definitions use `{{placeholder}}` syntax for values that are resolved a
 Pass arbitrary variables with `--var key=value`:
 
 ```
-/scc:pipeline run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
+/scc:workflow run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 Custom variables are referenced as `{{framework}}`, `{{lang}}`, etc.
@@ -170,7 +170,7 @@ Together they let you automate the full Gather → Produce → Verify → Refine
 
 - **"Variable not resolved" error** -- Check `{{variable}}` spelling in your pipeline definition. Variable names must be alphanumeric plus underscores (`[a-zA-Z_][a-zA-Z0-9_]*`). Ensure the variable is either declared in `"defaults"` or provided via `--topic`, `--output_dir`, or `--var key=value` at runtime.
 - **Step fails mid-pipeline** -- Check the `on_fail` strategy for the failed step. `abort` halts the entire pipeline (default). `skip` moves to the next step. `retry` re-runs the failed step. To resume a halted pipeline, run the same pipeline again -- the orchestrator picks up from the last saved state.
-- **Pipeline not found** -- Verify the pipeline name with `/scc:pipeline list`. Pipeline definitions are stored at `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`.
+- **Pipeline not found** -- Verify the pipeline name with `/scc:workflow list`. Pipeline definitions are stored at `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`.
 - **Unexpected output location** -- Check whether `{{output_dir}}` is set. Without `--output_dir`, all outputs go to the current working directory.
 
 ## Works With

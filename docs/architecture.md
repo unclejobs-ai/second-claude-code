@@ -2,145 +2,6 @@
 
 # Architecture
 
-## What's New in 1.4.0
-
-**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through three layers:
-
-### Layer 1: Runtime Plugin Discovery
-
-`hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json` at session start and inspects each plugin's filesystem:
-
-```
-Plugin filesystem          → Capability extraction
-─────────────────────────────────────────────────
-.claude-plugin/plugin.json → name, version, description, mcpServers
-skills/*/SKILL.md          → skill names + descriptions (frontmatter parsed)
-commands/*.md              → command names + descriptions
-agents/*.md                → agent names
-.mcp.json                  → alternative MCP server declarations
-```
-
-No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls them. The capability map is rebuilt every session.
-
-### Layer 2: Intent Scoring and Dispatch Planning
-
-`getDispatchPlan()` converts a keyword or PDCA phase into an intent profile, scores every installed plugin skill/command, and returns ranked invocation instructions:
-
-| Input | Intent | Current top dispatch with the verified plugin set |
-|-------|--------|---------------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit-code-review` |
-| `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
-
-Preferred-plugin scoring keeps common lifecycle intents stable, while generic scoring still lets newly installed plugins win when their skill or command text strongly matches the prompt. Short keywords use word-boundary checks so `bug` does not accidentally match `debugging`.
-
-### Layer 3: Proactive Auto-Dispatch
-
-The orchestrator operates at three touchpoints:
-
-```
-User types "리뷰해줘"
-  ↓
-prompt-detect hook (UserPromptSubmit)
-  ├── Calls getDispatchPlan(keyword="리뷰해줘")
-  ├── Top dispatch: Skill: coderabbit-code-review
-  └── Injects [ORCHESTRATOR]: invoke that Skill before self-processing
-  ↓
-External plugin result returns
-  ↓
-Claude integrates result into the final answer
-```
-
-PDCA still uses the same dispatcher when a full cycle enters a phase:
-
-```
-PDCA enters Check phase
-  ├── orchestrator_route phase=check
-  ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── Auto-dispatches top pick: "Skill: coderabbit-code-review"
-  ↓
-Result returned → PDCA proceeds to Act phase
-  ├── orchestrator_route phase=act
-  └── Auto-dispatches: "/commit-commands:commit"
-```
-
-### MCP Tools (orchestrator_*)
-
-| Tool | Purpose | Auto-Dispatch |
-|------|---------|---------------|
-| `orchestrator_list_plugins` | Full ecosystem inventory | No |
-| `orchestrator_get_plugin` | Single plugin deep inspection | No |
-| `orchestrator_route` | Keyword/phase → matching plugins | **Yes** — returns `Skill:` strings |
-| `orchestrator_health` | Ecosystem readiness check | No |
-
-### New Subsystems
-
-```
-hooks/lib/plugin-discovery.mjs       — Filesystem scanner + capability mapper + dispatch guide generator
-mcp/lib/orchestrator-handlers.mjs    — 4 MCP tool handler implementations
-```
-
-### What Changed in Session-Start
-
-The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin Dispatch** section that pre-computes per-phase routing:
-
-```
-## Active Plugin Dispatch
-📋 plan → Skill: claude-mem-knowledge-agent
-🔨 do → Skill: frontend-design-frontend-design
-🔍 check → Skill: coderabbit-code-review
-🚀 act → /commit-commands:commit
-```
-
-### What Changed in prompt-detect
-
-The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. In addition, prompt-detect now calls `getDispatchPlan()` for each substantive prompt. If the top external match is a known lifecycle intent or a strong generic plugin match, it injects an `[ORCHESTRATOR]` instruction that requires invoking that Skill/command before self-processing. When plugins change, both the guide and the immediate dispatch target change automatically.
-
----
-
-## What's New in 1.3.0
-
-PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
-
-1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
-2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
-3. **Hard Length Floors per Format** — Do gate fails if artifact is below format minimum. 11 formats with calibrated `min_chars`, `target_chars`, `min_sections`. Below floor → sub-skill re-dispatched with specific scope expansion. Generic "make it longer" prompts are explicitly forbidden.
-4. **Plan Brief Floors** — Sources raised from 3 to 5; 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000-char body now mandatory.
-5. **Reviewer Model Diversity Rule** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced for >2 reviewers.
-6. **False Consensus Detection** — All reviewers APPROVED with avg > 0.9 and zero critical findings triggers an automatic adversarial pass with an unused external model before exit.
-7. **5+ Rule (Calibrated AND Logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on a real 4-finding patch set.
-8. **New `domain-pipeline-integration.md`** — 284-line standard for sub-skill input/output contracts, failure handling (4 modes), integration points with adjacent phases.
-9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
-
-Verification cycle (2026-04-07): generic-topic PDCA run achieved 7,981-char Plan brief, 6,962-char Do article, Codex+sonnet diverse reviewers, surfaced 4 P1 findings the v1.0.0 baseline would have missed.
-
-## What's New in 1.0.0
-
-Four changes landed in this release:
-
-1. **Cycle Memory** — New persistence layer (`mcp/lib/cycle-memory.mjs`, 230 lines) stores per-cycle phase markdown, metrics, and cross-cycle insights under `.data/cycles/`. Three new MCP tools (`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`) expose the memory to any MCP client.
-2. **Domain-Aware Contracts** — `pdca_start_run` now accepts a `domain` parameter (`code | content | analysis | pipeline`) that selects stage-specific contracts, Definition of Done criteria, and rollback targets for each phase transition.
-3. **Read-Before-Act Wiring** — `handleStartRun` automatically loads the 10 most recent insights (weight ≥ 0.1) so each new cycle starts with accumulated learnings. `handleTransition` auto-saves phase artifacts to cycle memory. `handleEndRun` persists cycle metrics.
-4. **Self-Evolution** — When a critical insight is recorded 3+ times, `saveInsight` auto-generates a gotcha proposal under `.data/proposals/gotchas-{category}.md`, surfacing repeated failure patterns as reusable checklists.
-
-## What's New in 0.5.3
-
-Three changes landed in this release:
-
-1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing.
-2. **Project memory layer** — session-start can now surface durable project facts separately from `soul` identity memory.
-3. **Runtime boundary guidance** — the plugin now explicitly documents that standalone agent-runtime ideas can be borrowed without embedding a second runtime.
-
-## What's New in 0.5.1
-
-Three changes in this release (on top of 0.5.0):
-
-1. **SubagentStart Hook** — New lifecycle hook (`hooks/subagent-start.mjs`) initializes review session context when subagents spawn. Registered via `hooks.json` on the `SubagentStart` event.
-2. **Agent Model Upgrades** — Eevee (researcher) promoted from haiku to sonnet for deeper research quality. Porygon (fact-checker) promoted from haiku to sonnet for more reliable verification.
-3. **MMBridge Full Integration (Phase 1–3)** — 10 MMBridge commands integrated across all PDCA phases: research, review, security, debate, gate, followup, resume, diff, memory, handoff. See the MMBridge Integration section below.
-
 ## Runtime Boundary
 
 Second Claude Code is intentionally a Claude Code plugin, not a standalone agent runtime.
@@ -150,23 +11,6 @@ Second Claude Code is intentionally a Claude Code plugin, not a standalone agent
 - External skill discovery remains approval-first.
 
 This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the Claude Code execution model.
-
-## What's New in 0.5.0
-
-Two additions shipped in this release (on top of 0.4.0):
-
-1. **Soul System** — 10th skill (`/scc:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
-2. **Playwright MCP** — Optional browser automation server added to `.claude-plugin/plugin.json`. When `WebFetch` fails on a JavaScript-heavy or dynamic URL, the researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree extraction). Gracefully degrades if the server is not installed.
-
-## What's New in 0.4.0
-
-Five major additions shipped in this release:
-
-1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
-2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
-3. **Lifecycle Hooks** — Hook count expanded from 3 to 6 (later 8 in 0.5.1): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. Compaction hooks preserve PDCA state across context compression.
-4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
-5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
 
 ---
 
@@ -235,18 +79,11 @@ second-claude/
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers [NEW 1.4.0]
 │       ├── soul-handlers.mjs          # soul_* tool handlers (inc. retro, synthesis, readiness)
+│       ├── cycle-memory.mjs           # Cycle memory persistence (phase snapshots, insights, metrics)
 │       └── ...                        # pdca-handlers, memory-handlers, etc.
-│   ├── prompt-detect.mjs         # Natural language auto-router (UserPromptSubmit)
-│   ├── session-start.mjs         # Session banner + state init (SessionStart)
-│   ├── subagent-start.mjs        # Review session context init (SubagentStart)
-│   ├── subagent-stop.mjs         # Reviewer consensus aggregation (SubagentStop)
-│   ├── stop-failure.mjs          # Check-phase quality gate (StopFailure)
-│   ├── session-end.mjs           # Session cleanup (Stop)
-│   └── compaction.mjs            # PDCA state snapshot/restore (PreCompact, PostCompact)
 ├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
 ├── scripts/                      # Shell utilities
-├── mcp/lib/cycle-memory.mjs      # Cycle memory persistence (phase snapshots, insights, metrics)
 └── config/                       # User configuration
 ```
 
@@ -317,28 +154,46 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 
 The agents map to the PDCA quality cycle with the Action Router in Act phase:
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                      PDCA Cycle v2                           │
-│                                                              │
-│  Gather (Plan)     → Eevee (researcher), Noctowl (searcher) │
-│    research → analyze  Magnezone (inspector), Abra           │
-│    + Question Protocol (connector)                           │
-│                                                              │
-│  Produce (Do)      → Alakazam (analyst), Mewtwo (strategist) │
-│    pure execution     Smeargle (writer), Arceus              │
-│                       (orchestrator), Machamp (step-executor)│
-│                                                              │
-│  Verify (Check)    → Xatu (deep-reviewer), Absol             │
-│    parallel review    (devil-advocate), Porygon              │
-│                       (fact-checker), Jigglypuff             │
-│                       (tone-guardian), Unown                  │
-│                       (structure-analyst)                    │
-│                                                              │
-│  Refine (Act)      → Ditto (editor)                          │
-│    Action Router:     Route to Plan, Do, or Refine           │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph PLAN["Gather (Plan)"]
+        direction LR
+        P1[Eevee — researcher]
+        P2[Noctowl — searcher]
+        P3[Magnezone — inspector]
+        P4[Abra — connector]
+    end
+
+    subgraph DO["Produce (Do)"]
+        direction LR
+        D1[Alakazam — analyst]
+        D2[Mewtwo — strategist]
+        D3[Smeargle — writer]
+        D4[Arceus — orchestrator]
+        D5[Machamp — step-executor]
+    end
+
+    subgraph CHECK["Verify (Check)"]
+        direction LR
+        C1[Xatu — deep-reviewer]
+        C2[Absol — devil-advocate]
+        C3[Porygon — fact-checker]
+        C4[Jigglypuff — tone-guardian]
+        C5[Unown — structure-analyst]
+    end
+
+    subgraph ACT["Refine (Act)"]
+        direction LR
+        A1[Ditto — editor]
+        AR{Action Router}
+    end
+
+    PLAN -->|"research → analyze + Question Protocol"| DO
+    DO -->|"pure execution"| CHECK
+    CHECK -->|"parallel review"| ACT
+    AR -->|"Plan"| PLAN
+    AR -->|"Do"| DO
+    AR -->|"Refine"| ACT
 ```
 
 Supporting commands reinforce the same loop:
@@ -691,3 +546,166 @@ Max **3 Playwright navigations per research round**. Exceeding the cap triggers 
 `browser_snapshot()` returns a structured accessibility tree rather than raw HTML. Token cost is 80-90% lower than equivalent HTML for the same information. The researcher extracts headings, paragraphs, and table cells directly from the tree — navigation chrome and ads are structurally excluded.
 
 See `skills/research/references/playwright-guide.md` for full tool reference and patterns.
+
+---
+
+<details>
+<summary><strong>Release History</strong></summary>
+
+## What's New in 1.4.0
+
+**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through three layers:
+
+### Layer 1: Runtime Plugin Discovery
+
+`hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json` at session start and inspects each plugin's filesystem:
+
+```
+Plugin filesystem          → Capability extraction
+─────────────────────────────────────────────────
+.claude-plugin/plugin.json → name, version, description, mcpServers
+skills/*/SKILL.md          → skill names + descriptions (frontmatter parsed)
+commands/*.md              → command names + descriptions
+agents/*.md                → agent names
+.mcp.json                  → alternative MCP server declarations
+```
+
+No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls them. The capability map is rebuilt every session.
+
+### Layer 2: Intent Scoring and Dispatch Planning
+
+`getDispatchPlan()` converts a keyword or PDCA phase into an intent profile, scores every installed plugin skill/command, and returns ranked invocation instructions:
+
+| Input | Intent | Current top dispatch with the verified plugin set |
+|-------|--------|---------------------------------------------------|
+| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
+| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
+| `phase=check` | `review` | `Skill: coderabbit-code-review` |
+| `phase=act` | `commit` | `/commit-commands:commit` |
+| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
+
+Preferred-plugin scoring keeps common lifecycle intents stable, while generic scoring still lets newly installed plugins win when their skill or command text strongly matches the prompt. Short keywords use word-boundary checks so `bug` does not accidentally match `debugging`.
+
+### Layer 3: Proactive Auto-Dispatch
+
+The orchestrator operates at three touchpoints:
+
+```
+User types "리뷰해줘"
+  ↓
+prompt-detect hook (UserPromptSubmit)
+  ├── Calls getDispatchPlan(keyword="리뷰해줘")
+  ├── Top dispatch: Skill: coderabbit-code-review
+  └── Injects [ORCHESTRATOR]: invoke that Skill before self-processing
+  ↓
+External plugin result returns
+  ↓
+Claude integrates result into the final answer
+```
+
+PDCA still uses the same dispatcher when a full cycle enters a phase:
+
+```
+PDCA enters Check phase
+  ├── orchestrator_route phase=check
+  ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
+  └── Auto-dispatches top pick: "Skill: coderabbit-code-review"
+  ↓
+Result returned → PDCA proceeds to Act phase
+  ├── orchestrator_route phase=act
+  └── Auto-dispatches: "/commit-commands:commit"
+```
+
+### MCP Tools (orchestrator_*)
+
+| Tool | Purpose | Auto-Dispatch |
+|------|---------|---------------|
+| `orchestrator_list_plugins` | Full ecosystem inventory | No |
+| `orchestrator_get_plugin` | Single plugin deep inspection | No |
+| `orchestrator_route` | Keyword/phase → matching plugins | **Yes** — returns `Skill:` strings |
+| `orchestrator_health` | Ecosystem readiness check | No |
+
+### New Subsystems
+
+```
+hooks/lib/plugin-discovery.mjs       — Filesystem scanner + capability mapper + dispatch guide generator
+mcp/lib/orchestrator-handlers.mjs    — 4 MCP tool handler implementations
+```
+
+### What Changed in Session-Start
+
+The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin Dispatch** section that pre-computes per-phase routing:
+
+```
+## Active Plugin Dispatch
+📋 plan → Skill: claude-mem-knowledge-agent
+🔨 do → Skill: frontend-design-frontend-design
+🔍 check → Skill: coderabbit-code-review
+🚀 act → /commit-commands:commit
+```
+
+### What Changed in prompt-detect
+
+The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. In addition, prompt-detect now calls `getDispatchPlan()` for each substantive prompt. If the top external match is a known lifecycle intent or a strong generic plugin match, it injects an `[ORCHESTRATOR]` instruction that requires invoking that Skill/command before self-processing. When plugins change, both the guide and the immediate dispatch target change automatically.
+
+---
+
+## What's New in 1.3.0
+
+PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
+
+1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
+2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
+3. **Hard Length Floors per Format** — Do gate fails if artifact is below format minimum. 11 formats with calibrated `min_chars`, `target_chars`, `min_sections`. Below floor → sub-skill re-dispatched with specific scope expansion. Generic "make it longer" prompts are explicitly forbidden.
+4. **Plan Brief Floors** — Sources raised from 3 to 5; 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000-char body now mandatory.
+5. **Reviewer Model Diversity Rule** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced for >2 reviewers.
+6. **False Consensus Detection** — All reviewers APPROVED with avg > 0.9 and zero critical findings triggers an automatic adversarial pass with an unused external model before exit.
+7. **5+ Rule (Calibrated AND Logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on a real 4-finding patch set.
+8. **New `domain-pipeline-integration.md`** — 284-line standard for sub-skill input/output contracts, failure handling (4 modes), integration points with adjacent phases.
+9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
+
+Verification cycle (2026-04-07): generic-topic PDCA run achieved 7,981-char Plan brief, 6,962-char Do article, Codex+sonnet diverse reviewers, surfaced 4 P1 findings the v1.0.0 baseline would have missed.
+
+## What's New in 1.0.0
+
+Four changes landed in this release:
+
+1. **Cycle Memory** — New persistence layer (`mcp/lib/cycle-memory.mjs`, 230 lines) stores per-cycle phase markdown, metrics, and cross-cycle insights under `.data/cycles/`. Three new MCP tools (`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`) expose the memory to any MCP client.
+2. **Domain-Aware Contracts** — `pdca_start_run` now accepts a `domain` parameter (`code | content | analysis | pipeline`) that selects stage-specific contracts, Definition of Done criteria, and rollback targets for each phase transition.
+3. **Read-Before-Act Wiring** — `handleStartRun` automatically loads the 10 most recent insights (weight ≥ 0.1) so each new cycle starts with accumulated learnings. `handleTransition` auto-saves phase artifacts to cycle memory. `handleEndRun` persists cycle metrics.
+4. **Self-Evolution** — When a critical insight is recorded 3+ times, `saveInsight` auto-generates a gotcha proposal under `.data/proposals/gotchas-{category}.md`, surfacing repeated failure patterns as reusable checklists.
+
+## What's New in 0.5.3
+
+Three changes landed in this release:
+
+1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing.
+2. **Project memory layer** — session-start can now surface durable project facts separately from `soul` identity memory.
+3. **Runtime boundary guidance** — the plugin now explicitly documents that standalone agent-runtime ideas can be borrowed without embedding a second runtime.
+
+## What's New in 0.5.1
+
+Three changes in this release (on top of 0.5.0):
+
+1. **SubagentStart Hook** — New lifecycle hook (`hooks/subagent-start.mjs`) initializes review session context when subagents spawn. Registered via `hooks.json` on the `SubagentStart` event.
+2. **Agent Model Upgrades** — Eevee (researcher) promoted from haiku to sonnet for deeper research quality. Porygon (fact-checker) promoted from haiku to sonnet for more reliable verification.
+3. **MMBridge Full Integration (Phase 1–3)** — 10 MMBridge commands integrated across all PDCA phases: research, review, security, debate, gate, followup, resume, diff, memory, handoff. See the MMBridge Integration section below.
+
+## What's New in 0.5.0
+
+Two additions shipped in this release (on top of 0.4.0):
+
+1. **Soul System** — 10th skill (`/scc:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
+2. **Playwright MCP** — Optional browser automation server added to `.claude-plugin/plugin.json`. When `WebFetch` fails on a JavaScript-heavy or dynamic URL, the researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree extraction). Gracefully degrades if the server is not installed.
+
+## What's New in 0.4.0
+
+Five major additions shipped in this release:
+
+1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
+2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
+3. **Lifecycle Hooks** — Hook count expanded from 3 to 6 (later 8 in 0.5.1): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. Compaction hooks preserve PDCA state across context compression.
+4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
+5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
+
+</details>

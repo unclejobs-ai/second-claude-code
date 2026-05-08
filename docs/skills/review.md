@@ -50,7 +50,7 @@ Review this README for quality
 |----------|-------|-------|
 | `deep-reviewer` | opus | Logic, structure, completeness |
 | `devil-advocate` | sonnet | Weakest points and blind spots |
-| `fact-checker` | haiku | Claims, numbers, sources |
+| `fact-checker` | sonnet | Claims, numbers, sources |
 | `tone-guardian` | haiku | Voice and audience fit |
 | `structure-analyst` | haiku | Organization and readability |
 

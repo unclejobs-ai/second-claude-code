@@ -1,6 +1,6 @@
-[English](pipeline.md) | **한국어**
+[English](workflow.md) | **한국어**
 
-# Pipeline
+# Workflow
 
 > 여러 /scc 명령을 재사용 가능한 워크플로우로 연결하는 스킬입니다.
 
@@ -10,7 +10,7 @@
 /second-claude-code:workflow create "weekly-report" --steps research,analyze,write
 ```
 
-**동작 방식:** 스킬이 3단계 순차 실행의 JSON 정의를 생성하고, 각 단계의 출력 선언과 `input_from` 참조의 호환성을 검증한 뒤 파이프라인을 저장합니다. `/scc:pipeline run "weekly-report" --topic "edge computing"`을 실행하면 모든 `{{variable}}` 플레이스홀더를 먼저 해석한 후, 각 단계를 새로운 서브에이전트로 실행하며 데이터를 파일을 통해 전달합니다.
+**동작 방식:** 스킬이 3단계 순차 실행의 JSON 정의를 생성하고, 각 단계의 출력 선언과 `input_from` 참조의 호환성을 검증한 뒤 파이프라인을 저장합니다. `/scc:workflow run "weekly-report" --topic "edge computing"`을 실행하면 모든 `{{variable}}` 플레이스홀더를 먼저 해석한 후, 각 단계를 새로운 서브에이전트로 실행하며 데이터를 파일을 통해 전달합니다.
 
 ## 실전 예시
 
@@ -88,7 +88,7 @@
 `--var key=value`로 임의의 변수를 전달합니다:
 
 ```
-/scc:pipeline run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
+/scc:workflow run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 커스텀 변수는 `{{framework}}`, `{{lang}}` 등으로 참조합니다.
@@ -171,7 +171,7 @@ graph TD
 
 - **"변수가 해석되지 않음" 오류** -- 파이프라인 정의의 `{{variable}}` 철자를 확인하세요. 변수 이름은 영숫자와 밑줄만 허용됩니다(`[a-zA-Z_][a-zA-Z0-9_]*`). `"defaults"`에 선언되어 있거나 `--topic`, `--output_dir`, `--var key=value`로 제공되는지 확인하세요.
 - **단계가 중간에 실패** -- 실패한 단계의 `on_fail` 전략을 확인하세요. `abort`(기본값)는 전체 파이프라인을 중단합니다. `skip`은 다음 단계로 넘어갑니다. `retry`는 실패한 단계를 재실행합니다. 중단된 파이프라인을 재개하려면 동일한 파이프라인을 다시 실행하세요 -- 오케스트레이터가 마지막 저장 상태부터 이어갑니다.
-- **파이프라인을 찾을 수 없음** -- `/scc:pipeline list`로 파이프라인 이름을 확인하세요. 정의 파일은 `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`에 저장됩니다.
+- **파이프라인을 찾을 수 없음** -- `/scc:workflow list`로 파이프라인 이름을 확인하세요. 정의 파일은 `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`에 저장됩니다.
 - **예상과 다른 출력 위치** -- `{{output_dir}}`이 설정되었는지 확인하세요. `--output_dir` 없이 실행하면 모든 출력은 현재 작업 디렉토리로 갑니다.
 
 ## 연동 스킬

@@ -105,22 +105,35 @@ function matchesAny(value, patterns) {
  *   - Base score for first match: 0.5
  *   - Each additional match:     +0.15 (diminishing)
  *   - Multi-word pattern bonus:  +0.1  per multi-word match (capped contribution)
- *   - Position bonus:            +0.1  if earliest match is in first 100 chars
+ *   - Korean pattern bonus:      +0.1  if any Korean pattern matched (not negated)
+ *   - Position bonus:            +0.1  if earliest match is in first 200 chars
  *
  * The result is clamped to [0.0, 1.0].
  */
+const KOREAN_NEGATION = /(?:안 |않|없|아닌|아니|못 |필요 없|안돼|안됨|이미 .{0,4}했|이미 .{0,4}됐|.{0,2}졌어|.{0,2}됐어)/;
+
+function isNegatedAt(value, pos, patternLen) {
+  const windowStart = Math.max(0, pos - 10);
+  const windowEnd = Math.min(value.length, pos + patternLen + 6);
+  const context = value.slice(windowStart, windowEnd);
+  return KOREAN_NEGATION.test(context);
+}
+
 function computeRouteConfidence(value, patterns) {
   let matchCount = 0;
   let multiWordMatches = 0;
+  let koreanMatches = 0;
   let earliestPos = Infinity;
 
   for (const p of patterns) {
     const pos = value.indexOf(p);
     if (pos !== -1) {
+      const isKorean = /[가-힯]/.test(p);
+      if (isKorean && isNegatedAt(value, pos, p.length)) continue;
       matchCount++;
       if (pos < earliestPos) earliestPos = pos;
-      // A pattern with a space is multi-word → more specific
       if (p.includes(" ")) multiWordMatches++;
+      if (isKorean) koreanMatches++;
     }
   }
 
@@ -129,7 +142,8 @@ function computeRouteConfidence(value, patterns) {
   let score = 0.5;                                         // base for first match
   score += Math.min((matchCount - 1) * 0.15, 0.3);        // additional matches
   score += Math.min(multiWordMatches * 0.1, 0.2);         // specificity bonus
-  if (earliestPos < 100) score += 0.1;                     // position bonus
+  if (koreanMatches > 0) score += 0.1;                     // Korean patterns are inherently specific
+  if (earliestPos < 200) score += 0.1;                     // position bonus (relaxed from 100 to 200)
 
   const confidence = Math.min(Math.max(score, 0), 1);
   return { confidence: Math.round(confidence * 100) / 100, matchCount, earliestPos };
@@ -221,6 +235,7 @@ const ENGINEERING_PATTERNS = [
   /\bdebug\b/,
   /\bbug\b/,
   /(?:^|[\s(])[\w./-]+\.(?:ts|tsx|js|jsx|mjs|cjs|py|go|rs|java)\b/,
+  /코드/, /함수/, /컴포넌트/, /변수/, /타입/, /에러/, /빌드/,
 ];
 
 const WORKFLOW_KNOWLEDGE_PATTERNS = [
@@ -263,6 +278,7 @@ const KNOWLEDGE_INTENT_PATTERNS = [
   /\bnewsletter\b/, /\barticle about\b/, /\bcard news\b/,
   /조사/, /리서치/, /찾아봐/, /알아봐/, /분석/, /리뷰/, /검토/,
   /뉴스레터/, /보고서/, /아티클/, /전략/, /개선/, /다듬/,
+  /살펴봐/, /파악/, /정리해/, /알아보고/, /찾아보고/,
 ];
 
 // Strong engineering patterns — these indicate actual engineering work and should
@@ -319,6 +335,7 @@ try {
 // ──────────────────────────────────────────────
 
 const pdcaCompound = [
+  // Korean formal
   { pattern: "알아보고", phases: "full" },
   { pattern: "조사하고", phases: "full" },
   { pattern: "조사해서", phases: "full" },
@@ -328,8 +345,21 @@ const pdcaCompound = [
   { pattern: "리뷰하고 개선", phases: "check+act" },
   { pattern: "알아봐서 정리", phases: "full" },
   { pattern: "찾아보고 정리", phases: "full" },
+  // Korean casual/colloquial (multi-phase intent only — single verbs stay in ko.* single-skill)
+  { pattern: "분석부터", phases: "full" },
+  { pattern: "분석 먼저", phases: "full" },
+  { pattern: "분석해서 정리", phases: "full" },
+  { pattern: "알아보고 써", phases: "full" },
+  { pattern: "찾아보고 써", phases: "full" },
+  { pattern: "봐보고 정리", phases: "full" },
+  { pattern: "확인하고 정리", phases: "full" },
+  { pattern: "검토해서 고쳐", phases: "check+act" },
+  { pattern: "봐서 고쳐", phases: "check+act" },
+  { pattern: "봐주고 개선", phases: "check+act" },
+  // English
   { pattern: "research and write", phases: "full" },
   { pattern: "research and analyze", phases: "plan+do" },
+  { pattern: "research then write", phases: "full" },
   { pattern: "investigate and report", phases: "full" },
   { pattern: "review and improve", phases: "check+act" },
   { pattern: "review and fix", phases: "check+act" },
@@ -339,6 +369,8 @@ const pdcaCompound = [
   { pattern: "full report on", phases: "full" },
   { pattern: "full analysis of", phases: "full" },
   { pattern: "comprehensive report", phases: "full" },
+  { pattern: "look into and summarize", phases: "full" },
+  { pattern: "dig into and report", phases: "full" },
 ];
 
 let pdcaResult = { confidence: 0, matchCount: 0, entry: null };
@@ -388,16 +420,16 @@ if (pdcaResult.confidence >= 0.5 && pdcaResult.entry) {
 // ──────────────────────────────────────────────
 
 const ko = {
-  research: ["조사해", "리서치", "찾아봐", "알아봐", "검색해", "탐색"],
-  write: ["뉴스레터", "보고서", "대본", "아티클", "글 써", "써줘", "작성해", "카드뉴스"],
-  analyze: ["분석해", "전략"],
-  review: ["리뷰", "검토", "품질", "체크", "피드백"],
-  refine: ["개선", "반복", "더 좋게", "다듬어", "다듬"],
-  collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해"],
-  workflow: ["파이프라인", "자동화", "워크플로우"],
-  discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치"],
-  investigate: ["디버그", "버그", "에러", "원인", "실패", "고장", "문제"],
-  translate: ["번역", "번역해", "영어로", "한국어로", "영문으로", "국문으로", "번역해줘"],
+  research: ["조사해", "리서치", "찾아봐", "알아봐", "검색해", "탐색", "조사해봐", "찾아봐봐", "알아봐봐", "서치해", "서칭", "리서치해봐", "조사 좀", "찾아 좀", "알아 좀"],
+  write: ["뉴스레터", "보고서", "대본", "아티클", "글 써", "써줘", "작성해", "카드뉴스", "글 좀", "글 써봐", "작성해봐", "초안", "드래프트", "원고"],
+  analyze: ["분석해", "전략", "분석 좀", "분석해봐", "분석부터", "살펴봐", "파악해"],
+  review: ["리뷰", "검토", "품질", "체크", "피드백", "리뷰해봐", "검토해봐", "체크해봐", "이 글 봐봐", "이 글 봐줘", "내용 봐바", "글 봐바", "글 봐줘"],
+  refine: ["개선", "반복", "더 좋게", "다듬어", "다듬", "고쳐", "고쳐봐", "손봐", "손 좀", "다듬어봐", "수정해", "개선해봐"],
+  collect: ["저장", "캡처", "정리해줘", "메모", "기록", "클리핑", "수집", "수집해", "모아", "모아봐", "정리 좀"],
+  workflow: ["파이프라인", "자동화", "워크플로우", "자동으로"],
+  discover: ["스킬 찾아", "어떤 스킬", "스킬 있어", "새로운 스킬", "스킬 설치", "뭐 있어", "기능 찾아"],
+  investigate: ["디버그", "버그", "에러", "원인", "실패", "고장", "문제", "왜 안돼", "안되는데", "안 되는데", "왜 이래", "뭐가 문제"],
+  translate: ["번역", "번역해", "영어로", "한국어로", "영문으로", "국문으로", "번역해줘", "번역 좀", "번역해봐"],
   unblock: ["차단됨", "안 열려", "안열려", "본문 못", "캡차", "긁어줘", "긁어줄", "스크래핑 우회", "차단 우회", "사이트 우회", "url 우회"],
 };
 
