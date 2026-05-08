@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "This one article covers everything" → STOP. Single-source = blind spots. Depth minimums (3/5/10) exist for a reason.
+- "I already know the answer, just need a citation" → STOP. Confirmation bias produces cherry-picked sources.
+- "Source is from 2022 but topic hasn't changed" → STOP. Staleness must be verified, not assumed.
+- "Skip the analyst step, just list links" → STOP. Raw link dumps without gap analysis are rejected.
+- "Page was blocked so I'll summarize from the URL title" → STOP. Use fallback chain (Jina → Playwright → Gaps), never hallucinate from metadata.
 
 # Research
 
@@ -126,7 +126,7 @@ When `--interactive` is set, skip Jina/WebFetch and use Playwright for every URL
 ## Subagents
 
 ```yaml
-researcher: { model: sonnet, tools: [Bash, WebSearch, WebFetch, browser_navigate, browser_snapshot], constraint: "use Jina Search via Bash/curl when $JINA_API_KEY is set; fall back to WebSearch+WebFetch otherwise; meet depth minimums, vary phrasing, validate fetched content, flag staleness; Playwright tools optional — use only when Jina and WebFetch both fail or --interactive set; max 3 Playwright navigations per round" }
+researcher: { model: sonnet, tools: [Bash, WebSearch, WebFetch, browser_navigate, browser_snapshot], constraint: "Jina Search when $JINA_API_KEY set, else WebSearch+WebFetch; meet depth minimums, vary phrasing, validate content, flag staleness; Playwright only when Jina+WebFetch both fail; max 3 navigations" }
 analyst: { model: sonnet, tools: [], constraint: "produce gap list, flag data conflicts, verify coverage requirements" }
 writer: { model: sonnet, tools: [], constraint: "every claim needs a source, no invented URLs, include conflict annotations" }
 ```

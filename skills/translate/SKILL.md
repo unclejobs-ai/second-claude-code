@@ -10,11 +10,11 @@ effort: medium
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "I'll translate it word by word to be safe" → STOP, because literal translation is only appropriate in `--style literal` mode — the default is `natural`, which restructures for fluency.
+- "Korean doesn't have an equivalent for this idiom, I'll keep it in English" → STOP, because `creative` mode adapts cultural references and `natural` mode finds idiomatic equivalents — only `literal` mode preserves source idioms.
+- "I'll just pick a style as I go" → STOP, because the Iron Law requires specifying the style mode (literal/natural/creative) before starting — never begin without it.
+- "The code block has comments, I should translate those too" → STOP, because code inside fences and backticks is never translated — only surrounding prose and comments outside code blocks may be translated in `creative` mode.
+- "존댓말 and 반말 both work here" → STOP, because mixing speech levels within a single translation is forbidden — pick one level (default 해요체) and maintain it throughout.
 
 # Translate
 

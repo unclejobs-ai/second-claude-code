@@ -10,11 +10,11 @@ effort: low
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "This package looks useful, let me install it" → STOP, because installation requires explicit user approval after scoring — never auto-install.
+- "It has 5000 stars so it must be safe" → STOP, because popularity alone is not safety — check for lifecycle scripts, license, recency, and dependency weight before recommending.
+- "I need an external tool for this" → STOP, because built-in capabilities (Read, WebFetch, Bash) must be checked first — install only when built-ins genuinely cannot handle the task.
+- "The README looks fine, skip the inspection" → STOP, because candidate inspection of the actual SKILL.md/README is mandatory for the top 3 — metadata alone is insufficient.
+- "It scored 2.5 but it's the only option" → STOP, because packages below 3.0 must not be recommended — suggest building a custom pipeline instead.
 
 # Discover
 

@@ -10,11 +10,11 @@ effort: low
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "Just save it, I'll organize it later" → STOP, because every collected item must be PARA-classified at capture time — unclassified dumps rot in storage.
+- "This is related to AI" → STOP, because connections must name a specific principle, pattern, or concept — topic-level connections ("related to AI") fail the quality gate.
+- "I'll create a new entry for this" → STOP, because you must search existing knowledge first — duplicates fragment the knowledge base and waste future search time.
+- "I'll just copy the whole article" → STOP, because the analyst must extract and reduce to exactly 3 key points — verbatim storage is not collection.
+- "The connection is obvious, I don't need a separate agent" → STOP, because the connector must run as a separate subagent without seeing the analyst's framing — inline connection finding introduces bias.
 
 # Collect
 

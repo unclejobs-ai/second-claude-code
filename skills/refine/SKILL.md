@@ -10,11 +10,11 @@ effort: medium
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "I fixed the wording but the meaning is basically the same" → STOP, because refinement must preserve the author's intent — changing meaning during polish is an unauthorized rewrite.
+- "The score went up so the fix must be good" → STOP, because you must compare verdicts between iterations, not just scores — a higher score with new Critical findings is a regression.
+- "Let me do one more pass, I can make it even better" → STOP, because the plateau rule (same verdict for 2 consecutive iterations) exists to prevent infinite loops — stop when improvement stalls.
+- "I'll skip the completion gate, the last review was already APPROVED" → STOP, because the final `/scc:review --preset quick` check is mandatory — never declare done without it.
+- "The reviewers disagreed so I'll just pick the feedback I like" → STOP, because reviewer consensus drives refinement priority — Critical and Major findings from any reviewer must be addressed before Minor ones.
 
 # Refine
 

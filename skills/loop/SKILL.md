@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "Let's just run it and see what happens" → STOP, because the Iron Law says a loop without a benchmark is meaningless — a fixed suite with numeric scoring must exist before any run.
+- "The new variant feels better" → STOP, because evaluator output must expose a numeric score that can be parsed deterministically — subjective improvement is not a valid promotion signal.
+- "Baseline is close enough, let's promote the candidate" → STOP, because winners are promoted only when the score beats baseline by at least `min_delta` — close is not enough.
+- "I'll mutate the docs and test files too" → STOP, because `.mjs`, `docs/`, `README*`, and `tests/` are excluded from mutation scope — only allowed targets in the suite allowlist may be changed.
+- "One more generation might improve it" → STOP, because the loop must stop when budget is exhausted, `min_delta` is not met, or scores plateau — open-ended iteration wastes tokens without measurable gain.
 
 # Loop
 

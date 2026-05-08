@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-1.5.0-blue)
+![version](https://img.shields.io/badge/version-1.4.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -41,27 +41,6 @@ flowchart TB
 Second Claude Code는 제어 루프입니다. v1.4.0 오케스트레이터는 그 루프 앞에서 설치된 플러그인이 더 적합한 경우 먼저 실행되도록 길을 터줍니다.
 
 ---
-
-## v1.5.0에서 달라진 점
-
-**`unblock` 스킬 — zero-key 적응 fetch chain.** 16번째 스킬. 차단된 URL (4xx / 캡차 / WAF / JS 무거운 SPA) 때문에 리서치 결과가 조용히 손상되던 갭을 닫습니다. Eevee 리서처와 자동 라우터가 이제 9-phase escalation 파이프라인을 호출한 뒤에야 포기합니다.
-
-```
-Phase 0a → 0b → 0c → 0d → 1 → 2 → 3 → 4 → 5 → 6
-공개 API → Jina → yt-dlp → 키워드 → curl 변형 →
-TLS 회전 → LightPanda → Playwright → 무료 아카이브 → 옵션 유료
-```
-
-- **11개 공개 API 라우트** — Reddit, HN, arXiv, Bluesky, GitHub, NPM, Stack Exchange, Wikipedia, Mastodon (모든 호스트), Lemmy (모든 호스트), oEmbed fallback
-- **Phase 2 TLS 다중 회전** — chrome131 → safari17_0 → firefox133, 시도 사이 쿠키 carry
-- **Phase 4 숨겨진 API 발견** — Playwright 네트워크 인터셉트가 HTML 검증 실패해도 내부 JSON endpoint surface
-- **Phase 5 무료 아카이브 클러스터** — Wayback + archive.today + AMP 병렬 race; RSS/Atom 디스커버리; OG-tag 구조
-- **운영 강화** — SSRF 가드가 RFC1918/loopback/클라우드 메타데이터 호스트 거부; `schema_version` + `idempotency_key` 엔벨로프; stagnation 감지가 동일 reason 3회 시 archive로 단축
-- **397 tests** (394 pass, 0 fail, 3 skipped)
-
-전체 릴리스 노트와 검증 요약은 `docs/RELEASE-v1.5.0.ko.md` 참고.
-
-> **이전 v1.4.0...**
 
 ## v1.4.0에서 달라진 점
 
@@ -150,7 +129,7 @@ graph LR
 
 - **테스트 기준선 정리** — 현재 검증 기준은 총 `323`개, `322`개 통과, `1`개 스킵, 실패 `0`개예요
 - **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
-- **16개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
+- **15개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
 - **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
 - **PDCA 결정이 3갈래가 됐어요** — `pdca_transition`이 이제 `PROCEED`, `REFINE`, `PIVOT`를 구분하고, refine/pivot 최대 횟수로 무한루프를 막아요
 - **세션 끝나면 시각화까지 남아요** — 터미널 ANSI 요약 박스가 뜨고, `.data/reports/`에 Mermaid + Chart.js 기반 다크 테마 HTML 리포트가 자동 생성돼요
@@ -181,7 +160,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-16 commands and 16 skills for all knowledge work:
+15 commands and 15 skills for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -216,7 +195,7 @@ Research AI agent frameworks and write a report
 
 ---
 
-## 빠른 시작: 메모리가 있는 첫 PDCA 사이클
+## 첫 PDCA 사이클
 
 v1.0.0부터 PDCA 사이클이 **기억**해요. 이전 사이클에서 뭘 배웠는지 다음 사이클이 알아요.
 
@@ -596,7 +575,6 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | 리서치→작성→리뷰→개선 전체 사이클 | `pdca` | 조사하고 쓰고 검증한 글 — 프롬프트 하나로 |
 | 주제 파기 | `research` | 20개 이상 소스 크롤링, 패턴 분석, 브리프 |
 | SWOT, Porter, RICE 등 15개 프레임워크 | `analyze` | 구조화된 전략 분석 |
-| WebFetch가 안 풀리는 차단/WAF/캡차 URL 가져오기 | `unblock` | 9-phase zero-key fetch chain — 공개 API → Jina → curl-impersonate → LightPanda → Playwright → 무료 아카이브 → 옵션 paid |
 | 아티클, 보고서, 뉴스레터 | `write` | 리서치 + 초안 + 리뷰가 한 명령어로 |
 | 3~5명 관점에서 초안 리뷰 | `review` | 병렬 리뷰 + 합의 투표 |
 | 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 — `--dod`로 성공 기준 체크리스트 지원 |
@@ -710,7 +688,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 대부분의 AI 도구는 수동적이에요 — 시키면 해요. Second Claude Code는 품질에 대한 의견이 있고, 그걸 강제해요. 세 가지 생각이 전부를 관통해요.
 
-**스킬 16개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 16개 중 하나가 알아서 잡아요.
+**스킬 15개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 15개 중 하나가 알아서 잡아요.
 
 **모든 산출물은 리뷰를 거쳐요.** 이건 권장이 아니에요. 품질 게이트가 건너뛰기를 막아요. 합의 게이트를 안 통과한 초안은 물리적으로 저한테 안 와요.
 
@@ -877,129 +855,6 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 <details>
 <summary><strong>변경 이력</strong></summary>
 
-### v1.0.0 — PDCA 사이클 메모리, 도메인 완성, 24개 MCP 도구
-
-- **PDCA Cycle Memory** — `.data/cycles/`에 사이클별 구조화 저장 (`mcp/lib/cycle-memory.mjs`, 240+ 줄)
-  - 사이클별 디렉토리에 페이즈 마크다운 (plan/do/check/act.md), events.jsonl, metrics.json
-  - Zero-context 표준: 각 파일이 이전 컨텍스트 없이 독립적으로 읽힘
-  - 30일 시간 감쇠 (가중치 1.0 → 0.0)
-  - 카테고리 분류 (process/technical/quality) + 심각도 (info/warning/critical)
-  - Critical 인사이트 3회 반복 시 `.data/proposals/`에 gotchas 제안 자동 생성 (append, 덮어쓰기 안 함)
-  - `cycle_id` 검증 (정수 0–9999, 경로 순회 방지)
-  - 깨진 JSON 상태 파일에 대한 graceful fallback
-- **MCP 도구 3개 추가**: `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights` (총 24개)
-- **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 `code`, `content`, `analysis`, `pipeline` 4개 도메인 × 4개 페이즈에 I/O 계약, DoD, 롤백 대상을 정의
-- **MCP 핸들러 테스트 커버리지** — cycle-memory (14), daemon-handlers (6), session-handlers (4), loop-handlers (4), pdca-analytics (6) 등 8개 신규 테스트 파일
-- 총 테스트: 194 → 323개 (`322` 통과, `1` 스킵)
-
-### v0.9.0 — 시각화, 추적, 릴리스 하드닝
-
-- **311개 테스트 기준선** — 현재 스위트는 총 **323개** (`322` 통과, `1` 스킵)
-- **MetaClaw PRM effectiveness tracker** — PRM 에이전트 효과를 추적하는 관측 지표 추가
-- **시각화 레이어** — 세션 종료 시 ANSI 요약 박스 + HTML cycle report 자동 생성
-- **보안/안정성 수정** — HTML injection, ENOENT, stdin fd `0` 처리 이슈 정리
-
-### v0.8.0 — Runtime Contracts, MMBridge, Anti-Fabrication
-
-- **Stage Contracts 런타임 연결** — `loadContracts`, `getDoD`, `getPhaseContract`가 도메인별 계약을 실제 전환에 반영
-- **합의 게이트 수정** — `Math.round` 기준 2/3 보정, score + vote 듀얼 게이트, 프리셋 threshold 정리
-- **Optional MMBridge MCP 등록** — `.claude-plugin/plugin.json`에서 `mmbridge` 서버를 선택 등록 가능
-- **MMBridge Adapter Protocol** — `Cli`, `Stub`, `Recording` 어댑터 추가
-- **Anti-Fabrication 레이어** — `hooks/lib/fact-checker.mjs`로 숫자 주장 검증 강화
-
-### v0.7.0 — 레이스 방지와 루프 하드닝
-
-- **File Mutation Queue** — 리뷰어 집계 레이스를 막는 cross-process 락/큐 추가
-- **MAD confidence scoring** — 벤치마크 결과를 strong / marginal / noise로 분류
-- **Loop budget 제한** — loop-runner에 cost/time 상한 추가
-- **Iterative Compaction** — 압축 중에도 이전 요약과 핵심 인사이트를 보존
-- **3-way decision** — `pdca_transition`이 `PROCEED`, `REFINE`, `PIVOT`를 구분
-
-### v0.6.0 — 스킬 가드레일과 페이즈 계약
-
-- **Iron Laws + Red Flags** — 16개 스킬 전체에 강한 운영 규칙 추가
-- **Stage Contracts** — `config/stage-contracts.json` 도입, code vs content 경로 분리
-- **워크플로우 보존 수정** — compaction 중 `workflow-active.json` 보존, session-start에서 전체 커맨드 복원
-- **회귀 테스트 보강** — `subagent-stop`, `compaction`, `subagent-start`, `stop-failure` 범위 테스트 추가
-
-### v0.5.7 — MCP 테스트 스위트, 신뢰도 점수, 학술 프리셋
-
-- **MCP 서버 테스트 스위트 (72개)** — pdca-state-server 전체 커버리지 (전환, 게이트, 분석, 엣지 케이스)
-- **`pdca_list_runs` 도구** — MCP 상태 서버에서 PDCA 실행 이력 조회
-- **`auto_gate` on `pdca_transition`** — 페이즈 전환 시 자동 게이트 평가
-- **학술 리뷰 프리셋** — 학술 논문 및 연구 산출물 전용 리뷰어 구성
-- **신뢰도 점수(confidence scoring)** — 라우팅 결정에 신뢰도 점수 포함, 관찰성 강화
-- **라우팅 수정 소울 관찰** — 소울 시스템이 라우팅 수정을 캡처하여 장기 학습에 반영
-- **벤치마크 CI** — CI 파이프라인에 자동화된 벤치마크 스위트 추가
-- **P0 수정** — package.json 정렬, 감사 정리, 스킬 카운트 수정, 메타데이터 수정, CI MCP 커버리지, 라우팅 가드 수정
-- 총 테스트: 87 → 194개
-
-### v0.5.5 — MMBridge CLI 정합성, 참조 파일 정리, 스킬 완성도
-
-- **MMBridge CLI 정합성** — mmbridge v0.6.3 CLI에 맞게 전체 스킬의 호출 패턴 수정. `--export`는 `review` 전용으로 정리하고, 나머지 커맨드는 `--json`, `--write`, stdout 리다이렉트를 올바르게 사용
-- **참조 파일 중복 해소** — 최상위 `references/`와 스킬별 `references/` 사이에 내용이 갈라진 5쌍을 최신 버전 기준으로 동기화
-- **mmbridge-integration.md 전면 개편** — 잘못된 범용 `--export` 패턴을 커맨드별 호출 테이블로 교체. `resume`(120s), `embrace`(600s) 커맨드 추가
-- **PDCA Subagents 섹션** — `pdca` SKILL.md에 11개 에이전트 YAML 블록 추가 (유일하게 빠져있던 스킬)
-- **MMBridge Embrace 연동** — `pdca` 스킬에 `mmbridge embrace` 풀사이클 멀티모델 가속 문서화 (`--depth deep` 전용)
-- **Soul 템플릿 추가** — `developer`, `writer`, `researcher` 3개 템플릿 신규 생성 (기존 `default`만 존재)
-- **잔여 CLI 수정** — `check-phase.md`의 `mmbridge gate` 호출, `plan-phase.md`의 `mmbridge memory search` 플래그 정정
-
-### v0.5.4 — 데몬 하드닝, 라우팅 가드레일, 릴리스 정렬
-
-- **데몬 하드닝** — background run ID를 경로 안전하게 제한하고 daemon job/run 조회 표면을 CLI와 MCP에 노출
-- **프로젝트 메모리 신뢰 경계** — instruction-like 메모리 항목은 세션 시작 주입 전에 차단하거나 redaction
-- **라우팅 가드레일** — workflow 스케줄링/recall 프롬프트는 정확히 라우팅하고 엔지니어링 프롬프트는 지식작업 스킬로 오탐되지 않게 조정
-- **알림 fallback 유지** — daemon heartbeat가 있어도 stdout 기반 알림 전달 계약을 계속 유지
-- **상태 호환성 + 릴리스 정렬** — legacy `pipeline-active.json` resume 지원 복원 및 marketplace/plugin 버전 표면 재정렬
-
-### v0.5.3 — 컴패니언 데몬 기반, 프로젝트 메모리 경계
-
-- **컴패니언 데몬 기반** — 스케줄링, 백그라운드 실행, 알림 라우팅, 리콜 인덱싱을 위한 로컬 데몬 CLI와 상태 헬퍼 추가
-- **프로젝트 메모리 레이어** — 세션 시작 시 `soul`과 분리된 프로젝트 사실 컨텍스트를 주입할 수 있게 정리
-- **Hermes 경계 문서화** — 외부 런타임 아이디어는 차용하되 플러그인 안에 두 번째 에이전트 런타임을 넣지 않는다는 원칙 명시
-
-### v0.5.1 — 에이전트 승격, MMBridge 전면 통합
-
-- **SubagentStart 훅** — 에이전트 생성 시 리뷰 세션 컨텍스트 자동 주입
-- **에이전트 모델 승격** — 이브이(리서처), 폴리곤(팩트체커) haiku → sonnet
-- **MMBridge 전면 통합 (Phase 1-3)** — PDCA 전 페이즈에 10개 커맨드 통합
-- **라이프사이클 훅 8개** (기존 7개) — SubagentStart, StopFailure 추가
-- 모델 분포: 4 opus / 9 sonnet / 4 haiku (기존 4/7/6)
-
-### v0.5.0 — Soul System, Batch, 이벤트 소싱
-
-- **Dynamic Soul System** — 3가지 메모리 모드: manual / learning / hybrid. 세션을 거치며 사용자를 이해하고 행동을 조정해요
-- **Batch 병렬 분해** — 대형 작업을 독립 단위로 자동 분해 후 병렬 실행, 결과 재합성. `batch` 스킬이 오케스트레이션 담당
-- **이벤트 소싱 + 애널리틱스** — PDCA 사이클 전체 이벤트 로그. 히스토리 쿼리, 실패 패턴 분석, 크래시 후 재개 지원
-- **Playwright 동적 웹 리서치** — JavaScript 기반 페이지 실행, 현대 SaaS/SPA 리서치 정상화
-- **채널 알림** — Slack, Telegram, 이메일로 완료 알림 발송
-- **7개 라이프사이클 훅** — 각 PDCA 페이즈 pre/post 훅 + 크래시 복구
-- **21개 MCP 도구** — PDCA 상태, 애널리틱스, soul/project memory, daemon control, session recall 표면
-- **17마리 포켓몬 서브에이전트** — 3개 모델 티어(4 opus / 7 sonnet / 6 haiku)
-- **신규 스킬 2개**: `soul`, `batch`
-
-### v0.3.0 — PDCA v2, 액션 라우터, 포켓몬 에이전트
-
-- **PDCA v2 오케스트레이터** + 액션 라우터 — 리뷰 실패를 근본원인별로 라우팅
-- **질문 프로토콜** — PDCA가 리서치 전에 명확화 질문 (`--no-questions`로 생략 가능)
-- **16마리 포켓몬 서브에이전트** — 3개 모델 티어(opus/sonnet/haiku)
-- **5명 병렬 리뷰어** + 합의 게이트 + 5개 프리셋
-- **훅 기반 자동 라우팅** — 영어 ~77개 + 한국어 ~50개 트리거 패턴
-- **자동 캡처** — 결과물을 `.captures/`에 자동 저장
-- **19개 라우팅 테스트** — false positive 커버리지
-
-### v0.2.0 — 보안 강화, 영어 로컬라이제이션
-
-- 훅·스킬 전반 보안 강화 (13개 감사 소견 해결)
-- 전체 스킬 문서 및 README 영어 번역
-- `claude plugin add` 설치를 위한 마켓플레이스 매니페스트
-- 전 스킬 품질 강화 (8개 도메인 스킬 9/10 목표; v0.3.0에서 pdca를 9번째로 승격)
-
-### v0.1.0 — 최초 릴리스
-
-- 도메인 스킬 8개 + 오케스트레이터 1개
-- `/analyze`용 15개 전략 프레임워크
-- PARA 기반 지식 수집
-- 반복 가능한 워크플로우를 위한 파이프라인 빌더
+자세한 변경사항은 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.
 
 </details>

@@ -10,11 +10,11 @@ effort: medium
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "Looks good to me, no issues found" → STOP, because a review with zero findings is almost always a rubber stamp — at minimum the devil-advocate must attack 3 weak points.
+- "I'll just run the quick preset, it's not important" → STOP, because preset selection determines reviewer coverage — match the preset to the content type, not the deadline.
+- "The fact-checker verified it" → STOP, because fact-checker findings require source URLs — claims verified without citations are not verified at all.
+- "One reviewer flagged it but the others didn't, so it's fine" → STOP, because severity conflicts use the higher severity with a noted disagreement — do not downgrade by vote count alone.
+- "The location is somewhere in section 2" → STOP, because every finding must have a precise location (file:line for code, Section > Subsection for prose) — vague locations make findings unactionable.
 
 # Review
 

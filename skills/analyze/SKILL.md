@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "Let's use SWOT, it always works" → STOP. Framework must fit the problem, not habit.
+- "Everyone knows they're the market leader" → STOP. Reputation ≠ evidence. Need 3+ data points per section.
+- "The challenge round found nothing" → STOP. A challenge that confirms everything is a rubber stamp.
+- "I'll fill in the weaker sections later" → STOP. Uneven depth hides gaps.
+- "Data doesn't support it but the conclusion feels right" → STOP. Evidence determines the conclusion.
 
 # Analyze
 

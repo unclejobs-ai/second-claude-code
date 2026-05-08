@@ -10,11 +10,11 @@ effort: medium
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "I think I know what's wrong, let me just fix it" → STOP, because the Iron Law requires root cause investigation first — guessing without evidence leads to masked bugs.
+- "Let me try another approach" → STOP, because the 3-Strike Rule says 3 consecutive wrong hypotheses means ask the user for more context, not guess further.
+- "It's probably a race condition" → STOP, because every hypothesis must be stated explicitly and tested minimally before acting — "probably" is not a root cause.
+- "Quick fix for now, proper fix later" → STOP, because this is always the wrong approach — investigate first, fix the confirmed cause, write the regression test.
+- "The fix only touches one file so no need for a regression test" → STOP, because every confirmed fix gets a regression test immediately — do not ask, just write it.
 
 # Investigate
 

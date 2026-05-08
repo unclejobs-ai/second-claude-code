@@ -10,11 +10,11 @@ effort: medium
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "I'll test the steps after building the full workflow" → STOP, because the Iron Law says validate the manual workflow before automating — run each step individually first.
+- "Step 3 can use step 2's output from memory" → STOP, because steps pass data through files, never memory — shared memory between steps does not exist.
+- "This 12-step workflow covers everything" → STOP, because the maximum is 10 steps — split oversized workflows into smaller pipelines.
+- "Step A references step C which references step A, but it should work" → STOP, because circular dependencies are detected and rejected at create-time — restructure the dependency graph.
+- "I'll add the topic variable at runtime" → STOP, because every `{{variable}}` must resolve before execution starts — unresolved tokens abort the run.
 
 # Workflow
 

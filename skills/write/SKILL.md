@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "I'll skip the research step, I know enough about this topic" → STOP, because writing without sources falls back to training knowledge silently — warn the user or provide `--input`.
+- "The review found issues but they're minor, ship it" → STOP, because Critical and Major findings must be addressed before output — review is mandatory, not advisory.
+- "I'll figure out the format as I go" → STOP, because the format spec file must be loaded before drafting — writing without it produces structure drift.
+- "This is only 800 words but it covers everything" → STOP, because format minimums (newsletter 2000, article 3000, report 4000) are hard rules — negotiate length with the user, never silently truncate.
+- "The voice doesn't matter for this piece" → STOP, because tone inconsistency is the top reader-trust killer — load the voice guide and verify the voice checklist before finalizing.
 
 # Write
 

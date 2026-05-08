@@ -2,165 +2,15 @@
 
 # 아키텍처
 
-## 1.4.0 변경사항 — 크로스-플러그인 오케스트레이션
+## 런타임 경계
 
-Second Claude Code가 이제 당신의 Claude Code에 설치된 **모든 플러그인을 실시간으로 찾아내고 명령**합니다. 세 개 레이어로 동작합니다.
+Second Claude Code는 의도적으로 Claude Code 플러그인이지, 독립 실행 에이전트 런타임이 아닙니다.
 
-### 레이어 1: 런타임 플러그인 탐지
+- `soul`은 사용자 선호와 행동 패턴을 위한 영속 정체성 레이어입니다.
+- 프로젝트 리콜은 PDCA 복구 상태, MMBridge 메모리, 핸드오프 아티팩트, 세션 재개에 속합니다.
+- 외부 스킬 탐색은 승인-우선 방식을 유지합니다.
 
-`hooks/lib/plugin-discovery.mjs`가 세션 시작 시 `~/.claude/plugins/installed_plugins.json`을 스캔하고 각 플러그인의 파일시스템을 검사:
-
-```
-플러그인 파일시스템          → 추출되는 능력
-─────────────────────────────────────────────
-.claude-plugin/plugin.json  → 이름, 버전, 설명, mcpServers
-skills/*/SKILL.md           → 스킬명 + 설명 (frontmatter 파싱)
-commands/*.md               → 커맨드명 + 설명
-agents/*.md                 → 에이전트명
-.mcp.json                   → 대체 MCP 서버 선언
-```
-
-하드코딩 레지스트리 없음. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. Capability map은 매 세션 재구축.
-
-### 레이어 2: 의도 점수화와 디스패치 계획
-
-`getDispatchPlan()`은 키워드나 PDCA 페이즈를 intent profile로 바꾸고, 설치된 모든 플러그인의 스킬/커맨드를 점수화한 뒤 정렬된 호출 지시를 반환해요.
-
-| 입력 | 의도 | 현재 검증된 플러그인 세트의 1순위 디스패치 |
-|------|------|--------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit-code-review` |
-| `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
-
-자주 쓰는 생명주기 의도는 preferred-plugin 점수로 안정화하고, 일반 프롬프트도 설치된 플러그인 skill/command 텍스트와 강하게 맞으면 외부 capability가 이깁니다. 짧은 키워드는 단어 경계 기반으로만 매칭해서 `bug`가 `debugging` 안에 들어 있다는 이유로 잘못 라우팅되지 않게 했어요.
-
-### 레이어 3: 능동적 자동 디스패치
-
-```
-사용자: "코드 리뷰해줘"
-  ↓
-prompt-detect 훅 (UserPromptSubmit)
-  ├── getDispatchPlan(keyword="리뷰해줘") 호출
-  ├── 1순위 디스패치: Skill: coderabbit-code-review
-  └── [ORCHESTRATOR] 주입: 자체 처리 전 해당 Skill 호출
-  ↓
-외부 플러그인 결과 반환
-  ↓
-Claude가 결과를 최종 답변에 통합
-```
-
-전체 PDCA 사이클이 페이즈에 진입할 때도 같은 디스패처를 씁니다.
-
-```
-PDCA Check 페이즈 진입
-  ├── orchestrator_route phase=check
-  ├── 탐지 결과: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── 자동 디스패치: "Skill: coderabbit-code-review"
-  ↓
-결과 반환 → PDCA Act 페이즈로
-  ├── orchestrator_route phase=act
-  └── 자동 디스패치: "/commit-commands:commit"
-```
-
-### 신규 MCP 도구
-
-| 도구 | 목적 | 자동 디스패치 |
-|------|------|-------------|
-| `orchestrator_list_plugins` | 전체 생태계 인벤토리 | 아니오 |
-| `orchestrator_get_plugin` | 단일 플러그인 상세 | 아니오 |
-| `orchestrator_route` | 키워드/페이즈 → 매칭 플러그인 | **예** — `Skill:` 문자열 반환 |
-| `orchestrator_health` | 생태계 건전성 점검 | 아니오 |
-
-### 신규 서브시스템
-
-```
-hooks/lib/plugin-discovery.mjs       — 파일시스템 스캐너 + capability 매퍼 + 디스패치 가이드 생성기
-mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
-```
-
-### SessionStart 변경사항
-
-예전의 수동적인 "Plugin Orchestrator" 목록 대신 **Active Plugin Dispatch** 섹션이 들어갑니다. 설치된 플러그인 기준으로 페이즈별 1순위 디스패치를 미리 보여줘요.
-
-```
-📋 plan → Skill: claude-mem-knowledge-agent
-🔨 do → Skill: frontend-design-frontend-design
-🔍 check → Skill: coderabbit-code-review
-🚀 act → /commit-commands:commit
-```
-
-### prompt-detect 변경사항
-
-예전의 하드코딩된 `<skill-check>` 블록은 `generateDispatchGuide()`가 만든 실시간 라우팅 테이블로 바뀌었습니다. 추가로 prompt-detect는 실질적인 프롬프트마다 `getDispatchPlan()`을 호출합니다. 1순위 외부 매칭이 생명주기 의도이거나 강한 일반 플러그인 매칭이면, 자체 처리 전에 해당 Skill/command를 먼저 호출하라는 `[ORCHESTRATOR]` 지시를 주입합니다. 플러그인이 바뀌면 가이드와 즉시 디스패치 대상도 같이 바뀝니다.
-
-### 소울 피드백 바인딩 (Phase 5)
-
-- `soul_retro` — git shipping 메트릭 수집 (커밋 수, streak, peak hours, 트렌드 감지)
-- `soul_get_synthesis_context` — synthesis 단계용 관측 데이터 준비
-- `soul_get_readiness` — synthesis 임계값 도달 여부 확인 (관측 30건 또는 세션 10회)
-- 세션 시작 시 시각적 진행 게이지 + retro 요약 + synthesis CTA 주입
-
----
-
-## 1.3.0 변경사항
-
-PDCA 하드 게이트 릴리스. PDCA 오케스트레이터에 9개 구체 강화를 박아서, v1.0.0의 약한 게이트로 셀프 처리 fallback과 sparse 출력이 슬쩍 통과하던 구조적 구멍을 막았어요.
-
-1. **PDCA가 메인 오케스트레이터 (아키텍처 명확화)** — Sub-skill(`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`)은 PDCA의 Do 페이즈 안에서 호출되는 빌딩 블록이지 PDCA를 대체하는 게 아닙니다. Sub-skill 내부 멀티 페이즈 파이프라인은 PDCA의 Do 안에서 돌아가고, sub-skill 자체 계약으로 게이팅되며, PDCA의 Plan + Check + Act가 그 위아래를 감싸요.
-2. **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 그리디 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`. 가장 specialized한 sub-skill이 항상 우선이고, specialized가 있을 때 generic으로 가는 건 절대 금지.
-3. **포맷별 길이 floor 강제** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 11개 포맷에 보정된 `min_chars`, `target_chars`, `min_sections`. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치. Generic "더 길게 써" 프롬프트는 명시적으로 금지돼요.
-4. **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새로 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
-5. **리뷰어 모델 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. >2 리뷰어일 때 diversity score ≥ 0.6.
-6. **False consensus 감지** — 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
-7. **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정.
-8. **새 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점을 정의한 284줄 표준.
-9. **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능.
-
-검증 사이클 (2026-04-07): generic 토픽 PDCA 실행으로 7,981자 Plan brief, 6,962자 Do 아티클, Codex+sonnet 다양 리뷰어, v1.0.0 baseline에서는 놓쳤을 4 P1 findings 발견.
-
-## 1.0.0 변경사항
-
-이번 릴리스에는 네 가지가 추가됐어요.
-
-1. **사이클 메모리** — 새로운 영속 레이어(`mcp/lib/cycle-memory.mjs`, 230줄)가 사이클별 페이즈 마크다운, 메트릭스, 교차 사이클 인사이트를 `.data/cycles/`에 저장해요. 3개의 새 MCP 도구(`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`)가 메모리를 MCP 클라이언트에 노출해요.
-2. **도메인 인식 계약** — `pdca_start_run`이 이제 `domain` 매개변수(`code | content | analysis | pipeline`)를 받아서 페이즈 전환마다 단계별 계약, 완료 정의(DoD), 롤백 대상을 선택해요.
-3. **Read-Before-Act 연결** — `handleStartRun`이 자동으로 최근 10개 인사이트(가중치 ≥ 0.1)를 불러와서 각 새 사이클이 축적된 학습으로 시작해요. `handleTransition`이 페이즈 아티팩트를 자동 저장하고, `handleEndRun`이 사이클 메트릭스를 영속해요.
-4. **자기 진화** — 치명적 인사이트가 3회 이상 기록되면 `saveInsight`가 `.data/proposals/gotchas-{category}.md`에 주의사항 제안을 자동 생성해서 반복되는 실패 패턴을 재사용 가능한 체크리스트로 표면화해요.
-
-## 0.5.3 변경사항
-
-이번 릴리스에는 세 가지가 추가됐어요.
-
-1. **컴패니언 데몬 기반** — 스케줄링, 백그라운드 실행, 알림 라우팅, 세션 리콜 인덱싱을 위한 로컬 데몬 헬퍼와 CLI 진입점을 추가했어요.
-2. **프로젝트 메모리 레이어** — 세션 시작 시 `soul`과 별도로 지속되는 프로젝트 사실 컨텍스트를 보여줄 수 있게 정리했어요.
-3. **런타임 경계 문서화** — 독립 실행 에이전트 런타임의 아이디어는 차용하더라도, 플러그인 안에 두 번째 런타임은 넣지 않는다고 명시했어요.
-
-## 0.5.1 변경사항
-
-이번 릴리스에 세 가지가 바뀌었어요.
-
-1. **SubagentStart 훅** — 서브에이전트가 생성될 때 리뷰 세션 컨텍스트를 주입하는 라이프사이클 훅(`hooks/subagent-start.mjs`)이 추가됐어요. `hooks.json`의 `SubagentStart` 이벤트에 등록돼 있어요.
-2. **에이전트 모델 승격** — 이브이(Eevee, 리서처)가 haiku에서 sonnet으로, 폴리곤(Porygon, 팩트체커)이 haiku에서 sonnet으로 올라갔어요. 리서치 품질과 검증 정확도를 높이기 위한 변경이에요.
-3. **MMBridge 전면 통합 (Phase 1-3)** — 10개 MMBridge 커맨드가 PDCA 전 페이즈에 걸쳐 통합됐어요: research, review, security, debate, gate, followup, resume, diff, memory, handoff. 아래 MMBridge 통합 섹션에서 자세히 다뤄요.
-
-## 0.5.0 변경사항
-
-두 가지가 추가됐어요.
-
-1. **Soul 시스템** — 10번째 스킬(`/scc:soul`)이 사용자의 정체성 프로필을 구축하고 유지해요. 목소리, 톤 규칙, 안티패턴 정보가 write 스킬과 tone-guardian 리뷰어에 주입돼요.
-2. **Playwright MCP** — 선택적 브라우저 자동화 서버가 `.claude-plugin/plugin.json`에 추가됐어요. `WebFetch`가 JavaScript 기반 동적 URL에서 실패하면 리서처 에이전트가 `browser_navigate` + `browser_snapshot`(접근성 트리 추출)으로 대체해요. 서버가 설치돼 있지 않으면 조용히 건너뛰어요.
-
-## 0.4.0 변경사항
-
-다섯 가지가 추가됐어요.
-
-1. **MCP 상태 서버** — 6개 도구를 제공하는 stdio MCP 서버(`mcp/pdca-state-server.mjs`)가 PDCA 상태를 MCP 클라이언트에 노출해요. 도구: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
-2. **Critic 스키마 + 점수 기반 합의** — 리뷰어가 구조화된 JSON(0.0-1.0 점수, 심각도 태그 소견)을 출력해요. 합의 게이트가 투표 수 기반에서 점수 기반으로 바뀌었어요: 평균 0.7 이상 + Critical 소견 없음 = APPROVED.
-3. **라이프사이클 훅** — 훅이 3개에서 6개로 늘어났어요(0.5.1에서 8개): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. 컴팩션 훅이 컨텍스트 압축 시 PDCA 상태를 보존해요.
-4. **StuckDetector** — Plan Churn, Check Avoidance, Scope Creep 같은 안티패턴을 페이즈 전환마다 감지해요. 사이클이 헛바퀴 도는 걸 사전에 막아줘요.
-5. **Worktree 격리** — Do 페이즈가 격리된 `git worktree`에서 실행돼요. APPROVED 판정이면 머지하고, MUST FIX면 버려요. 불완전한 작업이 메인 브랜치를 오염시키지 않아요.
+이 경계는 의도적입니다. Hermes 스타일 런타임 기능에서 개별 서브시스템에 영감을 받을 수 있지만, 플러그인이 Claude Code 실행 모델 안에 두 번째 에이전트 OS를 내장해서는 안 됩니다.
 
 ---
 
@@ -317,28 +167,46 @@ second-claude/
 
 에이전트가 PDCA 품질 사이클에 어떻게 배치되는지, Act 페이즈의 액션 라우터가 어떻게 분기하는지 보여줘요.
 
-```
-┌──────────────────────────────────────────────────────────────┐
-│                      PDCA Cycle v2                           │
-│                                                              │
-│  Gather (Plan)     → 이브이(리서처), 야부엉(서처)            │
-│    research → analyze  자포코일(인스펙터), 캐이시             │
-│    + 질문 프로토콜     (커넥터)                               │
-│                                                              │
-│  Produce (Do)      → 후딘(애널리스트), 뮤츠(전략가)          │
-│    순수 실행           루브도(라이터), 아르세우스              │
-│                        (오케스트레이터), 괴력몬(스텝 실행)    │
-│                                                              │
-│  Verify (Check)    → 네이티오(심층 리뷰어), 앱솔              │
-│    병렬 리뷰           (데빌 어드보킷), 폴리곤                │
-│                        (팩트체커), 푸린                       │
-│                        (톤 가디언), 안농                      │
-│                        (구조 분석가)                          │
-│                                                              │
-│  Refine (Act)      → 메타몽(에디터)                           │
-│    액션 라우터:        Plan, Do, Refine 중 하나로 분기        │
-│                                                              │
-└──────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph PLAN["Gather (Plan)"]
+        direction LR
+        P1["이브이(Eevee) — 리서처"]
+        P2["야부엉(Noctowl) — 서처"]
+        P3["자포코일(Magnezone) — 인스펙터"]
+        P4["캐이시(Abra) — 커넥터"]
+    end
+
+    subgraph DO["Produce (Do)"]
+        direction LR
+        D1["후딘(Alakazam) — 애널리스트"]
+        D2["뮤츠(Mewtwo) — 전략가"]
+        D3["루브도(Smeargle) — 라이터"]
+        D4["아르세우스(Arceus) — 오케스트레이터"]
+        D5["괴력몬(Machamp) — 스텝 실행"]
+    end
+
+    subgraph CHECK["Verify (Check)"]
+        direction LR
+        C1["네이티오(Xatu) — 심층 리뷰어"]
+        C2["앱솔(Absol) — 데빌 어드보킷"]
+        C3["폴리곤(Porygon) — 팩트체커"]
+        C4["푸린(Jigglypuff) — 톤 가디언"]
+        C5["안농(Unown) — 구조 분석가"]
+    end
+
+    subgraph ACT["Refine (Act)"]
+        direction LR
+        A1["메타몽(Ditto) — 에디터"]
+        AR{"액션 라우터"}
+    end
+
+    PLAN -->|"research → analyze + 질문 프로토콜"| DO
+    DO -->|"순수 실행"| CHECK
+    CHECK -->|"병렬 리뷰"| ACT
+    AR -->|"Plan"| PLAN
+    AR -->|"Do"| DO
+    AR -->|"Refine"| ACT
 ```
 
 보조 커맨드도 같은 루프를 따라가요:
@@ -699,3 +567,170 @@ MMBridge CLI가 여러 PDCA 페이즈에 걸쳐 멀티모델 AI 기능을 제공
 |------|------|----------|------|
 | `pdca-state` | stdio | 필수 | 31개 도구로 PDCA 상태, 사이클 메모리, Soul, 프로젝트 메모리, 데몬, 세션 리콜, 플러그인 오케스트레이션 관리 |
 | `playwright` | stdio | 선택 | Chromium 브라우저를 통한 JavaScript 렌더링 페이지 접근 |
+
+---
+
+<details>
+<summary><strong>릴리스 히스토리</strong></summary>
+
+## 1.4.0 변경사항 — 크로스-플러그인 오케스트레이션
+
+Second Claude Code가 이제 당신의 Claude Code에 설치된 **모든 플러그인을 실시간으로 찾아내고 명령**합니다. 세 개 레이어로 동작합니다.
+
+### 레이어 1: 런타임 플러그인 탐지
+
+`hooks/lib/plugin-discovery.mjs`가 세션 시작 시 `~/.claude/plugins/installed_plugins.json`을 스캔하고 각 플러그인의 파일시스템을 검사:
+
+```
+플러그인 파일시스템          → 추출되는 능력
+─────────────────────────────────────────────
+.claude-plugin/plugin.json  → 이름, 버전, 설명, mcpServers
+skills/*/SKILL.md           → 스킬명 + 설명 (frontmatter 파싱)
+commands/*.md               → 커맨드명 + 설명
+agents/*.md                 → 에이전트명
+.mcp.json                   → 대체 MCP 서버 선언
+```
+
+하드코딩 레지스트리 없음. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. Capability map은 매 세션 재구축.
+
+### 레이어 2: 의도 점수화와 디스패치 계획
+
+`getDispatchPlan()`은 키워드나 PDCA 페이즈를 intent profile로 바꾸고, 설치된 모든 플러그인의 스킬/커맨드를 점수화한 뒤 정렬된 호출 지시를 반환해요.
+
+| 입력 | 의도 | 현재 검증된 플러그인 세트의 1순위 디스패치 |
+|------|------|--------------------------------------------|
+| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
+| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
+| `phase=check` | `review` | `Skill: coderabbit-code-review` |
+| `phase=act` | `commit` | `/commit-commands:commit` |
+| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
+
+자주 쓰는 생명주기 의도는 preferred-plugin 점수로 안정화하고, 일반 프롬프트도 설치된 플러그인 skill/command 텍스트와 강하게 맞으면 외부 capability가 이깁니다. 짧은 키워드는 단어 경계 기반으로만 매칭해서 `bug`가 `debugging` 안에 들어 있다는 이유로 잘못 라우팅되지 않게 했어요.
+
+### 레이어 3: 능동적 자동 디스패치
+
+```
+사용자: "코드 리뷰해줘"
+  ↓
+prompt-detect 훅 (UserPromptSubmit)
+  ├── getDispatchPlan(keyword="리뷰해줘") 호출
+  ├── 1순위 디스패치: Skill: coderabbit-code-review
+  └── [ORCHESTRATOR] 주입: 자체 처리 전 해당 Skill 호출
+  ↓
+외부 플러그인 결과 반환
+  ↓
+Claude가 결과를 최종 답변에 통합
+```
+
+전체 PDCA 사이클이 페이즈에 진입할 때도 같은 디스패처를 씁니다.
+
+```
+PDCA Check 페이즈 진입
+  ├── orchestrator_route phase=check
+  ├── 탐지 결과: coderabbit (code-review), codex (review), agent-teams (team-review)
+  └── 자동 디스패치: "Skill: coderabbit-code-review"
+  ↓
+결과 반환 → PDCA Act 페이즈로
+  ├── orchestrator_route phase=act
+  └── 자동 디스패치: "/commit-commands:commit"
+```
+
+### 신규 MCP 도구
+
+| 도구 | 목적 | 자동 디스패치 |
+|------|------|-------------|
+| `orchestrator_list_plugins` | 전체 생태계 인벤토리 | 아니오 |
+| `orchestrator_get_plugin` | 단일 플러그인 상세 | 아니오 |
+| `orchestrator_route` | 키워드/페이즈 → 매칭 플러그인 | **예** — `Skill:` 문자열 반환 |
+| `orchestrator_health` | 생태계 건전성 점검 | 아니오 |
+
+### 신규 서브시스템
+
+```
+hooks/lib/plugin-discovery.mjs       — 파일시스템 스캐너 + capability 매퍼 + 디스패치 가이드 생성기
+mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
+```
+
+### SessionStart 변경사항
+
+예전의 수동적인 "Plugin Orchestrator" 목록 대신 **Active Plugin Dispatch** 섹션이 들어갑니다. 설치된 플러그인 기준으로 페이즈별 1순위 디스패치를 미리 보여줘요.
+
+```
+📋 plan → Skill: claude-mem-knowledge-agent
+🔨 do → Skill: frontend-design-frontend-design
+🔍 check → Skill: coderabbit-code-review
+🚀 act → /commit-commands:commit
+```
+
+### prompt-detect 변경사항
+
+예전의 하드코딩된 `<skill-check>` 블록은 `generateDispatchGuide()`가 만든 실시간 라우팅 테이블로 바뀌었습니다. 추가로 prompt-detect는 실질적인 프롬프트마다 `getDispatchPlan()`을 호출합니다. 1순위 외부 매칭이 생명주기 의도이거나 강한 일반 플러그인 매칭이면, 자체 처리 전에 해당 Skill/command를 먼저 호출하라는 `[ORCHESTRATOR]` 지시를 주입합니다. 플러그인이 바뀌면 가이드와 즉시 디스패치 대상도 같이 바뀝니다.
+
+### 소울 피드백 바인딩 (Phase 5)
+
+- `soul_retro` — git shipping 메트릭 수집 (커밋 수, streak, peak hours, 트렌드 감지)
+- `soul_get_synthesis_context` — synthesis 단계용 관측 데이터 준비
+- `soul_get_readiness` — synthesis 임계값 도달 여부 확인 (관측 30건 또는 세션 10회)
+- 세션 시작 시 시각적 진행 게이지 + retro 요약 + synthesis CTA 주입
+
+---
+
+## 1.3.0 변경사항
+
+PDCA 하드 게이트 릴리스. PDCA 오케스트레이터에 9개 구체 강화를 박아서, v1.0.0의 약한 게이트로 셀프 처리 fallback과 sparse 출력이 슬쩍 통과하던 구조적 구멍을 막았어요.
+
+1. **PDCA가 메인 오케스트레이터 (아키텍처 명확화)** — Sub-skill(`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`)은 PDCA의 Do 페이즈 안에서 호출되는 빌딩 블록이지 PDCA를 대체하는 게 아닙니다. Sub-skill 내부 멀티 페이즈 파이프라인은 PDCA의 Do 안에서 돌아가고, sub-skill 자체 계약으로 게이팅되며, PDCA의 Plan + Check + Act가 그 위아래를 감싸요.
+2. **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 그리디 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`. 가장 specialized한 sub-skill이 항상 우선이고, specialized가 있을 때 generic으로 가는 건 절대 금지.
+3. **포맷별 길이 floor 강제** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 11개 포맷에 보정된 `min_chars`, `target_chars`, `min_sections`. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치. Generic "더 길게 써" 프롬프트는 명시적으로 금지돼요.
+4. **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새로 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
+5. **리뷰어 모델 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. >2 리뷰어일 때 diversity score ≥ 0.6.
+6. **False consensus 감지** — 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
+7. **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정.
+8. **새 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점을 정의한 284줄 표준.
+9. **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능.
+
+검증 사이클 (2026-04-07): generic 토픽 PDCA 실행으로 7,981자 Plan brief, 6,962자 Do 아티클, Codex+sonnet 다양 리뷰어, v1.0.0 baseline에서는 놓쳤을 4 P1 findings 발견.
+
+## 1.0.0 변경사항
+
+이번 릴리스에는 네 가지가 추가됐어요.
+
+1. **사이클 메모리** — 새로운 영속 레이어(`mcp/lib/cycle-memory.mjs`, 230줄)가 사이클별 페이즈 마크다운, 메트릭스, 교차 사이클 인사이트를 `.data/cycles/`에 저장해요. 3개의 새 MCP 도구(`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`)가 메모리를 MCP 클라이언트에 노출해요.
+2. **도메인 인식 계약** — `pdca_start_run`이 이제 `domain` 매개변수(`code | content | analysis | pipeline`)를 받아서 페이즈 전환마다 단계별 계약, 완료 정의(DoD), 롤백 대상을 선택해요.
+3. **Read-Before-Act 연결** — `handleStartRun`이 자동으로 최근 10개 인사이트(가중치 ≥ 0.1)를 불러와서 각 새 사이클이 축적된 학습으로 시작해요. `handleTransition`이 페이즈 아티팩트를 자동 저장하고, `handleEndRun`이 사이클 메트릭스를 영속해요.
+4. **자기 진화** — 치명적 인사이트가 3회 이상 기록되면 `saveInsight`가 `.data/proposals/gotchas-{category}.md`에 주의사항 제안을 자동 생성해서 반복되는 실패 패턴을 재사용 가능한 체크리스트로 표면화해요.
+
+## 0.5.3 변경사항
+
+이번 릴리스에는 세 가지가 추가됐어요.
+
+1. **컴패니언 데몬 기반** — 스케줄링, 백그라운드 실행, 알림 라우팅, 세션 리콜 인덱싱을 위한 로컬 데몬 헬퍼와 CLI 진입점을 추가했어요.
+2. **프로젝트 메모리 레이어** — 세션 시작 시 `soul`과 별도로 지속되는 프로젝트 사실 컨텍스트를 보여줄 수 있게 정리했어요.
+3. **런타임 경계 문서화** — 독립 실행 에이전트 런타임의 아이디어는 차용하더라도, 플러그인 안에 두 번째 런타임은 넣지 않는다고 명시했어요.
+
+## 0.5.1 변경사항
+
+이번 릴리스에 세 가지가 바뀌었어요.
+
+1. **SubagentStart 훅** — 서브에이전트가 생성될 때 리뷰 세션 컨텍스트를 주입하는 라이프사이클 훅(`hooks/subagent-start.mjs`)이 추가됐어요. `hooks.json`의 `SubagentStart` 이벤트에 등록돼 있어요.
+2. **에이전트 모델 승격** — 이브이(Eevee, 리서처)가 haiku에서 sonnet으로, 폴리곤(Porygon, 팩트체커)이 haiku에서 sonnet으로 올라갔어요. 리서치 품질과 검증 정확도를 높이기 위한 변경이에요.
+3. **MMBridge 전면 통합 (Phase 1-3)** — 10개 MMBridge 커맨드가 PDCA 전 페이즈에 걸쳐 통합됐어요: research, review, security, debate, gate, followup, resume, diff, memory, handoff. 아래 MMBridge 통합 섹션에서 자세히 다뤄요.
+
+## 0.5.0 변경사항
+
+두 가지가 추가됐어요.
+
+1. **Soul 시스템** — 10번째 스킬(`/scc:soul`)이 사용자의 정체성 프로필을 구축하고 유지해요. 목소리, 톤 규칙, 안티패턴 정보가 write 스킬과 tone-guardian 리뷰어에 주입돼요.
+2. **Playwright MCP** — 선택적 브라우저 자동화 서버가 `.claude-plugin/plugin.json`에 추가됐어요. `WebFetch`가 JavaScript 기반 동적 URL에서 실패하면 리서처 에이전트가 `browser_navigate` + `browser_snapshot`(접근성 트리 추출)으로 대체해요. 서버가 설치돼 있지 않으면 조용히 건너뛰어요.
+
+## 0.4.0 변경사항
+
+다섯 가지가 추가됐어요.
+
+1. **MCP 상태 서버** — 6개 도구를 제공하는 stdio MCP 서버(`mcp/pdca-state-server.mjs`)가 PDCA 상태를 MCP 클라이언트에 노출해요. 도구: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
+2. **Critic 스키마 + 점수 기반 합의** — 리뷰어가 구조화된 JSON(0.0-1.0 점수, 심각도 태그 소견)을 출력해요. 합의 게이트가 투표 수 기반에서 점수 기반으로 바뀌었어요: 평균 0.7 이상 + Critical 소견 없음 = APPROVED.
+3. **라이프사이클 훅** — 훅이 3개에서 6개로 늘어났어요(0.5.1에서 8개): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. 컴팩션 훅이 컨텍스트 압축 시 PDCA 상태를 보존해요.
+4. **StuckDetector** — Plan Churn, Check Avoidance, Scope Creep 같은 안티패턴을 페이즈 전환마다 감지해요. 사이클이 헛바퀴 도는 걸 사전에 막아줘요.
+5. **Worktree 격리** — Do 페이즈가 격리된 `git worktree`에서 실행돼요. APPROVED 판정이면 머지하고, MUST FIX면 버려요. 불완전한 작업이 메인 브랜치를 오염시키지 않아요.
+
+</details>

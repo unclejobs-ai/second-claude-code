@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "These tasks look independent enough" → STOP, because hidden output dependencies only surface after parallel dispatch wastes the full budget — verify independence rigorously before execution.
+- "Part 2 builds on part 1's conclusion but we can still batch them" → STOP, because inherent sequencing means this is not a batch job — route to `workflow` instead.
+- "Let's skip the approval step, the decomposition is obvious" → STOP, because the Approve gate is mandatory with no exceptions — decomposition errors are cheap to fix before execution and expensive after.
+- "10 units is fine, we have the budget" → STOP, because cost scales linearly (10 units = 10x a single invocation) — always show estimated cost at the Approve gate and get explicit approval.
+- "2 units failed but the other 8 are fine, just discard the failures" → STOP, because partial failure requires a clear failure report with error summaries and recommended actions — do not silently drop failed units.
 
 # Batch
 

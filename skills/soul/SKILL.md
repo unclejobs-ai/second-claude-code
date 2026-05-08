@@ -10,11 +10,11 @@ effort: high
 
 ## Red Flags
 
-- "I can write tests later" → STOP. Write them now.
-- "This change is too small to review" → STOP. Small bugs become P0 incidents.
-- "I don't need to check previous cycle insights" → STOP. You will repeat the same mistake.
-- "This is good enough" → STOP. Check the checklist.
-- "No time to follow every step" → STOP. Skipped steps cost 3x more later.
+- "They seem like a detail-oriented person" → STOP, because generic descriptions that could apply to any knowledge worker are rejected — every dimension needs 2+ evidence citations from actual observations.
+- "They were direct last time and verbose this time, so they're inconsistent" → STOP, because contradictions become conditional rules ("direct in chat, verbose in reports"), not averages — context determines the pattern.
+- "I noticed they mentioned their health situation" → STOP, because medical data, financial details, relationship status, and political/religious beliefs must never be recorded — log "sensitive signal omitted" without content.
+- "5 observations should be enough to synthesize a profile" → STOP, because the minimum threshold is 10 sessions OR 30 observations — premature synthesis produces unreliable profiles.
+- "The soul profile shifted significantly but the new version is clearly better" → STOP, because >30% drift in any dimension requires explicit user acknowledgment with "SIGNIFICANT DRIFT DETECTED" — never auto-apply large shifts.
 
 # Soul
 
