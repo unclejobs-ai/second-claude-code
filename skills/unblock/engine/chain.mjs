@@ -1,6 +1,7 @@
 import { probePublicApi } from "./probes/public-api.mjs";
 import { probeJinaReader } from "./probes/jina.mjs";
 import { probeYtDlp } from "./probes/yt-dlp.mjs";
+import { probeNativeClean } from "./probes/native-clean.mjs";
 import { probeCurlVariants } from "./probes/curl.mjs";
 import { probeImpersonate } from "./probes/impersonate.mjs";
 import { probeLightpanda } from "./probes/lightpanda.mjs";
@@ -11,6 +12,7 @@ import { probeKeyword } from "./probes/keyword.mjs";
 import { classifyIntent } from "./intent.mjs";
 import { phase0Order, deriveSkips, explain, detectStagnation, idempotencyKey } from "./orchestrator.mjs";
 import { assertPublicUrl } from "./util.mjs";
+import { normalizeIframeHost } from "./transforms.mjs";
 
 const TRACE_SCHEMA_VERSION = 1;
 
@@ -20,6 +22,7 @@ const PHASES = [
   { id: "0a", numeric: 0, label: "public-api",    tier: "free", needsBinary: false, run: probePublicApi },
   { id: "0b", numeric: 0, label: "jina-reader",   tier: "free", needsBinary: false, run: probeJinaReader },
   { id: "0c", numeric: 0, label: "yt-dlp",        tier: "free", needsBinary: true,  run: probeYtDlp },
+  { id: "0d", numeric: 0, label: "native-clean",  tier: "free", needsBinary: false, run: probeNativeClean },
   { id: 1,    numeric: 1, label: "curl-variants", tier: "free", needsBinary: false, run: probeCurlVariants },
   { id: 2,    numeric: 2, label: "impersonate",   tier: "free", needsBinary: true,  run: probeImpersonate },
   { id: 3,    numeric: 3, label: "lightpanda",    tier: "free", needsBinary: true,  run: probeLightpanda },
@@ -55,8 +58,15 @@ export async function runChain(input, opts = {}) {
   const decisions = [];
   let lastPartial = null;
 
+  let workUrl = intent.url;
+  const normalized = normalizeIframeHost(workUrl);
+  if (normalized) {
+    decisions.push(explain("0", "normalize", `${normalized.label}: ${workUrl} → ${normalized.url}`));
+    workUrl = normalized.url;
+  }
+
   // Reorder Phase 0 sub-probes based on URL host priors.
-  const order0 = phase0Order(intent.url);
+  const order0 = phase0Order(workUrl);
   const phaseById = Object.fromEntries(PHASES.map((p) => [String(p.id), p]));
   const reorderedPhases = [
     ...order0.map((id) => phaseById[id]).filter(Boolean),
@@ -79,7 +89,7 @@ export async function runChain(input, opts = {}) {
     }
     let result;
     try {
-      result = await phase.run(intent.url, { ...opts, allowPaid });
+      result = await phase.run(workUrl, { ...opts, allowPaid });
     } catch (err) {
       result = {
         phase: phase.id,
@@ -106,7 +116,7 @@ export async function runChain(input, opts = {}) {
     }
     if (result.status === "ok" && result.content) {
       return finalize({
-        ok: true, url: intent.url, phase: phase.id, probe: result.probe,
+        ok: true, url: workUrl, original_url: intent.url, phase: phase.id, probe: result.probe,
         elapsed_ms: Date.now() - start,
         content: result.content, title: result.title || "", meta: result.meta || {},
         trace, decisions,
@@ -117,7 +127,7 @@ export async function runChain(input, opts = {}) {
 
   if (lastPartial) {
     return finalize({
-      ok: false, url: intent.url, phase: lastPartial.phase, probe: lastPartial.result.probe,
+      ok: false, url: workUrl, original_url: intent.url, phase: lastPartial.phase, probe: lastPartial.result.probe,
       elapsed_ms: Date.now() - start,
       content: lastPartial.result.content,
       title: lastPartial.result.title || "",
@@ -127,7 +137,7 @@ export async function runChain(input, opts = {}) {
   }
 
   return finalize({
-    ok: false, url: intent.url,
+    ok: false, url: workUrl, original_url: intent.url,
     phase: trace[trace.length - 1]?.phase ?? null,
     probe: null, elapsed_ms: Date.now() - start,
     trace, decisions, reason: "all_phases_exhausted",

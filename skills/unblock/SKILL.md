@@ -24,6 +24,7 @@ is failure. The chain stops only when content passes `engine/validate.mjs`.
 | 0a | Public APIs (Reddit, HN, arXiv, Bluesky, GitHub, NPM, oEmbed) | free | yes |
 | 0b | Jina Reader (`r.jina.ai`) | free at 20 RPM | yes |
 | 0c | yt-dlp metadata + subtitles (1800+ media sites) | free | yes (auto-install) |
+| 0d | Native cleaner (host-specific body extractor) | free | yes |
 | 1 | curl with rotating UA × headers × URL transforms | free | yes |
 | 2 | curl-impersonate (TLS spoof) + cookie warming + referrer chain | free | yes (auto-install) |
 | 3 | LightPanda headless | free | yes (auto-install) |
@@ -33,6 +34,40 @@ is failure. The chain stops only when content passes `engine/validate.mjs`.
 
 The chain stops at the first probe whose body passes `validate.mjs`. Phase 6
 never runs implicitly even with env keys present.
+
+### Pre-chain URL normalization
+
+Before any probe runs, hosts that hide their body inside an iframe shell are
+rewritten to their canonical body URL. Example:
+
+- `blog.naver.com/{id}/{logNo}` → `m.blog.naver.com/{id}/{logNo}`
+- `blog.naver.com/PostView.naver?blogId=…&logNo=…` → `m.blog.naver.com/{id}/{logNo}`
+
+The decision is logged to `decisions[]` with `action: "normalize"`. Both the
+rewritten `url` and the caller's `original_url` appear in the result envelope.
+
+## Phase 0d — Native Cleaners
+
+Host-specific body extractors that turn raw HTML into chrome-free markdown
+(no nav, footer, sidebar). Each cleaner:
+
+- Lives in `engine/cleaners/<host>.mjs`
+- Exports `extract(html, url) -> { ok, markdown, title, author, published, blocks, chars }` or returns `null` on no-match
+- Registered in `engine/cleaners/index.mjs` with a host predicate
+
+Phase 0d runs **first** for any URL whose host has a registered cleaner.
+When it succeeds the output is materially cleaner (and faster) than Jina;
+when it fails the chain falls through to 0a → 0b → … as usual.
+
+| Cleaner | Hosts | Selector |
+|---------|-------|----------|
+| `naver` | `*.blog.naver.com` (after normalization → `m.blog.naver.com`) | SmartEditor `se-text-paragraph` / `se-image` / `se-quotation-line` |
+| `tistory` | `*.tistory.com` | `tt_article_useless_p_margin` / `article-view` / `entry-content` |
+| `brunch` | `brunch.co.kr` | `wrap_body` → `wrap_item` / `cont` |
+
+To add a host: write `engine/cleaners/<host>.mjs` exporting an `extract`
+function with the contract above, then register it in
+`engine/cleaners/index.mjs`. The new cleaner is picked up automatically.
 
 ## When to Use
 

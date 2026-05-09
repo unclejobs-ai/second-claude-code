@@ -64,7 +64,7 @@ export async function probeCurlVariants(rawUrl) {
 function curlOnce({ url, ua, platform, mobile, secChUa, noClientHints, acceptLang, referrer }) {
   const headers = [
     ["user-agent", PROFILES.user_agents[ua]],
-    ["accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"],
+    ["accept", "text/html,application/xhtml+xml,text/markdown;q=0.95,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"],
     ["accept-language", acceptLang],
     ["accept-encoding", "gzip, deflate, br, zstd"],
     ["cache-control", "max-age=0"],

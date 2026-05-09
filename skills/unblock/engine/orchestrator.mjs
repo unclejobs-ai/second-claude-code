@@ -1,6 +1,8 @@
 // Orchestrator — picks phase order, races cheap probes, applies signal-driven skip rules.
 // Lives separately from chain.mjs so the "what to run next" decision is testable in isolation.
 
+import { pickCleaner } from "./cleaners/index.mjs";
+
 const VIDEO_HINT_RE = /(youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|twitch\.tv|dailymotion\.com|soundcloud\.com|bilibili\.com|nicovideo\.jp|chzzk\.naver\.com|afreecatv\.com)/i;
 
 const PUBLIC_API_HINT_RE = /(reddit\.com\/r\/[^/]+\/comments|news\.ycombinator\.com\/item|arxiv\.org\/abs|bsky\.app\/profile|github\.com\/[^/]+\/[^/]+|npmjs\.com\/package|wikipedia\.org\/wiki|stackoverflow\.com\/questions|stackexchange\.com\/questions|serverfault\.com\/questions|superuser\.com\/questions|askubuntu\.com\/questions|mathoverflow\.net\/questions|\/api\/v1\/statuses\/\d+|\/post\/\d+)/i;
@@ -9,16 +11,20 @@ export function urlPriors(rawUrl) {
   return {
     isVideo: VIDEO_HINT_RE.test(rawUrl),
     isPublicApi: PUBLIC_API_HINT_RE.test(rawUrl),
+    hasCleaner: Boolean(pickCleaner(rawUrl)),
   };
 }
 
 // Decide which Phase 0 sub-probes to try and in what order.
-// Returns array of phase IDs from {"0a", "0b", "0c"}.
+// Returns array of phase IDs from {"0a", "0b", "0c", "0d"}.
+// Hosts with a registered cleaner run 0d first — chrome-free markdown beats
+// Jina's UI-laden envelope when it works.
 export function phase0Order(rawUrl) {
   const p = urlPriors(rawUrl);
-  if (p.isVideo) return ["0c", "0a", "0b"];
-  if (p.isPublicApi) return ["0a", "0b", "0c"];
-  return ["0a", "0b", "0c"];
+  if (p.hasCleaner) return ["0d", "0a", "0b", "0c"];
+  if (p.isVideo) return ["0c", "0a", "0b", "0d"];
+  if (p.isPublicApi) return ["0a", "0b", "0c", "0d"];
+  return ["0a", "0b", "0c", "0d"];
 }
 
 // After a probe runs, decide which downstream phases should be SKIPPED outright.
