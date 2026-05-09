@@ -3,6 +3,45 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.1] - 2026-05-09
+
+### Added — Unblock Phase 0d native cleaners
+
+- **Phase 0d** (`engine/probes/native-clean.mjs`) — host-specific body extractors that turn raw HTML into chrome-free markdown. Runs first when a registered cleaner matches; falls through to 0a/0b/… on miss.
+- **Cleaners shipped** (`engine/cleaners/<host>.mjs`)
+  - `naver` — SmartEditor walker (`se-text-paragraph` / `se-image` / `se-quotation-line`) for `*.blog.naver.com`
+  - `tistory` — `tt_article_useless_p_margin` / `article-view` / `entry-content` / `tt-entry-content` for `*.tistory.com`
+  - `brunch` — `wrap_body` → `wrap_item` / `cont` / `text` for `brunch.co.kr`
+  - Each exports `extract(html, url) -> { ok, markdown, title, author, published, blocks, chars } | null`
+  - `engine/cleaners/index.mjs` dispatches by host predicate; new hosts pick up automatically
+- **Pre-chain URL normalization** (`engine/transforms.mjs` → `normalizeIframeHost()`) — rewrites iframe-fronted hosts before any probe runs. First rule: `blog.naver.com/{id}/{logNo}` → `m.blog.naver.com/{id}/{logNo}` (also handles `PostView.naver?blogId=…&logNo=…` query form). Decision logged to `decisions[]` with `action: "normalize"`. Result envelope exposes both `url` (rewritten) and `original_url`.
+- **GEO-aligned markdown content negotiation** — `engine/probes/curl.mjs` Accept header now offers `text/markdown;q=0.95`, surfacing markdown automatically on sites publishing `<link rel="alternate" type="text/markdown">` or Mintlify-style `.md` mirror routes.
+- **References** — `skills/unblock/references/native-cleaners.md` covers cleaner contract, dispatch table, host selectors, adding a cleaner, and the live measurement.
+
+### Fixed
+
+- **Jina envelope-only success** — Jina Reader returns HTTP 200 with a 314-byte envelope (`Title:` + `URL Source:` + `Warning: This page contains iframe…`) when the source page hides body content inside an iframe. The existing `body.length > 200` check accepted these stubs as success. Now the envelope lines are stripped and the meaty content is re-measured; bodies under 200 chars after stripping fail with reason `jina_envelope_only` and the chain falls through.
+
+### Effect
+
+Live measurement on `https://blog.naver.com/balahk/224279392527`:
+
+| | Before | After |
+|---|---|---|
+| Phase | 0b jina-reader | 0d native-clean |
+| Body | 314 B (envelope only) | 2,289 chars chrome-free markdown |
+| Latency | ~1100 ms | 148 ms (~7× faster) |
+| Metadata | none | author, published, block count |
+| Trace | — | `decisions: [normalize, reorder]` |
+
+Other hosts (HackerNews, GitHub, etc.) unchanged — 0d is skipped when no cleaner matches.
+
+### Verification
+
+- `node engine/cli.mjs https://blog.naver.com/balahk/224279392527 --json` → Phase 0d, `cleaner: "naver"`, `body_chars: 2289`
+- `node engine/cli.mjs https://news.ycombinator.com/item?id=1 --json` → still resolves at 0a `public-api/hn-item` (no behavioral regression)
+- CI: `plugin-contracts (22)` SUCCESS, CodeRabbit SUCCESS
+
 ## [1.5.0] - 2026-05-06
 
 ### Added — Unblock Skill (16th skill)

@@ -1,6 +1,6 @@
 {
   "name": "second-claude-code",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "description": "PDCA-native Knowledge Work OS — skills, hooks, and MCP server for Claude Code",
   "type": "module",
   "private": true,
