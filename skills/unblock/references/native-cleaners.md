@@ -1,48 +1,49 @@
-# Phase 0d — URL Normalization & Native Cleaners
+# Phase 0d — Native Cleaners
 
-Phase 0d turns iframe-fronted blogs and similar hosts into the fastest-path
-success in the chain. Two parts: a pre-chain URL rewrite and a host-specific
-body extractor.
+Some sites (Naver Blog, etc.) hide the article body inside an iframe.
+Generic fetchers grab the wrapper page and miss the content. Phase 0d
+fixes that with two steps:
 
-## URL normalization
+1. **Rewrite the URL** to the page where the body actually lives.
+2. **Extract the body** with a host-specific parser. Output is clean
+   markdown — no nav, footer, sidebar, or paywall stub.
 
-Before any probe runs, hosts that hide their body inside an iframe shell are
-rewritten to their canonical body URL. The rewrite is logged to
-`decisions[]` with `action: "normalize"`, and both the rewritten `url` and
-the caller's `original_url` appear on the result envelope.
+When a known host shows up, 0d runs first. If the parser doesn't find a
+body, the chain falls through to 0a → 0b → … as usual.
 
-Rules live in `engine/transforms.mjs` → `IFRAME_FRONTED_RULES`. Initial rule:
+## URL rewrite rules
 
-| From | To |
-|------|----|
+Rules live in `engine/transforms.mjs` → `IFRAME_FRONTED_RULES`. The
+rewrite is logged to `decisions[]` so callers can see what happened, and
+the result keeps both the new `url` and the caller's `original_url`.
+
+| Input | Output |
+|-------|--------|
 | `blog.naver.com/{id}/{logNo}` | `m.blog.naver.com/{id}/{logNo}` |
 | `blog.naver.com/PostView.naver?blogId=…&logNo=…` | `m.blog.naver.com/{id}/{logNo}` |
 
-To add a rule, append a `{ label, test(host), rewrite(urlObj) }` entry to
-`IFRAME_FRONTED_RULES`. `rewrite` returns a string URL or `null` to skip.
+Adding a rule: append a `{ label, test(host), rewrite(urlObj) }` entry.
+`rewrite` returns a string URL, or `null` to skip.
 
-## Phase 0d native cleaners
+## How a cleaner works
 
-Host-dispatched body extractors that turn raw HTML into chrome-free
-markdown — no nav, footer, sidebar, or paywall stub. When a cleaner matches,
-0d runs first; when it fails the chain falls through to 0a → 0b → … as
-usual.
-
-Each cleaner lives in `engine/cleaners/<host>.mjs` and exports:
+Each cleaner is one file: `engine/cleaners/<host>.mjs`. It exports a
+function that takes raw HTML and returns markdown plus a few facts about
+the post.
 
 ```js
 extract(html, url) -> {
   ok: true,
-  markdown: string,        // ready-to-render
+  markdown: string,        // ready to render
   title: string,
   author: string | null,
   published: string | null,
-  blocks: number,          // count of body components
-  chars: number,           // body character length
-} | null                   // returning null = no-match, fall through
+  blocks: number,          // body block count
+  chars: number,           // body character count
+} | null                   // null = skip, fall through to 0a/0b/…
 ```
 
-`engine/cleaners/index.mjs` keeps the dispatch table:
+`engine/cleaners/index.mjs` lists which host uses which cleaner:
 
 ```js
 const CLEANERS = [
@@ -52,30 +53,32 @@ const CLEANERS = [
 ];
 ```
 
-### Shipped cleaners
+## Cleaners shipped
 
-| Cleaner | Hosts | Selectors |
-|---------|-------|-----------|
-| `naver` | `*.blog.naver.com` (after normalization → `m.blog.naver.com`) | SmartEditor `se-text-paragraph` / `se-image` / `se-quotation-line`, in document order |
-| `tistory` | `*.tistory.com` | `tt_article_useless_p_margin` / `article-view` / `entry-content` / `tt-entry-content` |
-| `brunch` | `brunch.co.kr` | `wrap_body` → `wrap_item` / `cont` / `text` |
+| Cleaner | Hosts | What it walks |
+|---------|-------|---------------|
+| `naver` | `*.blog.naver.com` (rewritten to `m.blog.naver.com`) | SmartEditor blocks: text, image, quote |
+| `tistory` | `*.tistory.com` | `tt_article_useless_p_margin` / `article-view` / `entry-content` |
+| `brunch` | `brunch.co.kr` | `wrap_body` → `wrap_item` / `cont` |
 
-## Adding a host
+## Add a cleaner
 
-1. Write `engine/cleaners/<host>.mjs` with an `extract(html, url)` function
-   matching the contract above. Strip scripts/styles, find the body
-   container, walk content blocks in document order, return markdown.
-2. Register the host predicate in `engine/cleaners/index.mjs`.
-3. The orchestrator (`pickCleaner`, `phase0Order`) picks 0d up automatically.
+1. Write `engine/cleaners/<host>.mjs`. Inside `extract`: strip scripts and
+   styles, find the body container, walk it in document order, return
+   markdown.
+2. Add the host predicate to `engine/cleaners/index.mjs`.
+3. Done. The chain picks it up automatically.
 
-## Effect (live measurement)
+Look at `cleaners/naver.mjs` as a reference. ~100 lines, one regex per
+block type.
+
+## Real-world result
 
 URL: `https://blog.naver.com/balahk/224279392527`
 
-| | Before | After |
+| | Without 0d | With 0d |
 |---|---|---|
-| Phase | 0b jina-reader | 0d native-clean |
-| Body | 314 B (jina envelope only) | 2,289 chars chrome-free markdown |
-| Latency | ~1100 ms | 148 ms (~7× faster) |
-| Metadata | none | author, published, block count |
-| Trace | — | `decisions: [normalize, reorder]` |
+| What came back | 314 B (just an iframe warning) | 2,289 chars of clean markdown |
+| Time | ~1100 ms | 148 ms |
+| Has the actual article? | No | Yes |
+| Metadata (author, date) | None | Both |

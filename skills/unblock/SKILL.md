@@ -24,7 +24,7 @@ is failure. The chain stops only when content passes `engine/validate.mjs`.
 | 0a | Public APIs (Reddit, HN, arXiv, Bluesky, GitHub, NPM, oEmbed) | free | yes |
 | 0b | Jina Reader (`r.jina.ai`) | free at 20 RPM | yes |
 | 0c | yt-dlp metadata + subtitles (1800+ media sites) | free | yes (auto-install) |
-| 0d | Native cleaner (host-specific body extractor) | free | yes |
+| 0d | Native body cleaners (Naver, Tistory, Brunch) | free | yes |
 | 1 | curl with rotating UA × headers × URL transforms | free | yes |
 | 2 | curl-impersonate (TLS spoof) + cookie warming + referrer chain | free | yes (auto-install) |
 | 3 | LightPanda headless | free | yes (auto-install) |
