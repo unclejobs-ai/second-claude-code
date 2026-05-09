@@ -24,6 +24,7 @@ is failure. The chain stops only when content passes `engine/validate.mjs`.
 | 0a | Public APIs (Reddit, HN, arXiv, Bluesky, GitHub, NPM, oEmbed) | free | yes |
 | 0b | Jina Reader (`r.jina.ai`) | free at 20 RPM | yes |
 | 0c | yt-dlp metadata + subtitles (1800+ media sites) | free | yes (auto-install) |
+| 0d | Native cleaner (host-specific body extractor) | free | yes |
 | 1 | curl with rotating UA × headers × URL transforms | free | yes |
 | 2 | curl-impersonate (TLS spoof) + cookie warming + referrer chain | free | yes (auto-install) |
 | 3 | LightPanda headless | free | yes (auto-install) |
@@ -32,7 +33,8 @@ is failure. The chain stops only when content passes `engine/validate.mjs`.
 | 6 | Optional paid (Tavily / Exa / Firecrawl) | paid | needs `--allow-paid` |
 
 The chain stops at the first probe whose body passes `validate.mjs`. Phase 6
-never runs implicitly even with env keys present.
+never runs implicitly even with env keys present. Phase 0d and URL
+normalization detail: `references/native-cleaners.md`.
 
 ## When to Use
 
@@ -69,11 +71,10 @@ Dispatched by URL host pattern.
 
 ## Phase 5 — Free Archive Fallback
 
-When Phases 1–4 all fail, the chain tries free mirrors before giving up:
-Wayback Machine, archive.today, AMP cache, RSS/Atom feed discovery, OG-tag
-rescue (using a Facebook scraper UA against pages that gate humans but expose
-metadata). Results carry `via_archive: true`; OG-rescue results also carry
-`partial: true`. See `references/archive-fallbacks.md`.
+When Phases 1–4 all fail, the chain tries free mirrors: Wayback Machine,
+archive.today, AMP cache, RSS/Atom feed discovery, OG-tag rescue. Results
+carry `via_archive: true`; OG-rescue results also carry `partial: true`. See
+`references/archive-fallbacks.md`.
 
 ## Phase 2 — Cookie Warming + Referrer Chain
 

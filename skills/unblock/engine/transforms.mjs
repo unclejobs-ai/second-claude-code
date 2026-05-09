@@ -101,3 +101,36 @@ export function inferReferrer(rawUrl) {
   if (/\.jp$/i.test(host)) return "https://www.google.co.jp/";
   return "https://www.google.com/";
 }
+
+// Pre-chain rewrite for hosts that front their body inside an iframe.
+// Without this, every Phase 0 probe wastes a request on the shell page.
+const IFRAME_FRONTED_RULES = [
+  {
+    label: "naver_blog→m.blog",
+    test: (host) => /^blog\.naver\.com$/i.test(host),
+    rewrite: (urlObj) => {
+      const next = new URL(urlObj.toString());
+      const blogId = next.searchParams.get("blogId");
+      const logNo = next.searchParams.get("logNo");
+      if (blogId && logNo && (next.pathname === "/" || /PostView\.naver/i.test(next.pathname))) {
+        next.pathname = `/${blogId}/${logNo}`;
+        next.searchParams.delete("blogId");
+        next.searchParams.delete("logNo");
+        next.searchParams.delete("redirect");
+      }
+      next.hostname = "m.blog.naver.com";
+      return next.toString();
+    },
+  },
+];
+
+export function normalizeIframeHost(rawUrl) {
+  let url;
+  try { url = new URL(rawUrl); } catch { return null; }
+  for (const rule of IFRAME_FRONTED_RULES) {
+    if (!rule.test(url.hostname)) continue;
+    const next = rule.rewrite(url);
+    if (next && next !== rawUrl) return { url: next, label: rule.label };
+  }
+  return null;
+}
