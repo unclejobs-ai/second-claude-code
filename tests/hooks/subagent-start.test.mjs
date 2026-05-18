@@ -207,3 +207,20 @@ test("subagent start identifies reviewers from alternate payload fields", () => 
   assert.equal(aggregation.started_reviewers.length, 1);
   assert.equal(aggregation.started_reviewers[0].name, "deep-reviewer");
 });
+
+test("subagent start identifies current Claude Code agent_type payloads", () => {
+  const tempDir = makeTempDataDir();
+  const result = runHook(tempDir, {
+    hook_event_name: "SubagentStart",
+    agent_type: "fact-checker",
+    agent_id: "agent-123",
+  });
+  const aggregation = readAggregation(tempDir);
+  const output = parseOutput(result);
+
+  assert.equal(result.status, 0);
+  assert.equal(aggregation.started_reviewers.length, 1);
+  assert.equal(aggregation.started_reviewers[0].name, "fact-checker");
+  assert.equal(aggregation.started_reviewers[0].agent_id, "agent-123");
+  assert.match(output.hookSpecificOutput.additionalContext, /fact-checker started/);
+});

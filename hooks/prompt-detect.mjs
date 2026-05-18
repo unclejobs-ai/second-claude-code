@@ -22,7 +22,37 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 
-const raw = process.env.USER_PROMPT || "";
+function readHookPayload() {
+  if (process.stdin.isTTY) return null;
+
+  try {
+    const rawPayload = readFileSync(0, "utf8");
+    if (!rawPayload.trim()) return null;
+    return JSON.parse(rawPayload);
+  } catch {
+    return null;
+  }
+}
+
+function extractPrompt(payload) {
+  const candidates = [
+    payload?.prompt,
+    payload?.user_prompt,
+    payload?.input,
+    payload?.message,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate;
+    }
+  }
+
+  return "";
+}
+
+const hookPayload = readHookPayload();
+const raw = extractPrompt(hookPayload) || process.env.USER_PROMPT || "";
 
 if (!raw) {
   process.exit(0);

@@ -11,7 +11,7 @@ These supplement the top-5 inline gotchas in SKILL.md. Read this file when debug
 
 ## Auto-routing
 
-**Auto-routing via prompt-detect**: when entering PDCA from natural conversation (not explicit `/scc:pdca`), announce: "이건 리서치→작성→리뷰 전체 사이클이 필요하니 PDCA로 진행한다." Then start with Question Protocol as normal.
+**Auto-routing via prompt-detect**: when entering PDCA from natural conversation (not explicit `/second-claude-code:pdca`), announce: "이건 리서치→작성→리뷰 전체 사이클이 필요하니 PDCA로 진행한다." Then start with Question Protocol as normal.
 
 **Plan Mode in automation (`--no-questions`)**: skip Plan Mode briefing — approval flow does not apply when running headless.
 

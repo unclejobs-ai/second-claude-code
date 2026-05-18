@@ -54,8 +54,8 @@ Produced at the end of the Plan phase, passed to Do.
 
 | Failing Field | Action |
 |---------------|--------|
-| `research_brief_path` missing or file absent | Re-run `/scc:research` |
-| `analysis_path` missing or file absent | Re-run `/scc:analyze` |
+| `research_brief_path` missing or file absent | Re-run `/second-claude-code:research` |
+| `analysis_path` missing or file absent | Re-run `/second-claude-code:analyze` |
 | `meets_brief_floor: false` | Re-run research with `--depth deep`. Brief is structurally too thin to support a proper Do output. |
 | `sources_count < 5` | Continue research with broader queries or additional source types (`--sources academic --sources news`) |
 | `facts_count < 8` | Re-run with explicit instruction to extract more discrete data points across multiple sources |

@@ -80,22 +80,31 @@ function readPayload() {
 // Identify reviewer name from payload
 // ─────────────────────────────────────────────────────────────────────────────
 
+function normalizeReviewerName(value) {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  return KNOWN_REVIEWERS.has(normalized) ? normalized : null;
+}
+
 function identifyReviewer(payload) {
   if (!payload) return null;
 
-  // Try known payload fields for subagent identity.
+  // Try known payload fields for subagent identity. Claude Code 2.1+
+  // uses agent_type/agent_id for subagent hooks; older builds and tests used
+  // subagent_name/subagent_type/agent_name.
   const candidates = [
+    payload.agent_type,
     payload.subagent_name,
     payload.subagent_type,
     payload.name,
     payload.type,
     payload.agent_name,
+    payload.tool_input?.subagent_type,
   ];
 
   for (const candidate of candidates) {
-    if (typeof candidate === "string" && KNOWN_REVIEWERS.has(candidate)) {
-      return candidate;
-    }
+    const reviewer = normalizeReviewerName(candidate);
+    if (reviewer) return reviewer;
   }
 
   return null;
@@ -140,10 +149,14 @@ function main() {
 
     // Avoid duplicate entries on retry.
     if (!s.started_reviewers.some((r) => r.name === reviewerName)) {
-      s.started_reviewers.push({
+      const startedRecord = {
         name: reviewerName,
         started_at: new Date().toISOString(),
-      });
+      };
+      if (typeof payload?.agent_id === "string" && payload.agent_id.trim()) {
+        startedRecord.agent_id = payload.agent_id.trim();
+      }
+      s.started_reviewers.push(startedRecord);
     }
 
     const config = resolveReviewAggregationConfig(s, payload);

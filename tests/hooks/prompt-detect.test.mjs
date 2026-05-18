@@ -22,6 +22,22 @@ function runPrompt(userPrompt, env = {}) {
   });
 }
 
+function runPromptPayload(payload, env = {}) {
+  const childEnv = {
+    ...process.env,
+    __SCC_TEST_PLUGINS_ROOT: emptyPluginsRoot,
+    ...env,
+  };
+  delete childEnv.USER_PROMPT;
+
+  return execFileSync(process.execPath, [hookPath], {
+    cwd: root,
+    env: childEnv,
+    input: JSON.stringify(payload),
+    encoding: "utf8",
+  });
+}
+
 function assertRoutesTo(output, skill) {
   assert.match(output, new RegExp(`skill: \\\\\"second-claude-code:${skill}\\\\\"`));
 }
@@ -97,6 +113,15 @@ test("prompt detect routes review prompts to /second-claude-code:review", () => 
 
 test("prompt detect routes writing prompts to /second-claude-code:write", () => {
   const output = runPrompt("write a newsletter");
+  assertRoutesTo(output, "write");
+});
+
+test("prompt detect routes current UserPromptSubmit stdin payloads", () => {
+  const output = runPromptPayload({
+    hook_event_name: "UserPromptSubmit",
+    prompt: "write a newsletter",
+  });
+
   assertRoutesTo(output, "write");
 });
 
@@ -201,6 +226,15 @@ test("PDCA: single-skill prompts still route to individual skills, not PDCA", ()
 
 test("PDCA: slash commands are skipped entirely", () => {
   const output = runPrompt("/second-claude-code:review my draft");
+  assert.equal(output.trim(), "");
+});
+
+test("PDCA: slash commands in stdin payloads are skipped entirely", () => {
+  const output = runPromptPayload({
+    hook_event_name: "UserPromptSubmit",
+    prompt: "/second-claude-code:review my draft",
+  });
+
   assert.equal(output.trim(), "");
 });
 

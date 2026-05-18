@@ -308,22 +308,84 @@ test("run stops when wall clock time exceeds --time-limit", () => {
 
 test("parallel evaluations honor the requested concurrency budget", () => {
   const repoDir = initFixtureRepo("second-claude-loop-parallel-");
-  const sequentialDataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
   const parallelDataDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-loop-data-"));
+  const evaluatorPath = path.join(repoDir, "parallel-evaluator.cjs");
+
+  writeFileSync(
+    evaluatorPath,
+    `const fs = require("node:fs");
+const path = require("node:path");
+
+const captureDir = process.argv[2];
+const candidate = path.basename(captureDir);
+const eventPath = path.join(path.dirname(captureDir), "concurrency-events.jsonl");
+
+function append(event) {
+  fs.appendFileSync(eventPath, JSON.stringify({ event, candidate, at: Date.now() }) + "\\n");
+}
+
+function generationStartCount() {
+  try {
+    return fs.readFileSync(eventPath, "utf8")
+      .trim()
+      .split(/\\n+/)
+      .filter(Boolean)
+      .map((line) => JSON.parse(line))
+      .filter((entry) => entry.event === "start" && /^g1-c\\d+$/.test(entry.candidate))
+      .length;
+  } catch {
+    return 0;
+  }
+}
+
+function finish() {
+  append("end");
+  console.log(JSON.stringify({ average_score: 0.5 }));
+}
+
+append("start");
+if (!/^g1-c\\d+$/.test(candidate)) {
+  finish();
+} else {
+  const deadline = Date.now() + 4000;
+  const tick = () => {
+    if (generationStartCount() >= 3) {
+      finish();
+    } else if (Date.now() > deadline) {
+      console.error("timed out waiting for parallel candidate starts");
+      process.exit(2);
+    } else {
+      setTimeout(tick, 25);
+    }
+  };
+  tick();
+}
+`
+  );
   writeSuite(
     repoDir,
     "parallel-suite",
-    `${process.execPath} -e "setTimeout(() => console.log(JSON.stringify({average_score:0.5})), 800)"`
+    `${JSON.stringify(process.execPath)} ${JSON.stringify(evaluatorPath)} "{{capture_dir}}"`
   );
 
-  const sequentialStart = Date.now();
-  runLoop(repoDir, sequentialDataDir, "run", "parallel-suite", "--parallel", "1", "--budget", "3", "--max-generations", "1");
-  const sequentialElapsed = Date.now() - sequentialStart;
+  const output = runLoop(repoDir, parallelDataDir, "run", "parallel-suite", "--parallel", "3", "--budget", "3", "--max-generations", "1");
+  const parsed = JSON.parse(output);
+  const eventPath = path.join(parsed.artifact_dir, "concurrency-events.jsonl");
+  const generationEvents = readFileSync(eventPath, "utf8")
+    .trim()
+    .split(/\n+/)
+    .filter(Boolean)
+    .map((line) => JSON.parse(line))
+    .filter((entry) => /^g1-c\d+$/.test(entry.candidate));
 
-  const parallelStart = Date.now();
-  runLoop(repoDir, parallelDataDir, "run", "parallel-suite", "--parallel", "3", "--budget", "3", "--max-generations", "1");
-  const parallelElapsed = Date.now() - parallelStart;
+  const firstEndIndex = generationEvents.findIndex((entry) => entry.event === "end");
+  assert.notEqual(firstEndIndex, -1);
 
-  assert.equal(parallelElapsed < sequentialElapsed, true);
-  assert.equal(parallelElapsed < sequentialElapsed * 0.8, true);
+  const startsBeforeFirstEnd = new Set(
+    generationEvents
+      .slice(0, firstEndIndex)
+      .filter((entry) => entry.event === "start")
+      .map((entry) => entry.candidate)
+  );
+  assert.equal(startsBeforeFirstEnd.size, 3);
 });

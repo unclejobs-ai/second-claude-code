@@ -145,7 +145,7 @@ test("analyze supports exactly the framework templates it advertises", () => {
   );
 });
 
-test("command wrappers map each /scc command to the matching bare skill", () => {
+test("command wrappers map each /second-claude-code command to the matching bare skill", () => {
   const commandNames = readdirSync(path.join(root, "commands"))
     .filter((fileName) => fileName.endsWith(".md"))
     .map((fileName) => fileName.replace(/\.md$/, ""))
@@ -169,6 +169,63 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
       `${name} command should execute directly rather than emit meta instructions`
     );
   }
+});
+
+test("active skill docs do not use the legacy /scc namespace", () => {
+  const scanStack = [path.join(root, "skills")];
+  const offenders = [];
+
+  while (scanStack.length > 0) {
+    const current = scanStack.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        scanStack.push(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith(".md")) {
+        const content = readFileSync(fullPath, "utf8");
+        if (/\/scc:/.test(content)) {
+          offenders.push(path.relative(root, fullPath));
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(offenders.sort(), []);
+});
+
+test("active skill docs reference only registered public commands", () => {
+  const commandNames = new Set(
+    readdirSync(path.join(root, "commands"))
+      .filter((fileName) => fileName.endsWith(".md"))
+      .map((fileName) => fileName.replace(/\.md$/, ""))
+  );
+  const scanStack = [path.join(root, "skills")];
+  const offenders = [];
+
+  while (scanStack.length > 0) {
+    const current = scanStack.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        scanStack.push(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith(".md")) {
+        const content = readFileSync(fullPath, "utf8");
+        for (const match of content.matchAll(/\/second-claude-code:([a-z-]+)/g)) {
+          if (!commandNames.has(match[1])) {
+            offenders.push(`${path.relative(root, fullPath)} -> ${match[0]}`);
+          }
+        }
+      }
+    }
+  }
+
+  assert.deepEqual(offenders.sort(), []);
+});
+
+test("research command wrapper preserves the research brief auto-save contract", () => {
+  const researchCommand = read("commands/research.md");
+  assert.match(researchCommand, /\.captures\/research-\{slug\}-\{YYYY-MM-DD\}\.md/);
+  assert.match(researchCommand, /saved path/i);
 });
 
 test("session-start command banner matches command files", () => {

@@ -68,8 +68,8 @@ mmbridge security --scope <scope> --json > /tmp/mmbridge-security-${RUN_ID}.json
 ```
 
 **Option passthrough**:
-- `--scope`: `/scc:review --preset security --scope auth` → `mmbridge security --scope auth` (default: `all`)
-- `--compliance`: `/scc:review --preset security --compliance GDPR,SOC2` → `mmbridge security --compliance GDPR,SOC2`
+- `--scope`: `/second-claude-code:review --preset security --scope auth` → `mmbridge security --scope auth` (default: `all`)
+- `--compliance`: `/second-claude-code:review --preset security --compliance GDPR,SOC2` → `mmbridge security --compliance GDPR,SOC2`
 
 ### CWE Severity Mapping
 
@@ -94,7 +94,7 @@ The `academic` preset activates academic-focused review for research papers, the
 
 ### Option passthrough
 
-- `--citation-style`: `/scc:review --preset academic --citation-style APA` (default: `APA`, accepts `APA`, `MLA`, `Chicago`)
+- `--citation-style`: `/second-claude-code:review --preset academic --citation-style APA` (default: `APA`, accepts `APA`, `MLA`, `Chicago`)
 
 ### Academic review focus areas
 

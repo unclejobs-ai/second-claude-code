@@ -123,6 +123,69 @@ test("subagent stop records reviewer output and waits for remaining reviewers", 
   assert.match(output.hookSpecificOutput.additionalContext, /Waiting for 2 more reviewer\(s\)/);
 });
 
+test("subagent stop records current Claude Code last_assistant_message payloads", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    expected_reviewers: 3,
+    threshold: 0.67,
+    started_reviewers: [
+      { name: "fact-checker", agent_id: "agent-123", started_at: "2026-03-28T00:00:00.000Z" },
+    ],
+    reviewers: [],
+  });
+
+  const result = runHook(tempDir, {
+    hook_event_name: "SubagentStop",
+    agent_type: "fact-checker",
+    agent_id: "agent-123",
+    last_assistant_message: [
+      "## Critic Output",
+      "**Verdict**: APPROVED",
+      "**Score**: 0.91",
+      "",
+      "### Findings",
+      "| # | Severity | Category | Finding | Evidence | Fix |",
+      "| 1 | Warning | evidence | cite primary sources | paragraph 2 | add URL |",
+    ].join("\n"),
+  });
+
+  const aggregation = readAggregation(tempDir);
+  const output = parseStdout(result);
+  const reviewer = aggregation.reviewers[0];
+
+  assert.equal(result.status, 0);
+  assert.equal(aggregation.reviewers.length, 1);
+  assert.equal(reviewer.name, "fact-checker");
+  assert.equal(reviewer.verdict, "APPROVED");
+  assert.equal(reviewer.warning_count, 1);
+  assert.equal(reviewer.score, 0.91);
+  assert.match(output.hookSpecificOutput.additionalContext, /Latest: fact-checker → APPROVED score=0\.91 \(1 Warning\)/);
+});
+
+test("subagent stop ignores non-reviewer output while aggregation is active", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    expected_reviewers: 3,
+    threshold: 0.67,
+    started_reviewers: [{ name: "fact-checker", started_at: "2026-03-28T00:00:00.000Z" }],
+    reviewers: [],
+  });
+
+  const before = readFileSync(aggregationPath(tempDir), "utf8");
+  const result = runHook(tempDir, {
+    hook_event_name: "SubagentStop",
+    agent_type: "researcher",
+    last_assistant_message: "APPROVED\nScore: 0.95",
+  });
+  const after = readFileSync(aggregationPath(tempDir), "utf8");
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(after, before);
+});
+
 test("subagent stop uses last-write-wins for duplicate reviewer retries", () => {
   const tempDir = makeTempDataDir();
 

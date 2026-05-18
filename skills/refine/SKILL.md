@@ -45,7 +45,7 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
    - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
    - For non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`): restore from `baseline_content` in `refine-active.json`.
 5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction). When `--dod` is active, the target is only considered met when **all DoD criteria pass** AND the score/verdict target is satisfied.
-6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/scc:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
+6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/second-claude-code:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
 
 ## Options
 
@@ -101,7 +101,7 @@ mmbridge resume --action followup -y --json > /tmp/mmbridge-resume-${RUN_ID}.jso
 ```
 
 - This asks the original external reviewer to evaluate the fixes against its earlier findings
-- The resume result is merged as supplemental context into the next `/scc:review` cycle
+- The resume result is merged as supplemental context into the next `/second-claude-code:review` cycle
 - If resume indicates all external findings are addressed, it counts as a positive signal for the consensus gate
 
 ### When to Use

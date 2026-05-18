@@ -45,6 +45,13 @@ const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 const STATE_DIR = join(DATA_DIR, "state");
 const AGGREGATION_FILE = join(STATE_DIR, "review-aggregation.json");
+const KNOWN_REVIEWERS = new Set([
+  "deep-reviewer",
+  "devil-advocate",
+  "fact-checker",
+  "tone-guardian",
+  "structure-analyst",
+]);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Fast-exit guard: do nothing when no aggregation is in progress.
@@ -59,25 +66,88 @@ if (!existsSync(AGGREGATION_FILE)) {
 // Claude sends a JSON object on stdin for SubagentStop hooks.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** @returns {string} raw subagent output text, or "" on failure */
-function readSubagentOutput() {
+/** @returns {object | null} parsed subagent hook payload, or null on failure */
+function readPayload() {
   try {
     // Use fd 0 directly instead of /dev/stdin for CI/container compatibility.
     const raw = readFileSync(0, "utf8");
-    if (!raw.trim()) return "";
-    const payload = JSON.parse(raw);
-    // The subagent's final text output lives at different paths depending on
-    // Claude's hook protocol version; try both known locations.
-    const text =
-      payload?.output ??
-      payload?.result ??
-      payload?.content ??
-      payload?.subagent_output ??
-      "";
-    return typeof text === "string" ? text : JSON.stringify(text);
+    if (!raw.trim()) return null;
+    return JSON.parse(raw);
   } catch {
-    return "";
+    return null;
   }
+}
+
+function normalizeReviewerName(value) {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  return KNOWN_REVIEWERS.has(normalized) ? normalized : null;
+}
+
+function extractReviewerIdentity(payload) {
+  const candidates = [
+    payload?.agent_type,
+    payload?.subagent_name,
+    payload?.subagent_type,
+    payload?.agent_name,
+    payload?.name,
+    payload?.type,
+    payload?.tool_input?.subagent_type,
+  ];
+
+  for (const candidate of candidates) {
+    const reviewer = normalizeReviewerName(candidate);
+    if (reviewer) return reviewer;
+  }
+
+  return null;
+}
+
+function textFromContent(value) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (typeof item?.text === "string") return item.text;
+        if (typeof item?.content === "string") return item.content;
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  if (value && typeof value === "object") {
+    if (typeof value.text === "string") return value.text;
+    if (typeof value.content === "string") return value.content;
+  }
+  return "";
+}
+
+/** @returns {string} raw subagent output text */
+function extractSubagentOutput(payload) {
+  if (!payload) return "";
+  const candidates = [
+    payload.last_assistant_message,
+    payload.output,
+    payload.result,
+    payload.subagent_output,
+    payload.content,
+  ];
+
+  for (const candidate of candidates) {
+    const text = textFromContent(candidate);
+    if (text.trim()) return text;
+  }
+
+  return "";
+}
+
+function reviewerStartedInState(state, reviewerName, agentId) {
+  if (!state || !Array.isArray(state.started_reviewers)) return false;
+  return state.started_reviewers.some((reviewer) => {
+    if (agentId && reviewer.agent_id === agentId) return true;
+    return reviewer.name === reviewerName;
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -91,21 +161,27 @@ const FAIL_VERDICTS = new Set(["NEEDS IMPROVEMENT", "MUST FIX", "FAIL"]);
  * Parse reviewer output text and extract structured result.
  *
  * @param {string} text
+ * @param {string | null} reviewerName
  * @returns {{ name: string, verdict: string, is_pass: boolean, critical_count: number, warning_count: number, findings: string[], score: number | null }}
  */
-function parseReviewerOutput(text) {
+function parseReviewerOutput(text, reviewerName = null) {
   const lines = text.split("\n");
 
   // ── Reviewer name ──────────────────────────────────────────────────────────
-  // Look for "Reviewer: <name>" or "## <name>" or fall back to "unknown".
-  let name = "unknown";
-  const nameMatch = text.match(/reviewer[:\s]+([a-z][a-z0-9\-_]+)/i);
-  if (nameMatch) {
-    name = sanitize(nameMatch[1].toLowerCase().trim(), 50);
-  } else {
-    const headingMatch = text.match(/^##\s+([a-z][a-z0-9\-_ ]+)/im);
-    if (headingMatch) {
-      name = sanitize(headingMatch[1].toLowerCase().trim(), 50);
+  // Prefer hook payload identity. Fallback to explicit "Reviewer:" markers;
+  // generic headings like "## Critic Output" are not reviewer names.
+  let name = reviewerName || "unknown";
+  if (!reviewerName) {
+    const nameMatch = text.match(/reviewer[:\s]+([a-z][a-z0-9\-_]+)/i);
+    const explicitName = normalizeReviewerName(nameMatch?.[1]);
+    if (explicitName) {
+      name = explicitName;
+    } else {
+      const headingMatch = text.match(/^##\s+([a-z][a-z0-9\-_ ]+)/im);
+      const headingName = normalizeReviewerName(headingMatch?.[1]);
+      if (headingName) {
+        name = headingName;
+      }
     }
   }
 
@@ -120,9 +196,7 @@ function parseReviewerOutput(text) {
   }
 
   // ── Verdict ────────────────────────────────────────────────────────────────
-  // Scan for the first occurrence of a known verdict keyword.
-  // Order matters: longer matches first to avoid "APPROVED" inside a sentence
-  // matching before "MINOR FIXES".
+  // Prefer the Critic Schema field; fallback to bounded, case-insensitive scan.
   const orderedVerdicts = [
     "MINOR FIXES",
     "NEEDS IMPROVEMENT",
@@ -131,11 +205,25 @@ function parseReviewerOutput(text) {
     "PASS",
     "FAIL",
   ];
+  const normalizeVerdict = (value) => {
+    if (typeof value !== "string") return null;
+    const normalized = value.trim().toUpperCase().replace(/\s+/g, " ");
+    return orderedVerdicts.includes(normalized) ? normalized : null;
+  };
+
   let rawVerdict = null;
-  for (const v of orderedVerdicts) {
-    if (text.includes(v)) {
-      rawVerdict = v;
-      break;
+  const verdictFieldMatch =
+    text.match(/\*\*Verdict\*\*:\s*(MINOR FIXES|NEEDS IMPROVEMENT|MUST FIX|APPROVED|PASS|FAIL)/i) ??
+    text.match(/\bVerdict:\s*(MINOR FIXES|NEEDS IMPROVEMENT|MUST FIX|APPROVED|PASS|FAIL)/i);
+  rawVerdict = normalizeVerdict(verdictFieldMatch?.[1]);
+
+  if (!rawVerdict) {
+    for (const v of orderedVerdicts) {
+      const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
+        rawVerdict = v;
+        break;
+      }
     }
   }
 
@@ -164,16 +252,25 @@ function parseReviewerOutput(text) {
     }
   }
 
-  // ── Table-format Critical detection (Critic Schema: | N | Critical | ... |) ─
-  // Matches rows like: | 1 | Critical | description |
-  const tableMatches = text.match(/\|\s*\d+\s*\|\s*Critical\s*\|/gi) || [];
-  const tableCriticals = tableMatches.length;
-  if (tableCriticals > 0) {
-    // Extract the finding descriptions from table rows for traceability.
-    const tableRowRe = /\|\s*\d+\s*\|\s*Critical\s*\|([^|]+)\|/gi;
-    let tableRow;
-    while ((tableRow = tableRowRe.exec(text)) !== null) {
-      findings.push(sanitize(`Critical (table): ${tableRow[1].trim()}`, 200));
+  // ── Table-format severity detection (Critic Schema: | N | Severity | ...) ─
+  let tableCriticals = 0;
+  let tableWarnings = 0;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!/^\|/.test(trimmed)) continue;
+    const cells = trimmed.split("|").map((cell) => cell.trim()).filter(Boolean);
+    if (cells.length < 3 || !/^\d+$/.test(cells[0])) continue;
+
+    const severity = cells[1].toLowerCase();
+    const description = cells.length >= 4 ? cells[3] : cells[2];
+    if (/^critical$/.test(severity)) {
+      tableCriticals++;
+      findings.push(sanitize(`Critical table: ${description}`, 200));
+    } else if (/^(warning|major)$/.test(severity)) {
+      tableWarnings++;
+      findings.push(sanitize(`Warning table: ${description}`, 200));
+    } else if (/^(nitpick|minor)$/.test(severity)) {
+      findings.push(sanitize(`Nitpick table: ${description}`, 200));
     }
   }
 
@@ -196,9 +293,11 @@ function parseReviewerOutput(text) {
     }
   }
 
-  // Merge critical counts: take the maximum to avoid under-counting when both
-  // formats appear, but avoid double-counting the same findings.
+  // Merge counts: take the max for criticals to avoid double-counting the same
+  // finding across formats; add table warnings because prefix warnings are
+  // independent rows in the Critic Output schema.
   critical_count = Math.max(headingCriticals, tableCriticals);
+  warning_count += tableWarnings;
 
   // ── Score/verdict consistency check ───────────────────────────────────────
   // If score < 0.7 but verdict is a pass verdict, downgrade to NEEDS IMPROVEMENT
@@ -292,13 +391,37 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
 
 function main() {
   // ── Parse the subagent's output (before lock, no shared state) ─────────────
-  const text = readSubagentOutput();
+  const payload = readPayload();
+  const text = extractSubagentOutput(payload);
   if (!text.trim()) {
     // Empty output — subagent produced nothing useful; skip aggregation update.
     process.exit(0);
   }
 
-  const record = parseReviewerOutput(text);
+  const identityFields = [
+    payload?.agent_type,
+    payload?.subagent_name,
+    payload?.subagent_type,
+    payload?.agent_name,
+    payload?.name,
+    payload?.type,
+    payload?.tool_input?.subagent_type,
+  ];
+  const hasExplicitIdentity = identityFields.some((value) => typeof value === "string" && value.trim());
+  const payloadReviewer = extractReviewerIdentity(payload);
+  if (hasExplicitIdentity && !payloadReviewer) {
+    // A named non-reviewer subagent finished while review aggregation is active.
+    // Do not let unrelated agent output pollute reviewer consensus.
+    process.exit(0);
+  }
+
+  const record = parseReviewerOutput(text, payloadReviewer);
+  if (!KNOWN_REVIEWERS.has(record.name)) {
+    process.exit(0);
+  }
+  const agentId = typeof payload?.agent_id === "string" && payload.agent_id.trim()
+    ? payload.agent_id.trim()
+    : null;
 
   // ── Locked read-modify-write of aggregation file ──────────────────────────
   // Multiple reviewer subagents may complete simultaneously. withFileLockSync
@@ -307,6 +430,10 @@ function main() {
   const state = withFileLockSync(AGGREGATION_FILE, () => {
     const s = readJsonSafe(AGGREGATION_FILE);
     if (!s) return null;
+
+    if (hasExplicitIdentity && Array.isArray(s.started_reviewers) && s.started_reviewers.length > 0) {
+      if (!reviewerStartedInState(s, record.name, agentId)) return null;
+    }
 
     if (!Array.isArray(s.reviewers)) {
       s.reviewers = [];

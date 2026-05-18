@@ -73,8 +73,8 @@ The Plan phase chains two skills internally:
 
 | Step | Skill | Agent | Purpose |
 |------|-------|-------|---------|
-| 1 | `/scc:research` | Eevee (researcher) | Data collection and source gathering |
-| 2 | `/scc:analyze --skip-challenge` | Alakazam (analyst) + Mewtwo (strategist) | Structure findings into actionable framework |
+| 1 | `/second-claude-code:research` | Eevee (researcher) | Data collection and source gathering |
+| 2 | `/second-claude-code:analyze --skip-challenge` | Alakazam (analyst) + Mewtwo (strategist) | Structure findings into actionable framework |
 
 The `--skip-challenge` flag on analyze bypasses the devil's advocate challenge round. This is intentional: adversarial pressure is applied in the Check phase on Do output, not on Plan artifacts. Running a challenge round during Plan would waste a full analysis pass on a brief that has not yet been turned into a deliverable.
 

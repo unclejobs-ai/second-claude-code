@@ -122,7 +122,7 @@ This prevents the Action Router from over-classifying small subsets of findings 
 
 1. Compile findings as constraints list
 2. **Discard worktree**: `git worktree remove --force worktree-pdca-do` — a fresh Do pass requires a clean branch
-3. Re-execute: `/scc:write --skip-research --skip-review --constraints {findings}` (creates a new `worktree-pdca-do`)
+3. Re-execute: `/second-claude-code:write --skip-research --skip-review --constraints {findings}` (creates a new `worktree-pdca-do`)
 4. Proceed directly to Check after Do (skip Plan and Loop)
 
 ## Route: Act → REFINE (MINOR FIXES or NEEDS IMPROVEMENT)
@@ -132,7 +132,7 @@ This prevents the Action Router from over-classifying small subsets of findings 
    - NEEDS IMPROVEMENT: `--max 3 --target {pdca_target}`
    - MUST FIX: `--max 5 --target {pdca_target}`
 2. **Keep worktree** — fixes are applied in place inside `worktree-pdca-do`
-3. Dispatch: `/scc:refine --file {artifact} --review {report} --max {N} --target {pdca_target}`
+3. Dispatch: `/second-claude-code:refine --file {artifact} --review {report} --max {N} --target {pdca_target}`
 4. Refine runs review-fix cycles internally
 5. On refine exit with APPROVED or MINOR FIXES: merge worktree → `git merge --no-ff worktree-pdca-do`, then `git worktree remove worktree-pdca-do`
 6. On refine exit with MUST FIX: discard worktree, re-enter Do with full constraints

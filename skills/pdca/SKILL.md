@@ -30,19 +30,19 @@ Each phase gates into the next. No gate skipping.
 
 ## PDCA Is the Main Orchestrator. Sub-Skills Are Building Blocks.
 
-**PDCA always runs.** It is the top-level orchestrator for all knowledge work. The Plan→Do→Check→Act cycle wraps every task. Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`, `/scc:research`, `/scc:review`, `/scc:refine`) are **building blocks that PDCA calls inside its phases** — they are not replacements for PDCA, and they do not run on their own outside a PDCA cycle.
+**PDCA always runs.** It is the top-level orchestrator for all knowledge work. The Plan→Do→Check→Act cycle wraps every task. Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/second-claude-code:write`, `/second-claude-code:research`, `/second-claude-code:review`, `/second-claude-code:refine`) are **building blocks that PDCA calls inside its phases** — they are not replacements for PDCA, and they do not run on their own outside a PDCA cycle.
 
 ```
 PDCA Cycle (always running)
-  ├─ Plan  → calls /scc:research (or domain research) + /scc:analyze
+  ├─ Plan  → calls /second-claude-code:research (or domain research) + /second-claude-code:analyze
   ├─ Do    → calls the appropriate sub-skill based on output format
   │           ├─ Threads content?      → /threads handles its own internal phases inside Do
   │           ├─ Newsletter?           → /newsletter handles its own phases inside Do
   │           ├─ Shorts script?        → /academy-shorts handles its own phases inside Do
   │           ├─ Card news?            → /card-news handles its own phases inside Do
-  │           └─ Generic content?      → /scc:write
-  ├─ Check → calls /scc:review (always, regardless of which sub-skill ran in Do)
-  └─ Act   → calls /scc:refine or routes back to Plan/Do via Action Router
+  │           └─ Generic content?      → /second-claude-code:write
+  ├─ Check → calls /second-claude-code:review (always, regardless of which sub-skill ran in Do)
+  └─ Act   → calls /second-claude-code:refine or routes back to Plan/Do via Action Router
 ```
 
 The key principle: **the user only invokes PDCA**. PDCA decides which sub-skill to dispatch in each phase. The sub-skill produces its phase output and returns control to PDCA, which then enforces the gate, runs Check, and routes Act findings.
@@ -57,7 +57,7 @@ When PDCA enters the Do phase, it picks the most specialized sub-skill that matc
 | Korean tech newsletter | `/newsletter` | Its 7-phase pipeline, Notion/Beehiiv publishing |
 | Shorts script (60-90s) | `/academy-shorts` | Research → script → editor pipeline with MMBridge review |
 | Card news (carousel) | `/card-news` | Card news template + Playwright render pipeline |
-| Generic article/report/blog/social | `/scc:write` | Pure execution from Plan artifacts |
+| Generic article/report/blog/social | `/second-claude-code:write` | Pure execution from Plan artifacts |
 
 **Key trigger keywords for sub-skill selection** (PDCA scans the user's prompt and the Plan output's `dod` field):
 
@@ -65,7 +65,7 @@ When PDCA enters the Do phase, it picks the most specialized sub-skill that matc
 - "뉴스레터", "newsletter", "주간 뉴스레터" → `/newsletter` in Do
 - "쇼츠", "shorts", "릴스", "Reels", "9:16", "60초 영상" → `/academy-shorts` in Do
 - "카드뉴스", "card news", "인스타 카드", "캐러셀" → `/card-news` in Do
-- Anything else → `/scc:write` in Do
+- Anything else → `/second-claude-code:write` in Do
 
 ### Why PDCA Wraps Sub-Skills (Doesn't Hand Off)
 
@@ -87,11 +87,11 @@ For the full sub-skill dispatch protocol (input contract, output contract, failu
 This means a full PDCA run on a threads article looks like:
 
 ```
-PDCA Plan  →  /scc:research + /scc:analyze (gather sources, build framework)
+PDCA Plan  →  /second-claude-code:research + /second-claude-code:analyze (gather sources, build framework)
 PDCA Do    →  /threads (which internally runs its own 8 phases including the
               sub-skill's research, draft, edit, cross-review, proofread, final QA,
               publish — all gated by /threads' own contracts)
-PDCA Check →  /scc:review (parallel reviewers, even though /threads already did
+PDCA Check →  /second-claude-code:review (parallel reviewers, even though /threads already did
               its own cross-review — PDCA's Check adds an outside perspective)
 PDCA Act   →  Action Router classifies any Check findings and routes to Plan,
               Do, or Refine
@@ -101,7 +101,7 @@ PDCA's Check is **not redundant** with the sub-skill's internal review — they 
 
 ### Past Failure That Motivated This Architecture
 
-A user asked for a threads article. PDCA was invoked but the orchestrator interpreted PDCA's abstract phases as a license to self-process — it skipped both `/threads` (the right Do-phase sub-skill) and `/scc:review` (the Check phase). Result: a 3,000-character article with no cross-review, no fact-check, no second model perspective. When the work was redone with PDCA explicitly dispatching `/threads` in Do and `/scc:review` in Check, three P0 factual errors surfaced (a math inconsistency, a wrong feature description, an incorrect currency conversion). The lesson: PDCA's value comes from the wrapping (Plan + Check + Act around whatever the Do phase produces), and skipping that wrapping is what makes outputs short and weak. **Always run the full cycle. Always wrap. Never let the orchestrator self-process when a sub-skill exists.**
+A user asked for a threads article. PDCA was invoked but the orchestrator interpreted PDCA's abstract phases as a license to self-process — it skipped both `/threads` (the right Do-phase sub-skill) and `/second-claude-code:review` (the Check phase). Result: a 3,000-character article with no cross-review, no fact-check, no second model perspective. When the work was redone with PDCA explicitly dispatching `/threads` in Do and `/second-claude-code:review` in Check, three P0 factual errors surfaced (a math inconsistency, a wrong feature description, an incorrect currency conversion). The lesson: PDCA's value comes from the wrapping (Plan + Check + Act around whatever the Do phase produces), and skipping that wrapping is what makes outputs short and weak. **Always run the full cycle. Always wrap. Never let the orchestrator self-process when a sub-skill exists.**
 
 ## Phase Detection (Only Runs After Domain Routing Returns "no match")
 
@@ -119,7 +119,7 @@ When full PDCA is detected, run all phases with gates between each.
 ## Architecture
 
 ```
-User Prompt → prompt-detect.mjs (Layer 1: compound → /scc:pdca)
+User Prompt → prompt-detect.mjs (Layer 1: compound → /second-claude-code:pdca)
 
 PDCA Orchestrator
 │
@@ -130,11 +130,11 @@ PDCA Orchestrator
 │       └── Gate: Brief + Analysis exist? Sources ≥3?
 │
 ├── DO (pure execution)
-│   └── Smeargle (writer): /scc:write --skip-research --skip-review
+│   └── Smeargle (writer): /second-claude-code:write --skip-research --skip-review
 │       └── Gate: Artifact complete? Format OK?
 │
 ├── CHECK (unchanged)
-│   └── Xatu + Absol + Porygon + Jigglypuff + Unown: /scc:review
+│   └── Xatu + Absol + Porygon + Jigglypuff + Unown: /second-claude-code:review
 │       └── Gate: Verdict routing
 │
 └── ACT (action router → refine)
@@ -142,7 +142,7 @@ PDCA Orchestrator
     │   ├── SOURCE/ASSUMPTION/FRAMEWORK → PLAN
     │   ├── COMPLETENESS/FORMAT → DO
     │   └── EXECUTION_QUALITY → REFINE
-    └── Ditto (editor): /scc:refine
+    └── Ditto (editor): /second-claude-code:refine
         └── Gate: Target met? → EXIT
 ```
 
@@ -228,34 +228,34 @@ the notification payload pattern used by `hooks/session-end.mjs`.
 
 ## Subagents (Conceptual Roles, Not Direct Dispatch Targets)
 
-**Important**: The Pokemon names below are **conceptual role labels**, not Agent tool `subagent_type` values. PDCA does NOT dispatch them directly via the Agent tool. Instead, the chained skills (`/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`) handle these roles internally — they map each role to the appropriate concrete subagent or model.
+**Important**: The Pokemon names below are **conceptual role labels**, not Agent tool `subagent_type` values. PDCA does NOT dispatch them directly via the Agent tool. Instead, the chained skills (`/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine`) handle these roles internally — they map each role to the appropriate concrete subagent or model.
 
 If you (the orchestrator) try to call `Agent(subagent_type: "eevee")`, it will fail. Always go through the chained skill, never bypass to a Pokemon role.
 
 ```yaml
-# Roles handled inside /scc:research
+# Roles handled inside /second-claude-code:research
 researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 3 distinct sources" }
 analyst: { model: sonnet, role: alakazam, purpose: "apply frameworks with evidence, no generic claims" }
 strategist: { model: sonnet, role: mewtwo, purpose: "strategic synthesis, challenge assumptions" }
 
-# Role handled inside /scc:write
+# Role handled inside /second-claude-code:write
 writer: { model: opus, role: smeargle, purpose: "produce artifact from plan, skip-research skip-review" }
 
-# Roles handled inside /scc:review (parallel dispatch)
+# Roles handled inside /second-claude-code:review (parallel dispatch)
 deep-reviewer: { model: opus, role: xatu, purpose: "thorough quality review with structured critic output" }
 devil-advocate: { model: sonnet, role: absol, purpose: "attack weakest points, find logical gaps" }
 fact-checker: { model: sonnet, role: porygon, purpose: "verify claims against sources, flag unsupported statements" }
 structure-analyst: { model: haiku, role: jigglypuff, purpose: "check organization, flow, format compliance" }
 consistency-checker: { model: haiku, role: unown, purpose: "cross-reference internal consistency, flag contradictions" }
 
-# Role handled inside /scc:refine
+# Role handled inside /second-claude-code:refine
 editor: { model: opus, role: ditto, purpose: "apply top 3 fixes per iteration, verify improvement" }
 
 # Orchestration meta-role (the PDCA orchestrator itself)
 orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
 ```
 
-**How PDCA actually executes**: The orchestrator calls `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` as Skill invocations. Each of those skills internally dispatches the right subagents (`general-purpose`, `code-reviewer`, etc.) using the Agent tool. PDCA never bypasses this layer.
+**How PDCA actually executes**: The orchestrator calls `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine` as Skill invocations. Each of those skills internally dispatches the right subagents (`general-purpose`, `code-reviewer`, etc.) using the Agent tool. PDCA never bypasses this layer.
 
 ## Gotchas
 

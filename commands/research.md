@@ -16,5 +16,6 @@ Invoke the `/second-claude-code:research` command to perform deep research throu
 ## Your task
 Perform the research now using the plugin's loaded `research` skill and the provided arguments.
 
-- Return the final research brief directly.
+- Save the full brief to `.captures/research-{slug}-{YYYY-MM-DD}.md` following the research skill's Auto-Save contract.
+- Return the final research brief directly and include the saved path.
 - Do not say that you are invoking or have invoked a skill.
