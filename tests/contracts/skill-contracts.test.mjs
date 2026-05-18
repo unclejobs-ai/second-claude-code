@@ -9,6 +9,35 @@ function read(relPath) {
   return readFileSync(path.join(root, relPath), "utf8");
 }
 
+function markdownFilesUnder(relPath) {
+  const start = path.join(root, relPath);
+  const files = [];
+  const scanStack = [start];
+
+  while (scanStack.length > 0) {
+    const current = scanStack.pop();
+    for (const entry of readdirSync(current, { withFileTypes: true })) {
+      const fullPath = path.join(current, entry.name);
+      if (entry.isDirectory()) {
+        scanStack.push(fullPath);
+      } else if (entry.isFile() && entry.name.endsWith(".md")) {
+        files.push(fullPath);
+      }
+    }
+  }
+
+  return files;
+}
+
+function activePublicDocFiles() {
+  return [
+    ...markdownFilesUnder("skills"),
+    ...markdownFilesUnder(path.join("docs", "skills")),
+    path.join(root, "docs", "architecture.md"),
+    path.join(root, "docs", "architecture.ko.md"),
+  ];
+}
+
 function findAgentFileByName(expectedName) {
   const agentsDir = path.join(root, "agents");
   for (const fileName of readdirSync(agentsDir)) {
@@ -171,50 +200,32 @@ test("command wrappers map each /second-claude-code command to the matching bare
   }
 });
 
-test("active skill docs do not use the legacy /scc namespace", () => {
-  const scanStack = [path.join(root, "skills")];
+test("active public docs do not use the legacy /scc namespace", () => {
   const offenders = [];
 
-  while (scanStack.length > 0) {
-    const current = scanStack.pop();
-    for (const entry of readdirSync(current, { withFileTypes: true })) {
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        scanStack.push(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = readFileSync(fullPath, "utf8");
-        if (/\/scc:/.test(content)) {
-          offenders.push(path.relative(root, fullPath));
-        }
-      }
+  for (const fullPath of activePublicDocFiles()) {
+    const content = readFileSync(fullPath, "utf8");
+    if (/\/scc:/.test(content)) {
+      offenders.push(path.relative(root, fullPath));
     }
   }
 
   assert.deepEqual(offenders.sort(), []);
 });
 
-test("active skill docs reference only registered public commands", () => {
+test("active public docs reference only registered public commands", () => {
   const commandNames = new Set(
     readdirSync(path.join(root, "commands"))
       .filter((fileName) => fileName.endsWith(".md"))
       .map((fileName) => fileName.replace(/\.md$/, ""))
   );
-  const scanStack = [path.join(root, "skills")];
   const offenders = [];
 
-  while (scanStack.length > 0) {
-    const current = scanStack.pop();
-    for (const entry of readdirSync(current, { withFileTypes: true })) {
-      const fullPath = path.join(current, entry.name);
-      if (entry.isDirectory()) {
-        scanStack.push(fullPath);
-      } else if (entry.isFile() && entry.name.endsWith(".md")) {
-        const content = readFileSync(fullPath, "utf8");
-        for (const match of content.matchAll(/\/second-claude-code:([a-z-]+)/g)) {
-          if (!commandNames.has(match[1])) {
-            offenders.push(`${path.relative(root, fullPath)} -> ${match[0]}`);
-          }
-        }
+  for (const fullPath of activePublicDocFiles()) {
+    const content = readFileSync(fullPath, "utf8");
+    for (const match of content.matchAll(/\/second-claude-code:([a-z-]+)/g)) {
+      if (!commandNames.has(match[1])) {
+        offenders.push(`${path.relative(root, fullPath)} -> ${match[0]}`);
       }
     }
   }

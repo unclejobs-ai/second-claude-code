@@ -19,7 +19,7 @@ See [orchestrator-architecture.md](../orchestrator-architecture.md) for the v1.4
 - **Plan brief floors** — sources raised from 3 to 5, plus 8 facts, 1 named quote, 1 comparison table, 1 media item, 3,000 chars body minimum.
 - **Reviewer diversity rule** — Check requires ≥ 2 distinct models and ≥ 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6. False consensus detection triggers adversarial pass.
 - **5+ Rule (calibrated AND logic)** — patch vs full rewrite threshold. Fires on any P0 OR (P0+P1 ≥ 5 AND findings span ≥ 3 categories). Calibrated from initial OR logic after observing over-trigger on real 4-finding patch sets.
-- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`.
+- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine`.
 
 See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec and verification cycle metrics.
 
@@ -85,12 +85,12 @@ Every gate now requires measurable numeric or boolean fields, not soft "looks co
 |--------|-----------|--------|---------------------|
 | Threads article | 4,000 | 5,000-7,000 | `/threads` |
 | Newsletter | 10,000 | 12,000-15,000 | `/newsletter` |
-| Generic article | 4,000 | 5,000-7,000 | `/scc:write` |
-| Strategy report | 5,000 | 6,000-9,000 | `/scc:write` |
-| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
+| Generic article | 4,000 | 5,000-7,000 | `/second-claude-code:write` |
+| Strategy report | 5,000 | 6,000-9,000 | `/second-claude-code:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/second-claude-code:analyze` |
 | Shorts script | 1,800 | 2,200-2,800 | `/academy-shorts` |
 | Card news | 8-10 cards | 9-12 cards | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
+| PRD | 4,000 | 5,000-7,000 | `/second-claude-code:write --format prd` |
 
 Full table in `skills/pdca/references/do-phase.md`.
 
@@ -104,7 +104,7 @@ Do phase greedy-matches user prompts against trigger keywords and dispatches the
 | 뉴스레터, newsletter | `/newsletter` |
 | 쇼츠, shorts, 릴스 | `/academy-shorts` |
 | 카드뉴스, card news, 캐러셀 | `/card-news` |
-| (no specialized match) | `/scc:write` |
+| (no specialized match) | `/second-claude-code:write` |
 
 Sub-skill standard: `skills/pdca/references/domain-pipeline-integration.md` (input/output contracts, 4 failure modes).
 

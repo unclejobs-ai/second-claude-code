@@ -90,7 +90,7 @@ graph TD
 
 ## Troubleshooting
 
-- **Wrong framework selected** -- When auto-detection picks the wrong framework, specify it explicitly: `/scc:analyze --framework porter "your topic"`. The 15 supported frameworks are listed in the Options section above.
+- **Wrong framework selected** -- When auto-detection picks the wrong framework, specify it explicitly: `/second-claude-code:analyze --framework porter "your topic"`. The 15 supported frameworks are listed in the Options section above.
 - **Generic claims in output** -- The framework references enforce "Evidence Expectations." If the output lacks specifics, try `--with-research` to gather real data before analysis, or `--depth thorough` for a second challenge round.
 - **Depth levels explained** -- `quick` maps to depth 1 (template only, no challenge). `standard` maps to depth 2 (template + one challenge round). `thorough` maps to depth 3 (adds research and a second challenge round). Use `--depth thorough` or the alias `deep` for maximum rigor.
 
