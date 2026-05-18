@@ -30,6 +30,10 @@ const ALLOW_LIST = new Set([
   "engine/probes/jina.mjs",
   "engine/transforms.mjs",
   "engine/orchestrator.mjs",
+  // Native cleaners are intentionally host-scoped extractors; the registry and
+  // extractor implementation may mention the host they match.
+  "engine/cleaners/index.mjs",
+  "engine/cleaners/naver.mjs",
 ]);
 
 function escapeRegex(s) {
