@@ -126,7 +126,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-16 slash commands and 16 skills for all knowledge work:
+17 slash commands and 17 skills for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -454,6 +454,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Refine a draft to a target score | `refine` | Iterative improvement until reviewers pass — supports `--dod` for structured success criteria |
 | Debug a failing workflow before fixing it | `investigate` | Root-cause report with evidence, hypotheses, and verification |
 | Benchmark and evolve prompt assets | `loop` | Fixed-suite optimization with isolated winner branches |
+| Evolve a prompt asset that keeps causing the same failure | `evolve` | Ouroboros maintainer loop — harvest real gate failures, maintainer-authored structural check, isolated winner branch |
 | Save a URL, note, or excerpt | `collect` | PARA-classified knowledge capture |
 | Chain skills into a reusable workflow | `workflow` | Custom multi-step automation |
 | Find and install new capabilities | `discover` | Skill discovery and installation |
@@ -477,6 +478,16 @@ Typical flow:
 ```
 
 The run writes resumable state to `.data/state/loop-active.json` and captures artifacts in `.captures/loop-<run_id>/`, including the leaderboard, score history, and winner diff.
+
+### Ouroboros Loop — `evolve`
+
+`evolve` closes the self-improvement ring on top of `loop`. When the same PDCA gate keeps failing across runs, it harvests those real failures (`list-failures`), lets the **maintainer** hand-author a structural check (`harvest <id> --assertion …`), then hands the asset to the unmodified `loop` engine to evolve on an isolated branch. The optimizer never authors its own success criterion — the maintainer does — and merging the winner stays a manual decision after reading `winner.diff`. Slash-only, like `loop`. See [docs/proposals/evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md) for the full design and its adversarial-review history.
+
+```bash
+/second-claude-code:evolve list-failures
+/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
+/second-claude-code:evolve run evolve-<id>
+```
 
 ```
 "Research and write about AI agents"       →  pdca (full cycle)

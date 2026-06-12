@@ -187,7 +187,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-16 commands and 16 skills for all knowledge work:
+17 commands and 17 skills for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -612,6 +612,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | 3~5명 관점에서 초안 리뷰 | `review` | 병렬 리뷰 + 합의 투표 |
 | 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 — `--dod`로 성공 기준 체크리스트 지원 |
 | 프롬프트 자산 벤치마크 최적화 | `loop` | 고정 스위트 기반 루프 + 격리 우승 브랜치 |
+| 반복 실패하는 프롬프트 자산 진화 | `evolve` | 우로보로스 유지보수 루프 — 실제 게이트 실패 수확 + 메인테이너 작성 구조 체크 + 격리 우승 브랜치 |
 | URL, 메모, 발췌 저장 | `collect` | PARA 분류 기반 지식 캡처 |
 | 여러 스킬을 워크플로우로 연결 | `workflow` | 커스텀 자동화 |
 | 없는 스킬 찾아 설치 | `discover` | 새 스킬 탐색 및 설치 |
@@ -634,6 +635,16 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 ```
 
 실행 상태는 `.data/state/loop-active.json`에 저장되고, 점수표, 세대 히스토리, 우승 diff 같은 산출물은 `.captures/loop-<run_id>/`에 남습니다.
+
+### 우로보로스 루프 — `evolve`
+
+`evolve`는 `loop` 위에서 자기개선 고리를 닫습니다. 같은 PDCA 게이트가 여러 런에 걸쳐 반복 실패하면, 그 실제 실패를 수확하고(`list-failures`), **메인테이너**가 구조 체크를 직접 작성하게 한 뒤(`harvest <id> --assertion …`), 자산을 그대로의 `loop` 엔진에 넘겨 격리 브랜치에서 진화시킵니다. 옵티마이저는 자기 성공 기준을 절대 작성하지 않고(메인테이너가 작성), 우승안 병합은 `winner.diff`를 읽은 뒤의 수동 결정으로 남습니다. `loop`처럼 슬래시 전용입니다. 전체 설계와 적대적 리뷰 이력은 [docs/proposals/evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md)를 보세요.
+
+```bash
+/second-claude-code:evolve list-failures
+/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
+/second-claude-code:evolve run evolve-<id>
+```
 
 ```
 "AI 에이전트 알아보고 보고서 써줘"       →  pdca (전체 사이클)
