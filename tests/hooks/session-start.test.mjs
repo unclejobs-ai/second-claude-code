@@ -45,6 +45,9 @@ test("session start renders active state with canonical keys and capability summ
     env: {
       ...process.env,
       CLAUDE_PLUGIN_DATA: tempDir,
+      // Deterministic: under heavy parallel-suite load the live 5s probe can
+      // time out and render "none detected", flaking the /git/ assertion.
+      SECOND_CLAUDE_CAPABILITIES: '["git","node"]',
     },
     encoding: "utf8",
   });
@@ -76,6 +79,7 @@ test("session start still resumes legacy pipeline-active state", () => {
     env: {
       ...process.env,
       CLAUDE_PLUGIN_DATA: tempDir,
+      SECOND_CLAUDE_CAPABILITIES: '["git"]',
     },
     encoding: "utf8",
   });

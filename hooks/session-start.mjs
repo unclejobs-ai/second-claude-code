@@ -24,6 +24,18 @@ const DATA_DIR =
   process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 
 function getCapabilities() {
+  // Deterministic override (JSON array) — skips the live probe entirely.
+  // Used by tests so the rendered banner does not depend on a 5s shell probe
+  // surviving arbitrary system load; also a user escape hatch for slow hosts.
+  const override = process.env.SECOND_CLAUDE_CAPABILITIES;
+  if (override) {
+    try {
+      const parsed = JSON.parse(override);
+      if (Array.isArray(parsed)) return parsed.filter((c) => typeof c === "string");
+    } catch {
+      // malformed override — fall through to the live probe
+    }
+  }
   try {
     const scriptPath = join(PLUGIN_ROOT, "scripts", "detect-environment.sh");
     const output = execFileSync("bash", [scriptPath], {
