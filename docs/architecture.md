@@ -46,7 +46,7 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional)
-├── skills/                       # 16 skills (SKILL.md each)
+├── skills/                       # 17 skills (SKILL.md each)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
@@ -59,6 +59,7 @@ second-claude/
 │   ├── workflow/                 # Custom workflow builder
 │   ├── discover/                 # Skill discovery
 │   ├── loop/                     # Karpathy-style prompt optimization loop
+│   ├── evolve/                   # Ouroboros maintainer loop (harvest failures → maintainer check → loop)
 │   ├── batch/                    # Parallel task decomposition and execution
 │   │   └── references/           # Decomposition guide, split strategies, merge patterns
 │   ├── soul/                     # User identity profile synthesis
@@ -70,7 +71,7 @@ second-claude/
 │       ├── engine/               # CLI + chain + 10 probes + orchestrator
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 16 slash command wrappers
+├── commands/                     # 17 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)

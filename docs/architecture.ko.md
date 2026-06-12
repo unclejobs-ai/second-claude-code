@@ -38,7 +38,7 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 
 핵심은 새 런타임을 얹는 게 아니라, 기존 Plan → Do → Check → Act 게이트를 코드 작업에 맞게 더 엄격하게 만드는 거예요. Plan에서는 테스트 가능한 수용 기준과 영향 범위를 확정하고, Do에서는 필요하면 브랜치나 워크트리로 격리해 단계별로 진행하며, Check에서는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구해요. Act에서는 clean-ai-slop, 단순화, 성능 측정이 필요할 때의 Rob Pike식 baseline/after 비교, PR 또는 로컬 리포트 핸드오프를 마무리 조건으로 둡니다.
 
-### 16개 스킬 목록
+### 17개 스킬 목록
 
 | 스킬 | 페이즈 | 역할 |
 |------|--------|------|
@@ -48,6 +48,7 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 | `review` | Check | 다관점 품질 게이트 (5명 병렬 리뷰) |
 | `refine` | Act | 반복 개선 |
 | `loop` | 최적화 | 고정 스위트 기반 프롬프트 자산 최적화 |
+| `evolve` | 유지보수 | 반복 실패 자산을 메인테이너 작성 구조 체크로 진화 |
 | `collect` | Plan | PARA 방식 지식 수집 |
 | `workflow` | Do | 커스텀 워크플로 빌더 |
 | `discover` | Plan | 스킬 탐색 |
@@ -66,7 +67,7 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택)
-├── skills/                       # 16개 스킬 (각각 SKILL.md)
+├── skills/                       # 17개 스킬 (각각 SKILL.md)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
 │   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
 │   ├── research/                 # 자율적 심층 리서치 (WebFetch + Playwright 폴백)
@@ -79,6 +80,7 @@ second-claude/
 │   ├── workflow/                 # 커스텀 워크플로 빌더
 │   ├── discover/                 # 스킬 탐색
 │   ├── loop/                     # Karpathy 스타일 프롬프트 최적화 루프
+│   ├── evolve/                   # 우로보로스 메인테이너 루프 (실패 수확 → 메인테이너 체크 → loop)
 │   ├── batch/                    # 병렬 작업 분해 및 실행
 │   │   └── references/           # 분해 가이드, 분할 전략, 병합 패턴
 │   ├── soul/                     # 사용자 정체성 프로필 합성
@@ -90,7 +92,7 @@ second-claude/
 │       ├── engine/               # CLI + 체인 + 10개 probe + 오케스트레이터
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
-├── commands/                     # 16개 슬래시 커맨드 래퍼
+├── commands/                     # 17개 슬래시 커맨드 래퍼
 ├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (8개 훅)
 │   ├── hooks.json                # 훅 설정
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)

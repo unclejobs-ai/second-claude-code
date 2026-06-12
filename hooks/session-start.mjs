@@ -139,7 +139,7 @@ function main() {
   lines.push("");
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
-  lines.push("16 commands for all knowledge work:");
+  lines.push("17 commands for all knowledge work:");
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
@@ -150,6 +150,7 @@ function main() {
   lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
   lines.push("| `/second-claude-code:refine` | Iterative improvement until quality target met |");
   lines.push("| `/second-claude-code:loop` | Benchmark and evolve prompt assets inside isolated loop branches |");
+  lines.push("| `/second-claude-code:evolve` | Ouroboros maintainer loop — evolve a recurring-failure asset against a maintainer-authored check |");
   lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
   lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
   lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
@@ -161,7 +162,7 @@ function main() {
   lines.push("| `/second-claude-code:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
   lines.push("");
   lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: research, write, analyze, review, refine, loop, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
+  lines.push("Or use individual skills: research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
   lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

@@ -1,0 +1,23 @@
+{
+  "_comment": "Maps a PDCA gate-failure signal to the prompt asset most responsible for producing it. Used by evolve harvest to attribute a real failure to a weak asset (provenance only). Gate-rule names come from mcp/lib/pdca-handlers.mjs checkGate(); phase is the fallback when a rule is unmapped. The maintainer authors the actual structural check separately — this map never decides what the check is, only which asset the loop should evolve. Tune freely; every value must be a valid v1 loop target (skills/**/SKILL.md, agents/*.md, commands/*.md, templates/*.md).",
+  "gate_rule": {
+    "brief_exists": "skills/research/SKILL.md",
+    "sources_min_3": "skills/research/SKILL.md",
+    "analysis_exists": "skills/analyze/SKILL.md",
+    "plan_mode_approved": "skills/pdca/SKILL.md",
+    "artifact_exists": "skills/write/SKILL.md",
+    "artifact_complete": "skills/write/SKILL.md",
+    "plan_integrated": "skills/write/SKILL.md",
+    "verdict_set": "skills/review/SKILL.md",
+    "min_two_reviewers": "skills/review/SKILL.md",
+    "decision_set": "skills/refine/SKILL.md",
+    "root_cause_set": "skills/investigate/SKILL.md"
+  },
+  "phase": {
+    "plan": "skills/research/SKILL.md",
+    "do": "skills/write/SKILL.md",
+    "check": "skills/review/SKILL.md",
+    "act": "skills/refine/SKILL.md"
+  },
+  "fallback": "skills/pdca/SKILL.md"
+}
