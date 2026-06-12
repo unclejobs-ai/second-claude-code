@@ -64,6 +64,10 @@ Research and write a report on AI agent frameworks
 
 The `--domain` flag (new in v1.0.0) selects domain-specific stage contracts, Definition of Done criteria, and rollback targets for each phase transition.
 
+### Code Engineering Lane
+
+When `--domain code` is active, PDCA loads the Code Engineering Lane from `skills/pdca/references/code-engineering-lane.md`. It keeps the normal Plan -> Do -> Check -> Act order while adding code-work discipline: executable acceptance criteria, worker-validator separation, stage reports for long work, human approval gates for broad or risky execution, cleanup/simplification, and issue/PR/local handoff state.
+
 ## How It Works
 
 ![PDCA Cycle](../images/pdca-cycle.svg)

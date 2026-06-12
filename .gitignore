@@ -20,6 +20,7 @@ ui/dist/
 .claude/last30days.env
 .claude/settings.local.json
 .superpowers/
+.omo/
 
 # Test snapshots
 tests/skill-tests/

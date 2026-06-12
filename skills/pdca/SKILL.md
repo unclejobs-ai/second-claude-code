@@ -47,6 +47,19 @@ PDCA Cycle (always running)
 
 The key principle: **the user only invokes PDCA**. PDCA decides which sub-skill to dispatch in each phase. The sub-skill produces its phase output and returns control to PDCA, which then enforces the gate, runs Check, and routes Act findings.
 
+### Code Engineering Lane
+
+When the task is code work (`domain=code`, repository edits, tests, debugging, CI, refactoring, or PR prep), PDCA still owns the Plan -> Do -> Check -> Act cycle, but it must load `references/code-engineering-lane.md` before planning. This lane absorbs the useful code-work discipline from external playbooks while preserving Second Claude's existing PDCA architecture.
+
+The lane adds code-specific gates:
+
+- Plan must produce executable acceptance criteria before medium or high-risk edits.
+- Do should use branch/worktree isolation for non-trivial implementation and keep a stage report for long work.
+- Check must separate worker output from validator/reviewer proof.
+- Act must clean, simplify, and record handoff state before completion.
+
+Use the lane as a specialization layer, not as a replacement for `investigate`, `review`, `workflow`, or `loop`.
+
 ### Do-Phase Sub-Skill Selection
 
 When PDCA enters the Do phase, it picks the most specialized sub-skill that matches the artifact format:

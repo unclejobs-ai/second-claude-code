@@ -3,6 +3,19 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [1.5.2] - 2026-06-12
+
+### Added — Code Engineering Lane
+
+- **Code Engineering Lane** (`skills/pdca/references/code-engineering-lane.md`) — a `domain=code` PDCA specialization that absorbs useful operating discipline from `engineering-discipline` and `Hyper-Waterfall` without replacing Second Claude's Plan → Do → Check → Act cycle.
+- **Code-stage contracts strengthened** (`config/stage-contracts.json`) — code Plan now requires executable acceptance criteria, rollback path, and approval-gate status; Do records branch/worktree isolation and stage-report expectations; Check requires validator/reviewer proof; Act requires clean-ai-slop/simplification and final handoff state.
+- **Public docs aligned** — README, Korean README, architecture docs, and PDCA skill guides now describe the same code engineering lane.
+- **Contract regression coverage** — `tests/contracts/skill-contracts.test.mjs` locks the new lane reference, public docs, and code-stage DoD phrases.
+
+### Changed
+
+- **Release metadata aligned to 1.5.2** — package metadata, plugin manifest, marketplace metadata, badges, `CLAUDE.md`, and `AGENTS.md` now agree on the current deployed version and 16-skill surface.
+
 ## [1.5.1] - 2026-05-09
 
 ### Added — Unblock Phase 0d native cleaners

@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-1.4.2-blue)
+![version](https://img.shields.io/badge/version-1.5.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -38,9 +38,36 @@ flowchart TB
     ACT --> OUT[완성 결과물 + 사이클 메모리]
 ```
 
-Second Claude Code는 제어 루프입니다. v1.4.0 오케스트레이터는 그 루프 앞에서 설치된 플러그인이 더 적합한 경우 먼저 실행되도록 길을 터줍니다.
+Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀어내는 `unblock` 스킬과 코드 작업 전용 엔지니어링 레인이 추가돼, 리서치와 코드 작업 모두에서 PDCA 게이트가 더 구체적으로 작동합니다.
 
 ---
+
+## v1.5.2에서 달라진 점
+
+**코드 엔지니어링 레인** — `code` 도메인이 이제 일반 PDCA보다 더 엄격한 실행 계약을 탑니다. `engineering-discipline`의 plan → worker-validator → review-work → clean-ai-slop 흐름과 `Hyper-Waterfall`의 issue/branch/stage report/PR 기반 작업 기억 외부화를 Second Claude PDCA 안에 흡수했어요.
+
+- **실행 가능한 코드 Plan** — 수용 기준, 롤백 경로, 복잡도, 위험 작업 승인 상태를 Plan 계약에 포함합니다.
+- **worker-validator 분리** — Check는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구합니다.
+- **stage report** — 장기 또는 다단계 Do 작업은 브랜치/워크트리 격리, 단계 진행, 검증 결과, 다음 결정을 남깁니다.
+- **핸드오프 전 정리** — Act는 clean-ai-slop, 단순화, 관련 검증, 성능 주장 시 baseline/after 측정, issue/PR/local handoff state를 마무리 조건으로 둡니다.
+- **공개 문서 정렬** — README, 아키텍처 문서, PDCA 스킬 가이드, stage contract, 계약 테스트가 같은 코드 레인을 설명합니다.
+
+릴리스 노트와 검증 요약은 `docs/RELEASE-v1.5.2.ko.md` 참고.
+
+> **이전 v1.5.0에서는...**
+
+## v1.5.0에서 달라진 점
+
+**`unblock` 스킬** — WebFetch가 막히는 URL(4xx, captcha, WAF, JS-heavy SPA)을 포기하기 전에 9-phase zero-key fetch chain으로 우회합니다.
+
+- **16번째 스킬** — `/second-claude-code:unblock`이 추가돼 research fallback과 auto-router에 연결됐어요.
+- **9-phase escalation** — public API, Jina, yt-dlp, curl variants, TLS rotation, LightPanda, Playwright, free archive cluster, optional paid provider 순서로 시도합니다.
+- **운영 하드닝** — SSRF guard, `schema_version`, `idempotency_key`, stagnation detection, decisions audit log가 들어갔습니다.
+- **검증 기준선** — v1.5.0 기준 `UNBLOCK_SKIP_NETWORK_TESTS=1 npm test`에서 397개 테스트, 394개 통과, 3개 스킵.
+
+전체 릴리스 노트는 `docs/RELEASE-v1.5.0.ko.md` 참고.
+
+> **이전 v1.4.0에서는...**
 
 ## v1.4.0에서 달라진 점
 
@@ -160,7 +187,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — 제2의 클로드
-15 commands and 15 skills for all knowledge work:
+16 commands and 16 skills for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -327,7 +354,7 @@ v1.0.0의 핵심이에요. PDCA가 이제 **기억하는 사이클**이 됐어�
 
 | 도메인 | DoD (완료 기준) |
 |---|---|
-| `code` | 요구사항이 테스트 가능한 태스크로 분해됨, 태스크별 복잡도 추정치 |
+| `code` | 테스트 가능한 태스크 분해, 실행 가능한 수용 기준과 롤백 경로, 위험 작업 승인 상태 |
 | `content` | 대상 독자 정의됨, 섹션별 분량 추정이 포함된 콘텐츠 아웃라인 |
 | `analysis` | 분석 질문과 가설이 명확, 데이터 소스 식별 및 접근 가능 |
 | `pipeline` | 파이프라인 스테이지가 I/O 계약과 함께 열거됨, 순환 의존성 없음 |
@@ -336,10 +363,16 @@ v1.0.0의 핵심이에요. PDCA가 이제 **기억하는 사이클**이 됐어�
 
 | 도메인 | DoD (완료 기준) |
 |---|---|
-| `code` | 코드 컴파일/파스 에러 없음, 새 코드에 테스트 있음, lint 경고 없음 |
+| `code` | 코드 컴파일/파스 에러 없음, 새 동작 테스트 또는 검증 증거 있음, 필요 시 브랜치/워크트리 격리와 stage report 있음 |
 | `content` | 초안이 plan.md 요구사항을 커버, 독자 수준에 맞는 가독성, 목표 분량 ±10% |
 | `analysis` | 데이터 수집 및 검증 완료, 분석 방법론 일관 적용, 중간 결과 재현 가능 |
 | `pipeline` | 각 스테이지의 출력이 다음 스테이지 입력 스펙에 맞음 |
+
+#### 코드 엔지니어링 레인
+
+`code` 도메인은 일반 PDCA보다 한 단계 더 엄격한 코드 엔지니어링 레인을 탑니다. `engineering-discipline`에서 가져올 만한 plan → worker-validator → review-work → clean-ai-slop 흐름과, `Hyper-Waterfall`에서 가져올 만한 issue/branch/stage report/PR 기반 작업 기억 외부화를 합친 레인이에요.
+
+즉 코드 작업에서는 Plan이 테스트 가능한 수용 기준을 만들고, Do가 필요 시 브랜치나 워크트리로 격리해 단계 리포트를 남기며, Check가 구현자 자기 보고 대신 validator/reviewer 증거를 요구하고, Act가 단순화와 핸드오프를 마무리합니다. 새 OS를 얹는 게 아니라 기존 Second Claude PDCA 안에 코드 전용 실행 규율을 더한 구조예요.
 
 모든 도메인의 모든 페이즈에 **rollback target**이 정의돼 있어요. Check에서 문제가 나오면 Do로, Do에서 문제가 나오면 Plan으로 돌아가요. 도메인 지정 없이 시작하면 `content`가 기본값이에요.
 
@@ -688,7 +721,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 대부분의 AI 도구는 수동적이에요 — 시키면 해요. Second Claude Code는 품질에 대한 의견이 있고, 그걸 강제해요. 세 가지 생각이 전부를 관통해요.
 
-**스킬 15개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 15개 중 하나가 알아서 잡아요.
+**스킬 16개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 16개 중 하나가 알아서 잡아요.
 
 **모든 산출물은 리뷰를 거쳐요.** 이건 권장이 아니에요. 품질 게이트가 건너뛰기를 막아요. 합의 게이트를 안 통과한 초안은 물리적으로 저한테 안 와요.
 

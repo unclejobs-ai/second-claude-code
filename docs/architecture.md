@@ -35,6 +35,12 @@ It auto-detects which phase to enter from natural language and chains the approp
 
 *`analyze` spans both phases: in Plan it synthesizes research findings; in Do it can apply a different framework for the production artifact.
 
+### Code Engineering Lane
+
+Code work keeps the same PDCA cycle but runs through a stricter `domain=code` lane. This lane absorbs `engineering-discipline`'s plan/implementation/validation separation and `Hyper-Waterfall`'s issue/branch/stage-report/PR external memory pattern as a code-specific contract.
+
+The point is not to add a second runtime. It tightens the existing Plan -> Do -> Check -> Act gates: Plan defines executable acceptance criteria and impact scope, Do isolates non-trivial work in a branch or worktree and records stage reports when needed, Check requires validator/reviewer evidence instead of worker self-report, and Act finishes cleanup, simplification, measured performance claims, and PR or local handoff state.
+
 ## Directory Structure
 
 ```

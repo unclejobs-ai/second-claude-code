@@ -239,6 +239,51 @@ test("research command wrapper preserves the research brief auto-save contract",
   assert.match(researchCommand, /saved path/i);
 });
 
+test("pdca documents the code engineering lane contract", () => {
+  const koreanLaneName = "\uCF54\uB4DC \uC5D4\uC9C0\uB2C8\uC5B4\uB9C1 \uB808\uC778";
+  const lanePath = path.join(root, "skills", "pdca", "references", "code-engineering-lane.md");
+  assert.equal(existsSync(lanePath), true, "PDCA should provide a code engineering lane reference");
+
+  const lane = read(path.join("skills", "pdca", "references", "code-engineering-lane.md"));
+  for (const phrase of [
+    "engineering-discipline",
+    "Hyper-Waterfall",
+    "human approval gate",
+    "worker-validator",
+    "stage report",
+    "clean-ai-slop",
+    "Rob Pike",
+  ]) {
+    assert.match(lane, new RegExp(phrase), `code engineering lane should include ${phrase}`);
+  }
+
+  assert.match(read("skills/pdca/SKILL.md"), /Code Engineering Lane/);
+  assert.match(read("skills/pdca/SKILL.md"), /references\/code-engineering-lane\.md/);
+  assert.match(read("README.md"), /Code Engineering Lane/);
+  assert.match(read("docs/architecture.md"), /Code Engineering Lane/);
+  assert.match(read("docs/skills/pdca.md"), /Code Engineering Lane/);
+  assert.match(read("docs/architecture.ko.md"), new RegExp(koreanLaneName));
+  assert.match(read("docs/skills/pdca.ko.md"), new RegExp(koreanLaneName));
+  assert.match(read("README.ko.md"), new RegExp(koreanLaneName));
+
+  const stageContracts = JSON.parse(read("config/stage-contracts.json"));
+  const codeDodText = ["plan", "do", "check", "act"]
+    .flatMap((phase) => stageContracts.contracts[phase].code.dod)
+    .join("\n");
+
+  for (const phrase of [
+    "Executable acceptance criteria",
+    "Human approval gate",
+    "Stage report",
+    "Validator/reviewer proof",
+    "clean-ai-slop",
+    "baseline and after measurement",
+    "handoff state",
+  ]) {
+    assert.match(codeDodText, new RegExp(phrase), `code stage contracts should include ${phrase}`);
+  }
+});
+
 test("session-start command banner matches command files", () => {
   const commandNames = readdirSync(path.join(root, "commands"))
     .filter((fileName) => fileName.endsWith(".md"))

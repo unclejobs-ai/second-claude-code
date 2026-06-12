@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-1.5.0-blue)
+![version](https://img.shields.io/badge/version-1.5.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
@@ -41,6 +41,20 @@ flowchart TB
 Second Claude Code is the control loop. The v1.4.0 orchestrator sits in front of that loop and gives installed plugins the first shot when they are a stronger fit.
 
 ---
+
+## What's New in v1.5.2
+
+**Code Engineering Lane — stricter PDCA for repository work.** The `code` domain now has a dedicated execution contract that folds in the best parts of `engineering-discipline` and `Hyper-Waterfall` without replacing Second Claude's PDCA cycle.
+
+- **Executable code plans** — Plan now requires acceptance criteria, rollback path, complexity, and human approval status for risky work.
+- **Worker-validator split** — Check requires validator/reviewer proof instead of trusting the implementer's self-report.
+- **Stage reports for long work** — non-trivial Do phases record branch/worktree isolation, stage progress, verification, and next action.
+- **Cleanup before handoff** — Act requires clean-ai-slop/simplification, relevant verification, measured performance claims when applicable, and issue/PR/local handoff state.
+- **Public docs aligned** — README, architecture docs, PDCA skill guides, stage contracts, and contract tests now describe the same code lane.
+
+See `docs/RELEASE-v1.5.2.md` for the release notes and validation.
+
+> **Previously in v1.5.0...**
 
 ## What's New in v1.5.0
 
@@ -255,7 +269,7 @@ Not all work is the same. Writing an article and shipping a code change have dif
 
 | Domain | What it covers | Plan contract | Do contract | Check contract | Act contract |
 |---|---|---|---|---|---|
-| **code** | Features, bug fixes, refactors | Spec + test plan required | Implementation + tests pass | Code review: correctness, security, perf | Merge criteria met, CI green |
+| **code** | Features, bug fixes, refactors | Executable plan + approval gate for risky work | Scoped branch/worktree, tests, stage report when needed | Validator/reviewer proof, not worker self-report | Clean/simplify, handoff, CI or local verification |
 | **content** | Articles, reports, newsletters | Research brief with sources | Full draft with citations | 5-reviewer consensus: logic, facts, tone | Editorial polish, publish-ready |
 | **analysis** | SWOT, frameworks, market intel | Data collection + framework selection | Structured analysis output | Validity check: methodology, numbers | Actionable recommendations |
 | **pipeline** | Workflows, automation, infra | Pipeline spec + rollback plan | Implementation + dry run | Integration test + load test | Deployment checklist verified |
@@ -266,6 +280,10 @@ Each domain loads its contracts from `config/stage-contracts.json`. The contract
 - **DoD (Definition of Done)** — the checklist that reviewers evaluate
 
 When you say `pdca_start_run(domain="code")`, the system loads code-specific contracts and enforces them at every transition. No manual configuration needed per run.
+
+#### Code Engineering Lane
+
+The `code` domain uses the Code Engineering Lane: a PDCA specialization that absorbs the useful parts of `engineering-discipline` and `Hyper-Waterfall` without replacing Second Claude's cycle. It keeps Plan -> Do -> Check -> Act, but tightens code work around executable acceptance criteria, worker-validator separation, stage reports, human approval gates for broad work, cleanup/simplification, and issue/PR/local handoff state.
 
 ---
 

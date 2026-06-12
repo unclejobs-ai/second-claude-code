@@ -66,6 +66,10 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 
 `--domain` 플래그(v1.0.0 신규)는 페이즈 전환마다 도메인별 단계 계약, 완료 정의(DoD), 롤백 대상을 선택합니다.
 
+### 코드 엔지니어링 레인
+
+`--domain code`가 활성화되면 PDCA는 `skills/pdca/references/code-engineering-lane.md`의 코드 엔지니어링 레인을 로드합니다. 기본 Plan → Do → Check → Act 순서는 유지하되, 코드 작업에는 테스트 가능한 수용 기준, worker-validator 분리, 장기 작업 stage report, 넓거나 위험한 실행의 human approval gate, 정리/단순화, issue/PR/local handoff state를 추가 계약으로 둡니다.
+
 ## 작동 원리
 
 ![PDCA Cycle](../images/pdca-cycle.svg)

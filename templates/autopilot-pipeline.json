@@ -1,6 +1,6 @@
 {
   "name": "autopilot",
-  "description": "End-to-end workflow: research → analyze → write → review → refine. Adopted from oh-my-codex autopilot pattern.",
+  "description": "End-to-end workflow: research → analyze → write → review → refine. Adopted from third-party Codex orchestration autopilot pattern.",
   "steps": [
     {
       "skill": "/second-claude-code:research",

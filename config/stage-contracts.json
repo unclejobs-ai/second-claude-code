@@ -8,7 +8,9 @@
         "output_files": ["plan.md"],
         "dod": [
           "Requirements decomposed into testable tasks",
+          "Executable acceptance criteria and rollback path defined",
           "Complexity estimate per task provided",
+          "Human approval gate recorded or explicitly not required for scoped work",
           "Previous cycle insights reviewed (if not first cycle)"
         ],
         "max_retries": 2,
@@ -54,8 +56,10 @@
         "output_files": ["do.md"],
         "dod": [
           "Code compiles/parses without errors",
-          "New code has corresponding tests",
-          "No new lint warnings introduced"
+          "New behavior has corresponding tests or documented verification",
+          "No new lint warnings introduced",
+          "Branch/worktree isolation used or direct-edit reason recorded",
+          "Stage report written for long-running or multi-stage work"
         ],
         "max_retries": 2,
         "rollback_target": "plan"
@@ -99,6 +103,8 @@
         "input_files": ["plan.md", "do.md"],
         "output_files": ["check.md"],
         "dod": [
+          "Targeted tests, lint, or syntax checks run with evidence",
+          "Validator/reviewer proof separated from worker self-report",
           "Multi-model review consensus > 7/10 (if mmbridge installed)",
           "Zero critical/high severity issues",
           "mmbridge gate passes (if installed, skip otherwise)"
@@ -145,7 +151,10 @@
         "input_files": ["plan.md", "do.md", "check.md"],
         "output_files": ["act.md", "metrics.json"],
         "dod": [
-          "All existing tests pass",
+          "All relevant tests pass or skipped with reason",
+          "clean-ai-slop and simplification pass completed",
+          "Performance claims include baseline and after measurement",
+          "Final handoff state recorded in issue, PR, or local report",
           "Cycle insight recorded",
           "Next cycle input defined"
         ],
