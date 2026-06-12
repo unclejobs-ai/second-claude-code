@@ -3,6 +3,12 @@
 All notable changes to second-claude-code are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- **MCP server self-heals missing dependencies** (`mcp/pdca-state-server.mjs`) — `claude plugin add` clones the repo but never runs `npm install`, so on a fresh install the `pdca-state` server died with `ERR_MODULE_NOT_FOUND` for `@modelcontextprotocol/sdk` and all 31 tools were unavailable. The server now detects the missing SDK at startup, installs production dependencies into the plugin root once (npm output routed to stderr — stdout stays clean JSON-RPC), and retries the import.
+
 ## [1.5.2] - 2026-06-12
 
 ### Added — Code Engineering Lane

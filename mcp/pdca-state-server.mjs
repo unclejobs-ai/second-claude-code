@@ -17,12 +17,7 @@
  *   pdca_get_analytics      — Cycle analytics: duration, gate rates, stuck frequency
  */
 
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js";
+import { execFileSync } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -82,6 +77,53 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA ?? join(PLUGIN_ROOT, ".data");
+
+// ---------------------------------------------------------------------------
+// SDK bootstrap — `claude plugin add` clones the repo but never runs
+// `npm install`, so on a fresh install @modelcontextprotocol/sdk is missing
+// and the server would die with ERR_MODULE_NOT_FOUND. Self-heal by installing
+// production deps into the plugin root once, then retry the import.
+// npm output goes to stderr only: stdout is reserved for the MCP stdio
+// transport and must stay clean JSON-RPC.
+// ---------------------------------------------------------------------------
+
+async function importSdk() {
+  const [serverMod, stdioMod, typesMod] = await Promise.all([
+    import("@modelcontextprotocol/sdk/server/index.js"),
+    import("@modelcontextprotocol/sdk/server/stdio.js"),
+    import("@modelcontextprotocol/sdk/types.js"),
+  ]);
+  return {
+    Server: serverMod.Server,
+    StdioServerTransport: stdioMod.StdioServerTransport,
+    CallToolRequestSchema: typesMod.CallToolRequestSchema,
+    ListToolsRequestSchema: typesMod.ListToolsRequestSchema,
+  };
+}
+
+async function loadSdk() {
+  try {
+    return await importSdk();
+  } catch (error) {
+    if (error?.code !== "ERR_MODULE_NOT_FOUND") throw error;
+    console.error(
+      "pdca-state: @modelcontextprotocol/sdk not found — installing plugin dependencies (one-time)…"
+    );
+    execFileSync(
+      "npm",
+      ["install", "--omit=dev", "--no-audit", "--no-fund", "--no-progress"],
+      {
+        cwd: PLUGIN_ROOT,
+        stdio: ["ignore", 2, 2],
+        shell: process.platform === "win32",
+      }
+    );
+    return importSdk();
+  }
+}
+
+const { Server, StdioServerTransport, CallToolRequestSchema, ListToolsRequestSchema } =
+  await loadSdk();
 
 // ---------------------------------------------------------------------------
 // Tool definitions
