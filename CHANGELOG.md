@@ -5,6 +5,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- **Deep Interview skill** (`commands/deep-interview.md`, `skills/deep-interview/`, `scripts/deep-interview-runner.mjs`) — an 18th public command/skill for Socratic requirements discovery, Round 0 topology confirmation, ambiguity scoring, language-preserving specs, internal auto-mode fragments, and approval-gated handoff.
+- **Deep Interview documentation and fixtures** (`docs/skills/deep-interview.md`, `docs/skills/deep-interview.ko.md`, `skills/deep-interview/references/`) — self-serve protocol, scoring, fixtures, troubleshooting, example transcript, acceptance checklist, and gotchas.
+- **Deep Interview regression tests** (`tests/runtime/deep-interview-runner.test.mjs`, `tests/contracts/deep-interview-contracts.test.mjs`) — locks topology preservation, Korean rendering, auto-mode validation, approval non-execution, fragment privacy, exact command/skill alignment, and documentation discoverability.
+
 ### Fixed
 
 - **MCP server self-heals missing dependencies** (`mcp/pdca-state-server.mjs`) — `claude plugin add` clones the repo but never runs `npm install`, so on a fresh install the `pdca-state` server died with `ERR_MODULE_NOT_FOUND` for `@modelcontextprotocol/sdk` and all 31 tools were unavailable. The server now detects the missing SDK at startup, installs production dependencies into the plugin root once (npm output routed to stderr — stdout stays clean JSON-RPC), and retries the import.
@@ -20,7 +26,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
-- **Release metadata aligned to 1.5.2** — package metadata, plugin manifest, marketplace metadata, badges, `CLAUDE.md`, and `AGENTS.md` now agree on the current deployed version and 16-skill surface.
+- **Release metadata aligned to 1.5.2** — package metadata, plugin manifest, marketplace metadata, badges, `CLAUDE.md`, and `AGENTS.md` now agree on the current deployed version and 18-skill surface.
 
 ## [1.5.1] - 2026-05-09
 
@@ -115,7 +121,7 @@ Other hosts (HackerNews, GitHub, etc.) unchanged — 0d is skipped when no clean
 
 - **Artifact Viewer command surface** — added the missing `/second-claude-code:viewer` wrapper so the documented viewer skill is actually registered by Claude Code.
 - **Viewer server lifecycle** — `ui/scripts/start-server.sh` now starts the viewer in the background, writes JSON runtime metadata, and returns the URL without blocking the slash command. Added `ui/scripts/stop-server.sh` for clean shutdown from the recorded PID.
-- **Command count alignment** — session-start, README, architecture docs, and contract tests now agree on 15 slash commands and 15 skills.
+- **Command count alignment** — session-start, README, architecture docs, and contract tests were aligned to the then-current public command and skill surface.
 
 ### Verification
 

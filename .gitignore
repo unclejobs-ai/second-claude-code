@@ -1,5 +1,6 @@
 # Plugin data (user-specific state)
 .data/
+.gjc/
 *.local.json
 
 # OS

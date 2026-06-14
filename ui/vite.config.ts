@@ -16,8 +16,7 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          nivo: ['@nivo/core', '@nivo/bar', '@nivo/radar', '@nivo/line', '@nivo/pie'],
-          vendor: ['react', 'react-dom', 'framer-motion'],
+          vendor: ['react', 'react-dom', 'framer-motion', '@nivo/core', '@nivo/bar', '@nivo/radar', '@nivo/line', '@nivo/pie'],
           shiki: ['shiki'],
         },
       },

@@ -44,13 +44,14 @@ Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀�
 
 ## v1.5.2에서 달라진 점
 
-**코드 엔지니어링 레인** — `code` 도메인이 이제 일반 PDCA보다 더 엄격한 실행 계약을 탑니다. `engineering-discipline`의 plan → worker-validator → review-work → clean-ai-slop 흐름과 `Hyper-Waterfall`의 issue/branch/stage report/PR 기반 작업 기억 외부화를 Second Claude PDCA 안에 흡수했어요.
+**Deep Interview + 코드 엔지니어링 레인** — 실행 전에 요구사항을 더 선명하게 만들고, 실행 중에는 더 엄격하게 검증합니다. v1.5.2는 18번째 공개 명령어 `/second-claude-code:deep-interview`를 추가하고, `domain=code` PDCA 작업에 계획·검증·정리·핸드오프 계약을 강화합니다.
 
+- **Deep Interview** — Round 0 topology 확인, 컴포넌트별 모호성 점수, ontology 수렴 추적, 한국어/세션 언어 보존, ralplan/ultragoal/team 승인 게이트 핸드오프를 갖춘 소크라테스식 요구사항 인터뷰입니다.
 - **실행 가능한 코드 Plan** — 수용 기준, 롤백 경로, 복잡도, 위험 작업 승인 상태를 Plan 계약에 포함합니다.
 - **worker-validator 분리** — Check는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구합니다.
 - **stage report** — 장기 또는 다단계 Do 작업은 브랜치/워크트리 격리, 단계 진행, 검증 결과, 다음 결정을 남깁니다.
 - **핸드오프 전 정리** — Act는 clean-ai-slop, 단순화, 관련 검증, 성능 주장 시 baseline/after 측정, issue/PR/local handoff state를 마무리 조건으로 둡니다.
-- **공개 문서 정렬** — README, 아키텍처 문서, PDCA 스킬 가이드, stage contract, 계약 테스트가 같은 코드 레인을 설명합니다.
+- **공개 문서 정렬** — README, 아키텍처 문서, Deep Interview 가이드, PDCA 스킬 가이드, stage contract, 계약 테스트가 같은 18-skill surface를 설명합니다.
 
 릴리스 노트와 검증 요약은 `docs/RELEASE-v1.5.2.ko.md` 참고.
 
@@ -156,7 +157,7 @@ graph LR
 
 - **테스트 기준선 정리** — 현재 검증 기준은 총 `323`개, `322`개 통과, `1`개 스킵, 실패 `0`개예요
 - **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
-- **15개 스킬 전부 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
+- **공개 스킬 전반 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
 - **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
 - **PDCA 결정이 3갈래가 됐어요** — `pdca_transition`이 이제 `PROCEED`, `REFINE`, `PIVOT`를 구분하고, refine/pivot 최대 횟수로 무한루프를 막아요
 - **세션 끝나면 시각화까지 남아요** — 터미널 ANSI 요약 박스가 뜨고, `.data/reports/`에 Mermaid + Chart.js 기반 다크 테마 HTML 리포트가 자동 생성돼요
@@ -186,8 +187,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 새 세션을 열어보세요. 화면 상단에 이런 텍스트가 보이면 정상이에요:
 
 ```
-# Second Claude Code — 제2의 클로드
-17 commands and 17 skills for all knowledge work:
+# Second Claude Code — Knowledge Work OS
+18 commands for all knowledge work:
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -605,6 +606,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 | 하고 싶은 것 | 스킬 | 결과물 |
 |---|---|---|
+| 모호한 아이디어를 실행 승인 가능한 명세로 만들기 | `deep-interview` | 소크라테스식 질문, 모호성 점수, 실행 핸드오프 |
 | 리서치→작성→리뷰→개선 전체 사이클 | `pdca` | 조사하고 쓰고 검증한 글 — 프롬프트 하나로 |
 | 주제 파기 | `research` | 20개 이상 소스 크롤링, 패턴 분석, 브리프 |
 | SWOT, Porter, RICE 등 15개 프레임워크 | `analyze` | 구조화된 전략 분석 |
@@ -620,7 +622,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | 영어↔한국어 번역 | `translate` | 소울 기반 EN↔KO 번역 — 스타일, 포맷, 용어집 지원 |
 | 대형 작업을 병렬로 쪼개기 | `batch` | 대형 작업 병렬 분해 |
 
-스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, `/second-claude-code:workflow`, `/second-claude-code:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
+스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/second-claude-code:deep-interview`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, `/second-claude-code:workflow`, `/second-claude-code:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
 
 ### 유지보수자용 Karpathy-Style Loop
 

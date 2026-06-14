@@ -15,7 +15,7 @@ function getWsUrl(): string {
 }
 
 export function App() {
-  const { state, artifacts, connected } = useWebSocket(getWsUrl())
+  const { state, artifacts, connected, snapshotLoaded } = useWebSocket(getWsUrl())
   const [selectedPhase, setSelectedPhase] = useState<Phase | 'all'>('all')
 
   const filteredArtifacts = useMemo<Artifact[]>(() => {
@@ -46,7 +46,7 @@ export function App() {
         currentPhase={state?.currentPhase}
         artifactCount={artifacts.length}
       />
-      <ConnectionStatus connected={connected} />
+      <ConnectionStatus connected={connected} snapshotLoaded={snapshotLoaded} />
 
       {state && (
         <>

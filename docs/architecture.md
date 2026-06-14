@@ -20,6 +20,7 @@ directly to `Plan → Do → Check → Act`.
 
 | PDCA | Product Phase | Primary Skills |
 |------|---------------|----------------|
+| Requirements | Clarify | `deep-interview` |
 | Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
@@ -46,7 +47,8 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional)
-├── skills/                       # 17 skills (SKILL.md each)
+├── skills/                       # 18 skills (SKILL.md each)
+│   ├── deep-interview/           # Socratic requirements interview (topology, scoring, spec handoff)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
 │   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
@@ -71,7 +73,7 @@ second-claude/
 │       ├── engine/               # CLI + chain + 10 probes + orchestrator
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 17 slash command wrappers
+├── commands/                     # 18 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
 │   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)

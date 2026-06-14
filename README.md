@@ -44,13 +44,14 @@ Second Claude Code is the control loop. The v1.4.0 orchestrator sits in front of
 
 ## What's New in v1.5.2
 
-**Code Engineering Lane — stricter PDCA for repository work.** The `code` domain now has a dedicated execution contract that folds in the best parts of `engineering-discipline` and `Hyper-Waterfall` without replacing Second Claude's PDCA cycle.
+**Deep Interview + Code Engineering Lane — clearer requirements before safer execution.** v1.5.2 adds the 18th public command, `/second-claude-code:deep-interview`, and tightens `domain=code` PDCA work with stricter planning, validation, cleanup, and handoff contracts.
 
+- **Deep Interview** — Socratic requirements discovery with Round 0 topology confirmation, per-component ambiguity scoring, ontology convergence, Korean/session-language preservation, and approval-gated handoff into ralplan/ultragoal/team.
 - **Executable code plans** — Plan now requires acceptance criteria, rollback path, complexity, and human approval status for risky work.
 - **Worker-validator split** — Check requires validator/reviewer proof instead of trusting the implementer's self-report.
 - **Stage reports for long work** — non-trivial Do phases record branch/worktree isolation, stage progress, verification, and next action.
 - **Cleanup before handoff** — Act requires clean-ai-slop/simplification, relevant verification, measured performance claims when applicable, and issue/PR/local handoff state.
-- **Public docs aligned** — README, architecture docs, PDCA skill guides, stage contracts, and contract tests now describe the same code lane.
+- **Public docs aligned** — README, architecture docs, Deep Interview guides, PDCA skill guides, stage contracts, and contract tests now describe the same 18-skill surface.
 
 See `docs/RELEASE-v1.5.2.md` for the release notes and validation.
 
@@ -126,7 +127,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 
 ```
 # Second Claude Code — Knowledge Work OS
-17 slash commands and 17 skills for all knowledge work:
+18 commands for all knowledge work:
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -446,6 +447,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 
 | I want to... | Skill | What you get |
 |---|---|---|
+| Turn a vague idea into an approval-gated spec | `deep-interview` | Socratic questions, ambiguity scores, and a clear execution handoff |
 | Run the full research → write → review → improve cycle | `pdca` | Researched, reviewed, refined output — one prompt |
 | Dig into a topic | `research` | 20+ sources crawled, patterns synthesized, brief delivered |
 | Apply strategic frameworks — SWOT, Porter, RICE, and more | `analyze` | Structured strategic analysis from 15 built-in frameworks |
@@ -463,7 +465,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
 | Fetch a URL that WebFetch cannot crack | `unblock` | Zero-key adaptive chain through public APIs, TLS impersonation, headless browsers, and free archives |
 
-Every skill responds to natural language. Slash commands work too: `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:translate`, etc. ~130 trigger patterns across English and Korean.
+Every skill responds to natural language. Slash commands work too: `/second-claude-code:deep-interview`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:translate`, etc. ~130 trigger patterns across English and Korean.
 
 ### Karpathy-Style Loop for Maintainers
 
@@ -541,7 +543,7 @@ I run `full` before publishing anything externally. For internal drafts, `quick`
 
 Three ideas drive the system's design:
 
-**Fifteen skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of fifteen handles it.
+**Eighteen skills, not eighty.** Each one is deep — references, gotchas, quality gates built in. You never wonder which of 80 skills to pick. Say what you want, and one of eighteen handles it.
 
 **Every output gets reviewed.** This isn't a suggestion. Quality gates block you from skipping review. A draft that hasn't passed the consensus gate doesn't reach you.
 

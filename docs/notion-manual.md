@@ -40,8 +40,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 Start a new Claude Code session. You should see this in the context injection:
 
 ```
-# Second Claude Code
-15 commands for all knowledge work:
+# Second Claude Code — Knowledge Work OS
+18 commands for all knowledge work:
 ```
 
 If it does not appear, run `claude plugin list` to confirm the plugin is installed.
@@ -90,7 +90,7 @@ Four prompts in a specific order, every week, replaced by one.
 
 ---
 
-## 4. The 15 Skills
+## 4. The 18 Skills
 
 You do not need to memorize skill names. Type your request in natural language and the auto-router selects the right skill. If you want explicit control, use slash commands like `/second-claude-code:write`.
 
@@ -98,6 +98,7 @@ Both English and Korean prompts work. The system has 100+ Korean trigger pattern
 
 | Skill | What it does | When to use | Example prompt |
 |---|---|---|---|
+| `deep-interview` | Turns vague ideas into approval-gated specs with topology and ambiguity scoring | Requirements discovery before execution | "Interview me before building this feature" |
 | `research` | Crawls 20+ sources, finds patterns, produces a structured brief | Digging deep into a topic | "Research the current state of AI regulation in the EU" |
 | `analyze` | Applies strategic frameworks: SWOT, Porter, RICE, PESTLE, OKR, and more (15 built-in) | Structured strategic thinking | "Run a SWOT analysis on our product vs. competitors" |
 | `write` | Produces research-backed drafts with automatic review | Articles, reports, newsletters, social content | "Write a newsletter about remote work productivity tips" |
@@ -113,6 +114,8 @@ Both English and Korean prompts work. The system has 100+ Korean trigger pattern
 | `soul` | Observes your patterns and synthesizes a persistent identity profile | Adapting the system to your style over time | "Show my soul profile" or "Propose a soul evolution" |
 | `viewer` | Opens a local web UI to view PDCA pipeline outputs as artifacts | Inspecting results from a completed pipeline | "Open the artifact viewer" |
 | `loop` | Benchmarks and evolves prompt assets through optimization iterations | Systematically improving prompt quality | "Loop this prompt suite against the benchmark until score > 85" |
+| `evolve` | Evolves recurring-failure prompt assets against maintainer-authored checks | Maintaining the plugin's own prompt quality | "List recurring failures and evolve the weakest asset" |
+| `unblock` | Fetches hostile or blocked URLs through adaptive zero-key fallback phases | Research source cannot be fetched normally | "Unblock this Cloudflare-protected article" |
 
 ---
 
@@ -209,4 +212,4 @@ Yes. The `write` skill targets 3,000+ words for articles, 4,000+ words for repor
 
 ---
 
-*Version 1.4.2 | MIT License*
+*Version 1.5.2 | MIT License*

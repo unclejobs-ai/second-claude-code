@@ -2,9 +2,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface ConnectionStatusProps {
   connected: boolean
+  snapshotLoaded: boolean
 }
 
-export function ConnectionStatus({ connected }: ConnectionStatusProps) {
+export function ConnectionStatus({ connected, snapshotLoaded }: ConnectionStatusProps) {
+  const message = snapshotLoaded
+    ? 'Loaded snapshot; reconnecting for live updates...'
+    : 'Connecting to server...'
   return (
     <AnimatePresence>
       {!connected && (
@@ -34,7 +38,7 @@ export function ConnectionStatus({ connected }: ConnectionStatusProps) {
             >
               {'\u25CF'}
             </motion.span>
-            Connecting to server...
+            {message}
           </div>
         </motion.div>
       )}

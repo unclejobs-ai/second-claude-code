@@ -1,12 +1,12 @@
 # Second Codex
 
-Codex plugin (v1.5.2). PDCA-native knowledge work system — 17 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
+Codex plugin (v1.5.2). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
-skills/                     — 17 skill directories (pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate, investigate, viewer, unblock)
+skills/                     — 18 skill directories (deep-interview, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate, investigate, viewer, unblock)
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)

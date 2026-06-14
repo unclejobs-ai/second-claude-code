@@ -5,6 +5,7 @@ interface UseWebSocketReturn {
   state: SessionState | null
   artifacts: Artifact[]
   connected: boolean
+  snapshotLoaded: boolean
 }
 
 export function useWebSocket(url: string): UseWebSocketReturn {
@@ -14,6 +15,7 @@ export function useWebSocket(url: string): UseWebSocketReturn {
   const [state, setState] = useState<SessionState | null>(null)
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
   const [connected, setConnected] = useState(false)
+  const [snapshotLoaded, setSnapshotLoaded] = useState(false)
 
   const connect = useCallback(() => {
     const rs = wsRef.current?.readyState
@@ -88,6 +90,19 @@ export function useWebSocket(url: string): UseWebSocketReturn {
 
   useEffect(() => {
     destroyed.current = false
+
+    Promise.all([
+      fetch('/api/state').then((res) => (res.ok ? res.json() : null)).catch(() => null),
+      fetch('/api/artifacts').then((res) => (res.ok ? res.json() : [])).catch(() => []),
+    ]).then(([nextState, nextArtifacts]) => {
+      if (destroyed.current) return
+      const hasState = Boolean(nextState?.sessionId)
+      const hasArtifacts = Array.isArray(nextArtifacts) && nextArtifacts.length > 0
+      if (hasState) setState(nextState)
+      if (Array.isArray(nextArtifacts)) setArtifacts(nextArtifacts)
+      if (hasState || hasArtifacts) setSnapshotLoaded(true)
+    })
+
     connect()
     return () => {
       destroyed.current = true
@@ -96,5 +111,5 @@ export function useWebSocket(url: string): UseWebSocketReturn {
     }
   }, [connect])
 
-  return { state, artifacts, connected }
+  return { state, artifacts, connected, snapshotLoaded }
 }

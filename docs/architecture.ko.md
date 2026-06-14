@@ -38,10 +38,11 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 
 핵심은 새 런타임을 얹는 게 아니라, 기존 Plan → Do → Check → Act 게이트를 코드 작업에 맞게 더 엄격하게 만드는 거예요. Plan에서는 테스트 가능한 수용 기준과 영향 범위를 확정하고, Do에서는 필요하면 브랜치나 워크트리로 격리해 단계별로 진행하며, Check에서는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구해요. Act에서는 clean-ai-slop, 단순화, 성능 측정이 필요할 때의 Rob Pike식 baseline/after 비교, PR 또는 로컬 리포트 핸드오프를 마무리 조건으로 둡니다.
 
-### 17개 스킬 목록
+### 18개 스킬 목록
 
 | 스킬 | 페이즈 | 역할 |
 |------|--------|------|
+| `deep-interview` | Requirements | 모호한 아이디어를 토폴로지와 모호성 점수로 명세화 |
 | `research` | Plan | 자율적 다회차 웹 리서치 |
 | `analyze` | Plan / Do | 15개 전략 프레임워크 분석 |
 | `write` | Do | 장문 콘텐츠 제작 |
@@ -67,7 +68,8 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택)
-├── skills/                       # 17개 스킬 (각각 SKILL.md)
+├── skills/                       # 18개 스킬 (각각 SKILL.md)
+│   ├── deep-interview/           # 소크라테스식 요구사항 인터뷰 (topology, scoring, spec handoff)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
 │   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
 │   ├── research/                 # 자율적 심층 리서치 (WebFetch + Playwright 폴백)
@@ -92,7 +94,7 @@ second-claude/
 │       ├── engine/               # CLI + 체인 + 10개 probe + 오케스트레이터
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
-├── commands/                     # 17개 슬래시 커맨드 래퍼
+├── commands/                     # 18개 슬래시 커맨드 래퍼
 ├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (8개 훅)
 │   ├── hooks.json                # 훅 설정
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)
