@@ -32,12 +32,12 @@
     "playwright": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@playwright/mcp@0.0.68"]
+      "args": ["@playwright/mcp@0.0.78"]
     },
     "mmbridge": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@mmbridge/mcp"],
+      "args": ["@mmbridge/mcp@0.7.3"],
       "optional": true
     }
   }
