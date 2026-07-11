@@ -45,8 +45,14 @@ const STATE_DIR = join(DATA_DIR, "state");
 
 // Sentinel file used as a stop-hook-active guard.
 // If this file exists and is recent, the hook has already fired once in this
-// stop attempt — allow through to prevent an infinite denial loop.
-const GUARD_FILE = join(STATE_DIR, ".stop-hook-guard");
+// stop attempt — allow through to prevent an infinite denial loop. Scoped per
+// session so one session's retry-suppression can't unblock another's PDCA gate
+// (all sessions share the global .data dir).
+function guardFile() {
+  const sid = process.env.CLAUDE_SESSION_ID;
+  const suffix = sid ? `-${String(sid).replace(/[^a-zA-Z0-9._-]/g, "")}` : "";
+  return join(STATE_DIR, `.stop-hook-guard${suffix}`);
+}
 
 // Sentinel is considered "recent" if written within the last 30 seconds.
 const GUARD_TTL_MS = 30_000;
@@ -60,9 +66,10 @@ const ANSI_RED = "\u001b[31m";
 // ─────────────────────────────────────────────────────────────────────────────
 
 function guardIsActive() {
-  if (!existsSync(GUARD_FILE)) return false;
+  const file = guardFile();
+  if (!existsSync(file)) return false;
   try {
-    const { mtimeMs } = statSync(GUARD_FILE);
+    const { mtimeMs } = statSync(file);
     return Date.now() - mtimeMs < GUARD_TTL_MS;
   } catch {
     return false;
@@ -71,13 +78,14 @@ function guardIsActive() {
 
 function writeGuard() {
   ensureDirUtil(STATE_DIR);
-  writeFileSync(GUARD_FILE, String(Date.now()), "utf8");
+  writeFileSync(guardFile(), String(Date.now()), "utf8");
 }
 
 function clearGuard() {
-  if (existsSync(GUARD_FILE)) {
+  const file = guardFile();
+  if (existsSync(file)) {
     try {
-      unlinkSync(GUARD_FILE);
+      unlinkSync(file);
     } catch {
       // Non-fatal — guard will expire naturally via TTL.
     }
@@ -655,12 +663,10 @@ function main() {
       // Write the guard before blocking so a second stop attempt passes through.
       writeGuard();
 
-      console.log(
-        JSON.stringify({
-          decision: "block",
-          reason: blockReason,
-        })
-      );
+      // Exit 2 blocks the stop; on exit 2 Claude Code reads the reason from
+      // stderr (structured stdout JSON is only consumed on exit 0, so the old
+      // console.log payload was silently dropped). Deliver the reason on stderr.
+      process.stderr.write(blockReason + "\n");
       process.exit(2);
     }
   }
