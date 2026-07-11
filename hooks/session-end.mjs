@@ -35,6 +35,7 @@ import {
   readDaemonStatus,
 } from "./lib/companion-daemon.mjs";
 import { readEvents } from "./lib/event-log.mjs";
+import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -670,8 +671,13 @@ function main() {
   const currentSessionId = process.env.CLAUDE_SESSION_ID || null;
   if (currentSessionId) {
     const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
-    const rawPdca = readJsonSafe(pdcaActivePath);
-    if (rawPdca) {
+    // Lock the read-modify-write: a concurrent session or MCP transition writes
+    // this same file, and an unlocked RMW would clobber session_history. Uses the
+    // same lock path (file + ".lock") the MCP handlers acquire.
+    withFileLockSync(pdcaActivePath, () => {
+      const rawPdca = readJsonSafe(pdcaActivePath);
+      if (!rawPdca) return;
+
       const sessionHistory = Array.isArray(rawPdca.session_history)
         ? rawPdca.session_history
         : [];
@@ -707,7 +713,7 @@ function main() {
       } catch {
         // Non-fatal — HANDOFF generation continues.
       }
-    }
+    });
   }
 
   // ── HANDOFF.md (always written) ───────────────────────────────────────────

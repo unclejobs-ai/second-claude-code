@@ -14,6 +14,7 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { logEvent, readEvents, getEventStats, listRunIds } from "../../hooks/lib/event-log.mjs";
+import { withFileLockSync } from "../../hooks/lib/file-mutex-sync.mjs";
 import {
   saveCyclePhase,
   saveCycleMetrics,
@@ -352,7 +353,11 @@ export function handleGetState() {
 }
 
 /** pdca_start_run */
-export function handleStartRun({ topic, max_cycles = 3, domain = "code" }) {
+export function handleStartRun(args = {}) {
+  return withFileLockSync(ACTIVE_FILE, () => handleStartRunInner(args));
+}
+
+function handleStartRunInner({ topic, max_cycles = 3, domain = "code" }) {
   if (typeof topic !== "string" || topic.trim() === "") {
     throw new Error("topic must be a non-empty string");
   }
@@ -402,7 +407,11 @@ const PHASE_TO_GATE = {
 };
 
 /** pdca_transition */
-export function handleTransition({ target_phase, artifacts = {}, auto_gate = false, phase_result = null }) {
+export function handleTransition(args = {}) {
+  return withFileLockSync(ACTIVE_FILE, () => handleTransitionInner(args));
+}
+
+function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false, phase_result = null }) {
   const validPhases = ["plan", "do", "check", "act"];
   if (!validPhases.includes(target_phase)) {
     throw new Error(
@@ -584,7 +593,11 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
 }
 
 /** pdca_check_gate */
-export function handleCheckGate({ gate, phase_result = null }) {
+export function handleCheckGate(args = {}) {
+  return withFileLockSync(ACTIVE_FILE, () => handleCheckGateInner(args));
+}
+
+function handleCheckGateInner({ gate, phase_result = null }) {
   const validGates = Object.keys(GATE_REQUIRED);
   if (!validGates.includes(gate)) {
     throw new Error(
@@ -624,6 +637,10 @@ export function handleCheckGate({ gate, phase_result = null }) {
 
 /** pdca_end_run */
 export function handleEndRun() {
+  return withFileLockSync(ACTIVE_FILE, () => handleEndRunInner());
+}
+
+function handleEndRunInner() {
   const state = readJson(ACTIVE_FILE);
   if (!state) {
     throw new Error("No active PDCA run to end.");
@@ -693,7 +710,11 @@ export function handleEndRun() {
 }
 
 /** pdca_update_stuck_flags */
-export function handleUpdateStuckFlags({ flags }) {
+export function handleUpdateStuckFlags(args = {}) {
+  return withFileLockSync(ACTIVE_FILE, () => handleUpdateStuckFlagsInner(args));
+}
+
+function handleUpdateStuckFlagsInner({ flags }) {
   if (!Array.isArray(flags) || flags.length === 0) {
     throw new Error("flags must be a non-empty array of strings");
   }
