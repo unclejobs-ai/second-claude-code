@@ -528,21 +528,39 @@ test("handleSoulGetSynthesisContext returns null profile when SOUL.md absent", a
 // handleSoulRetro
 // ---------------------------------------------------------------------------
 
+// Commit timestamps are relative to now so the retro's week/month window always
+// includes them. Previously hard-coded to 2026-03-28, they silently fell out of
+// range once real time advanced past that date, making these tests time bombs.
+// The retro filters with `git log --since/--until`, which use the COMMITTER date,
+// so both author and committer dates must be backdated (git commit --date only
+// sets the author date). periodEnd is today-at-midnight, so commits must land on
+// a prior day — ~2 days ago is safely inside the week window and before midnight.
+function hoursAgoIso(hoursAgo) {
+  return new Date(Date.now() - hoursAgo * 3600 * 1000).toISOString();
+}
+
+function commitAt(repoDir, message, iso) {
+  execSync(`git add file.txt && git commit -m '${message}'`, {
+    cwd: repoDir,
+    encoding: "utf8",
+    env: { ...process.env, GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso },
+  });
+}
+
 function initGitRepo(repoDir) {
   mkdirSync(repoDir, { recursive: true });
   execSync("git init", { cwd: repoDir, encoding: "utf8" });
   execSync("git config user.email 'test@test.test'", { cwd: repoDir, encoding: "utf8" });
   execSync("git config user.name 'Test'", { cwd: repoDir, encoding: "utf8" });
 
-  // Create a few commits
   writeFileSync(path.join(repoDir, "file.txt"), "line 1\n", "utf8");
-  execSync("git add file.txt && git commit -m 'first commit' --date='2026-03-28T10:00:00'", { cwd: repoDir, encoding: "utf8" });
+  commitAt(repoDir, "first commit", hoursAgoIso(52));
 
   writeFileSync(path.join(repoDir, "file.txt"), "line 1\nline 2\n", "utf8");
-  execSync("git add file.txt && git commit -m 'second commit' --date='2026-03-28T14:00:00'", { cwd: repoDir, encoding: "utf8" });
+  commitAt(repoDir, "second commit", hoursAgoIso(50));
 
   writeFileSync(path.join(repoDir, "file.txt"), "line 1\nline 2\nline 3\n", "utf8");
-  execSync("git add file.txt && git commit -m 'third commit' --date='2026-03-28T15:00:00'", { cwd: repoDir, encoding: "utf8" });
+  commitAt(repoDir, "third commit", hoursAgoIso(48));
 }
 
 test("handleSoulRetro returns retro report for a real git repo", async () => {
@@ -655,9 +673,9 @@ test("handleSoulRetro detects trend when previous retro exists", async () => {
 
     // Add more commits to change the commit count
     writeFileSync(path.join(repoDir, "file.txt"), "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\n", "utf8");
-    execSync("git add file.txt && git commit -m 'big commit' --date='2026-03-28T16:00:00'", { cwd: repoDir, encoding: "utf8" });
+    commitAt(repoDir, "big commit", hoursAgoIso(30));
     writeFileSync(path.join(repoDir, "file.txt"), "line 1\nline 2\nline 3\nline 4\nline 5\nline 6\nline 7\nline 8\n", "utf8");
-    execSync("git add file.txt && git commit -m 'another commit' --date='2026-03-28T17:00:00'", { cwd: repoDir, encoding: "utf8" });
+    commitAt(repoDir, "another commit", hoursAgoIso(29));
 
     // Second retro — should detect trend
     const r2 = handlers.handleSoulRetro({ period: "week", projects: [repoDir] });
