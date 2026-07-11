@@ -497,13 +497,13 @@ HTML 리포트는 다크 테마고, Mermaid 플로우와 Chart.js 추세 그래�
 
 | 도구 | 하는 일 |
 |---|---|
-| `get` | 현재 PDCA 상태 조회 |
-| `start` | 새 사이클 시작 (`domain` 파라미터로 도메인 지정 가능) |
-| `transition` | 페이즈 전환 (`auto_gate` 자동 평가 포함) |
-| `check_gate` | 품질 게이트 판정 |
-| `list_runs` | PDCA 실행 이력 조회 |
-| `end` | 사이클 종료 |
-| `update_stuck` | 막힌 상태 강제 해소 |
+| `pdca_get_state` | 현재 PDCA 상태 조회 |
+| `pdca_start_run` | 새 사이클 시작 (`domain` 파라미터로 도메인 지정 가능) |
+| `pdca_transition` | 페이즈 전환 — `auto_gate`로 게이트 평가, `phase_result`로 게이트 입력값 기록 |
+| `pdca_check_gate` | 품질 게이트 판정 |
+| `pdca_list_runs` | PDCA 실행 이력 조회 |
+| `pdca_end_run` | 사이클 종료 |
+| `pdca_update_stuck_flags` | 막힌 상태 강제 해소 |
 
 **사이클 메모리 도구 (3개, v1.0.0 신규):**
 
