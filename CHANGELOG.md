@@ -13,7 +13,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **PDCA quality gate re-arms every cycle** (`mcp/lib/pdca-handlers.mjs`, `hooks/session-end.mjs`) — `completed` was an append-only set never reset on an `act→plan` recycle, so after the first Check the Stop gate treated Check as permanently done and stopped enforcing for the rest of the run. Recycling now resets the cycle-scoped state.
+- **auto_gate transitions are reachable via the MCP API** (`mcp/lib/pdca-handlers.mjs`, `mcp/pdca-state-server.mjs`) — the gate counters (`sources_count`, `plan_mode_approved`, `reviewer_count`, …) had no setter tool, so `pdca_transition({auto_gate:true})` could never pass. `pdca_transition` and `pdca_check_gate` now accept a validated `phase_result`, artifacts merge before the gate is evaluated, and successful transitions return `transitioned: true`.
+- **Event/analytics reads reject path traversal** (`hooks/lib/event-log.mjs`) — `pdca_get_events`/`pdca_get_analytics` built a file path from an unvalidated `run_id`; a new `isValidRunId` guard blocks `..` and path separators.
+- **Cross-process state safety** (`mcp/lib/pdca-handlers.mjs`, `hooks/session-end.mjs`) — the five PDCA state mutators and the session-end `session_history` write now hold a file lock, preventing lost updates when two sessions share the global `.data` state.
+- **Stop hook delivers its reason** (`hooks/session-end.mjs`) — the block reason now goes to stderr (which Claude Code reads on exit 2) instead of stdout JSON (only read on exit 0); the guard is scoped by `CLAUDE_SESSION_ID` so one session can't clear another's.
+- **Plugin discovery hot path** (`hooks/lib/plugin-discovery.mjs`) — `discoverAllPlugins()` is memoized within the process (keyed on `installed_plugins.json` content), so `prompt-detect` no longer re-walks every installed plugin ~6× per prompt.
+- **Metadata consistency** — marketplace listing and `walnut.manifest.yaml` corrected to 18 skills; `AGENTS.md` product name corrected.
 - **MCP server self-heals missing dependencies** (`mcp/pdca-state-server.mjs`) — `claude plugin add` clones the repo but never runs `npm install`, so on a fresh install the `pdca-state` server died with `ERR_MODULE_NOT_FOUND` for `@modelcontextprotocol/sdk` and all 31 tools were unavailable. The server now detects the missing SDK at startup, installs production dependencies into the plugin root once (npm output routed to stderr — stdout stays clean JSON-RPC), and retries the import.
+
+### Removed
+
+- **Six unwired modules** (~1770 LOC incl. tests) — `hooks/lib/file-mutex.mjs` (superseded by `file-mutex-sync.mjs`), `agent-tracker.mjs`, `mmbridge-adapter.mjs`, `fact-checker.mjs`, `skill-metadata.mjs`, and `mcp/lib/loop-handlers.mjs` had no runtime or script importer — only their own tests. Removed both.
 
 ## [1.5.2] - 2026-06-12
 
