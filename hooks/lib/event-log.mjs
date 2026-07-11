@@ -35,12 +35,29 @@ function eventsDir(dataDir) {
 }
 
 /**
+ * Reject run IDs that could escape the events directory. Mirrors the guard in
+ * hooks/lib/companion-daemon.mjs: no path separators or "..", conservative charset.
+ * @param {string} runId
+ * @returns {boolean}
+ */
+export function isValidRunId(runId) {
+  return (
+    typeof runId === "string" &&
+    !runId.includes("..") &&
+    /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/.test(runId)
+  );
+}
+
+/**
  * Derive the JSONL file path for a given run ID.
  * @param {string} dataDir
  * @param {string} runId
  * @returns {string}
  */
 function eventFile(dataDir, runId) {
+  if (!isValidRunId(runId)) {
+    throw new Error(`Invalid run_id: must match ^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$ with no "..".`);
+  }
   return join(eventsDir(dataDir), `pdca-${runId}.jsonl`);
 }
 

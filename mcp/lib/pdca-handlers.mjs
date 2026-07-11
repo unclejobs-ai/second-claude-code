@@ -267,6 +267,80 @@ function buildInitialState(topic, maxCycles, domain = "code") {
   };
 }
 
+/**
+ * Gate-input fields a caller may set via `phase_result`, with their validators.
+ * These are the counters/flags evaluateGate() reads; without a channel to set
+ * them, auto_gate transitions can never pass. Keys not listed here are ignored.
+ */
+const PHASE_RESULT_FIELDS = {
+  sources_count: (v) => Number.isInteger(v) && v >= 0,
+  reviewer_count: (v) => Number.isInteger(v) && v >= 0,
+  warning_count: (v) => Number.isInteger(v) && v >= 0,
+  critical_count: (v) => Number.isInteger(v) && v >= 0,
+  plan_mode_approved: (v) => typeof v === "boolean",
+  do_artifact_complete: (v) => typeof v === "boolean",
+  plan_findings_integrated: (v) => typeof v === "boolean",
+  check_verdict: (v) => typeof v === "string",
+  act_root_cause: (v) => typeof v === "string",
+  average_score: (v) => v === null || typeof v === "number",
+  critical_findings: (v) => Array.isArray(v),
+  top_improvements: (v) => Array.isArray(v),
+};
+
+/**
+ * Merge caller-supplied gate inputs into state, validating each allowlisted
+ * field. Unknown keys are ignored; a wrong type throws.
+ * @param {object} state
+ * @param {object} phaseResult
+ */
+function mergePhaseResult(state, phaseResult) {
+  if (phaseResult == null) return;
+  if (typeof phaseResult !== "object") {
+    throw new Error("phase_result must be an object");
+  }
+  for (const key of Object.keys(phaseResult)) {
+    if (!Object.prototype.hasOwnProperty.call(PHASE_RESULT_FIELDS, key)) continue;
+    const value = phaseResult[key];
+    if (!PHASE_RESULT_FIELDS[key](value)) {
+      throw new Error(`phase_result.${key} failed validation (got ${JSON.stringify(value)})`);
+    }
+    state[key] = value;
+  }
+}
+
+/**
+ * Reset the state fields that belong to a single PDCA cycle so a recycle
+ * (act → plan) starts fresh. Cumulative caps (cycle_count, refine_count,
+ * pivot_count) and run identity/artifacts are preserved — artifacts survive so
+ * the just-completed phase can still be written to cycle memory after the
+ * transition, and gate re-entry is enforced by the reset counters below.
+ * @param {object} state
+ */
+function resetCycleScopedState(state) {
+  state.completed = [];
+  state.gates = { plan_to_do: null, do_to_check: null, check_to_act: null };
+  state.check_verdict = null;
+  state.act_decision = null;
+  state.act_root_cause = null;
+  state.sources_count = 0;
+  state.plan_mode_approved = false;
+  state.do_artifact_complete = false;
+  state.plan_findings_integrated = false;
+  state.reviewer_count = 0;
+  state.warning_count = 0;
+  state.critical_count = 0;
+  state.average_score = null;
+  state.critical_findings = [];
+  state.top_improvements = [];
+  state.stuck_flags = [];
+  state.scope_creep_detail = {
+    planned_scope: null,
+    actual_scope: null,
+    additions: [],
+    omissions: [],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Tool handlers
 // ---------------------------------------------------------------------------
@@ -328,7 +402,7 @@ const PHASE_TO_GATE = {
 };
 
 /** pdca_transition */
-export function handleTransition({ target_phase, artifacts = {}, auto_gate = false }) {
+export function handleTransition({ target_phase, artifacts = {}, auto_gate = false, phase_result = null }) {
   const validPhases = ["plan", "do", "check", "act"];
   if (!validPhases.includes(target_phase)) {
     throw new Error(
@@ -348,6 +422,30 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
       `Illegal transition: ${current} → ${target_phase}. ` +
         `From "${current}", allowed targets are: ${allowed.length > 0 ? allowed.join(", ") : "none (terminal phase)"}.`
     );
+  }
+
+  // Recycle cap: reject a new cycle before any gate evaluation or event logging,
+  // so a run that has exhausted max_cycles never logs a spurious gate pass.
+  if (target_phase === "plan" && (state.cycle_count ?? 1) + 1 > state.max_cycles) {
+    throw new Error(
+      `max_cycles (${state.max_cycles}) reached. ` +
+        `Cannot start another PDCA cycle. Use pdca_end_run to close the run.`
+    );
+  }
+
+  // Merge caller-supplied gate inputs before evaluating the gate, so auto_gate
+  // transitions are satisfiable through the MCP API (not only by editing JSON).
+  mergePhaseResult(state, phase_result);
+
+  // Merge artifacts before the gate is evaluated, so a single auto_gate
+  // transition can supply the artifacts its gate checks for (e.g. plan_research).
+  const VALID_ARTIFACT_KEYS = new Set(["plan_research", "plan_analysis", "do", "check_report", "act_final"]);
+  if (artifacts && typeof artifacts === "object") {
+    for (const k of Object.keys(artifacts)) {
+      if (VALID_ARTIFACT_KEYS.has(k)) {
+        state.artifacts[k] = artifacts[k];
+      }
+    }
   }
 
   let autoGateResult = null;
@@ -411,25 +509,12 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
     state.completed.push(current);
   }
 
-  // Increment cycle_count when re-entering plan
+  // Re-entering plan starts a new cycle: advance the counter and reset
+  // cycle-scoped state so gates (and the Stop quality gate) re-arm. The cap was
+  // already enforced above, before any gate logging.
   if (target_phase === "plan") {
     state.cycle_count = (state.cycle_count ?? 1) + 1;
-    if (state.cycle_count > state.max_cycles) {
-      throw new Error(
-        `max_cycles (${state.max_cycles}) reached. ` +
-          `Cannot start another PDCA cycle. Use pdca_end_run to close the run.`
-      );
-    }
-  }
-
-  // Merge artifacts — only allowlisted keys accepted
-  const VALID_ARTIFACT_KEYS = new Set(["plan_research", "plan_analysis", "do", "check_report", "act_final"]);
-  if (artifacts && typeof artifacts === "object") {
-    for (const k of Object.keys(artifacts)) {
-      if (VALID_ARTIFACT_KEYS.has(k)) {
-        state.artifacts[k] = artifacts[k];
-      }
-    }
+    resetCycleScopedState(state);
   }
 
   const previousPhase = current;
@@ -478,6 +563,7 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
   if (autoGateResult) {
     return {
       ...state,
+      transitioned: true,
       auto_gate_result: {
         ...autoGateResult,
         contract: contract ? { dod, rollback_target: contract.rollback_target, max_retries: contract.max_retries } : null,
@@ -489,15 +575,16 @@ export function handleTransition({ target_phase, artifacts = {}, auto_gate = fal
   if (contract) {
     return {
       ...state,
+      transitioned: true,
       current_contract: { phase: target_phase, domain, dod, rollback_target: contract.rollback_target },
     };
   }
 
-  return state;
+  return { ...state, transitioned: true };
 }
 
 /** pdca_check_gate */
-export function handleCheckGate({ gate }) {
+export function handleCheckGate({ gate, phase_result = null }) {
   const validGates = Object.keys(GATE_REQUIRED);
   if (!validGates.includes(gate)) {
     throw new Error(
@@ -508,6 +595,12 @@ export function handleCheckGate({ gate }) {
   const state = readJson(ACTIVE_FILE);
   if (!state) {
     throw new Error("No active PDCA run. Start one with pdca_start_run.");
+  }
+
+  // Record any supplied gate inputs so a subsequent transition sees them.
+  if (phase_result != null) {
+    mergePhaseResult(state, phase_result);
+    writeJsonAtomic(ACTIVE_FILE, state);
   }
 
   const result = evaluateGate(gate, state);
