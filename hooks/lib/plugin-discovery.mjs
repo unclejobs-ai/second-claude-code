@@ -385,21 +385,45 @@ function readManifest(pluginRoot) {
  *
  * @returns {{ plugins: object[], capability_map: object, total_plugins: number, total_skills: number, total_mcp_servers: number }}
  */
+const EMPTY_DISCOVERY = { plugins: [], capability_map: {}, total_plugins: 0, total_skills: 0, total_mcp_servers: 0 };
+
+/**
+ * Memoize the expensive per-plugin directory walks within one process.
+ * prompt-detect calls discoverAllPlugins ~6x per prompt and each call walks every
+ * installed plugin's skills/commands/agents/manifests. A hook process is
+ * short-lived, so the cache is keyed on the resolved path + the raw
+ * installed_plugins.json content; any install/uninstall invalidates it.
+ * @type {{ key: string, result: object } | null}
+ */
+let _discoverCache = null;
+
 export function discoverAllPlugins() {
   /** @type {object[]} */
   const plugins = [];
   const installedPluginsPath = getInstalledPluginsPath();
 
   if (!existsSync(installedPluginsPath)) {
-    return { plugins: [], capability_map: {}, total_plugins: 0, total_skills: 0, total_mcp_servers: 0 };
+    return { ...EMPTY_DISCOVERY };
+  }
+
+  let raw;
+  try {
+    raw = readFileSync(installedPluginsPath, "utf8");
+  } catch {
+    return { ...EMPTY_DISCOVERY };
+  }
+
+  const cacheKey = `${installedPluginsPath} ${raw}`;
+  if (_discoverCache && _discoverCache.key === cacheKey) {
+    return _discoverCache.result;
   }
 
   /** @type {{ [pluginId: string]: object[] }} */
   let installed;
   try {
-    installed = JSON.parse(readFileSync(installedPluginsPath, "utf8")).plugins || {};
+    installed = JSON.parse(raw).plugins || {};
   } catch {
-    return { plugins: [], capability_map: {}, total_plugins: 0, total_skills: 0, total_mcp_servers: 0 };
+    return { ...EMPTY_DISCOVERY };
   }
 
   let totalSkills = 0;
@@ -408,8 +432,9 @@ export function discoverAllPlugins() {
   for (const [pluginId, entries] of Object.entries(installed)) {
     if (!Array.isArray(entries) || entries.length === 0) continue;
 
-    // Use the most recent install entry
-    const entry = entries.sort(
+    // Use the most recent install entry (copy before sorting — never mutate the
+    // parsed installed_plugins.json array in place).
+    const entry = [...entries].sort(
       (a, b) => (b.lastUpdated || b.installedAt || "").localeCompare(a.lastUpdated || a.installedAt || "")
     )[0];
 
@@ -458,13 +483,15 @@ export function discoverAllPlugins() {
     };
   }
 
-  return {
+  const result = {
     plugins,
     capability_map: capabilityMap,
     total_plugins: plugins.length,
     total_skills: totalSkills,
     total_mcp_servers: totalMcpServers,
   };
+  _discoverCache = { key: cacheKey, result };
+  return result;
 }
 
 /**
