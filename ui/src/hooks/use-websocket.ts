@@ -10,7 +10,7 @@ interface UseWebSocketReturn {
 
 export function useWebSocket(url: string): UseWebSocketReturn {
   const wsRef = useRef<WebSocket | null>(null)
-  const reconnectTimer = useRef<ReturnType<typeof setTimeout>>()
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const destroyed = useRef(false)
   const [state, setState] = useState<SessionState | null>(null)
   const [artifacts, setArtifacts] = useState<Artifact[]>([])
