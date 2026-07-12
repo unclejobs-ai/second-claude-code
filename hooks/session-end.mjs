@@ -581,22 +581,21 @@ function emitChannelNotification(state) {
   const text = buildPdcaNotificationText(state);
   if (!text) return;
 
-  // Output notification payload for Claude Code's Notification hook handler.
-  // Written to stdout as a JSON object — the hook runtime routes it to MCP.
+  // Deliver through the companion daemon's notification queue when it is online.
+  // There is intentionally no stdout emission here: on the Stop hook, stdout is
+  // the decision channel, and Claude Code has no mechanism that routes a
+  // {notification} object from Stop stdout to a transport — writing one only
+  // pollutes the decision stream with a schema nothing consumes.
   try {
-    const payload = JSON.stringify({
-      notification: {
+    const daemonStatus = readDaemonStatus(DATA_DIR);
+    if (daemonStatus.online) {
+      queueDaemonNotification(DATA_DIR, {
         channel: "telegram",
         chat_id: sanitize(String(telegram.chat_id), 64),
         text,
         event_type: eventType,
-      },
-    });
-    const daemonStatus = readDaemonStatus(DATA_DIR);
-    if (daemonStatus.online) {
-      queueDaemonNotification(DATA_DIR, JSON.parse(payload).notification);
+      });
     }
-    process.stdout.write(payload + "\n");
   } catch {
     // Non-fatal — notification errors must never affect session exit.
   }
