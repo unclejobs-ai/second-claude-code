@@ -153,31 +153,32 @@ Here's what happens under the hood when you run a full cycle. The memory system 
 ```
 You: "Research AI agents and write a report"
 
-1. pdca_start_run(domain="content", topic="AI agents report")
-   → Creates .data/cycles/2025-03-29T18-02-00-content.json
-   → Reads prior content-domain insights (Read-Before-Act)
+1. pdca_start_run({ topic: "AI agents report", domain: "content" })
+   → Writes the active run to .data/state/pdca-active.json
+   → Reads prior insights first (Read-Before-Act)
 
-2. pdca_transition(phase="plan" → "do")
-   → Gate check passes, phase snapshot saved to cycle file
-   → Research brief persisted as cycle artifact
+2. pdca_transition({ target_phase: "do", auto_gate: true,
+                    artifacts: { plan_research: "…", plan_analysis: "…" },
+                    phase_result: { sources_count: 20, plan_mode_approved: true } })
+   → The plan→do gate is evaluated; on pass, the phase advances
+   → The completed Plan artifact is saved to .data/cycles/cycle-001/plan.md
 
-3. pdca_transition(phase="do" → "check")
-   → Draft artifact saved, reviewers dispatched
+3. pdca_transition({ target_phase: "check", auto_gate: true,
+                    artifacts: { do: "…" },
+                    phase_result: { do_artifact_complete: true, plan_findings_integrated: true } })
+   → Draft saved to .data/cycles/cycle-001/do.md, reviewers dispatched
 
-4. pdca_save_insight({
-     domain: "content",
-     type: "gotcha",
-     text: "Reviewers flagged unsourced market-size claims twice"
-   })
-   → Insight written to .data/cycles/insights/content.json
-   → Available to all future content cycles
+4. pdca_save_insight({ cycle_id: 1, category: "quality", severity: "warning",
+                      insight: "Reviewers flagged unsourced market-size claims twice" })
+   → Appended to .data/cycles/insights.json
+   → A category that recurs across cycles is promoted to a gotcha proposal
 
-5. pdca_get_insights(domain="content")
-   → Returns ranked insights with freshness decay applied
-   → Stale lessons (>30 days) score lower; recent gotchas rank first
+5. pdca_get_insights({ category: "quality" })
+   → Returns insights ranked by decayed weight
+   → Insights older than 30 days score lower; recent ones rank first
 
-6. pdca_end_run(verdict="PROCEED")
-   → Final cycle state saved to .data/cycles/
+6. pdca_end_run()
+   → Archives the final state to .data/state/pdca-last-completed.json
    → ANSI summary box printed, HTML report generated
 ```
 
@@ -185,13 +186,16 @@ After a few cycles, `.data/cycles/` looks like this:
 
 ```
 .data/cycles/
-├── 2025-03-29T18-02-00-content.json    # full cycle record
-├── 2025-03-29T19-15-00-code.json       # another cycle
-├── insights/
-│   ├── content.json    # accumulated content-domain insights
-│   ├── code.json       # code-domain insights
-│   ├── analysis.json   # analysis-domain insights
-│   └── pipeline.json   # pipeline-domain insights
+├── cycle-001/
+│   ├── plan.md        # Plan-phase artifact
+│   ├── do.md          # Do-phase artifact
+│   ├── check.md       # Check-phase artifact
+│   ├── act.md         # Act-phase artifact
+│   ├── metrics.json   # per-cycle metrics
+│   └── events.jsonl   # phase transitions and gate decisions
+├── cycle-002/
+│   └── …
+└── insights.json      # accumulated, decay-ranked insights
 ```
 
 Every cycle feeds the next. No manual knowledge management required.
@@ -239,25 +243,25 @@ The key is the Action Router. When review finds problems, it classifies the root
 
 Every PDCA run is now a learning event, not a throwaway session.
 
-**Auto-save on transition and end.** Each phase transition snapshots the cycle state — gate results, scores, reviewer findings, artifacts — into `.data/cycles/<timestamp>-<domain>.json`. When the run ends, the final record is persisted automatically. No manual saves. No lost context.
+**Auto-save on transition.** Each phase transition writes the completed phase's artifact to `.data/cycles/cycle-NNN/<phase>.md` and logs the transition to that cycle's `events.jsonl`. Metrics land in `metrics.json`. No manual saves.
 
-**Read-Before-Act.** Before entering any phase, the system queries `.data/cycles/insights/<domain>.json` for prior lessons. A content cycle reads content insights. A code cycle reads code insights. Cold starts disappear after your first run.
+**Read-Before-Act.** When a run starts, the system reads `.data/cycles/insights.json` for prior lessons, ranked by decayed weight, so a new run begins with what earlier runs learned. Cold starts disappear after your first run.
 
 **Self-Evolution.** Two mechanisms keep the insight pool healthy:
 
 - **Time decay** — insights older than 30 days score progressively lower in relevance rankings. Stale patterns don't crowd out fresh discoveries.
-- **Gotcha proposals** — when the same failure pattern appears across 3+ cycles, the system promotes it to a persistent gotcha. These rank highest and surface first in Read-Before-Act.
+- **Gotcha proposals** — when a category keeps producing critical insights across cycles, the system writes a proposal to `.data/proposals/gotchas-<category>.md` for the maintainer to promote into a reusable checklist item.
 
-The result: the 10th cycle in a domain is meaningfully smarter than the 1st.
+The result: the 10th cycle is meaningfully smarter than the 1st.
 
 ```
 .data/cycles/
-├── 2025-03-29T18-02-00-content.json   # cycle record with phases, gates, scores
-├── insights/
-│   └── content.json                    # accumulated insights for this domain
-│       ├── gotchas[]                   # promoted recurring failure patterns
-│       ├── lessons[]                   # one-off observations with decay scores
-│       └── preferences[]              # user-specific style/process signals
+├── cycle-001/                  # one directory per cycle
+│   ├── plan.md / do.md / check.md / act.md
+│   ├── metrics.json
+│   └── events.jsonl
+└── insights.json               # accumulated insights, each:
+    # { category: process|technical|quality, severity, insight, weight, ... }
 ```
 
 ---
@@ -397,13 +401,13 @@ A dedicated `pdca-state` MCP server (stdio transport, modular architecture with 
 
 | Tool | Purpose |
 |---|---|
-| `get` | Read current PDCA state |
-| `start` | Initialize a new cycle |
-| `transition` | Advance to next phase (with `auto_gate` evaluation) |
-| `check_gate` | Evaluate gate conditions |
-| `list_runs` | Query PDCA run history |
-| `end` | Complete the cycle |
-| `update_stuck` | Record a stuck/failed cycle |
+| `pdca_get_state` | Read current PDCA state |
+| `pdca_start_run` | Initialize a new cycle |
+| `pdca_transition` | Advance to next phase — `auto_gate` evaluates the gate, `phase_result` records the gate inputs |
+| `pdca_check_gate` | Evaluate gate conditions |
+| `pdca_list_runs` | Query PDCA run history |
+| `pdca_end_run` | Complete the cycle |
+| `pdca_update_stuck_flags` | Record a stuck/failed cycle |
 
 **Cycle Memory tools (new in v1.0.0):**
 

@@ -129,6 +129,32 @@ const { Server, StdioServerTransport, CallToolRequestSchema, ListToolsRequestSch
 // Tool definitions
 // ---------------------------------------------------------------------------
 
+/**
+ * Gate-input fields a caller may set alongside a transition or gate check.
+ * These are the counters/flags the gates evaluate; supplying them is what makes
+ * auto_gate transitions satisfiable through the API. Unlisted keys are ignored.
+ */
+const PHASE_RESULT_SCHEMA = {
+  type: "object",
+  description:
+    "Optional gate inputs recorded before the gate is evaluated (e.g. { sources_count: 4, plan_mode_approved: true }). Required for auto_gate transitions to pass.",
+  properties: {
+    sources_count: { type: "integer", minimum: 0 },
+    reviewer_count: { type: "integer", minimum: 0 },
+    warning_count: { type: "integer", minimum: 0 },
+    critical_count: { type: "integer", minimum: 0 },
+    plan_mode_approved: { type: "boolean" },
+    do_artifact_complete: { type: "boolean" },
+    plan_findings_integrated: { type: "boolean" },
+    check_verdict: { type: "string" },
+    act_root_cause: { type: "string" },
+    average_score: { type: ["number", "null"] },
+    critical_findings: { type: "array" },
+    top_improvements: { type: "array" },
+  },
+  additionalProperties: false,
+};
+
 const TOOL_DEFINITIONS = [
   {
     name: "pdca_get_state",
@@ -188,6 +214,7 @@ const TOOL_DEFINITIONS = [
           description:
             "When true, automatically evaluate the gate for the current→target transition before proceeding. If the gate fails, the transition is blocked and the gate result is returned. Default: false.",
         },
+        phase_result: PHASE_RESULT_SCHEMA,
       },
       required: ["target_phase"],
       additionalProperties: false,
@@ -196,7 +223,7 @@ const TOOL_DEFINITIONS = [
   {
     name: "pdca_check_gate",
     description:
-      "Validates a phase gate by checking required conditions against the current state. Returns { passed: boolean, missing: string[] }.",
+      "Validates a phase gate by checking required conditions against the current state. Pass phase_result to record the gate inputs first. Returns { passed: boolean, missing: string[] }.",
     inputSchema: {
       type: "object",
       properties: {
@@ -205,6 +232,7 @@ const TOOL_DEFINITIONS = [
           enum: ["plan_to_do", "do_to_check", "check_to_act", "act_to_exit"],
           description: "The gate to evaluate.",
         },
+        phase_result: PHASE_RESULT_SCHEMA,
       },
       required: ["gate"],
       additionalProperties: false,

@@ -1,6 +1,6 @@
 ---
 description: "Soul-aware English/Korean translation with style and format control"
-argument-hint: '"text or file path" --to ko|en --style formal|casual|technical'
+argument-hint: '"text or file path" --target en|ko --style literal|natural|creative'
 ---
 
 Invoke the `/second-claude-code:translate` command to translate content through the `translate` skill.
@@ -10,9 +10,13 @@ Invoke the `/second-claude-code:translate` command to translate content through 
 
 ## Arguments
 - Required: text, file path, or content to translate
-- `--to ko|en` target language
-- `--style formal|casual|technical` style hint
-- `--format preserve|plain|markdown` output format
+- `--target en|ko` target language (default: opposite of source)
+- `--source en|ko` source language (default: auto-detect)
+- `--style literal|natural|creative` translation style (default: natural)
+- `--format preserve|adapt` formatting mode (default: preserve)
+- `--glossary <path>` terminology map (default: references/glossary.md)
+- `--skip-qa` skip the Ditto QA review
+- `--input <path>` read the source from a file
 
 ## Your task
 Translate now using the plugin's loaded `translate` skill and the provided arguments.

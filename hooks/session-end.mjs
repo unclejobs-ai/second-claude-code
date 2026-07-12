@@ -35,6 +35,7 @@ import {
   readDaemonStatus,
 } from "./lib/companion-daemon.mjs";
 import { readEvents } from "./lib/event-log.mjs";
+import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -44,8 +45,14 @@ const STATE_DIR = join(DATA_DIR, "state");
 
 // Sentinel file used as a stop-hook-active guard.
 // If this file exists and is recent, the hook has already fired once in this
-// stop attempt — allow through to prevent an infinite denial loop.
-const GUARD_FILE = join(STATE_DIR, ".stop-hook-guard");
+// stop attempt — allow through to prevent an infinite denial loop. Scoped per
+// session so one session's retry-suppression can't unblock another's PDCA gate
+// (all sessions share the global .data dir).
+function guardFile() {
+  const sid = process.env.CLAUDE_SESSION_ID;
+  const suffix = sid ? `-${String(sid).replace(/[^a-zA-Z0-9._-]/g, "")}` : "";
+  return join(STATE_DIR, `.stop-hook-guard${suffix}`);
+}
 
 // Sentinel is considered "recent" if written within the last 30 seconds.
 const GUARD_TTL_MS = 30_000;
@@ -59,27 +66,25 @@ const ANSI_RED = "\u001b[31m";
 // ─────────────────────────────────────────────────────────────────────────────
 
 function guardIsActive() {
-  if (!existsSync(GUARD_FILE)) return false;
   try {
-    const { mtimeMs } = statSync(GUARD_FILE);
+    const { mtimeMs } = statSync(guardFile());
     return Date.now() - mtimeMs < GUARD_TTL_MS;
   } catch {
+    // No guard file (or unreadable) → not active.
     return false;
   }
 }
 
 function writeGuard() {
   ensureDirUtil(STATE_DIR);
-  writeFileSync(GUARD_FILE, String(Date.now()), "utf8");
+  writeFileSync(guardFile(), String(Date.now()), "utf8");
 }
 
 function clearGuard() {
-  if (existsSync(GUARD_FILE)) {
-    try {
-      unlinkSync(GUARD_FILE);
-    } catch {
-      // Non-fatal — guard will expire naturally via TTL.
-    }
+  try {
+    unlinkSync(guardFile());
+  } catch {
+    // Non-fatal — missing guard or unlink failure; it expires via TTL anyway.
   }
 }
 
@@ -576,22 +581,21 @@ function emitChannelNotification(state) {
   const text = buildPdcaNotificationText(state);
   if (!text) return;
 
-  // Output notification payload for Claude Code's Notification hook handler.
-  // Written to stdout as a JSON object — the hook runtime routes it to MCP.
+  // Deliver through the companion daemon's notification queue when it is online.
+  // There is intentionally no stdout emission here: on the Stop hook, stdout is
+  // the decision channel, and Claude Code has no mechanism that routes a
+  // {notification} object from Stop stdout to a transport — writing one only
+  // pollutes the decision stream with a schema nothing consumes.
   try {
-    const payload = JSON.stringify({
-      notification: {
+    const daemonStatus = readDaemonStatus(DATA_DIR);
+    if (daemonStatus.online) {
+      queueDaemonNotification(DATA_DIR, {
         channel: "telegram",
         chat_id: sanitize(String(telegram.chat_id), 64),
         text,
         event_type: eventType,
-      },
-    });
-    const daemonStatus = readDaemonStatus(DATA_DIR);
-    if (daemonStatus.online) {
-      queueDaemonNotification(DATA_DIR, JSON.parse(payload).notification);
+      });
     }
-    process.stdout.write(payload + "\n");
   } catch {
     // Non-fatal — notification errors must never affect session exit.
   }
@@ -654,12 +658,10 @@ function main() {
       // Write the guard before blocking so a second stop attempt passes through.
       writeGuard();
 
-      console.log(
-        JSON.stringify({
-          decision: "block",
-          reason: blockReason,
-        })
-      );
+      // Exit 2 blocks the stop; on exit 2 Claude Code reads the reason from
+      // stderr (structured stdout JSON is only consumed on exit 0, so the old
+      // console.log payload was silently dropped). Deliver the reason on stderr.
+      process.stderr.write(blockReason + "\n");
       process.exit(2);
     }
   }
@@ -670,8 +672,13 @@ function main() {
   const currentSessionId = process.env.CLAUDE_SESSION_ID || null;
   if (currentSessionId) {
     const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
-    const rawPdca = readJsonSafe(pdcaActivePath);
-    if (rawPdca) {
+    // Lock the read-modify-write: a concurrent session or MCP transition writes
+    // this same file, and an unlocked RMW would clobber session_history. Uses the
+    // same lock path (file + ".lock") the MCP handlers acquire.
+    withFileLockSync(pdcaActivePath, () => {
+      const rawPdca = readJsonSafe(pdcaActivePath);
+      if (!rawPdca) return;
+
       const sessionHistory = Array.isArray(rawPdca.session_history)
         ? rawPdca.session_history
         : [];
@@ -707,7 +714,7 @@ function main() {
       } catch {
         // Non-fatal — HANDOFF generation continues.
       }
-    }
+    });
   }
 
   // ── HANDOFF.md (always written) ───────────────────────────────────────────

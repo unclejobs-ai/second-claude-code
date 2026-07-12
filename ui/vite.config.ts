@@ -12,15 +12,9 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     emptyOutDir: true,
-    chunkSizeWarningLimit: 800,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'framer-motion', '@nivo/core', '@nivo/bar', '@nivo/radar', '@nivo/line', '@nivo/pie'],
-          shiki: ['shiki'],
-        },
-      },
-    },
+    // Vite 8's Rolldown bundler handles vendor chunking automatically; a manual
+    // shiki split triggered a Rolldown cross-chunk panic, so we let it decide.
+    chunkSizeWarningLimit: 1200,
   },
   server: {
     port: 3847,

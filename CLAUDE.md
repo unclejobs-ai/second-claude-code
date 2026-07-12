@@ -1,6 +1,6 @@
 # Second Claude Code
 
-Claude Code plugin (v1.5.2). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools across 3 servers.
+Claude Code plugin (v1.5.2). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 ## Project Structure
 
@@ -12,8 +12,8 @@ hooks/                      — 8 lifecycle hooks (session-start, prompt-detect,
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
 mcp/pdca-state-server.mjs   — MCP server (31 tools: PDCA state, cycle memory, soul, project memory, daemon, session recall, orchestrator)
 mcp/lib/cycle-memory.mjs    — Cycle memory persistence (phase snapshots, insights, metrics, self-evolution)
-hooks/lib/                  — Shared runtime modules: agent tracker, fact checker, file mutex sync, mmbridge adapter, report generator, soul observer
-mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, loop, cycle-memory
+hooks/lib/                  — Shared runtime modules: event log, file mutex sync, plugin discovery, project memory, review config, report generator, soul observer, companion daemon, utils
+mcp/lib/                    — Handler modules: pdca, soul, memory, session, daemon, orchestrator, cycle-memory, evolve-ledger
 commands/                   — 18 slash commands
 config/                     — Runtime configuration
 references/                 — Integration docs (mmbridge, etc.)
