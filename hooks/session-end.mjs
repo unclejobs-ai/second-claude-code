@@ -66,12 +66,11 @@ const ANSI_RED = "\u001b[31m";
 // ─────────────────────────────────────────────────────────────────────────────
 
 function guardIsActive() {
-  const file = guardFile();
-  if (!existsSync(file)) return false;
   try {
-    const { mtimeMs } = statSync(file);
+    const { mtimeMs } = statSync(guardFile());
     return Date.now() - mtimeMs < GUARD_TTL_MS;
   } catch {
+    // No guard file (or unreadable) → not active.
     return false;
   }
 }
@@ -82,13 +81,10 @@ function writeGuard() {
 }
 
 function clearGuard() {
-  const file = guardFile();
-  if (existsSync(file)) {
-    try {
-      unlinkSync(file);
-    } catch {
-      // Non-fatal — guard will expire naturally via TTL.
-    }
+  try {
+    unlinkSync(guardFile());
+  } catch {
+    // Non-fatal — missing guard or unlink failure; it expires via TTL anyway.
   }
 }
 

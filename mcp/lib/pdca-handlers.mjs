@@ -273,19 +273,23 @@ function buildInitialState(topic, maxCycles, domain = "code") {
  * These are the counters/flags evaluateGate() reads; without a channel to set
  * them, auto_gate transitions can never pass. Keys not listed here are ignored.
  */
+const isNonNegInt = (v) => Number.isInteger(v) && v >= 0;
+const isBoolean = (v) => typeof v === "boolean";
+const isString = (v) => typeof v === "string";
+
 const PHASE_RESULT_FIELDS = {
-  sources_count: (v) => Number.isInteger(v) && v >= 0,
-  reviewer_count: (v) => Number.isInteger(v) && v >= 0,
-  warning_count: (v) => Number.isInteger(v) && v >= 0,
-  critical_count: (v) => Number.isInteger(v) && v >= 0,
-  plan_mode_approved: (v) => typeof v === "boolean",
-  do_artifact_complete: (v) => typeof v === "boolean",
-  plan_findings_integrated: (v) => typeof v === "boolean",
-  check_verdict: (v) => typeof v === "string",
-  act_root_cause: (v) => typeof v === "string",
+  sources_count: isNonNegInt,
+  reviewer_count: isNonNegInt,
+  warning_count: isNonNegInt,
+  critical_count: isNonNegInt,
+  plan_mode_approved: isBoolean,
+  do_artifact_complete: isBoolean,
+  plan_findings_integrated: isBoolean,
+  check_verdict: isString,
+  act_root_cause: isString,
   average_score: (v) => v === null || typeof v === "number",
-  critical_findings: (v) => Array.isArray(v),
-  top_improvements: (v) => Array.isArray(v),
+  critical_findings: Array.isArray,
+  top_improvements: Array.isArray,
 };
 
 /**
@@ -342,6 +346,15 @@ function resetCycleScopedState(state) {
   };
 }
 
+/**
+ * Wrap a handler so its read-modify-write of ACTIVE_FILE runs inside a
+ * cross-process file lock. Every ACTIVE_FILE mutator is exported through this.
+ * @template T
+ * @param {(args?: object) => T} fn
+ * @returns {(args?: object) => T}
+ */
+const withActiveLock = (fn) => (args) => withFileLockSync(ACTIVE_FILE, () => fn(args));
+
 // ---------------------------------------------------------------------------
 // Tool handlers
 // ---------------------------------------------------------------------------
@@ -353,9 +366,7 @@ export function handleGetState() {
 }
 
 /** pdca_start_run */
-export function handleStartRun(args = {}) {
-  return withFileLockSync(ACTIVE_FILE, () => handleStartRunInner(args));
-}
+export const handleStartRun = withActiveLock(handleStartRunInner);
 
 function handleStartRunInner({ topic, max_cycles = 3, domain = "code" }) {
   if (typeof topic !== "string" || topic.trim() === "") {
@@ -407,9 +418,7 @@ const PHASE_TO_GATE = {
 };
 
 /** pdca_transition */
-export function handleTransition(args = {}) {
-  return withFileLockSync(ACTIVE_FILE, () => handleTransitionInner(args));
-}
+export const handleTransition = withActiveLock(handleTransitionInner);
 
 function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false, phase_result = null }) {
   const validPhases = ["plan", "do", "check", "act"];
@@ -486,6 +495,11 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
       });
 
       if (!gateResult.passed) {
+        // Persist the merged phase_result/artifacts even though the gate failed
+        // and the phase does not advance, so a caller probing gate readiness
+        // keeps the inputs it supplied (matches pdca_check_gate, which records
+        // phase_result unconditionally).
+        writeJsonAtomic(ACTIVE_FILE, state);
         return {
           transitioned: false,
           gate: gateKey,
@@ -513,8 +527,9 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     }
   }
 
-  // Mark current phase as completed
-  if (!state.completed.includes(current)) {
+  // Mark current phase as completed (skipped on a plan recycle — the reset
+  // below clears `completed`, so pushing here would be immediately discarded).
+  if (target_phase !== "plan" && !state.completed.includes(current)) {
     state.completed.push(current);
   }
 
@@ -593,9 +608,7 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
 }
 
 /** pdca_check_gate */
-export function handleCheckGate(args = {}) {
-  return withFileLockSync(ACTIVE_FILE, () => handleCheckGateInner(args));
-}
+export const handleCheckGate = withActiveLock(handleCheckGateInner);
 
 function handleCheckGateInner({ gate, phase_result = null }) {
   const validGates = Object.keys(GATE_REQUIRED);
@@ -636,9 +649,7 @@ function handleCheckGateInner({ gate, phase_result = null }) {
 }
 
 /** pdca_end_run */
-export function handleEndRun() {
-  return withFileLockSync(ACTIVE_FILE, () => handleEndRunInner());
-}
+export const handleEndRun = withActiveLock(handleEndRunInner);
 
 function handleEndRunInner() {
   const state = readJson(ACTIVE_FILE);
@@ -710,9 +721,7 @@ function handleEndRunInner() {
 }
 
 /** pdca_update_stuck_flags */
-export function handleUpdateStuckFlags(args = {}) {
-  return withFileLockSync(ACTIVE_FILE, () => handleUpdateStuckFlagsInner(args));
-}
+export const handleUpdateStuckFlags = withActiveLock(handleUpdateStuckFlagsInner);
 
 function handleUpdateStuckFlagsInner({ flags }) {
   if (!Array.isArray(flags) || flags.length === 0) {

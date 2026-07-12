@@ -402,18 +402,15 @@ export function discoverAllPlugins() {
   const plugins = [];
   const installedPluginsPath = getInstalledPluginsPath();
 
-  if (!existsSync(installedPluginsPath)) {
-    return { ...EMPTY_DISCOVERY };
-  }
-
   let raw;
   try {
     raw = readFileSync(installedPluginsPath, "utf8");
   } catch {
+    // Missing or unreadable installed_plugins.json → nothing to discover.
     return { ...EMPTY_DISCOVERY };
   }
 
-  const cacheKey = `${installedPluginsPath} ${raw}`;
+  const cacheKey = `${installedPluginsPath}\n${raw}`;
   if (_discoverCache && _discoverCache.key === cacheKey) {
     return _discoverCache.result;
   }
