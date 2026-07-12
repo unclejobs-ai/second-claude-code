@@ -94,7 +94,7 @@ Four prompts in a specific order, every week, replaced by one.
 
 You do not need to memorize skill names. Type your request in natural language and the auto-router selects the right skill. If you want explicit control, use slash commands like `/second-claude-code:write`.
 
-Both English and Korean prompts work. The system has 100+ Korean trigger patterns and 100+ English trigger patterns built in. You can mix languages freely.
+Both English and Korean prompts work. The system has roughly 50 Korean trigger patterns and 77 English trigger patterns built in. You can mix languages freely.
 
 | Skill | What it does | When to use | Example prompt |
 |---|---|---|---|

@@ -46,7 +46,7 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional)
+├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional), mmbridge (optional)
 ├── skills/                       # 18 skills (SKILL.md each)
 │   ├── deep-interview/           # Socratic requirements interview (topology, scoring, spec handoff)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
@@ -81,8 +81,8 @@ second-claude/
 │   └── lib/                      # Shared hook modules
 │       ├── plugin-discovery.mjs  # Runtime plugin scanner + dispatch guide generator [NEW 1.4.0]
 │       ├── soul-observer.mjs     # Soul signal detection + readiness/retro utilities
-│       ├── mmbridge-adapter.mjs  # MMBridge CLI adapter
-│       └── ...                   # agent-tracker, fact-checker, file-mutex, etc.
+│       ├── event-log.mjs         # PDCA event sourcing (append-only JSONL)
+│       └── ...                   # file-mutex-sync, project-memory, review-config, report-generator, companion-daemon, utils
 ├── mcp/
 │   ├── pdca-state-server.mjs     # 31-tool MCP server (27 core + 4 orchestrator [NEW 1.4.0])
 │   └── lib/

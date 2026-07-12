@@ -67,7 +67,7 @@ second-claude-code는 PDCA 품질 사이클을 기본 구조로 써요. 사용�
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택)
+├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택), mmbridge (선택)
 ├── skills/                       # 18개 스킬 (각각 SKILL.md)
 │   ├── deep-interview/           # 소크라테스식 요구사항 인터뷰 (topology, scoring, spec handoff)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
