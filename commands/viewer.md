@@ -1,6 +1,6 @@
 ---
 description: "Open the SCC Artifact Viewer for PDCA session outputs"
-argument-hint: --session-dir .data/sessions/current
+argument-hint: --session-dir .scc/sessions/{session-id}
 ---
 
 Invoke the `/second-claude-code:viewer` command to open the artifact viewer through the `viewer` skill.

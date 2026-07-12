@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import type { Artifact } from '@/types'
 import { ArtifactCard } from './artifacts/ArtifactCard'
+import { ErrorBoundary } from './ErrorBoundary'
 
 interface ArtifactGridProps {
   artifacts: Artifact[]
@@ -48,7 +49,9 @@ export function ArtifactGrid({ artifacts }: ArtifactGridProps) {
                 : undefined,
           }}
         >
-          <ArtifactCard artifact={artifact} />
+          <ErrorBoundary label={`${artifact.type} artifact "${artifact.title}"`}>
+            <ArtifactCard artifact={artifact} />
+          </ErrorBoundary>
         </motion.div>
       ))}
     </div>
