@@ -347,6 +347,42 @@ Act 페이즈가 plurality routing 전에 5+ 룰을 먼저 체크해요. Finding
 | COMPLETENESS_GAP, FORMAT_VIOLATION | Do | 실행 문제라 재작성이 필요 |
 | EXECUTION_QUALITY | Refine | 다듬기 수준이라 반복 개선으로 충분 |
 
+### 전이 계약
+
+`pdca_transition`이 사이클을 상태머신으로 강제해요. 아래 전이만 존재하고, **되돌아가는 두 경로는 둘 다 사이클을 하나 씁니다.** 그래서 `max_cycles`가 재계획만이 아니라 런 전체를 묶어요.
+
+```mermaid
+stateDiagram-v2
+    [*] --> plan
+    plan --> do: plan_to_do 게이트
+    do --> check: do_to_check 게이트
+    check --> act: check_to_act 게이트
+    act --> plan: 재계획 — 전체 리셋, cycle++
+    act --> do: 재실행 — 계획 보존, cycle++
+    act --> [*]: pdca_end_run
+
+    note right of plan
+        재계획은 사이클 범위의 모든 것을
+        지웁니다. 게이트, 판정, 카운트,
+        소스까지.
+    end note
+
+    note right of do
+        재실행은 plan 게이트와 승인,
+        소스 근거를 남기고 Do·Check가
+        만든 것만 지웁니다. 그래서 다시
+        만든 결과물도 반드시 검수를
+        한 번 더 받습니다.
+    end note
+```
+
+| 전이 | 사이클 비용 | 살아남는 것 |
+|---|---|---|
+| `act → plan` | +1, `max_cycles` 상한 | 런 식별자, 아티팩트, 누적 카운터 |
+| `act → do` | +1, `max_cycles` 상한 | 위 항목 + `plan_to_do`, 계획 승인, `sources_count` |
+
+그 외는 전부 `Illegal transition`이에요. `act → do`가 있는 이유는 액션 라우터가 COMPLETENESS_GAP과 FORMAT_VIOLATION을 실행 문제로 분류하기 때문입니다 — 이 경로가 없으면 라우터 판정의 3분의 1이 갈 곳을 잃어요.
+
 ### Definition of Done — Refine 게이트 (0.5.6)
 
 `refine` 스킬에 `--dod` 플래그를 쓸 수 있어요. 세미콜론으로 구분된 성공 기준 체크리스트예요.

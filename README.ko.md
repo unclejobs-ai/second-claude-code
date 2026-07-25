@@ -76,7 +76,9 @@ Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀�
 
 "코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit:code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅. "posthog event analysis"처럼 특정 플러그인 의도가 강하면 설치된 PostHog 스킬 `Skill: posthog:exploring-autocapture-events`가 먼저 잡힙니다.
 
-하드코딩된 레지스트리 없음. 수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. 유지보수 제로.
+수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐.
+
+다만 탐지가 아니라 고정된 게 하나 있습니다. 어떤 플러그인을 **선호**하는지입니다. `INTENT_PROFILES`가 리뷰는 `coderabbit`, act는 `commit-commands`, 디자인은 `frontend-design`, 메모리·리서치는 `claude-mem`으로 박아 뒀습니다. 다른 리뷰 플러그인을 깔면 탐지되고 점수도 정상으로 매겨지지만, 그 표를 고치기 전까지는 선호 가산점을 받지 못합니다.
 
 ```mermaid
 graph LR

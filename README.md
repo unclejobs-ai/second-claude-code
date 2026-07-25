@@ -38,7 +38,7 @@ flowchart TB
     ACT --> OUT[Finished artifact plus cycle memory]
 ```
 
-Second Claude Code is the control loop. The v1.4.0 orchestrator sits in front of that loop and gives installed plugins the first shot when they are a stronger fit.
+Second Claude Code is the control loop. The orchestrator hands a single-purpose prompt to an installed plugin when one is a stronger fit — "코드 리뷰해줘" goes to `coderabbit` rather than the built-in reviewer. A prompt that spans phases ("알아보고 써줘") is claimed by PDCA before any plugin is consulted, because the cycle is the thing that adds the review and the correction loop.
 
 ---
 
@@ -84,7 +84,9 @@ See `docs/RELEASE-v1.5.0.md` for full release notes and verification.
 
 You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit:code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog:exploring-autocapture-events` when that plugin is installed.
 
-No hardcoded registry. No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears. Zero maintenance.
+No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears.
+
+One thing is fixed rather than discovered: which plugin each lifecycle intent *prefers*. `INTENT_PROFILES` pins review to `coderabbit`, act to `commit-commands`, design to `frontend-design`, and memory/research to `claude-mem`. Install a different review plugin and it is discovered and scored normally — it just does not inherit that preference boost until someone edits the table.
 
 ```mermaid
 graph LR

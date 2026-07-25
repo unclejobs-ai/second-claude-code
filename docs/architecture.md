@@ -333,6 +333,42 @@ The Action Router classifies review findings by root cause before routing:
 | COMPLETENESS_GAP, FORMAT_VIOLATION | Do | Execution issues need rewrite |
 | EXECUTION_QUALITY | Refine | Polish issues need iteration |
 
+### Transition Contract
+
+`pdca_transition` enforces the cycle as a state machine. Only these moves exist, and both backward routes cost a cycle, so `max_cycles` bounds the whole run rather than just re-planning.
+
+```mermaid
+stateDiagram-v2
+    [*] --> plan
+    plan --> do: plan_to_do gate
+    do --> check: do_to_check gate
+    check --> act: check_to_act gate
+    act --> plan: re-plan — full reset, cycle++
+    act --> do: re-execute — plan kept, cycle++
+    act --> [*]: pdca_end_run
+
+    note right of plan
+        A re-plan clears everything
+        cycle-scoped: gates, verdict,
+        counts, sources.
+    end note
+
+    note right of do
+        A re-execute keeps the plan gate,
+        its approval and its sources, and
+        clears only what Do and Check
+        produced — so the rerun must pass
+        review again.
+    end note
+```
+
+| From → To | Cycle cost | What survives |
+|---|---|---|
+| `act → plan` | +1, capped by `max_cycles` | Run identity, artifacts, cumulative counters |
+| `act → do` | +1, capped by `max_cycles` | The above, plus `plan_to_do`, plan approval, and `sources_count` |
+
+Anything else raises `Illegal transition`. The `act → do` route exists because the Action Router classifies COMPLETENESS_GAP and FORMAT_VIOLATION as execution problems — without it, a third of the router's decisions would have nowhere to go.
+
 ### Definition of Done — Refine Gate (0.5.6)
 
 The `refine` skill accepts an optional `--dod` flag: a semicolon-separated checklist of success criteria. When active:

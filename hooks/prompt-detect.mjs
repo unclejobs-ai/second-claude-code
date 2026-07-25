@@ -4,9 +4,11 @@
  * UserPromptSubmit Hook — Auto-routing with priority context injection
  *
  * Layer 0: Soul observation — silently captures user signals (no routing effect)
- * Layer 1: PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
- * Layer 2: External plugin layer — routes strong installed-plugin matches first
- * Layer 3: Skill layer — detects single-skill intent → routes to individual skill
+ * Layer 1: PDCA phase layer — multi-phase intent routes to the pdca orchestrator and RETURNS.
+ *          A compound prompt never reaches the layers below, external plugins included.
+ * Layer 2: Skill layer — scores single-skill intent into `bestMatch`, but does not return yet
+ * Layer 3: External plugin layer — a strong installed-plugin match outranks `bestMatch`;
+ *          otherwise `bestMatch` wins
  *
  * Output: JSON additionalContext injected into system-reminder so Claude
  * sees an authoritative routing instruction, not just a hint.
@@ -596,6 +598,11 @@ for (const route of routes) {
 // Dynamic skill-check dispatch guide (built from plugin discovery)
 // Replaces the old hardcoded genericGuide — updates automatically when
 // plugins are installed or uninstalled.
+// ──────────────────────────────────────────────
+
+// ──────────────────────────────────────────────
+// Layer 3: External plugin dispatch — decided last, but outranks the Layer 2 `bestMatch`.
+// Compound prompts already returned in Layer 1, so they never arrive here.
 // ──────────────────────────────────────────────
 
 const dispatchGuide = generateDispatchGuide();

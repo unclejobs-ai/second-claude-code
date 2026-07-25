@@ -10,20 +10,29 @@ v1.5.0 extends this with the `unblock` skill — a 9-phase zero-key fetch chain 
 
 ```mermaid
 flowchart TB
-    U[User prompt] --> H[prompt-detect.mjs]
-    H --> G[getDispatchPlan]
+    U[User prompt] --> L1{"Layer 1<br/>compound intent?"}
+    L1 -->|yes| PDCA[["Route to pdca — returns immediately"]]
+    L1 -->|no| L2["Layer 2 — score single-skill intent into bestMatch"]
+    L2 --> G[getDispatchPlan]
     G --> D[Runtime plugin discovery]
     D --> C[Capability map]
-    C --> S[Intent scoring]
-    S --> E{External dispatch wins?}
-    E -->|yes| O[[ORCHESTRATOR instruction]]
-    E -->|no| P[PDCA compound router]
-    P --> I[Internal single-skill router]
+    C --> S["Intent scoring + preferred-plugin boost"]
+    S --> L3{"Layer 3<br/>external match strong enough?"}
+    L3 -->|yes| O[["ORCHESTRATOR instruction"]]
+    L3 -->|no| I[["Fall back to bestMatch"]]
+
+    style PDCA fill:#fff3bf,stroke:#f08c00
+    style O fill:#d3f9d8,stroke:#2f9e44
+    style I fill:#e7f5ff,stroke:#1971c2
 ```
+
+**A compound prompt never reaches the orchestrator.** Layer 1 matches phrases like "알아보고 써줘" or "research and write", routes to `pdca`, and returns at that point — the external plan is not even computed. External dispatch competes with the *single-skill* router, not with PDCA.
 
 1. **Runtime discovery** - `hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json`, plugin `skills/`, `commands/`, `agents/`, and `.claude-plugin/plugin.json` files.
 2. **Intent scoring** - `getDispatchPlan()` normalizes a keyword or PDCA phase, scores plugin capabilities, applies preferred-plugin boosts, and returns ranked invocation instructions.
 3. **Prompt dispatch** - `hooks/prompt-detect.mjs` injects an `[ORCHESTRATOR]` block when the top external match is a lifecycle intent or a strong generic plugin match.
+
+**What is discovered vs. what is fixed.** Which plugins exist, and every skill/command/agent inside them, is read from disk at runtime — install one and it appears, remove one and it disappears. What is *not* dynamic is the preference table: `INTENT_PROFILES` in `plugin-discovery.mjs` hardcodes which plugin each lifecycle intent favours (review → `coderabbit`, act → `commit-commands`, design → `frontend-design`, memory/research → `claude-mem`). A newly installed review plugin is discovered and scorable, but it does not inherit the `+60` preferred-plugin boost without an edit there.
 
 ## Verified Routes
 
@@ -49,7 +58,7 @@ flowchart LR
     GUIDE --> CTX[System reminder]
 ```
 
-At session start, the hook injects a compact "Active Plugin Dispatch" table. It is advisory context for the model and includes per-phase top picks, plugin names, capability counts, and exact invocation strings.
+At session start, the hook injects a compact "Active Plugin Dispatch" table. It is advisory context for the model and lists per-phase top picks by plugin name plus a capability count. It does **not** carry invocation strings — those are built per prompt by `buildDispatchInstructions()` and only appear in the `[ORCHESTRATOR]` block that Layer 3 injects.
 
 ## Prompt-Level Dispatch
 
@@ -61,7 +70,7 @@ Invoke this installed plugin capability before self-processing:
 Skill: coderabbit:code-review
 ```
 
-The model must then call the external skill or command first and integrate the result. If no external route wins, prompt detection continues to the older PDCA compound router and then the internal single-skill router.
+The model must then call the external skill or command first and integrate the result. If no external route wins, the single-skill match scored back in Layer 2 is used instead. The PDCA compound router does not sit downstream of this decision — it ran earlier, and a compound prompt would already have returned.
 
 ## MCP Tool Surface - 31 Tools Total
 
