@@ -5,7 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [2.0.0] - 2026-07-26
+## [2.1.0] - 2026-07-25
+
+### Added
+
+- **Background run handoff.** `daemon_start_background_run` returns the command that starts the work — `claude --bg "/scc:workflow run <name>"`, managed with `claude agents`. The queue deliberately executes nothing itself: Claude Code already ships background agents, and an in-plugin executor would run outside the conversation where this project requires explicit approval before publishing, pushing, or sending mail. Documented in the README and the workflow guide in both languages.
+- **Overridable plugin preferences.** `INTENT_PROFILES` pins review to `coderabbit` and the pin is worth +60, so a reviewer you prefer could not outrank it without editing source. A `plugin-preferences.json` in `CLAUDE_PLUGIN_DATA` now replaces the pinned list per intent; an empty array drops the pin entirely. Malformed files are ignored rather than taking routing down.
+
+### Fixed
+
+- **`daemon_start_background_run` no longer implies an executor.** It previously said "the daemon may execute it later when online" — there is no execution path, online or otherwise. The tool description, the architecture docs, and the session banner now say so; the banner had been blaming the offline daemon for something being online would not fix.
+- **A test that passed by measuring nothing.** The preference-override test bailed with an early return when `coderabbit` was absent, which the runner reports as a pass. It now builds a mock plugin root and asserts the plugin was scored before measuring the pin, so it runs identically everywhere.
+- **The Verified Routes table** listed `coderabbit` and `commit-commands` as top picks without noting those are the shipped defaults, which an override changes.
+
+
+## [2.0.0] - 2026-07-25
 
 ### Changed — BREAKING
 
