@@ -5,6 +5,42 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-07-26
+
+### Changed — BREAKING
+
+- **Command namespace is now `scc`.** Every invocation changes: `/second-claude-code:pdca` becomes `/scc:pdca`. The plugin must be reinstalled — the plugin cache is keyed by name, so an existing install keeps serving the old surface. The repository, the GitHub URL, and the display name "Second Claude Code" are unchanged.
+- **The Plan gate requires 5 sources, not 3.** v1.3.0 raised this in `phase-schemas.md` and `plan-phase.md`, recording the reason — a thin source pool hands the Do phase a single-narrative brief — but never touched the code, so the gate stayed at 3. It now matches its own documentation. Runs that used to clear Plan with 3 or 4 sources will be held.
+
+### Fixed — paths that were declared but never ran
+
+- **Cross-plugin dispatch emitted unresolvable ids.** Skills were joined with a hyphen (`coderabbit-code-review`) while commands three lines below used a colon. Nothing dispatched. Seven test assertions had pinned the broken format.
+- **`act → do` was rejected by the state machine.** The Action Router classifies COMPLETENESS_GAP and FORMAT_VIOLATION as execution problems and routes them back to Do; `VALID_TRANSITIONS` allowed only `act → plan`, so a third of the router's decisions had nowhere to go. Re-entry keeps the plan's gate, approval, and sources, clears everything Do and Check produced, and consumes a cycle so `max_cycles` bounds it.
+- **`action_router_history` was never written.** Declared, documented, appended to by nothing. It now records the route, root cause, and the counts the decision was computed from.
+- **Obeying the auto-router logged a correction against the user.** Command dispatches were stored with a leading slash and compared against a slash-stripped name, so following the router's own suggestion recorded a `routing_correction` at confidence 0.95. Soul learning was being trained on disagreement that never happened.
+- **The Artifact Viewer had never worked.** Nothing produced the `state.json` + `artifacts/*.json` layout it reads; `ui/dist` was gitignored so installs shipped without a build; and the WebSocket handshake used a wrong RFC 6455 GUID, which yields a plausible digest and is rejected by every browser. All three fixed — `scripts/viewer-session.mjs` is the missing producer, `dist` ships, and the handshake is verified against the RFC test vector.
+- **The tone reviewer was missing from the PDCA roster** and underpowered where it did run. `pdca/SKILL.md` listed a `consistency-checker` that does not exist and dropped `tone-guardian` entirely. `tone-guardian` and `structure-analyst` moved haiku → sonnet: both assign severity grades and 0.0–1.0 scores, and the repo's own review transcript recorded the tone reviewer returning APPROVED with zero findings, "consistent with its haiku-tier model assignment".
+- **Six skill role names matched no agent**, so the model and tools beside them were ignored on dispatch — `connector`, `searcher`, `inspector`, `evaluator`, `orchestrator`, `step_executor` are now the real names.
+- **`loop-runner` leaked git worktrees on any failure.** Cleanup ran only on the success path. Creations are tracked and removed in a `finally`, `mapWithConcurrency` lets workers settle before raising, and `--parallel` is capped at 8.
+
+### Added
+
+- **`scripts/export-artifact.mjs`** — renders a run as one shareable Markdown page: gates, reviewer verdicts, phase timeline, scope drift, and every re-entry with its reason. Mermaid for the loop and charts, so it publishes as an Artifact with no bundle and no server.
+- **`scripts/viewer-session.mjs`** — projects `.data/state` and `.data/cycles` into the layout the viewer reads.
+- **Design principle §10, "The Creative Spine Never Downgrades"** — tier overrides on the writer and deep-reviewer are upward-only, and the haiku line is drawn at judgment rather than seniority.
+
+### Documentation
+
+- The README now leads with what the plugin does **on its own** before what it does with your plugins. Cross-plugin dispatch is framed as an accelerant — with an empty plugin root, every lifecycle prompt falls through to the built-in reviewers and nothing degrades.
+- Routing order was documented backwards in four places across both languages. A compound prompt returns before the external plan is computed; external dispatch competes with the single-skill router, never with PDCA.
+- "No hardcoded registry" was untrue (`INTENT_PROFILES` pins four plugins) and the session-start table never carried invocation strings. Both corrected.
+- Added the missing `pdca_transition` state diagram — its absence is why nobody could see `act → do` was rejected.
+
+### Tests
+
+388 → 405 passing. New guards cover the class of defect this release is mostly made of: contract tests now fail when a skill role names no real agent, when a roster diagram's tiers or legend disagree with `agents/`, when a skill guide is missing a translation, and when the viewer guide stops naming its producer. `pdca-state-server.test.mjs` no longer asserts against a local copy of the state machine it is meant to be testing.
+
+
 ### Added
 
 - **Deep Interview skill** (`commands/deep-interview.md`, `skills/deep-interview/`, `scripts/deep-interview-runner.mjs`) — an 18th public command/skill for Socratic requirements discovery, Round 0 topology confirmation, ambiguity scoring, language-preserving specs, internal auto-mode fragments, and approval-gated handoff.

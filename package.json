@@ -1,6 +1,6 @@
 {
   "name": "scc",
-  "version": "1.5.2",
+  "version": "2.0.0",
   "description": "PDCA-native Knowledge Work OS — skills, hooks, and MCP server for Claude Code",
   "type": "module",
   "private": true,
