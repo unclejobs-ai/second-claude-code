@@ -3,7 +3,7 @@ description: "Do/Produce phase -- build and run PDCA pipelines"
 argument-hint: run autopilot --topic "AI trends" --background
 ---
 
-Invoke the `/second-claude-code:workflow` command for workflow automation through the `workflow` skill.
+Invoke the `/scc:workflow` command for workflow automation through the `workflow` skill.
 
 ## Context
 - Active workflow: !`cat .data/state/workflow-active.json 2>/dev/null || echo "No active workflow"`

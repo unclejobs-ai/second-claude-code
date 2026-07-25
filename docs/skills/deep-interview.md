@@ -5,19 +5,19 @@ Deep Interview turns vague ideas into approval-gated specifications. It is a req
 ## Quick example
 
 ```bash
-/second-claude-code:deep-interview "I want to improve this plugin but I am not sure what matters"
+/scc:deep-interview "I want to improve this plugin but I am not sure what matters"
 
 node scripts/deep-interview-runner.mjs start --idea "Improve this plugin" --json
 node scripts/deep-interview-runner.mjs answer --answer "The topology looks right" --json
 node scripts/deep-interview-runner.mjs status --json
-node scripts/deep-interview-runner.mjs finalize --slug second-claude-code-deep-interview-v1 --json
+node scripts/deep-interview-runner.mjs finalize --slug scc-deep-interview-v1 --json
 ```
 
 **What happens:** the runner resolves the ambiguity threshold, creates resumable interview state, locks Round 0 topology, scores each answer, writes `.gjc/specs/deep-interview-{slug}.md`, and returns approval options. It never executes ralplan, ultragoal, team, commits, formatters, or source mutation from the interview runtime.
 
 ## When to use
 
-Use `/second-claude-code:deep-interview` when:
+Use `/scc:deep-interview` when:
 
 - the user has a vague idea and wants assumptions exposed before execution;
 - multiple components could be built independently and the topology is not stable;

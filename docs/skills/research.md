@@ -14,7 +14,7 @@ Research the current state of AI agent frameworks in 2026
 
 **Input:**
 ```
-/second-claude-code:research "AI agent landscape 2026" --depth deep
+/scc:research "AI agent landscape 2026" --depth deep
 ```
 
 **Process:**

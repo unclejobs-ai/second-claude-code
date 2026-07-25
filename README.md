@@ -44,7 +44,7 @@ Second Claude Code is the control loop. The v1.4.0 orchestrator sits in front of
 
 ## What's New in v1.5.2
 
-**Deep Interview + Code Engineering Lane — clearer requirements before safer execution.** v1.5.2 adds the 18th public command, `/second-claude-code:deep-interview`, and tightens `domain=code` PDCA work with stricter planning, validation, cleanup, and handoff contracts.
+**Deep Interview + Code Engineering Lane — clearer requirements before safer execution.** v1.5.2 adds the 18th public command, `/scc:deep-interview`, and tightens `domain=code` PDCA work with stricter planning, validation, cleanup, and handoff contracts.
 
 - **Deep Interview** — Socratic requirements discovery with Round 0 topology confirmation, per-component ambiguity scoring, ontology convergence, Korean/session-language preservation, and approval-gated handoff into ralplan/ultragoal/team.
 - **Executable code plans** — Plan now requires acceptance criteria, rollback path, complexity, and human approval status for risky work.
@@ -301,8 +301,8 @@ The `code` domain uses the Code Engineering Lane: a PDCA specialization that abs
 | Tier | Agents | Assigned work |
 |---|---|---|
 | **opus** (4 agents) | Xatu, Smeargle, Ditto, Pikachu | Deep reasoning, long-form writing, editing, memory synthesis |
-| **sonnet** (9 agents) | Eevee, Alakazam, Mewtwo, Arceus, Absol, Porygon, Machamp, Magnezone, Deoxys | Analysis, strategy, research, review, infrastructure |
-| **haiku** (4 agents) | Noctowl, Jigglypuff, Unown, Abra | Search, tone checks, structure, knowledge routing |
+| **sonnet** (11 agents) | Eevee, Alakazam, Mewtwo, Arceus, Absol, Porygon, Machamp, Magnezone, Deoxys, Jigglypuff, Unown | Analysis, strategy, research, review, infrastructure |
+| **haiku** (2 agents) | Noctowl, Abra | Search and knowledge routing — collection, not judgment |
 
 Pokemon names are deliberate — when you're reading logs, "Xatu found a logic gap" is easier to track than "reviewer-3 found issue."
 
@@ -320,8 +320,8 @@ PDCA Orchestrator
   │          Xatu (opus) ─── logic + completeness
   │          Absol (sonnet) ─ weak points
   │          Porygon (sonnet) fact-check
-  │          Jigglypuff (haiku) tone
-  │          Unown (haiku) ─── structure
+  │          Jigglypuff (sonnet) tone
+  │          Unown (sonnet) ─── structure
   └── Act:  Action Router → Ditto (opus) edits
 ```
 
@@ -469,7 +469,7 @@ I use `write` when I have a topic and want a finished piece by the end of the co
 | Break a large task into parallel units | `batch` | Parallel decomposition and reassembly |
 | Fetch a URL that WebFetch cannot crack | `unblock` | Zero-key adaptive chain through public APIs, TLS impersonation, headless browsers, and free archives |
 
-Every skill responds to natural language. Slash commands work too: `/second-claude-code:deep-interview`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:translate`, etc. ~130 trigger patterns across English and Korean.
+Every skill responds to natural language. Slash commands work too: `/scc:deep-interview`, `/scc:write`, `/scc:review`, `/scc:translate`, etc. ~130 trigger patterns across English and Korean.
 
 ### Karpathy-Style Loop for Maintainers
 
@@ -478,9 +478,9 @@ Every skill responds to natural language. Slash commands work too: `/second-clau
 Typical flow:
 
 ```bash
-/second-claude-code:loop list-suites
-/second-claude-code:loop show-suite write-core
-/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
+/scc:loop list-suites
+/scc:loop show-suite write-core
+/scc:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
 ```
 
 The run writes resumable state to `.data/state/loop-active.json` and captures artifacts in `.captures/loop-<run_id>/`, including the leaderboard, score history, and winner diff.
@@ -490,9 +490,9 @@ The run writes resumable state to `.data/state/loop-active.json` and captures ar
 `evolve` closes the self-improvement ring on top of `loop`. When the same PDCA gate keeps failing across runs, it harvests those real failures (`list-failures`), lets the **maintainer** hand-author a structural check (`harvest <id> --assertion …`), then hands the asset to the unmodified `loop` engine to evolve on an isolated branch. The optimizer never authors its own success criterion — the maintainer does — and merging the winner stays a manual decision after reading `winner.diff`. Slash-only, like `loop`. See [docs/proposals/evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md) for the full design and its adversarial-review history.
 
 ```bash
-/second-claude-code:evolve list-failures
-/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
-/second-claude-code:evolve run evolve-<id>
+/scc:evolve list-failures
+/scc:evolve harvest <id> --assertion '/scc:'
+/scc:evolve run evolve-<id>
 ```
 
 ```
@@ -572,7 +572,7 @@ I use Full PDCA for anything external-facing. For internal notes, `write` alone 
 
 ## Agent Roster
 
-17 agents across 3 model tiers. Model distribution: 4 opus / 9 sonnet / 4 haiku.
+17 agents across 3 model tiers. Model distribution: 4 opus / 11 sonnet / 2 haiku.
 
 Each agent is named after a Pokemon whose trait maps to its role — memorable names make the system debuggable when you're reading logs.
 
@@ -587,8 +587,8 @@ Each agent is named after a Pokemon whose trait maps to its role — memorable n
 | **Check** | Xatu | Deep reviewer — logic, structure | opus |
 | | Absol | Devil's advocate — attacks weak points | sonnet |
 | | Porygon | Fact checker — numbers, sources | sonnet |
-| | Jigglypuff | Tone guardian — voice, audience | haiku |
-| | Unown | Structure analyst — readability | haiku |
+| | Jigglypuff | Tone guardian — voice, audience | sonnet |
+| | Unown | Structure analyst — readability | sonnet |
 | **Act** | Ditto | Editor — content refinement | opus |
 | **Infra** | Machamp | Pipeline step executor | sonnet |
 | | Magnezone | Skill candidate inspector | sonnet |
@@ -630,7 +630,7 @@ Every field is optional. Delete what you don't care about. I set `refine_max_ite
 
 Every limitation is a choice.
 
-- **Auto-routing handles ~95% of prompts correctly.** For edge cases, explicit `/second-claude-code:*` commands give full control.
+- **Auto-routing handles ~95% of prompts correctly.** For edge cases, explicit `/scc:*` commands give full control.
 - **Lightweight agents keep costs low** for high-volume tasks like fact-checking. Trade-off: with many plugins active, context limits can be tight. Disable unused plugins to keep headroom.
 - **Claude Code is the primary platform,** fully tested. OpenClaw, Codex, and Gemini CLI work via standard protocols but are experimental.
 - **Subagent results arrive after completion,** not incrementally. Streaming partial results would break the quality gate model.
@@ -664,7 +664,7 @@ Built by [Unclejobs](https://github.com/unclejobs-ai). MIT License.
 <details>
 <summary><strong>15 Strategic Frameworks</strong></summary>
 
-`/second-claude-code:analyze` supports 15 built-in frameworks:
+`/scc:analyze` supports 15 built-in frameworks:
 
 | Category | Frameworks |
 |---|---|
@@ -676,8 +676,8 @@ Built by [Unclejobs](https://github.com/unclejobs-ai). MIT License.
 Each framework lives in `skills/analyze/references/frameworks/`. The skill auto-selects from your prompt, or you can specify:
 
 ```bash
-/second-claude-code:analyze porter "cloud infrastructure market"
-/second-claude-code:analyze rice --input features.md
+/scc:analyze porter "cloud infrastructure market"
+/scc:analyze rice --input features.md
 ```
 
 </details>

@@ -48,10 +48,10 @@ If `mmbridge memory search` returns no results or fails, proceed normally. This 
 ## Execution Steps
 
 1. **Question Protocol**: Check scope clarity → ask or skip (see `references/question-protocol.md`)
-2. **Dispatch research**: Run `/second-claude-code:research --depth {selected}` (Eevee)
+2. **Dispatch research**: Run `/scc:research --depth {selected}` (Eevee)
    - For `--depth deep`: consider dispatching 2 research angles in parallel
 3. **Verify Research Brief**: Confirm structured brief exists with sources
-4. **Dispatch analyze**: Run `/second-claude-code:analyze --skip-challenge` (Alakazam + Mewtwo)
+4. **Dispatch analyze**: Run `/scc:analyze --skip-challenge` (Alakazam + Mewtwo)
    - Pass Research Brief as input context
    - Framework auto-selected from topic or defaults to "structured synthesis"
 5. **Verify Analysis**: Confirm structured framework output exists
@@ -73,8 +73,8 @@ The Plan phase chains two skills internally:
 
 | Step | Skill | Agent | Purpose |
 |------|-------|-------|---------|
-| 1 | `/second-claude-code:research` | Eevee (researcher) | Data collection and source gathering |
-| 2 | `/second-claude-code:analyze --skip-challenge` | Alakazam (analyst) + Mewtwo (strategist) | Structure findings into actionable framework |
+| 1 | `/scc:research` | Eevee (researcher) | Data collection and source gathering |
+| 2 | `/scc:analyze --skip-challenge` | Alakazam (analyst) + Mewtwo (strategist) | Structure findings into actionable framework |
 
 The `--skip-challenge` flag on analyze bypasses the devil's advocate challenge round. This is intentional: adversarial pressure is applied in the Check phase on Do output, not on Plan artifacts. Running a challenge round during Plan would waste a full analysis pass on a brief that has not yet been turned into a deliverable.
 
@@ -142,7 +142,7 @@ Beyond length floors, the brief must demonstrate:
 
 ## Gotchas
 
-- Plan analysis has no challenge round by default. For high-stakes topics (`--depth deep`), consider running `/second-claude-code:analyze --challenge` manually before approving the Plan→Do gate.
+- Plan analysis has no challenge round by default. For high-stakes topics (`--depth deep`), consider running `/scc:analyze --challenge` manually before approving the Plan→Do gate.
 
 ## Output to Next Phase
 

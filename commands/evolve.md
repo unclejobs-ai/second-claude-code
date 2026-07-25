@@ -1,9 +1,9 @@
 ---
 description: "Ouroboros maintainer loop -- evolve a recurring-failure prompt asset against a maintainer-authored structural check"
-argument-hint: list-failures | harvest <id> --assertion '/second-claude-code:' | run evolve-<id>
+argument-hint: list-failures | harvest <id> --assertion '/scc:' | run evolve-<id>
 ---
 
-Invoke the `/second-claude-code:evolve` command to run the plugin's loaded `evolve` skill.
+Invoke the `/scc:evolve` command to run the plugin's loaded `evolve` skill.
 
 ## Context
 - Eligible failures: !`node scripts/evolve-runner.mjs list-failures 2>/dev/null || echo '{"eligible":0,"failures":[]}'`

@@ -7,9 +7,9 @@
 ## 빠른 예시
 
 ```bash
-/second-claude-code:evolve list-failures
-/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
-/second-claude-code:evolve run evolve-<id>
+/scc:evolve list-failures
+/scc:evolve harvest <id> --assertion '/scc:'
+/scc:evolve run evolve-<id>
 ```
 
 **동작 흐름:** `list-failures`가 실제 `gate_fail` 이벤트를 스캔해 실패가 반복되는(`recurrence ≥ 3`) 자산을 띄웁니다. 메인테이너가 정적 정규식을 직접 작성하면 `harvest`가 그걸 기록하고 `benchmarks/loop/evolve-<id>.json` 스위트를 생성합니다. `run`은 `loop`을 호출해 격리된 `codex/loop-...` 브랜치에서 자산을 진화시킵니다. 메인테이너는 `winner.diff`를 검토하고 직접 병합합니다.

@@ -28,7 +28,7 @@ Moved from [CHANGELOG.md](../CHANGELOG.md) — see that file for v1.3.0+.
 
 ### Added
 - **Artifact Viewer** — local web UI that renders PDCA pipeline outputs as interactive artifacts
-- **Viewer skill** — `/second-claude-code:viewer` command to start the artifact viewer for any PDCA session
+- **Viewer skill** — `/scc:viewer` command to start the artifact viewer for any PDCA session
 - **Viewer server** — zero-dependency Node.js HTTP + WebSocket server with SPA fallback
 
 ### Changed

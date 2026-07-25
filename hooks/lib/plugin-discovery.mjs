@@ -444,8 +444,8 @@ export function discoverAllPlugins() {
     const mcpServers = discoverMcpServers(pluginRoot);
     const agents = discoverAgents(pluginRoot);
 
-    // Skip self (second-claude-code itself)
-    if (manifest.name === "second-claude-code") continue;
+    // Skip self (scc itself)
+    if (manifest.name === "scc") continue;
 
     // Skip empty plugins (no skills, no commands, no MCP, no agents)
     if (skills.length === 0 && commands.length === 0 && mcpServers.length === 0 && agents.length === 0) continue;

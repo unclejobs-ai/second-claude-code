@@ -30,7 +30,7 @@ evolve is a **target-selection + check-authoring layer on top of `loop`**. It ru
 
 ## v1 Scope — what can actually promote
 
-The loop's mutations are five fixed text substitutions: `should`→`must`, `can`→`must`, a legacy command-prefix rewrite to the full `/second-claude-code:` namespace, trailing-whitespace trim, blank-line collapse. **None add content.** A candidate beats baseline only when the maintainer's regex flips fail→pass *because a substitution fired* — i.e. the asset still holds a `should` / `can` / legacy-prefix token the regex wants rewritten.
+The loop's mutations are five fixed text substitutions: `should`→`must`, `can`→`must`, a legacy command-prefix rewrite to `/scc:`, trailing-whitespace trim, blank-line collapse. **None add content.** A candidate beats baseline only when the maintainer's regex flips fail→pass *because a substitution fired* — i.e. the asset still holds a `should` / `can` / legacy-prefix token the regex wants rewritten.
 
 A check requiring **new** content the asset lacks (a missing heading, an added section) can never be satisfied by v1 mutations — every candidate stays byte-identical and the run ends `min_delta_not_met`. Those need manual editing or a future mutation set. Author assertions inside the promotable space.
 
@@ -48,7 +48,7 @@ A check requiring **new** content the asset lacks (a missing heading, an added s
 
 1. `node scripts/evolve-runner.mjs list-failures` — which assets recur. Provenance only, never a check.
 2. Decide the structural property, inside the v1 promotable space above. **The maintainer authors the regex.** The agent must not invent it.
-3. `node scripts/evolve-runner.mjs harvest <id> --assertion '/second-claude-code:'` — a normalization check (a legacy short command prefix is rewritten to the full namespace). Writes a validated suite with the check inline (base64) so the worktree needs no extra file.
+3. `node scripts/evolve-runner.mjs harvest <id> --assertion '/scc:'` — a normalization check (the legacy long command prefix is rewritten to the canonical `/scc:` namespace). Writes a validated suite with the check inline (base64) so the worktree needs no extra file.
 4. Commit `scripts/evolve-scorer.mjs` and the target asset, then `node scripts/evolve-runner.mjs run evolve-<id>` — runs the loop on an isolated branch; prior ratified checks ride along as weight-0 holdouts. (Refuses if either is missing from `HEAD`.)
 5. Read `.captures/loop-<runId>/winner.diff`. Merge to main manually only if genuinely better.
 

@@ -7,7 +7,7 @@
 ## 빠른 예시
 
 ```
-/second-claude-code:soul learn
+/scc:soul learn
 ```
 
 **동작 방식:** analyst 서브에이전트가 현재 세션을 스캔해 행동 신호(정정, 스타일, 전문성, 의사결정, 감정 신호)를 추출합니다. `signal_type`이나 `raw_text`가 빠진 관찰은 거부되며, 유효한 항목만 `observations.jsonl`에 추가한 뒤 "Added N observations (total: M)" 형태로 결과를 보고합니다.
@@ -29,7 +29,7 @@
 
 **입력:**
 ```
-/second-claude-code:soul propose
+/scc:soul propose
 ```
 *상황: 12개 세션, 34개 관찰이 이미 쌓여 있으며 대부분 `hybrid` 모드에서 자동 기록되었습니다.*
 

@@ -165,7 +165,7 @@ export async function fetchText(url, { headers = {}, timeoutMs = DEFAULT_TIMEOUT
   }
   try {
     const res = await fetch(url, {
-      headers: { "user-agent": "unblock/1.0 (+second-claude-code)", ...headers },
+      headers: { "user-agent": "unblock/1.0 (+scc)", ...headers },
       redirect,
       signal: AbortSignal.timeout(timeoutMs),
     });

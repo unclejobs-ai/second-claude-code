@@ -3,7 +3,7 @@ description: "Soul-aware English/Korean translation with style and format contro
 argument-hint: '"text or file path" --target en|ko --style literal|natural|creative'
 ---
 
-Invoke the `/second-claude-code:translate` command to translate content through the `translate` skill.
+Invoke the `/scc:translate` command to translate content through the `translate` skill.
 
 ## Context
 - Current soul: !`cat .data/soul/SOUL.md 2>/dev/null | head -5 || echo "No soul synthesized yet"`

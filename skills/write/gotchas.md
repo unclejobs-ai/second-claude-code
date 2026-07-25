@@ -8,7 +8,7 @@
 
 ### 2. Skipping research
 **Symptom**: Writing from prior model knowledge and missing current evidence
-**Fix**: `/second-claude-code:research` is mandatory unless explicit sources are provided.
+**Fix**: `/scc:research` is mandatory unless explicit sources are provided.
 
 ### 3. Too little substance
 **Symptom**: A newsletter or article stops before the core argument is developed

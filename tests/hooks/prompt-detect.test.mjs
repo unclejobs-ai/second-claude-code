@@ -39,7 +39,7 @@ function runPromptPayload(payload, env = {}) {
 }
 
 function assertRoutesTo(output, skill) {
-  assert.match(output, new RegExp(`skill: \\\\\"second-claude-code:${skill}\\\\\"`));
+  assert.match(output, new RegExp(`skill: \\\\\"scc:${skill}\\\\\"`));
 }
 
 function setupPluginsRoot() {
@@ -106,12 +106,12 @@ function writeInstalledPlugins(pluginsDir, entries) {
 
 // ── Existing single-skill routing tests ──
 
-test("prompt detect routes review prompts to /second-claude-code:review", () => {
+test("prompt detect routes review prompts to /scc:review", () => {
   const output = runPrompt("quality check this document");
   assertRoutesTo(output, "review");
 });
 
-test("prompt detect routes writing prompts to /second-claude-code:write", () => {
+test("prompt detect routes writing prompts to /scc:write", () => {
   const output = runPrompt("write a newsletter");
   assertRoutesTo(output, "write");
 });
@@ -135,32 +135,32 @@ test("prompt detect still routes Korean review prompts without Hangul literals i
   assertRoutesTo(output, "review");
 });
 
-test("prompt detect routes workflow scheduling prompts to /second-claude-code:workflow", () => {
+test("prompt detect routes workflow scheduling prompts to /scc:workflow", () => {
   const output = runPrompt("schedule this workflow every morning");
   assertRoutesTo(output, "workflow");
 });
 
-test("prompt detect routes background workflow prompts to /second-claude-code:workflow", () => {
+test("prompt detect routes background workflow prompts to /scc:workflow", () => {
   const output = runPrompt("run this workflow in background");
   assertRoutesTo(output, "workflow");
 });
 
-test("prompt detect routes session recall prompts to /second-claude-code:workflow", () => {
+test("prompt detect routes session recall prompts to /scc:workflow", () => {
   const output = runPrompt("search session recall for Hermes adoption");
   assertRoutesTo(output, "workflow");
 });
 
-test("prompt detect routes root-cause debugging prompts to /second-claude-code:investigate", () => {
+test("prompt detect routes root-cause debugging prompts to /scc:investigate", () => {
   const output = runPrompt("investigate the root cause of conflicting claims in this report");
   assertRoutesTo(output, "investigate");
 });
 
 test("prompt detect keeps code bug prompts on development guidance", () => {
   const output = runPrompt("fix this bug in src/app.js");
-  assert.doesNotMatch(output, /skill: \\\"second-claude-code:investigate\\\"/);
+  assert.doesNotMatch(output, /skill: \\\"scc:investigate\\\"/);
 });
 
-test("prompt detect routes general investigate prompts to /second-claude-code:research", () => {
+test("prompt detect routes general investigate prompts to /scc:research", () => {
   const output = runPrompt("investigate ai market trends");
   assertRoutesTo(output, "research");
 });
@@ -214,25 +214,25 @@ test("PDCA: compound patterns take priority over single-skill patterns", () => {
   const output = runPrompt("research and write about the future of AI");
   assertRoutesTo(output, "pdca");
   // Should NOT match individual skills
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:research\\"/);
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:write\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:research\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:write\\"/);
 });
 
 test("PDCA: single-skill prompts still route to individual skills, not PDCA", () => {
   const output = runPrompt("research the AI market");
   assertRoutesTo(output, "research");
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:pdca\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:pdca\\"/);
 });
 
 test("PDCA: slash commands are skipped entirely", () => {
-  const output = runPrompt("/second-claude-code:review my draft");
+  const output = runPrompt("/scc:review my draft");
   assert.equal(output.trim(), "");
 });
 
 test("PDCA: slash commands in stdin payloads are skipped entirely", () => {
   const output = runPromptPayload({
     hook_event_name: "UserPromptSubmit",
-    prompt: "/second-claude-code:review my draft",
+    prompt: "/scc:review my draft",
   });
 
   assert.equal(output.trim(), "");
@@ -240,17 +240,17 @@ test("PDCA: slash commands in stdin payloads are skipped entirely", () => {
 
 test("engineering prompt with end-to-end analysis does not misroute to PDCA", () => {
   const output = runPrompt("do an end-to-end analysis of our failing auth flow");
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:pdca\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:pdca\\"/);
 });
 
 test("engineering prompt with iterate until tests pass does not misroute to refine", () => {
   const output = runPrompt("iterate until the tests pass in this repo");
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:refine\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:refine\\"/);
 });
 
 test("engineering prompt with CI deployment workflow does not misroute to workflow", () => {
   const output = runPrompt("automate this workflow in our CI deployment pipeline");
-  assert.doesNotMatch(output, /skill: \\"second-claude-code:workflow\\"/);
+  assert.doesNotMatch(output, /skill: \\"scc:workflow\\"/);
 });
 
 test("external dispatch: Korean review prompt routes to coderabbit before internal review", () => {
@@ -271,7 +271,7 @@ test("external dispatch: Korean review prompt routes to coderabbit before intern
     const output = runPrompt("리뷰해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for review/);
     assert.match(output, /coderabbit-code-review/);
-    assert.doesNotMatch(output, /second-claude-code:review/);
+    assert.doesNotMatch(output, /scc:review/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -311,7 +311,7 @@ test("external dispatch: design improvement prompt routes to frontend-design", (
     const output = runPrompt("디자인 개선해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for frontend-design/);
     assert.match(output, /frontend-design-frontend-design/);
-    assert.doesNotMatch(output, /second-claude-code:refine/);
+    assert.doesNotMatch(output, /scc:refine/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -332,7 +332,7 @@ test("external dispatch: Korean research prompt routes to claude-mem knowledge-a
     const output = runPrompt("조사해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for memory-research/);
     assert.match(output, /claude-mem-knowledge-agent/);
-    assert.doesNotMatch(output, /second-claude-code:research/);
+    assert.doesNotMatch(output, /scc:research/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }
@@ -352,7 +352,7 @@ test("external dispatch: strong generic match routes to installed plugin skill",
     const output = runPrompt("posthog event analysis", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for generic/);
     assert.match(output, /posthog-exploring-autocapture-events/);
-    assert.doesNotMatch(output, /second-claude-code:/);
+    assert.doesNotMatch(output, /scc:/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

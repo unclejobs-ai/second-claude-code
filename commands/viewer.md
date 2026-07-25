@@ -1,9 +1,9 @@
 ---
-description: "Open the SCC Artifact Viewer for PDCA session outputs"
-argument-hint: --session-dir .scc/sessions/{session-id}
+description: "Open the SCC Artifact Viewer, or export a PDCA session as a shareable provenance page"
+argument-hint: --session-dir .scc/sessions/{session-id} [--export]
 ---
 
-Invoke the `/second-claude-code:viewer` command to open the artifact viewer through the `viewer` skill.
+Invoke the `/scc:viewer` command to open the artifact viewer through the `viewer` skill.
 
 ## Context
 - Current git status: !`git status --short`
@@ -12,9 +12,11 @@ Invoke the `/second-claude-code:viewer` command to open the artifact viewer thro
 ## Arguments
 - Optional: `--session-dir <dir>` to point at a PDCA session directory
 - Optional: `--port <port>` to choose the local viewer port
+- Optional: `--export` to write a single shareable Markdown provenance page instead of starting the server
 
 ## Your task
 Start the viewer now using the plugin's loaded `viewer` skill and the provided arguments.
 
 - Return the viewer URL directly.
+- With `--export`, return the written file path instead, and offer to publish it as an Artifact.
 - Do not say that you are invoking or have invoked a skill.

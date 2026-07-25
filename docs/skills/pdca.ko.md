@@ -21,7 +21,7 @@ v1.4.0 디스패치 구조와 검증 범위는 [orchestrator-architecture.ko.md]
 - **Plan brief floor** — source 최소를 3 → 5로 올렸고, 사실 8개, named-source 인용 1개, 비교표 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
 - **리뷰어 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. False consensus 감지 시 adversarial pass 자동 디스패치.
 - **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. any P0 OR (P0+P1 ≥ 5 AND finding이 ≥ 3개 카테고리에 걸침)일 때 발동. 초기 OR 로직이 실제 4-finding patch set에서 over-trigger한 걸 발견하고 보정.
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 dispatch는 `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine` 안에서 일어나요.
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요.
 
 전체 강화 사양과 검증 사이클 메트릭은 [RELEASE-v1.3.0.ko.md](../RELEASE-v1.3.0.ko.md) 참고.
 
@@ -37,7 +37,7 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 
 **입력:**
 ```
-/second-claude-code:pdca "AI 에이전트 시장 보고서" --depth deep
+/scc:pdca "AI 에이전트 시장 보고서" --depth deep
 ```
 
 **진행 과정:**
@@ -91,12 +91,12 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 |------|---------|------|---------------------|
 | 스레드 아티클 | 4,000 | 5,000-7,000 | `/threads` |
 | 뉴스레터 | 10,000 | 12,000-15,000 | `/newsletter` |
-| 일반 아티클 | 4,000 | 5,000-7,000 | `/second-claude-code:write` |
-| 전략 리포트 | 5,000 | 6,000-9,000 | `/second-claude-code:write` |
-| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/second-claude-code:analyze` |
+| 일반 아티클 | 4,000 | 5,000-7,000 | `/scc:write` |
+| 전략 리포트 | 5,000 | 6,000-9,000 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
 | 쇼츠 대본 | 1,800 | 2,200-2,800 | `/academy-shorts` |
 | 카드뉴스 | 8-10 카드 | 9-12 카드 | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | `/second-claude-code:write --format prd` |
+| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
 
 전체 표는 `skills/pdca/references/do-phase.md`에.
 
@@ -110,7 +110,7 @@ Do 페이즈가 사용자 프롬프트를 트리거 키워드와 그리디 매�
 | 뉴스레터, newsletter | `/newsletter` |
 | 쇼츠, shorts, 릴스 | `/academy-shorts` |
 | 카드뉴스, card news, 캐러셀 | `/card-news` |
-| (specialized 매치 없음) | `/second-claude-code:write` |
+| (specialized 매치 없음) | `/scc:write` |
 
 Sub-skill 표준: `skills/pdca/references/domain-pipeline-integration.md` (입출력 계약, 4가지 실패 모드).
 

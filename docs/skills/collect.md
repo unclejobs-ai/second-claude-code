@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:collect https://sdk.vercel.ai/docs
+/scc:collect https://sdk.vercel.ai/docs
 ```
 
 **What happens:** The skill detects the source type (URL), fetches and strips boilerplate, reduces the content to exactly 3 key points and a summary, connects it to existing knowledge via a specific shared concept, classifies it into PARA, and saves dual output (`.json` + `.md`).

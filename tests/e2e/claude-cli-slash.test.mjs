@@ -27,28 +27,28 @@ function runClaude(prompt, timeout = 45000) {
 if (!enabled) {
   test("Claude CLI E2E smoke is skipped unless RUN_CLAUDE_CLI_E2E=1", { skip: true }, () => {});
 } else {
-  test("slash commands are registered under /second-claude-code:*", () => {
+  test("slash commands are registered under /scc:*", () => {
     const output = runClaude(
-      "List available slash commands from loaded plugins. Reply with only /second-claude-code:* lines.",
+      "List available slash commands from loaded plugins. Reply with only /scc:* lines.",
       20000
     );
 
     for (const command of [
-      "/second-claude-code:batch",
-      "/second-claude-code:soul",
-      "/second-claude-code:loop",
-      "/second-claude-code:pdca",
-      "/second-claude-code:research",
-      "/second-claude-code:write",
-      "/second-claude-code:analyze",
-      "/second-claude-code:review",
-      "/second-claude-code:refine",
-      "/second-claude-code:collect",
-      "/second-claude-code:workflow",
-      "/second-claude-code:discover",
-      "/second-claude-code:investigate",
-      "/second-claude-code:translate",
-      "/second-claude-code:viewer",
+      "/scc:batch",
+      "/scc:soul",
+      "/scc:loop",
+      "/scc:pdca",
+      "/scc:research",
+      "/scc:write",
+      "/scc:analyze",
+      "/scc:review",
+      "/scc:refine",
+      "/scc:collect",
+      "/scc:workflow",
+      "/scc:discover",
+      "/scc:investigate",
+      "/scc:translate",
+      "/scc:viewer",
     ]) {
       assert.match(output, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }
@@ -56,7 +56,7 @@ if (!enabled) {
 
   test("review command returns a real review report", () => {
     const output = runClaude(
-      "/second-claude-code:review README.md --preset quick"
+      "/scc:review README.md --preset quick"
     );
 
     assert.match(output, /REVIEW REPORT|Verdict|Consensus/i);
@@ -67,7 +67,7 @@ if (!enabled) {
 
   test("analyze command returns a real SWOT analysis", () => {
     const output = runClaude(
-      '/second-claude-code:analyze swot "second-claude-code plugin repo"'
+      '/scc:analyze swot "scc plugin repo"'
     );
 
     assert.match(output, /SWOT Analysis|STRENGTHS|WEAKNESSES/i);
@@ -78,7 +78,7 @@ if (!enabled) {
 
   test("write command returns actual content", () => {
     const output = runClaude(
-      '/second-claude-code:write social "Why skill packs need tests" --skip-research --skip-review --lang en'
+      '/scc:write social "Why skill packs need tests" --skip-research --skip-review --lang en'
     );
 
     assert.match(output, /Why skill packs need tests/i);

@@ -6,7 +6,7 @@ Each step in a workflow definition is a JSON object with the following fields:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `skill` | string | yes | Valid `/second-claude-code:*` command name |
+| `skill` | string | yes | Valid `/scc:*` command name |
 | `args` | string | no | Arguments passed to the skill (supports `{{variables}}`) |
 | `input_from` | string | no | Step name whose `output` file becomes this step's input |
 | `output` | string | yes | File path where this step writes its result |

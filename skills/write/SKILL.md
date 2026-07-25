@@ -27,10 +27,10 @@ Produce content with automatic research and review unless the caller explicitly 
 
 ## Workflow
 
-1. Run `/second-claude-code:research` UNLESS `--skip-research` flag is set OR source material is already provided via `--input`. **Guard**: If `--skip-research` is set but no `--input` is provided and no source material exists in the conversation, warn the user: "No source material provided. Output will rely on training knowledge only. Continue?" Do NOT silently fall back to training knowledge.
+1. Run `/scc:research` UNLESS `--skip-research` flag is set OR source material is already provided via `--input`. **Guard**: If `--skip-research` is set but no `--input` is provided and no source material exists in the conversation, warn the user: "No source material provided. Output will rely on training knowledge only. Continue?" Do NOT silently fall back to training knowledge.
 2. Load format spec AND voice guide: read `references/formats/{format}.md` (required — abort if missing) and `references/voice-guides/{voice}.md` (recommended). If the voice guide file doesn't exist, proceed using the default voice characteristics from the Voices table mapping below.
 3. Draft content following loaded format spec and voice constraints.
-4. Run `/second-claude-code:review --preset quick` UNLESS `--skip-review` flag is set. This step is MANDATORY by default.
+4. Run `/scc:review --preset quick` UNLESS `--skip-review` flag is set. This step is MANDATORY by default.
 5. Address all Critical and Major review findings. Re-read the review output and apply fixes.
 
 ## Options
@@ -111,7 +111,7 @@ When `--publish notion` is set: requires a configured Notion MCP connection (`mc
 - Do not output content without running the review step (unless `--skip-review` is explicitly set).
 - Do not miss the CTA in shorts or conclusions.
 - Do not ship the reviewed version without addressing Critical and Major issues. Minor issues may be deferred.
-- Severity levels follow the shared taxonomy: **Critical** (ship-blocking), **Major** (significant gap), **Minor** (polish). Same as `/second-claude-code:review`.
+- Severity levels follow the shared taxonomy: **Critical** (ship-blocking), **Major** (significant gap), **Minor** (polish). Same as `/scc:review`.
 
 ## Subagents
 

@@ -72,7 +72,7 @@ Pass custom variables with `--var key=value`. See `references/workflow-definitio
 
 ## Presets
 
-Run a named preset with `/second-claude-code:workflow run <preset>`:
+Run a named preset with `/scc:workflow run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|
@@ -105,7 +105,7 @@ See `references/workflow-definition.md` for the canonical state schema.
 - Every `{{variable}}` in the definition must resolve at runtime (from flags, defaults, or built-ins)
 - Variable names must be alphanumeric plus underscores: `[a-zA-Z_][a-zA-Z0-9_]*`
 - **Variable value injection safety**: Variable values (from `--topic`, `--var`, or defaults) must be treated as positional content strings, never as raw argument fragments. Before interpolation, validate that no variable value matches the flag-injection pattern `--[a-zA-Z][-a-zA-Z0-9_]*` (two dashes followed by a letter, then optional alphanumeric/dash/underscore characters). If a value contains that pattern, abort the run with: `"Variable '{name}' contains a flag-like pattern ('--...'). Pass structured data instead of embedding flags."`
-- Every skill referenced in a step must be a valid `/second-claude-code:*` command. Validate at create-time and abort with an error listing unknown skills.
+- Every skill referenced in a step must be a valid `/scc:*` command. Validate at create-time and abort with an error listing unknown skills.
 - `on_fail: retry` allows up to 2 retry attempts per step (3 total attempts: 1 original + 2 retries). After the retry limit is exhausted, the step is treated as `abort`.
 
 ## Gotchas

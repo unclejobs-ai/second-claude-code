@@ -5,19 +5,19 @@ Deep Interview는 모호한 아이디어를 승인 대기 명세로 바꾸는 �
 ## 빠른 예시
 
 ```bash
-/second-claude-code:deep-interview "이 플러그인을 개선하고 싶은데 무엇이 중요한지 확실하지 않다"
+/scc:deep-interview "이 플러그인을 개선하고 싶은데 무엇이 중요한지 확실하지 않다"
 
 node scripts/deep-interview-runner.mjs start --idea "Improve this plugin" --json
 node scripts/deep-interview-runner.mjs answer --answer "The topology looks right" --json
 node scripts/deep-interview-runner.mjs status --json
-node scripts/deep-interview-runner.mjs finalize --slug second-claude-code-deep-interview-v1 --json
+node scripts/deep-interview-runner.mjs finalize --slug scc-deep-interview-v1 --json
 ```
 
 **동작 흐름:** 러너가 모호도 임계치를 해석하고, 재개 가능한 인터뷰 상태를 만들고, Round 0 토폴로지를 잠근 뒤, 답변을 점수화합니다. 마지막에는 `.gjc/specs/deep-interview-{slug}.md` 명세를 쓰고 승인 옵션을 반환합니다. 인터뷰 런타임은 ralplan, ultragoal, team, 커밋, 포매터, 소스 변경을 실행하지 않습니다.
 
 ## 언제 쓰나
 
-`/second-claude-code:deep-interview`는 다음 상황에 씁니다.
+`/scc:deep-interview`는 다음 상황에 씁니다.
 
 - 사용자의 아이디어가 모호하고 실행 전에 숨은 가정을 드러내야 할 때
 - 독립적으로 성공/실패할 수 있는 여러 컴포넌트가 있고 토폴로지가 불안정할 때

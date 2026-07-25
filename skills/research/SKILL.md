@@ -23,7 +23,7 @@ Autonomous multi-round web research that produces structured Research Briefs.
 ## When to Use
 
 - User asks to research a topic, trend, or question
-- Another skill (e.g., `/second-claude-code:write`, `/second-claude-code:analyze`) needs source material
+- Another skill (e.g., `/scc:write`, `/scc:analyze`) needs source material
 - User wants competitive intelligence, market data, or literature review
 
 ### Web Engine

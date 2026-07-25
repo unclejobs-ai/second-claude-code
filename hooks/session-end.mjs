@@ -115,7 +115,7 @@ function pdcaBlockReason(pdcaState) {
   const safePhase = sanitize(phase || "unknown");
   return (
     `PDCA cycle "${topic}" is active — Check phase not yet completed. ` +
-    `Run /second-claude-code:review before finishing the session. ` +
+    `Run /scc:review before finishing the session. ` +
     `Current phase: ${safePhase}. ` +
     `Completed: ${completed.length > 0 ? completed.join(" → ") : "none"}.`
   );
@@ -430,22 +430,22 @@ function generateHandoff(state) {
   lines.push("");
   if (state.loop) {
     lines.push(
-      `- To resume loop: \`/second-claude-code:loop resume ${state.loop.run_id}\``
+      `- To resume loop: \`/scc:loop resume ${state.loop.run_id}\``
     );
   }
   if (state.refine) {
     lines.push(
-      `- To resume refine: re-run \`/second-claude-code:refine\` with the same file — it reads saved state from iteration ${state.refine.iteration}`
+      `- To resume refine: re-run \`/scc:refine\` with the same file — it reads saved state from iteration ${state.refine.iteration}`
     );
   }
   if (state.pipeline) {
     lines.push(
-      `- To resume pipeline: \`/second-claude-code:workflow run ${state.pipeline.name}\` (will resume from step ${state.pipeline.current_step})`
+      `- To resume pipeline: \`/scc:workflow run ${state.pipeline.name}\` (will resume from step ${state.pipeline.current_step})`
     );
   }
   if (state.pdca) {
     lines.push(
-      `- To resume PDCA: \`/second-claude-code:pdca\` — auto-detects phase ${state.pdca.current_phase} from saved state`
+      `- To resume PDCA: \`/scc:pdca\` — auto-detects phase ${state.pdca.current_phase} from saved state`
     );
     const sessionHistory = state.pdca.session_history;
     if (sessionHistory.length > 0) {
@@ -459,7 +459,7 @@ function generateHandoff(state) {
   }
   if (!hasActiveState) {
     lines.push(
-      "No state to resume. Start fresh with any `/second-claude-code:*` command."
+      "No state to resume. Start fresh with any `/scc:*` command."
     );
   }
   lines.push("");

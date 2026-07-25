@@ -9,7 +9,7 @@ fetch 실패 시 투명하게 호출합니다. API 키 0개. 유료 provider는
 
 ## 왜?
 
-v1.5.0 이전에는 `/second-claude-code:research` 안에서 `WebFetch` 실패가
+v1.5.0 이전에는 `/scc:research` 안에서 `WebFetch` 실패가
 PDCA Plan phase를 그대로 좌초시켰습니다. Naver / Coupang / LinkedIn / fmkorea / X 의 단일 403이 리서치 브리프 품질을 조용히 떨어뜨렸어요. Eevee는 Jina Reader로 한 번 fallback하고 멈췄죠.
 
 v1.5.0은 이 갭을 끝까지 닫습니다. 적대적 URL은 최대 9개의 escalating probe
@@ -44,7 +44,7 @@ flowchart LR
 ## 변경사항
 
 - **`unblock` 스킬** — 16번째 스킬. 9-phase 적응 fetch chain. API 키 0개.
-- **`/second-claude-code:unblock`** — 직접 CLI 호출용 슬래시 커맨드.
+- **`/scc:unblock`** — 직접 CLI 호출용 슬래시 커맨드.
 - **자동 라우터 패턴** — `hooks/prompt-detect.mjs`가 적대적 URL 의도 (영어+한국어)를 감지해 unblock으로 디스패치.
 - **Eevee 리서처 fallback** — `agents/eevee.md`가 `WebFetch` 실패 시 unblock 자동 호출. R5 (재시도 전 trace 읽기) 강제.
 - **Research 스킬 와이어링** — `skills/research/SKILL.md`의 Web Engine fallback chain이 WebFetch와 Playwright 사이에 unblock을 추가.

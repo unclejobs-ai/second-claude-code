@@ -16,7 +16,7 @@
 
 **입력:**
 ```
-/second-claude-code:analyze --framework swot --depth standard "second-claude vs superpowers 플러그인"
+/scc:analyze --framework swot --depth standard "second-claude vs superpowers 플러그인"
 ```
 
 **진행 과정:**

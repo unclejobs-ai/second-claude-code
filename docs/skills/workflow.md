@@ -5,16 +5,16 @@
 ## Quick Example
 
 ```
-/second-claude-code:workflow create "weekly-report" --steps research,analyze,write
+/scc:workflow create "weekly-report" --steps research,analyze,write
 ```
 
-**What happens:** The skill creates a JSON definition with 3 sequential steps, validates that each step declares an output and that `input_from` references are compatible, then saves the pipeline for reuse. Running `/second-claude-code:workflow run "weekly-report" --topic "edge computing"` executes each step as a fresh subagent, passing data through files. All `{{variable}}` placeholders are resolved before execution begins.
+**What happens:** The skill creates a JSON definition with 3 sequential steps, validates that each step declares an output and that `input_from` references are compatible, then saves the pipeline for reuse. Running `/scc:workflow run "weekly-report" --topic "edge computing"` executes each step as a fresh subagent, passing data through files. All `{{variable}}` placeholders are resolved before execution begins.
 
 ## Real-World Example
 
 **Input:**
 ```
-/second-claude-code:workflow run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
+/scc:workflow run "market-scan" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 **Process:**
@@ -35,20 +35,20 @@
   },
   "steps": [
     {
-      "skill": "/second-claude-code:research",
+      "skill": "/scc:research",
       "args": "\"{{topic}}\" --depth deep --sources web,news,academic --lang {{lang}}",
       "output": "{{output_dir}}/{{run_id}}-research.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:analyze",
+      "skill": "/scc:analyze",
       "args": "--framework {{framework}} --with-research --depth deep --lang {{lang}}",
       "input_from": "{{output_dir}}/{{run_id}}-research.md",
       "output": "{{output_dir}}/{{run_id}}-analysis.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:write",
+      "skill": "/scc:write",
       "args": "--format report --voice expert --skip-research --lang {{lang}}",
       "input_from": "{{output_dir}}/{{run_id}}-analysis.md",
       "output": "{{output_dir}}/{{run_id}}-report.md",
@@ -86,7 +86,7 @@ Pipeline definitions use `{{placeholder}}` syntax for values that are resolved a
 Pass arbitrary variables with `--var key=value`:
 
 ```
-/second-claude-code:workflow run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
+/scc:workflow run "weekly-report" --topic "edge computing" --var framework=porter --var lang=en
 ```
 
 Custom variables are referenced as `{{framework}}`, `{{lang}}`, etc.
@@ -138,7 +138,7 @@ graph TD
 
 ## Presets
 
-Run a named preset with `/second-claude-code:workflow run <preset>`:
+Run a named preset with `/scc:workflow run <preset>`:
 
 | Preset | Steps | Use For |
 |--------|-------|---------|
@@ -170,7 +170,7 @@ Together they let you automate the full Gather → Produce → Verify → Refine
 
 - **"Variable not resolved" error** -- Check `{{variable}}` spelling in your pipeline definition. Variable names must be alphanumeric plus underscores (`[a-zA-Z_][a-zA-Z0-9_]*`). Ensure the variable is either declared in `"defaults"` or provided via `--topic`, `--output_dir`, or `--var key=value` at runtime.
 - **Step fails mid-pipeline** -- Check the `on_fail` strategy for the failed step. `abort` halts the entire pipeline (default). `skip` moves to the next step. `retry` re-runs the failed step. To resume a halted pipeline, run the same pipeline again -- the orchestrator picks up from the last saved state.
-- **Pipeline not found** -- Verify the pipeline name with `/second-claude-code:workflow list`. Pipeline definitions are stored at `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`.
+- **Pipeline not found** -- Verify the pipeline name with `/scc:workflow list`. Pipeline definitions are stored at `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`.
 - **Unexpected output location** -- Check whether `{{output_dir}}` is set. Without `--output_dir`, all outputs go to the current working directory.
 
 ## Works With

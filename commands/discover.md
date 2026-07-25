@@ -3,7 +3,7 @@ description: "Plan/Gather phase -- find and install new skills beyond the core 8
 argument-hint: '"security audit" or "diagram generation"'
 ---
 
-Invoke the `/second-claude-code:discover` command to discover and install new skills through the `discover` skill.
+Invoke the `/scc:discover` command to discover and install new skills through the `discover` skill.
 
 ## Arguments
 - First argument: description of needed capability

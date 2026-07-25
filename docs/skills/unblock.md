@@ -14,7 +14,7 @@ This LinkedIn article won't load: https://www.linkedin.com/pulse/abc-xyz
 
 **Input:**
 ```
-/second-claude-code:unblock "https://news.ycombinator.com/item?id=42000000"
+/scc:unblock "https://news.ycombinator.com/item?id=42000000"
 ```
 
 **Process:**
@@ -42,7 +42,7 @@ This LinkedIn article won't load: https://www.linkedin.com/pulse/abc-xyz
 
 ## When to Use
 
-- Eevee researcher hits 403/blocked during `/second-claude-code:research`
+- Eevee researcher hits 403/blocked during `/scc:research`
 - Manual fetch of a known-hostile site (X, LinkedIn, Naver, Coupang, fmkorea, etc.)
 - WebFetch returns truncated/empty body for a JS-heavy SPA
 - Pipeline step needs guaranteed page content, not best-effort

@@ -38,7 +38,7 @@ normalization detail: `references/native-cleaners.md`.
 
 ## When to Use
 
-- Eevee researcher hits 403/blocked during `/second-claude-code:research`
+- Eevee researcher hits 403/blocked during `/scc:research`
 - Manual fetch of a hostile site
 - WebFetch returns truncated/empty body for JS-heavy SPAs
 

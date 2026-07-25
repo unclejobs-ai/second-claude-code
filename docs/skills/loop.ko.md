@@ -5,7 +5,7 @@
 ## 빠른 예시
 
 ```bash
-/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --max-generations 2
+/scc:loop run write-core --targets skills/write/SKILL.md,commands/write.md --max-generations 2
 ```
 
 **무슨 일이 일어나나:** `write-core` 스위트를 검증하고, 격리된 `codex/loop-...` 브랜치와 run worktree를 만든 뒤, baseline을 측정하고, 선택한 타깃 안에서 몇 개의 후보 변형을 만들고, 모든 하드 게이트를 통과하면서 baseline보다 `min_delta` 이상 좋아진 후보만 우승자로 승급합니다.

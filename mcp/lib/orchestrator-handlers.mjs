@@ -1,7 +1,7 @@
 /**
  * Orchestrator MCP handler implementations.
  *
- * Runtime plugin discovery, routing, and dispatch — enables second-claude-code
+ * Runtime plugin discovery, routing, and dispatch — enables scc
  * to orchestrate the user's entire Claude Code plugin ecosystem through PDCA
  * phase routing.
  */

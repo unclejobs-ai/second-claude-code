@@ -44,7 +44,7 @@ Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀�
 
 ## v1.5.2에서 달라진 점
 
-**Deep Interview + 코드 엔지니어링 레인** — 실행 전에 요구사항을 더 선명하게 만들고, 실행 중에는 더 엄격하게 검증합니다. v1.5.2는 18번째 공개 명령어 `/second-claude-code:deep-interview`를 추가하고, `domain=code` PDCA 작업에 계획·검증·정리·핸드오프 계약을 강화합니다.
+**Deep Interview + 코드 엔지니어링 레인** — 실행 전에 요구사항을 더 선명하게 만들고, 실행 중에는 더 엄격하게 검증합니다. v1.5.2는 18번째 공개 명령어 `/scc:deep-interview`를 추가하고, `domain=code` PDCA 작업에 계획·검증·정리·핸드오프 계약을 강화합니다.
 
 - **Deep Interview** — Round 0 topology 확인, 컴포넌트별 모호성 점수, ontology 수렴 추적, 한국어/세션 언어 보존, ralplan/ultragoal/team 승인 게이트 핸드오프를 갖춘 소크라테스식 요구사항 인터뷰입니다.
 - **실행 가능한 코드 Plan** — 수용 기준, 롤백 경로, 복잡도, 위험 작업 승인 상태를 Plan 계약에 포함합니다.
@@ -61,7 +61,7 @@ Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀�
 
 **`unblock` 스킬** — WebFetch가 막히는 URL(4xx, captcha, WAF, JS-heavy SPA)을 포기하기 전에 9-phase zero-key fetch chain으로 우회합니다.
 
-- **16번째 스킬** — `/second-claude-code:unblock`이 추가돼 research fallback과 auto-router에 연결됐어요.
+- **16번째 스킬** — `/scc:unblock`이 추가돼 research fallback과 auto-router에 연결됐어요.
 - **9-phase escalation** — public API, Jina, yt-dlp, curl variants, TLS rotation, LightPanda, Playwright, free archive cluster, optional paid provider 순서로 시도합니다.
 - **운영 하드닝** — SSRF guard, `schema_version`, `idempotency_key`, stagnation detection, decisions audit log가 들어갔습니다.
 - **검증 기준선** — v1.5.0 기준 `UNBLOCK_SKIP_NETWORK_TESTS=1 npm test`에서 397개 테스트, 394개 통과, 3개 스킵.
@@ -108,13 +108,13 @@ graph LR
 **PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
 
 - **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — 아키텍처 명확화. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 **Do 페이즈 안에서 디스패치**돼요 (각자의 내부 페이즈가 Do 안에서 돌아감). PDCA를 대체하는 게 아닙니다. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아가요
-- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/second-claude-code:write`
+- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`
 - **포맷별 길이 floor** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 스레드 아티클 ≥ 4,000자. 뉴스레터 ≥ 10,000자. 전략 리포트 ≥ 5,000자. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치, vague한 "더 길게 써" 금지
 - **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새 minimum 추가: 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자. Thin Plan → thin Do 실패 체인 차단
 - **리뷰어 모델 다양성 룰 (false consensus 감지 포함)** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼서 Goodhart 스타일 "다들 괜찮대" 거짓 신호를 잡아요
 - **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 surgical 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정. 새 로직 6/6 routing 정확도 vs 이전 OR 3/6
 - **새 284줄 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점 표준화
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
 - **확장된 페이즈 출력 스키마** — `PlanOutput`, `DoOutput`, `CheckOutput` 모두 측정 가능한 검증 필드를 갖게 됐어요 (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed` 등). PDCA가 sub-skill self-report를 신뢰하지 않고 독립 검증
 
 **검증 (2026-04-07)**: generic 토픽으로 실제 PDCA 사이클 돌렸을 때 7,981자 Plan brief (floor 3,000), 6,962자 Do 아티클 (floor 4,000), 12개 출처 인용 (floor 5), Codex 포함 2 리뷰어 (diversity score 1.0), pre-v1.3.0 baseline에서는 놓쳤을 4개 P1 findings 발견. 전체 검증 리포트는 `docs/RELEASE-v1.3.0.ko.md` 참고.
@@ -135,7 +135,7 @@ graph LR
 <summary><strong>v1.1.0에서 달라진 점</strong></summary>
 
 - **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로. 마크다운, 레이더/바/파이 차트(Nivo), 플로우 다이어그램(SVG), 코드 하이라이팅(Shiki) 4가지 타입. WebSocket 실시간 연결
-- **Viewer 스킬** — `/second-claude-code:viewer`로 뷰어 시작, 30분 비활동 시 자동 종료
+- **Viewer 스킬** — `/scc:viewer`로 뷰어 시작, 30분 비활동 시 자동 종료
 - **반응형 레이아웃** — 데스크톱(768px+) 좌우 스플릿 패널, 모바일(<768px) 드래그 바텀 시트
 - **Zero-dependency 서버** — Node.js HTTP + WebSocket with SPA fallback, RFC 6455 frame encoding, path traversal prevention
 
@@ -191,7 +191,7 @@ claude plugin add github:unclejobs-ai/second-claude-code
 18 commands for all knowledge work:
 ```
 
-이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `second-claude-code`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
+이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `scc`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
 
 **3단계. 첫 프롬프트 입력**
 
@@ -384,8 +384,8 @@ v1.0.0의 핵심이에요. PDCA가 이제 **기억하는 사이클**이 됐어�
 17마리 에이전트가 3개 모델 티어로 나뉘어요. 전부 opus로 돌리면 비용이 올라가요. 역할에 맞게 배분했어요.
 
 - **opus(4마리)** — 깊은 추론과 글쓰기가 필요한 자리. 네이티오(딥리뷰), 루브도(집필), 메타몽(편집), 피카츄(소울 키퍼)
-- **sonnet(9마리)** — 분석, 전략, 리서치, 인프라 실행. 이브이(리서처), 후딘(애널리스트), 뮤츠(전략가), 앱솔(데빌어드보킷), 폴리곤(팩트체커), 아르세우스, 괴력몬, 자포코일, 테오키스
-- **haiku(4마리)** — 검색, 톤, 구조 같은 고빈도 작업. 부엉, 푸린, 안농, 캐이시
+- **sonnet(11마리)** — 분석, 전략, 리서치, 인프라 실행. 이브이(리서처), 후딘(애널리스트), 뮤츠(전략가), 앱솔(데빌어드보킷), 폴리곤(팩트체커), 아르세우스, 괴력몬, 자포코일, 테오키스, 푸린(톤가디언), 안농(구조분석가)
+- **haiku(2마리)** — 검색과 지식 연결. 부엉, 캐이시. 판정이 아니라 수집이라 haiku로 충분해요
 
 PDCA 페이즈별로 어떤 에이전트가 뛰는지 보면 이래요:
 
@@ -401,8 +401,8 @@ PDCA 오케스트레이터
   │          네이티오(opus) ── 논리 + 완결성
   │          앱솔(sonnet) ─── 약점 공격
   │          폴리곤(sonnet) ─ 팩트체크
-  │          푸린(haiku) ──── 톤
-  │          안농(haiku) ──── 구조
+  │          푸린(sonnet) ──── 톤
+  │          안농(sonnet) ──── 구조
   └── Act:  액션 라우터 → 메타몽(opus) 편집
 ```
 
@@ -559,7 +559,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 전략 회의 준비인데, 경쟁사 분석을 프레임워크에 맞춰서 정리해야 해요.
 
 ```
-/second-claude-code:analyze swot "우리 회사의 SaaS 제품 vs 경쟁사 3개"
+/scc:analyze swot "우리 회사의 SaaS 제품 vs 경쟁사 3개"
 ```
 
 15개 내장 프레임워크(SWOT, Porter, RICE 등) 중 맞는 걸 골라서 구조화된 분석 결과를 줘요. 프레임워크를 직접 지정할 수도 있고, 주제만 던지면 자동으로 골라줘요.
@@ -589,7 +589,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 "리서치 → 분석 → 초안 → 리뷰"를 매번 같은 순서로 돌리는데, 매번 프롬프트를 새로 치기 귀찮아요.
 
 ```
-/second-claude-code:workflow run autopilot --topic "이번 달 업계 트렌드 리포트"
+/scc:workflow run autopilot --topic "이번 달 업계 트렌드 리포트"
 ```
 
 한 번 세팅해두면 주제만 바꿔서 돌릴 수 있어요. 커피 마시고 돌아오면 완성된 결과물이 기다리고 있어요.
@@ -622,7 +622,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | 영어↔한국어 번역 | `translate` | 소울 기반 EN↔KO 번역 — 스타일, 포맷, 용어집 지원 |
 | 대형 작업을 병렬로 쪼개기 | `batch` | 대형 작업 병렬 분해 |
 
-스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/second-claude-code:deep-interview`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:loop`, `/second-claude-code:workflow`, `/second-claude-code:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
+스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/scc:deep-interview`, `/scc:write`, `/scc:review`, `/scc:loop`, `/scc:workflow`, `/scc:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
 
 ### 유지보수자용 Karpathy-Style Loop
 
@@ -631,9 +631,9 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 보통은 이렇게 써요:
 
 ```bash
-/second-claude-code:loop list-suites
-/second-claude-code:loop show-suite write-core
-/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
+/scc:loop list-suites
+/scc:loop show-suite write-core
+/scc:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
 ```
 
 실행 상태는 `.data/state/loop-active.json`에 저장되고, 점수표, 세대 히스토리, 우승 diff 같은 산출물은 `.captures/loop-<run_id>/`에 남습니다.
@@ -643,9 +643,9 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 `evolve`는 `loop` 위에서 자기개선 고리를 닫습니다. 같은 PDCA 게이트가 여러 런에 걸쳐 반복 실패하면, 그 실제 실패를 수확하고(`list-failures`), **메인테이너**가 구조 체크를 직접 작성하게 한 뒤(`harvest <id> --assertion …`), 자산을 그대로의 `loop` 엔진에 넘겨 격리 브랜치에서 진화시킵니다. 옵티마이저는 자기 성공 기준을 절대 작성하지 않고(메인테이너가 작성), 우승안 병합은 `winner.diff`를 읽은 뒤의 수동 결정으로 남습니다. `loop`처럼 슬래시 전용입니다. 전체 설계와 적대적 리뷰 이력은 [docs/proposals/evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md)를 보세요.
 
 ```bash
-/second-claude-code:evolve list-failures
-/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
-/second-claude-code:evolve run evolve-<id>
+/scc:evolve list-failures
+/scc:evolve harvest <id> --assertion '/scc:'
+/scc:evolve run evolve-<id>
 ```
 
 ```
@@ -663,15 +663,15 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 대부분의 AI 글쓰기 도구는 생성하고 바로 넘겨요. Second Claude Code는 생성한 다음 **자기 결과물을 공격한 후에** 넘겨요. 차이가 여기에 있어요.
 
-`/second-claude-code:review`는 전문 에이전트 3~5마리를 병렬로 투입해요:
+`/scc:review`는 전문 에이전트 3~5마리를 병렬로 투입해요:
 
 | 리뷰어 | 포켓몬 | 모델 | 하는 일 |
 |---|---|---|---|
 | 딥리뷰어 | 네이티오 (Xatu) | opus | 논리, 완결성, 논증 흐름 |
 | 데빌어드보킷 | 앱솔 (Absol) | sonnet | 가장 약한 지점을 찾아서 때려요 |
 | 팩트체커 | 폴리곤 (Porygon) | sonnet | 숫자, 주장, 출처를 전부 검증해요 |
-| 톤가디언 | 푸린 (Jigglypuff) | haiku | 어조 일관성, 독자 적합성 |
-| 구조분석가 | 안농 (Unown) | haiku | 가독성, 구성 |
+| 톤가디언 | 푸린 (Jigglypuff) | sonnet | 어조 일관성, 독자 적합성 |
+| 구조분석가 | 안농 (Unown) | sonnet | 가독성, 구성 |
 
 왜 포켓몬이냐고요? 이름이 역할이랑 맞아떨어져요. 네이티오는 과거와 미래를 동시에 보는 포켓몬이에요 — 구조적 결함을 잡아요. 앱솔은 재앙을 감지하는 포켓몬이에요 — 취약점을 찾아요. 폴리곤은 디지털 네이티브예요 — 데이터 기반으로 판단해요. 외우기 쉽고, 외우니까 누가 뭘 하는지 진짜로 기억하게 돼요.
 
@@ -702,7 +702,7 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 ## 에이전트 로스터 — 3개 모델 티어에 걸친 17마리
 
-모델 분포: 4 opus / 9 sonnet / 4 haiku
+모델 분포: 4 opus / 11 sonnet / 2 haiku
 
 | 페이즈 | 포켓몬 | 역할 | 모델 |
 |---|---|---|---|
@@ -715,8 +715,8 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 | **Check** | 네이티오 (Xatu) | 딥리뷰어 — 논리, 구조 | opus |
 | | 앱솔 (Absol) | 데빌어드보킷 — 약점 공격 | sonnet |
 | | 폴리곤 (Porygon) | 팩트체커 — 숫자, 출처 | sonnet |
-| | 푸린 (Jigglypuff) | 톤가디언 — 어조, 독자 | haiku |
-| | 안농 (Unown) | 구조분석가 — 가독성 | haiku |
+| | 푸린 (Jigglypuff) | 톤가디언 — 어조, 독자 | sonnet |
+| | 안농 (Unown) | 구조분석가 — 가독성 | sonnet |
 | **Act** | 메타몽 (Ditto) | 에디터 — 콘텐츠 정제 | opus |
 | **인프라** | 괴력몬 (Machamp) | 스텝 실행기 | sonnet |
 | | 자포코일 (Magnezone) | 인스펙터 — 스킬 후보 검사 | sonnet |
@@ -843,7 +843,7 @@ Claude Code 외에 OpenClaw, Codex, Gemini CLI에서도 실험적으로 돌아�
 
 제한 사항이 아니라 선택이에요. 이유가 있어요:
 
-- **자동 라우팅은 ~95% 정확해요.** 엣지 케이스에서는 `/second-claude-code:*` 슬래시 명령어로 정밀 제어가 돼요.
+- **자동 라우팅은 ~95% 정확해요.** 엣지 케이스에서는 `/scc:*` 슬래시 명령어로 정밀 제어가 돼요.
 - **haiku 에이전트가 비용을 낮춰요.** 팩트체크 같은 고빈도 작업에 opus를 쓸 이유가 없어요. 대신 활성 플러그인이 많으면 컨텍스트가 빡빡해져요. 안 쓰는 플러그인은 끄면 해결돼요.
 - **Claude Code가 메인 플랫폼이에요.** 완전 검증 완료. OpenClaw, Codex, Gemini CLI는 표준 프로토콜로 돌아가지만 아직 실험적이에요.
 - **서브에이전트 결과는 한꺼번에 와요.** 스트리밍이 아닌 이유: 결과가 다 나오기 전에 품질 게이트를 통과시킬 수 없기 때문이에요. 의도적 설계예요.
@@ -880,7 +880,7 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 <details>
 <summary><strong>15개 전략 프레임워크</strong></summary>
 
-`/second-claude-code:analyze`는 15개 내장 프레임워크를 지원해요:
+`/scc:analyze`는 15개 내장 프레임워크를 지원해요:
 
 | 카테고리 | 프레임워크 |
 |---|---|
@@ -892,8 +892,8 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 각 프레임워크는 `skills/analyze/references/frameworks/`에 독립 문서로 있어요. 프롬프트에서 자동 선택되거나 직접 지정할 수 있어요:
 
 ```bash
-/second-claude-code:analyze porter "클라우드 인프라 시장"
-/second-claude-code:analyze rice --input features.md
+/scc:analyze porter "클라우드 인프라 시장"
+/scc:analyze rice --input features.md
 ```
 
 </details>

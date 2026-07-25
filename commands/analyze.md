@@ -3,7 +3,7 @@ description: "Do/Produce phase -- apply strategic frameworks such as SWOT, RICE,
 argument-hint: swot "our product" or porter "cloud market"
 ---
 
-Invoke the `/second-claude-code:analyze` command to apply a strategic framework through the `analyze` skill.
+Invoke the `/scc:analyze` command to apply a strategic framework through the `analyze` skill.
 
 ## Arguments
 - First argument: framework name (swot|rice|okr|prd|lean-canvas|persona|journey-map|pricing|gtm|north-star|porter|pestle|ansoff|battlecard|value-prop)

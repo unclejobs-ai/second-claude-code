@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:soul learn
+/scc:soul learn
 ```
 
 **What happens:** The skill dispatches the analyst subagent to scan the current session for behavioral signals (corrections, style, expertise, decisions, emotional markers), rejects any observation missing a `signal_type` or `raw_text`, appends the valid ones to `observations.jsonl`, and reports "Added N observations (total: M)".
@@ -27,7 +27,7 @@
 
 **Input:**
 ```
-/second-claude-code:soul propose
+/scc:soul propose
 ```
 *Context: 12 sessions and 34 observations already logged, most recorded automatically under `hybrid` mode.*
 

@@ -7,9 +7,9 @@
 ## Quick Example
 
 ```bash
-/second-claude-code:evolve list-failures
-/second-claude-code:evolve harvest <id> --assertion '/second-claude-code:'
-/second-claude-code:evolve run evolve-<id>
+/scc:evolve list-failures
+/scc:evolve harvest <id> --assertion '/scc:'
+/scc:evolve run evolve-<id>
 ```
 
 **What happens:** `list-failures` scans real `gate_fail` events and surfaces assets whose failures recur (`recurrence ≥ 3`). The maintainer hand-authors a static regex; `harvest` records it and writes a validated suite to `benchmarks/loop/evolve-<id>.json`. `run` shells out to `loop`, which evolves the asset on an isolated `codex/loop-...` branch. The maintainer reviews `winner.diff` and merges manually.

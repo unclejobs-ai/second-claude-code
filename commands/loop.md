@@ -3,7 +3,7 @@ description: "Maintainer loop -- benchmark and evolve prompt assets inside isola
 argument-hint: run write-core --targets skills/write/SKILL.md,commands/write.md --max-generations 2
 ---
 
-Invoke the `/second-claude-code:loop` command to run the plugin's loaded `loop` skill.
+Invoke the `/scc:loop` command to run the plugin's loaded `loop` skill.
 
 ## Context
 - Available suites: !`node scripts/loop-runner.mjs list-suites 2>/dev/null || echo '{"suites":[]}'`

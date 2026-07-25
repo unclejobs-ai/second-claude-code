@@ -101,7 +101,7 @@ second-claude/
 | `skills/` | Each skill has a `SKILL.md` (short, context-efficient) plus a `references/` subdirectory for deep documentation. Progressive disclosure in action. |
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
 | `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
-| `commands/` | Thin wrappers that route `/second-claude-code:*` invocations to the matching skill. |
+| `commands/` | Thin wrappers that route `/scc:*` invocations to the matching skill. |
 | `hooks/` | 8 lifecycle hooks across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
@@ -129,8 +129,8 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 | deep-reviewer | **Xatu** | opus | Verify | Logic, structure, and completeness | Sees past and future simultaneously = structural flaw detection |
 | devil-advocate | **Absol** | sonnet | Verify | Attacks weakest points and blind spots | The disaster-sensing Pokemon, warns of danger |
 | fact-checker | **Porygon** | sonnet | Verify | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
-| tone-guardian | **Jigglypuff** | haiku | Verify | Voice and audience fit | THE voice Pokemon, sensitive to tone |
-| structure-analyst | **Unown** | haiku | Verify | Organization and readability | Letter-shaped, obsessed with structure |
+| tone-guardian | **Jigglypuff** | sonnet | Verify | Voice and audience fit | THE voice Pokemon, sensitive to tone |
+| structure-analyst | **Unown** | sonnet | Verify | Organization and readability | Letter-shaped, obsessed with structure |
 
 ### Pipeline & Discover Agents
 
@@ -154,8 +154,8 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 | Tier | Count | Use |
 |------|-------|-----|
 | opus | 4 | Deep review, long-form writing, editorial, soul synthesis |
-| sonnet | 9 | Research, analysis, strategy, orchestration, adversarial review, fact-checking |
-| haiku | 4 | Search, tone-checking, structure analysis, knowledge linking |
+| sonnet | 11 | Research, analysis, strategy, orchestration, adversarial review, fact-checking, tone-checking, structure analysis |
+| haiku | 2 | Search and knowledge linking — collection, not judgment |
 
 ---
 
@@ -208,7 +208,7 @@ flowchart TD
 Supporting commands reinforce the same loop:
 
 - `pdca` orchestrates the full cycle with quality gates and the Action Router
-- `/second-claude-code:loop` runs fixed benchmark suites to evolve prompt assets in isolated winner branches
+- `/scc:loop` runs fixed benchmark suites to evolve prompt assets in isolated winner branches
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough
 - `workflow` automates full Gather → Produce → Verify → Refine runs
@@ -220,7 +220,7 @@ Supporting commands reinforce the same loop:
 
 ```mermaid
 flowchart LR
-    CMD["/second-claude-code:viewer"] --> SKILL[skills/viewer/SKILL.md]
+    CMD["/scc:viewer"] --> SKILL[skills/viewer/SKILL.md]
     SKILL --> START[ui/scripts/start-server.sh]
     START --> SERVER[server.cjs background process]
     SERVER --> META[server.pid + server-info.json]
@@ -270,15 +270,15 @@ The Do phase fails the gate when the artifact does not meet a format-specific le
 |--------|-----------------|--------|--------------|----------------|
 | Threads article (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 | `/threads` |
 | Korean tech newsletter | 10,000 | 12,000-15,000 | 6 topics | `/newsletter` |
-| Generic article | 4,000 | 5,000-7,000 | 5 H2 | `/second-claude-code:write` |
-| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections | `/second-claude-code:write` |
-| SWOT/RICE/OKR doc | 3,000 | 4,000-5,000 | 4 quadrants | `/second-claude-code:analyze` |
+| Generic article | 4,000 | 5,000-7,000 | 5 H2 | `/scc:write` |
+| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections | `/scc:write` |
+| SWOT/RICE/OKR doc | 3,000 | 4,000-5,000 | 4 quadrants | `/scc:analyze` |
 | Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes | `/academy-shorts` |
 | Card news (carousel) | 8-10 cards | 9-12 cards | hook + body + CTA | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | 7 sections | `/second-claude-code:write --format prd` |
-| Code review report | 2,500 | 3,500-5,000 | 5 dimensions | `/second-claude-code:review` |
-| Research brief | 3,000 | 4,000-6,000 | n/a | `/second-claude-code:research` |
-| Meeting notes | 2,000 | 2,500-3,500 | 5 sections | `/second-claude-code:write --format decision` |
+| PRD | 4,000 | 5,000-7,000 | 7 sections | `/scc:write --format prd` |
+| Code review report | 2,500 | 3,500-5,000 | 5 dimensions | `/scc:review` |
+| Research brief | 3,000 | 4,000-6,000 | n/a | `/scc:research` |
+| Meeting notes | 2,000 | 2,500-3,500 | 5 sections | `/scc:write --format decision` |
 
 Full table and calibration principles in `skills/pdca/references/do-phase.md`.
 
@@ -292,7 +292,7 @@ When PDCA enters the Do phase, the dispatcher matches the user prompt against tr
 | 뉴스레터 / newsletter | `/newsletter` |
 | 쇼츠 / shorts / 릴스 / Reels | `/academy-shorts` |
 | 카드뉴스 / card news / 캐러셀 | `/card-news` |
-| (no specialized match) | `/second-claude-code:write` (fallback) |
+| (no specialized match) | `/scc:write` (fallback) |
 
 Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md` (284 lines).
 
@@ -354,7 +354,7 @@ Limits interactive dialogue to max 3 scope-clarifying questions:
 
 Phase gate checklists live in `skills/pdca/references/`.
 The `hooks/prompt-detect.mjs` auto-router has a PDCA compound layer that detects
-multi-phase intent (e.g., "알아보고 써줘") and routes to `/second-claude-code:pdca`
+multi-phase intent (e.g., "알아보고 써줘") and routes to `/scc:pdca`
 before falling through to single-skill matching.
 
 ---
@@ -419,16 +419,16 @@ For detection, invocation, and error handling rules, see `references/mmbridge-in
 
 | PDCA Phase | MMBridge Command | Skill | Behavior |
 |-----------|-----------------|-------|----------|
-| **Plan** | `mmbridge research` | `/second-claude-code:research` | Parallel multi-model research, merged into analyst input |
-| **Check** | `mmbridge review` | `/second-claude-code:review --external` | Cross-model code review, +1 consensus voter |
-| **Check** | `mmbridge security` | `/second-claude-code:review --preset security --external` | CWE-classified security audit |
-| **Plan** | `mmbridge debate` | `/second-claude-code:analyze` | Multi-model adversarial challenge at thorough depth |
-| **Check→Act** | `mmbridge gate` | `/second-claude-code:pdca` | Advisory coverage check at phase transition |
-| **Act** | `mmbridge followup` | `/second-claude-code:refine` | Clarify ambiguous external review findings |
-| **Act** | `mmbridge resume` | `/second-claude-code:refine` | External re-assessment after fixes |
-| **Check** | `mmbridge diff` | `/second-claude-code:review` | Annotated diff view for code/security presets |
-| **Plan** | `mmbridge memory` | `/second-claude-code:pdca` | Cross-session context from prior cycles |
-| **Exit** | `mmbridge handoff` | `/second-claude-code:pdca` | Session summary artifact on APPROVED exit |
+| **Plan** | `mmbridge research` | `/scc:research` | Parallel multi-model research, merged into analyst input |
+| **Check** | `mmbridge review` | `/scc:review --external` | Cross-model code review, +1 consensus voter |
+| **Check** | `mmbridge security` | `/scc:review --preset security --external` | CWE-classified security audit |
+| **Plan** | `mmbridge debate` | `/scc:analyze` | Multi-model adversarial challenge at thorough depth |
+| **Check→Act** | `mmbridge gate` | `/scc:pdca` | Advisory coverage check at phase transition |
+| **Act** | `mmbridge followup` | `/scc:refine` | Clarify ambiguous external review findings |
+| **Act** | `mmbridge resume` | `/scc:refine` | External re-assessment after fixes |
+| **Check** | `mmbridge diff` | `/scc:review` | Annotated diff view for code/security presets |
+| **Plan** | `mmbridge memory` | `/scc:pdca` | Cross-session context from prior cycles |
+| **Exit** | `mmbridge handoff` | `/scc:pdca` | Session summary artifact on APPROVED exit |
 
 ### External Reviewers
 
@@ -447,8 +447,8 @@ Review Dispatch
 │   ├── Xatu / deep-reviewer (opus)
 │   ├── Absol / devil-advocate (sonnet)
 │   ├── Porygon / fact-checker (sonnet)
-│   ├── Jigglypuff / tone-guardian (haiku)
-│   └── Unown / structure-analyst (haiku)
+│   ├── Jigglypuff / tone-guardian (sonnet)
+│   └── Unown / structure-analyst (sonnet)
 │
 ├── External — review (--external flag)
 │   └── mmbridge review --tool kimi
@@ -544,7 +544,7 @@ researcher: WebFetch(url) → empty / error
                       └─ no  → log in Gaps & Limitations, continue
 ```
 
-The `--interactive` flag on `/second-claude-code:research` forces Playwright for every URL, bypassing WebFetch entirely. Useful for SPA dashboards or news sites with heavy JavaScript rendering.
+The `--interactive` flag on `/scc:research` forces Playwright for every URL, bypassing WebFetch entirely. Useful for SPA dashboards or news sites with heavy JavaScript rendering.
 
 ### Cost control
 
@@ -663,15 +663,15 @@ The old 900-token hardcoded `<skill-check>` block was replaced with `generateDis
 
 PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
 
-1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/second-claude-code:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
-2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/second-claude-code:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
+1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
+2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
 3. **Hard Length Floors per Format** — Do gate fails if artifact is below format minimum. 11 formats with calibrated `min_chars`, `target_chars`, `min_sections`. Below floor → sub-skill re-dispatched with specific scope expansion. Generic "make it longer" prompts are explicitly forbidden.
 4. **Plan Brief Floors** — Sources raised from 3 to 5; 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000-char body now mandatory.
 5. **Reviewer Model Diversity Rule** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced for >2 reviewers.
 6. **False Consensus Detection** — All reviewers APPROVED with avg > 0.9 and zero critical findings triggers an automatic adversarial pass with an unused external model before exit.
 7. **5+ Rule (Calibrated AND Logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on a real 4-finding patch set.
 8. **New `domain-pipeline-integration.md`** — 284-line standard for sub-skill input/output contracts, failure handling (4 modes), integration points with adjacent phases.
-9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
+9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
 
 Verification cycle (2026-04-07): generic-topic PDCA run achieved 7,981-char Plan brief, 6,962-char Do article, Codex+sonnet diverse reviewers, surfaced 4 P1 findings the v1.0.0 baseline would have missed.
 
@@ -704,7 +704,7 @@ Three changes in this release (on top of 0.5.0):
 
 Two additions shipped in this release (on top of 0.4.0):
 
-1. **Soul System** — 10th skill (`/second-claude-code:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
+1. **Soul System** — 10th skill (`/scc:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
 2. **Playwright MCP** — Optional browser automation server added to `.claude-plugin/plugin.json`. When `WebFetch` fails on a JavaScript-heavy or dynamic URL, the researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree extraction). Gracefully degrades if the server is not installed.
 
 ## What's New in 0.4.0

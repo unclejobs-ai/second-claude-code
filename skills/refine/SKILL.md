@@ -13,7 +13,7 @@ effort: medium
 - "I fixed the wording but the meaning is basically the same" → STOP, because refinement must preserve the author's intent — changing meaning during polish is an unauthorized rewrite.
 - "The score went up so the fix must be good" → STOP, because you must compare verdicts between iterations, not just scores — a higher score with new Critical findings is a regression.
 - "Let me do one more pass, I can make it even better" → STOP, because the plateau rule (same verdict for 2 consecutive iterations) exists to prevent infinite loops — stop when improvement stalls.
-- "I'll skip the completion gate, the last review was already APPROVED" → STOP, because the final `/second-claude-code:review --preset quick` check is mandatory — never declare done without it.
+- "I'll skip the completion gate, the last review was already APPROVED" → STOP, because the final `/scc:review --preset quick` check is mandatory — never declare done without it.
 - "The reviewers disagreed so I'll just pick the feedback I like" → STOP, because reviewer consensus drives refinement priority — Critical and Major findings from any reviewer must be addressed before Minor ones.
 
 # Refine
@@ -29,7 +29,7 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
 ## Workflow
 
 1. Read the current file and record a baseline hash. If `--dod` is provided, parse the semicolon-separated string into a numbered criteria list and store in state as `dod_criteria`.
-2. Run `/second-claude-code:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass. When `--dod` is active, inject the following block into each reviewer's context alongside any `--promise` text:
+2. Run `/scc:review` — this MUST dispatch actual subagents per the review skill spec. Do NOT simulate review inline or merge reviewer perspectives into one pass. When `--dod` is active, inject the following block into each reviewer's context alongside any `--promise` text:
    ```
    ## DoD Checklist — evaluate each criterion independently
    1. [criterion text]
@@ -39,13 +39,13 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
    ```
    After reviewers return, extract `DoD-N: PASS/FAIL` lines and compute per-criterion consensus (majority across reviewers). Store results in state `dod_results`.
 3. Apply fixes. When `--dod` is active, **prioritize FAIL DoD criteria first** (up to 3 total including general feedback). If all DoD criteria already pass, fall back to the standard top-3 general feedback.
-4. Re-run `/second-claude-code:review` (with DoD checklist re-injected) and keep the new baseline only if the verdict improves; otherwise revert. If mmbridge was used in the original review, run `mmbridge resume` before dispatching the full re-review to get the external reviewer's preliminary assessment of fixes (see MMBridge Refinement Enhancement below). Revert strategy:
+4. Re-run `/scc:review` (with DoD checklist re-injected) and keep the new baseline only if the verdict improves; otherwise revert. If mmbridge was used in the original review, run `mmbridge resume` before dispatching the full re-review to get the external reviewer's preliminary assessment of fixes (see MMBridge Refinement Enhancement below). Revert strategy:
    - **Before reverting a git-tracked file**: run `git diff --name-only <file>`. If the file shows uncommitted user changes that are NOT from this refine iteration (i.e., changes that predate `baseline_hash`), **warn the user and abort the revert** unless they explicitly confirm. Never silently overwrite uncommitted work.
    - **Path validation**: confirm the file path resolves within the project root — reject any path containing `../` traversal or resolving outside the working directory.
    - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
    - For non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`): restore from `baseline_content` in `refine-active.json`.
 5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction). When `--dod` is active, the target is only considered met when **all DoD criteria pass** AND the score/verdict target is satisfied.
-6. **Completion gate**: Before declaring done, run `/second-claude-code:review` with `--preset quick` (a parameter passed to `/second-claude-code:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
+6. **Completion gate**: Before declaring done, run `/scc:review` with `--preset quick` (a parameter passed to `/scc:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
 
 ## Options
 
@@ -101,7 +101,7 @@ mmbridge resume --action followup -y --json > /tmp/mmbridge-resume-${RUN_ID}.jso
 ```
 
 - This asks the original external reviewer to evaluate the fixes against its earlier findings
-- The resume result is merged as supplemental context into the next `/second-claude-code:review` cycle
+- The resume result is merged as supplemental context into the next `/scc:review` cycle
 - If resume indicates all external findings are addressed, it counts as a positive signal for the consensus gate
 
 ### When to Use
@@ -131,13 +131,13 @@ Round 1 (post-edit): 3.8/5  |||||||||||||||...  MINOR FIXES  (+1.8)
 - Do not claim improvement without comparing verdicts between iterations.
 - Revert through `git checkout -- <file>` for git-tracked files, or restore from `baseline_content` for non-git files. Never rely on memory alone. Always check `git diff --name-only <file>` before reverting — abort with a warning if uncommitted user changes are detected outside this refine pass's own edits.
 - Never revert a file whose path contains `../` or resolves outside the project root.
-- Do not simulate review inline — always dispatch through `/second-claude-code:review`.
+- Do not simulate review inline — always dispatch through `/scc:review`.
 - Stop early if the verdict stops improving across iterations.
-- The completion gate is mandatory — never skip the final `/second-claude-code:review --preset quick` check.
+- The completion gate is mandatory — never skip the final `/scc:review --preset quick` check.
 
 ## Subagents
 
 ```yaml
-reviewer: { skill: /second-claude-code:review, constraint: "return score plus ranked feedback" }
+reviewer: { skill: /scc:review, constraint: "return score plus ranked feedback" }
 editor: { model: opus, tools: [Read, Edit], constraint: "apply only the top 3 feedback items" }
 ```

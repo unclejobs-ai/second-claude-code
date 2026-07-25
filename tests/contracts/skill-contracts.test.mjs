@@ -174,7 +174,7 @@ test("analyze supports exactly the framework templates it advertises", () => {
   );
 });
 
-test("command wrappers map each /second-claude-code command to the matching bare skill", () => {
+test("command wrappers map each /scc command to the matching bare skill", () => {
   const commandNames = readdirSync(path.join(root, "commands"))
     .filter((fileName) => fileName.endsWith(".md"))
     .map((fileName) => fileName.replace(/\.md$/, ""))
@@ -184,7 +184,7 @@ test("command wrappers map each /second-claude-code command to the matching bare
     const content = read(path.join("commands", `${name}.md`));
     assert.match(
       content,
-      new RegExp(`Invoke the \`/second-claude-code:${name}\` command`, "i"),
+      new RegExp(`Invoke the \`/scc:${name}\` command`, "i"),
       `${name} command should document its public command name`
     );
     assert.match(
@@ -200,12 +200,12 @@ test("command wrappers map each /second-claude-code command to the matching bare
   }
 });
 
-test("active public docs do not use the legacy /scc namespace", () => {
+test("active public docs do not use the legacy /second-claude-code namespace", () => {
   const offenders = [];
 
   for (const fullPath of activePublicDocFiles()) {
     const content = readFileSync(fullPath, "utf8");
-    if (/\/scc:/.test(content)) {
+    if (/\/second-claude-code:/.test(content)) {
       offenders.push(path.relative(root, fullPath));
     }
   }
@@ -223,7 +223,7 @@ test("active public docs reference only registered public commands", () => {
 
   for (const fullPath of activePublicDocFiles()) {
     const content = readFileSync(fullPath, "utf8");
-    for (const match of content.matchAll(/\/second-claude-code:([a-z-]+)/g)) {
+    for (const match of content.matchAll(/\/scc:([a-z-]+)/g)) {
       if (!commandNames.has(match[1])) {
         offenders.push(`${path.relative(root, fullPath)} -> ${match[0]}`);
       }
@@ -290,7 +290,7 @@ test("session-start command banner matches command files", () => {
     .map((fileName) => fileName.replace(/\.md$/, ""))
     .sort();
   const sessionStart = read(path.join("hooks", "session-start.mjs"));
-  const advertised = [...new Set([...sessionStart.matchAll(/`\/second-claude-code:([a-z-]+)`/g)]
+  const advertised = [...new Set([...sessionStart.matchAll(/`\/scc:([a-z-]+)`/g)]
     .map((match) => match[1]))]
     .sort();
 
@@ -317,7 +317,7 @@ test("loop surfaces are documented across primary docs", () => {
     );
     assert.match(
       doc,
-      /\/second-claude-code:loop/,
+      /\/scc:loop/,
       "top-level docs should mention the public loop command"
     );
   }
@@ -333,7 +333,7 @@ test("README install and command namespace match the plugin surface", () => {
   for (const doc of [readme, readmeKo]) {
     assert.match(doc, new RegExp(expectedInstall.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     assert.doesNotMatch(doc, /github:parkeungje\/second-claude\b/);
-    assert.doesNotMatch(doc, /\/scc:/);
+    assert.doesNotMatch(doc, /\/second-claude-code:/);
     assert.match(
       doc,
       new RegExp(publicPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),

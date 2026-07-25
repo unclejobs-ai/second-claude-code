@@ -16,7 +16,7 @@ AI 에이전트 프레임워크 현황을 조사해
 
 **입력:**
 ```
-/second-claude-code:research "AI 에이전트 프레임워크 현황 2026" --depth deep
+/scc:research "AI 에이전트 프레임워크 현황 2026" --depth deep
 ```
 
 **진행 과정:**

@@ -3,7 +3,7 @@ description: "Run a Socratic requirements interview that turns vague ideas into 
 argument-hint: "<idea> | resume | status | finalize"
 ---
 
-Invoke the `/second-claude-code:deep-interview` command to run the plugin's loaded `deep-interview` skill.
+Invoke the `/scc:deep-interview` command to run the plugin's loaded `deep-interview` skill.
 
 ## Context
 - Active deep interview state: !`node scripts/deep-interview-runner.mjs status --json 2>/dev/null || echo '{"active":false}'`

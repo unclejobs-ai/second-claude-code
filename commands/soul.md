@@ -3,7 +3,7 @@ description: "Observe and synthesize a persistent user identity profile (SOUL.md
 argument-hint: '"learn" or "propose" or "show" or "init --template developer"'
 ---
 
-Invoke the `/second-claude-code:soul` command to build and maintain a user identity profile through the `soul` skill.
+Invoke the `/scc:soul` command to build and maintain a user identity profile through the `soul` skill.
 
 ## Context
 - Current soul: !`cat .data/soul/SOUL.md 2>/dev/null | head -5 || echo "No soul synthesized yet"`

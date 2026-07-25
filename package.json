@@ -1,5 +1,5 @@
 {
-  "name": "second-claude-code",
+  "name": "scc",
   "version": "1.5.2",
   "description": "PDCA-native Knowledge Work OS — skills, hooks, and MCP server for Claude Code",
   "type": "module",

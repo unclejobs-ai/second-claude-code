@@ -7,7 +7,7 @@
 ## 빠른 예시
 
 ```
-/second-claude-code:batch --topic "AI 인프라 트렌드 10부작 뉴스레터 시리즈" --skill write --parallel 3
+/scc:batch --topic "AI 인프라 트렌드 10부작 뉴스레터 시리즈" --skill write --parallel 3
 ```
 
 **동작 방식:** 스킬이 Explore 에이전트를 디스패치해 주제 범위를 파악한 뒤 독립적인 단위로 분해합니다(최소 2개, 기본 최대 10개, `--units`로 최대 20개까지 확장 가능). 전체 분해 계획을 표로 제시하며, 사용자가 명시적으로 승인하기 전까지는 실행이 시작되지 않습니다. 승인 후에는 단위마다 에이전트 하나가 격리된 워크트리에서 실행되고, 동시 실행 개수는 `--parallel`(기본값 3)로 제한됩니다. 각 단위의 상태(`PENDING`/`RUNNING`/`DONE`/`FAILED`)를 추적하다가, 모든 단위가 끝나면 배치 요약 리포트를 `.captures/batch-{run_id}/00-summary.md`에 저장합니다.
@@ -16,7 +16,7 @@
 
 **입력:**
 ```
-/second-claude-code:batch --topic "AI 인프라 트렌드 10부작 뉴스레터 시리즈" --skill write --parallel 3 --synthesize --format article --lang en
+/scc:batch --topic "AI 인프라 트렌드 10부작 뉴스레터 시리즈" --skill write --parallel 3 --synthesize --format article --lang en
 ```
 
 **진행 과정:**

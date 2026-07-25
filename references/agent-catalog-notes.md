@@ -14,8 +14,8 @@ Current second-claude ships with 16 Pokemon-themed agents. This document catalog
 | deep-reviewer | Xatu | opus | Logic, structure, completeness review |
 | devil-advocate | Absol | sonnet | Weak points, blind spots |
 | fact-checker | Porygon | haiku | Claims, numbers, source verification |
-| tone-guardian | Jigglypuff | haiku | Voice and audience fit |
-| structure-analyst | Unown | haiku | Organization and readability |
+| tone-guardian | Jigglypuff | sonnet | Voice and audience fit |
+| structure-analyst | Unown | sonnet | Organization and readability |
 | orchestrator | Arceus | sonnet | Pipeline orchestration |
 | step-executor | Machamp | sonnet | Single pipeline step execution |
 | searcher | Noctowl | haiku | External source search |

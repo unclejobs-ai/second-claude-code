@@ -16,13 +16,13 @@
 
 **입력:**
 ```
-/second-claude-code:review --preset content README.md
+/scc:review --preset content README.md
 ```
 
 **진행 과정:**
 1. Deep-reviewer(opus)가 논리, 구조, 완성도를 분석 -- 각 소견마다 정확한 위치를 인용.
 2. Devil-advocate(sonnet)가 가장 취약한 3가지를 공격: 과장된 주장, 암시적 보증, 검증되지 않은 가치 제안.
-3. Tone-guardian(haiku)이 문체 일관성과 타겟 독자 적합성을 점검.
+3. Tone-guardian(sonnet)이 문체 일관성과 타겟 독자 적합성을 점검.
 4. 소견 중복 제거 및 병합. 합의 게이트 적용: 승인 1/3, 기준 미충족.
 5. 우선순위화된 액션 아이템과 함께 최종 판정 발행.
 
@@ -54,8 +54,8 @@
 | `deep-reviewer` | opus | 논리, 구조, 완성도 |
 | `devil-advocate` | sonnet | 취약점 및 사각지대 |
 | `fact-checker` | sonnet | 주장, 수치, 출처 |
-| `tone-guardian` | haiku | 문체 및 독자 적합성 |
-| `structure-analyst` | haiku | 구성 및 가독성 |
+| `tone-guardian` | sonnet | 문체 및 독자 적합성 |
+| `structure-analyst` | sonnet | 구성 및 가독성 |
 
 ## 옵션
 

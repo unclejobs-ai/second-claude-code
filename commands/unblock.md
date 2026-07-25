@@ -3,7 +3,7 @@ description: "Plan/Gather phase -- adaptive zero-key fetch chain for blocked or 
 argument-hint: "https://example.com/blocked-article"
 ---
 
-Invoke the `/second-claude-code:unblock` command to run the loaded `unblock` skill — adaptive 9-phase fetch chain for URLs that WebFetch can't crack (4xx, captcha, WAF, JS-heavy SPAs).
+Invoke the `/scc:unblock` command to run the loaded `unblock` skill — adaptive 9-phase fetch chain for URLs that WebFetch can't crack (4xx, captcha, WAF, JS-heavy SPAs).
 
 ## Context
 - Cache dir: !`echo "${UNBLOCK_CACHE_DIR:-$HOME/.cache/unblock}"`

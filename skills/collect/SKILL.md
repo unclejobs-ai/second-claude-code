@@ -24,7 +24,7 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 - Save a URL, note, file, or excerpt for later use
 - Preserve a useful insight from the current conversation
-- Archive findings from another skill such as `/second-claude-code:research`
+- Archive findings from another skill such as `/scc:research`
 
 ## Workflow
 
@@ -81,7 +81,7 @@ If no specific connection exists, set `connections` to an empty array. Never for
 ## Search Mode
 
 Trigger: pass `--search "query"` instead of a source to retrieve rather than save.
-Invocation: `/second-claude-code:collect --search "query"`
+Invocation: `/scc:collect --search "query"`
 What it does: scans all stored JSON under `${CLAUDE_PLUGIN_DATA}/knowledge/`, ranks results by tag overlap and title similarity, and returns the top matches with their summary and PARA category.
 See `references/para-method.md` for full ranking weights.
 

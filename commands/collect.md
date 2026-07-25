@@ -3,7 +3,7 @@ description: "Plan/Gather phase -- collect knowledge into PARA-classified storag
 argument-hint: https://example.com or "note to save"
 ---
 
-Invoke the `/second-claude-code:collect` command to collect and organize knowledge through the `collect` skill.
+Invoke the `/scc:collect` command to collect and organize knowledge through the `collect` skill.
 
 ## Arguments
 - First argument: URL, text, or file path to collect

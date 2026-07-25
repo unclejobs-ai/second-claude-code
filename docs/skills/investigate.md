@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:investigate "TypeError: Cannot read properties of undefined (reading 'items')" on the checkout page
+/scc:investigate "TypeError: Cannot read properties of undefined (reading 'items')" on the checkout page
 ```
 
 **What happens:** The skill gathers evidence first -- the exact error and stack trace, reproduction conditions, and recent changes via `git log --oneline -20` and `git diff HEAD~5 --stat` -- then classifies the failure against a known pattern table before forming any opinion. Each hypothesis is stated explicitly and tested with a minimal check; three consecutive wrong hypotheses stop the investigation and hand it back to you for more context. Once the root cause is confirmed, the skill applies the minimal fix, writes a regression test, and saves a structured debug report.
