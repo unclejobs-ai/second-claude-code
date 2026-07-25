@@ -402,7 +402,7 @@ Each reviewer emits structured JSON: a score from 0.0 to 1.0, plus findings tagg
 | **PreCompact** | Before context compression | PDCA state serialization |
 | **PostCompact** | After context compression | PDCA state restoration, mid-cycle resume |
 
-The `UserPromptSubmit` auto-router first checks installed plugin capabilities through `getDispatchPlan()`. If a prompt strongly matches an external skill or command, it injects an `[ORCHESTRATOR]` instruction to invoke that capability before self-processing. If no external dispatch wins, it falls back to PDCA compound patterns, then single-skill patterns. This ordering matters — "research and write" should route to `pdca`, while "posthog event analysis" should use the installed PostHog plugin when available. Routing decisions include **confidence scoring** for observability, and corrections are captured as soul observations for long-term learning.
+The `UserPromptSubmit` auto-router checks for a compound intent first. "Research and write" matches there, routes to `pdca`, and returns — the external plan is never even computed, because the cycle is what adds the review and the correction loop. Only a single-purpose prompt reaches the next stage: it is scored against the built-in skills, then `getDispatchPlan()` looks for an installed specialist. A strong external match outranks the built-in choice and gets an `[ORCHESTRATOR]` instruction; otherwise the built-in one runs. So "posthog event analysis" goes to the PostHog plugin when it is installed, while "research and write" stays with PDCA either way. Routing decisions include **confidence scoring** for observability, and corrections are captured as soul observations for long-term learning.
 
 ---
 

@@ -500,7 +500,7 @@ PDCA 오케스트레이터
 | **PreCompact** | 컨텍스트 압축 전 PDCA 상태 직렬화 |
 | **PostCompact** | 압축 후 상태 복원 — 긴 세션에서도 사이클 연속성을 유지해요 |
 
-UserPromptSubmit 훅이 라우팅을 담당해요. 먼저 `getDispatchPlan()`으로 설치된 외부 플러그인 capability를 확인합니다. 강한 외부 매칭이 있으면 `[ORCHESTRATOR]` 컨텍스트를 주입해서 해당 Skill/command를 자체 처리보다 먼저 호출하게 해요. 외부 매칭이 없으면 "AI 에이전트 알아보고 보고서 써줘" 같은 PDCA 복합 패턴, 그다음 단일 스킬 패턴으로 내려갑니다. 그래서 "posthog event analysis"는 PostHog 플러그인이 설치되어 있을 때 외부 스킬로 가고, "AI 에이전트 알아보고 보고서 써줘"는 여전히 PDCA로 갑니다. 라우팅 결정에는 **신뢰도 점수(confidence scoring)**가 포함돼요 — 수정 사항은 소울 관찰로 캡처되어 장기 학습에 반영돼요.
+UserPromptSubmit 훅이 라우팅을 담당해요. **먼저 복합 의도인지 봅니다.** "AI 에이전트 알아보고 보고서 써줘"가 여기 걸리면 `pdca`로 보내고 그 자리에서 끝냅니다 — 외부 플랜은 계산조차 안 해요. 검수와 교정 루프를 붙이는 게 사이클이니까요. 단일 목적 프롬프트만 다음 단계로 갑니다. 내장 스킬과 점수를 매긴 뒤 `getDispatchPlan()`이 설치된 전문 플러그인을 찾고, 강한 외부 매칭이 있으면 내장 선택을 제치고 `[ORCHESTRATOR]`가 주입돼요. 없으면 내장이 그대로 돕니다. 그래서 "posthog event analysis"는 PostHog가 깔려 있으면 그쪽으로 가고, "알아보고 써줘"는 어느 쪽이든 PDCA로 갑니다. 라우팅 결정에는 **신뢰도 점수(confidence scoring)**가 포함돼요 — 수정 사항은 소울 관찰로 캡처되어 장기 학습에 반영돼요.
 
 ---
 

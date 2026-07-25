@@ -12,9 +12,9 @@
   <circle cx="248" cy="46" r="4" fill="#f85149"/>
   <text x="258" y="50" fill="#8b949e" font-size="9" font-family="SF Mono, Consolas, monospace">opus (4)</text>
   <circle cx="328" cy="46" r="4" fill="#58a6ff"/>
-  <text x="338" y="50" fill="#8b949e" font-size="9" font-family="SF Mono, Consolas, monospace">sonnet (9)</text>
+  <text x="338" y="50" fill="#8b949e" font-size="9" font-family="SF Mono, Consolas, monospace">sonnet (11)</text>
   <circle cx="418" cy="46" r="4" fill="#3fb950"/>
-  <text x="428" y="50" fill="#8b949e" font-size="9" font-family="SF Mono, Consolas, monospace">haiku (4)</text>
+  <text x="428" y="50" fill="#8b949e" font-size="9" font-family="SF Mono, Consolas, monospace">haiku (2)</text>
 
   <!-- Divider -->
   <line x1="20" y1="60" x2="840" y2="60" stroke="#30363d" stroke-width="0.5"/>

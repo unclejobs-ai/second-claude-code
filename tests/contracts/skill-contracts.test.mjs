@@ -600,10 +600,21 @@ test("roster diagrams show the tier distribution the agents actually declare", (
 
   for (const svg of ["docs/images/agent-roster.svg", "docs/images/agent-roster.ko.svg"]) {
     const body = read(svg);
-    const found = {};
+
+    // Per-agent labels: one `>tier<` per row.
+    const perAgent = {};
     for (const [, tier] of body.matchAll(/>(opus|sonnet|haiku)</g)) {
-      found[tier] = (found[tier] ?? 0) + 1;
+      perAgent[tier] = (perAgent[tier] ?? 0) + 1;
     }
-    assert.deepEqual(found, expected, `${svg} tier counts`);
+    assert.deepEqual(perAgent, expected, `${svg} per-agent tier labels`);
+
+    // Legend totals: `>tier (N)<`. Counting only the bare form left these unchecked, which is how
+    // a legend reading "sonnet (9)" survived a pass that fixed every row beneath it.
+    const legend = Object.fromEntries(
+      [...body.matchAll(/>(opus|sonnet|haiku) \((\d+)\)</g)].map(([, tier, n]) => [tier, Number(n)])
+    );
+    if (Object.keys(legend).length) {
+      assert.deepEqual(legend, expected, `${svg} legend totals`);
+    }
   }
 });
