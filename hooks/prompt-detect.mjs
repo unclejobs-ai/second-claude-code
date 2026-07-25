@@ -82,7 +82,14 @@ function writeLastAutoRoute(skill) {
   try {
     const dir = join(DATA_DIR, "soul");
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-    writeFileSync(ROUTE_STATE_FILE, JSON.stringify({ skill, ts: new Date().toISOString() }), "utf8");
+    // Command dispatches arrive as "/plugin:command" while the correction check compares against a
+    // slash-stripped name. Normalize on the way in, or following the suggestion logs a correction.
+    const normalized = String(skill ?? "").replace(/^\//, "");
+    writeFileSync(
+      ROUTE_STATE_FILE,
+      JSON.stringify({ skill: normalized, ts: new Date().toISOString() }),
+      "utf8"
+    );
   } catch {
     // Non-fatal
   }

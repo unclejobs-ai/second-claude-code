@@ -306,7 +306,7 @@ test("handleOrchestratorRoute maps PDCA plan phase to research plugin", async ()
     const { handleOrchestratorRoute } = await loadHandlers(pluginsDir);
     const result = handleOrchestratorRoute({ phase: "plan" });
     assert.equal(result.intent, "plan");
-    assert.equal(result.dispatch[0].invoke, "Skill: claude-mem-knowledge-agent");
+    assert.equal(result.dispatch[0].invoke, "Skill: claude-mem:knowledge-agent");
   } finally {
     delete process.env.__SCC_TEST_PLUGINS_ROOT;
     rmSync(tmp, { recursive: true, force: true });
@@ -360,7 +360,7 @@ test("handleOrchestratorRoute sends Korean review intent to CodeRabbit code-revi
     const { handleOrchestratorRoute } = await loadHandlers(pluginsDir);
     const result = handleOrchestratorRoute({ keyword: "\uB9AC\uBDF0\uD574\uC918" });
     assert.equal(result.intent, "review");
-    assert.equal(result.dispatch[0].invoke, "Skill: coderabbit-code-review");
+    assert.equal(result.dispatch[0].invoke, "Skill: coderabbit:code-review");
   } finally {
     delete process.env.__SCC_TEST_PLUGINS_ROOT;
     rmSync(tmp, { recursive: true, force: true });
@@ -409,7 +409,7 @@ test("handleOrchestratorRoute sends design improvement intent to frontend-design
     const { handleOrchestratorRoute } = await loadHandlers(pluginsDir);
     const result = handleOrchestratorRoute({ keyword: "\uB514\uC790\uC778 \uAC1C\uC120\uD574\uC918" });
     assert.equal(result.intent, "frontend-design");
-    assert.equal(result.dispatch[0].invoke, "Skill: frontend-design-frontend-design");
+    assert.equal(result.dispatch[0].invoke, "Skill: frontend-design:frontend-design");
   } finally {
     delete process.env.__SCC_TEST_PLUGINS_ROOT;
     rmSync(tmp, { recursive: true, force: true });
@@ -434,7 +434,7 @@ test("handleOrchestratorRoute sends Korean research intent to claude-mem knowled
     const { handleOrchestratorRoute } = await loadHandlers(pluginsDir);
     const result = handleOrchestratorRoute({ keyword: "\uC870\uC0AC\uD574\uC918" });
     assert.equal(result.intent, "memory-research");
-    assert.equal(result.dispatch[0].invoke, "Skill: claude-mem-knowledge-agent");
+    assert.equal(result.dispatch[0].invoke, "Skill: claude-mem:knowledge-agent");
   } finally {
     delete process.env.__SCC_TEST_PLUGINS_ROOT;
     rmSync(tmp, { recursive: true, force: true });
@@ -458,7 +458,7 @@ test("handleOrchestratorRoute routes strong generic match to installed plugin sk
     const { handleOrchestratorRoute } = await loadHandlers(pluginsDir);
     const result = handleOrchestratorRoute({ keyword: "posthog event analysis" });
     assert.equal(result.intent, "generic");
-    assert.equal(result.dispatch[0].invoke, "Skill: posthog-exploring-autocapture-events");
+    assert.equal(result.dispatch[0].invoke, "Skill: posthog:exploring-autocapture-events");
   } finally {
     delete process.env.__SCC_TEST_PLUGINS_ROOT;
     rmSync(tmp, { recursive: true, force: true });

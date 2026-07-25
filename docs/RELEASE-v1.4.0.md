@@ -32,8 +32,8 @@ The behavioral change is front-loaded routing: installed plugin capabilities are
 - **Runtime plugin discovery**: `hooks/lib/plugin-discovery.mjs` scans installed plugins, skills, commands, agents, and MCP declarations from the filesystem.
 - **Intent scoring**: `getDispatchPlan()` normalizes keywords and PDCA phases, scores plugin capabilities, applies preferred-plugin boosts, and returns ranked `Skill:` or slash-command invocation strings.
 - **Prompt-level external dispatch**: `hooks/prompt-detect.mjs` injects an `[ORCHESTRATOR]` instruction when an installed external capability should run before Second Claude self-processing.
-- **PDCA phase routing**: Plan routes to `Skill: claude-mem-knowledge-agent`, Do to `Skill: frontend-design-frontend-design`, Check to `Skill: coderabbit-code-review`, and Act to `/commit-commands:commit` when those plugins are installed and win scoring.
-- **Direct plugin matching**: strong generic plugin matches work outside the built-in lifecycle intents, such as `posthog event analysis` -> `Skill: posthog-exploring-autocapture-events`.
+- **PDCA phase routing**: Plan routes to `Skill: claude-mem:knowledge-agent`, Do to `Skill: frontend-design:frontend-design`, Check to `Skill: coderabbit:code-review`, and Act to `/commit-commands:commit` when those plugins are installed and win scoring.
+- **Direct plugin matching**: strong generic plugin matches work outside the built-in lifecycle intents, such as `posthog event analysis` -> `Skill: posthog:exploring-autocapture-events`.
 - **Short-keyword guard**: boundary checks prevent accidental matches from tiny tokens embedded inside longer words.
 - **Soul feedback binding**: session-start now surfaces readiness, retro/shipping signal, and progress context through the soul feedback loop.
 
@@ -52,7 +52,7 @@ The `pdca-state` server now exposes **31 MCP tools**:
 
 - `npm test`: 367 tests, 366 passing, 1 skipped.
 - Verified against 14 real Claude Code plugins, 67 discovered skills, and 3 MCP servers.
-- `orchestrator_route phase=check` dispatches to `Skill: coderabbit-code-review`.
+- `orchestrator_route phase=check` dispatches to `Skill: coderabbit:code-review`.
 - `orchestrator_route phase=act` dispatches to `/commit-commands:commit`.
 - Prompt detection routes Korean review, commit, design, and research prompts to external capabilities before internal fallback.
 

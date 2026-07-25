@@ -609,11 +609,11 @@ agents/*.md                 → 에이전트명
 
 | 입력 | 의도 | 현재 검증된 플러그인 세트의 1순위 디스패치 |
 |------|------|--------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit-code-review` |
+| `phase=plan` | `plan` | `Skill: claude-mem:knowledge-agent` |
+| `phase=do` | `frontend-design` | `Skill: frontend-design:frontend-design` |
+| `phase=check` | `review` | `Skill: coderabbit:code-review` |
 | `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
+| `posthog event analysis` | `generic` | `Skill: posthog:exploring-autocapture-events` |
 
 자주 쓰는 생명주기 의도는 preferred-plugin 점수로 안정화하고, 일반 프롬프트도 설치된 플러그인 skill/command 텍스트와 강하게 맞으면 외부 capability가 이깁니다. 짧은 키워드는 단어 경계 기반으로만 매칭해서 `bug`가 `debugging` 안에 들어 있다는 이유로 잘못 라우팅되지 않게 했어요.
 
@@ -624,7 +624,7 @@ agents/*.md                 → 에이전트명
   ↓
 prompt-detect 훅 (UserPromptSubmit)
   ├── getDispatchPlan(keyword="리뷰해줘") 호출
-  ├── 1순위 디스패치: Skill: coderabbit-code-review
+  ├── 1순위 디스패치: Skill: coderabbit:code-review
   └── [ORCHESTRATOR] 주입: 자체 처리 전 해당 Skill 호출
   ↓
 외부 플러그인 결과 반환
@@ -638,7 +638,7 @@ Claude가 결과를 최종 답변에 통합
 PDCA Check 페이즈 진입
   ├── orchestrator_route phase=check
   ├── 탐지 결과: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── 자동 디스패치: "Skill: coderabbit-code-review"
+  └── 자동 디스패치: "Skill: coderabbit:code-review"
   ↓
 결과 반환 → PDCA Act 페이즈로
   ├── orchestrator_route phase=act
@@ -666,9 +666,9 @@ mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
 예전의 수동적인 "Plugin Orchestrator" 목록 대신 **Active Plugin Dispatch** 섹션이 들어갑니다. 설치된 플러그인 기준으로 페이즈별 1순위 디스패치를 미리 보여줘요.
 
 ```
-📋 plan → Skill: claude-mem-knowledge-agent
-🔨 do → Skill: frontend-design-frontend-design
-🔍 check → Skill: coderabbit-code-review
+📋 plan → Skill: claude-mem:knowledge-agent
+🔨 do → Skill: frontend-design:frontend-design
+🔍 check → Skill: coderabbit:code-review
 🚀 act → /commit-commands:commit
 ```
 

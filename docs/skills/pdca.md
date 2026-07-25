@@ -5,7 +5,7 @@
 ## What's New in v1.4.0
 
 - **Cross-plugin phase dispatch** — PDCA phases now route through the installed plugin ecosystem when a stronger external capability is available.
-- **Verified phase top picks** — Plan → `Skill: claude-mem-knowledge-agent`, Do → `Skill: frontend-design-frontend-design`, Check → `Skill: coderabbit-code-review`, Act → `/commit-commands:commit`.
+- **Verified phase top picks** — Plan → `Skill: claude-mem:knowledge-agent`, Do → `Skill: frontend-design:frontend-design`, Check → `Skill: coderabbit:code-review`, Act → `/commit-commands:commit`.
 - **Prompt-level external dispatch** — `prompt-detect` calls `getDispatchPlan()` before internal fallback. Strong external matches such as `posthog event analysis` dispatch to the installed plugin first.
 - **No hardcoded plugin registry** — plugin capabilities are discovered from `~/.claude/plugins/` at runtime and converted into exact `Skill:` / slash-command invocation strings.
 - **Short-keyword safety** — boundary checks prevent small keyword overmatches, such as `bug` accidentally matching inside `debugging`.
@@ -39,11 +39,11 @@ Research and write a report on AI agent frameworks
 ```
 
 **Process:**
-1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem-knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
+1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
 2. **Plan→Do Gate**: Verifies research brief with 3+ sources and analysis artifact.
-3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design-frontend-design` when that plugin is the stronger match.
+3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
-5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit-code-review` when installed.
+5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit:code-review` when installed.
 6. **Check→Act Gate**: APPROVED → ship. Others → Action Router.
 7. **Act**: Action Router classifies findings by root cause. Shipping prompts prefer `/commit-commands:commit` when installed:
    - Source/assumption gaps → back to **Plan**

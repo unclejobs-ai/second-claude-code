@@ -74,7 +74,7 @@ Second Claude Code는 제어 루프입니다. v1.5.x에서는 막힌 URL을 풀�
 
 **크로스-플러그인 오케스트레이터** — 이제 Second Claude Code가 당신의 Claude Code에 설치된 *모든* 플러그인을 실시간으로 찾아내고 명령합니다.
 
-"코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit-code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅. "posthog event analysis"처럼 특정 플러그인 의도가 강하면 설치된 PostHog 스킬 `Skill: posthog-exploring-autocapture-events`가 먼저 잡힙니다.
+"코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit:code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅. "posthog event analysis"처럼 특정 플러그인 의도가 강하면 설치된 PostHog 스킬 `Skill: posthog:exploring-autocapture-events`가 먼저 잡힙니다.
 
 하드코딩된 레지스트리 없음. 수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐. 유지보수 제로.
 
@@ -96,7 +96,7 @@ graph LR
 - **MCP 도구 4종 신규** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
 - **런타임 플러그인 탐지** — 세션 시작 시 `~/.claude/plugins/` 스캔, 파일시스템에서 capability map 자동 구축 (설정 불필요)
 - **동적 디스패치 가이드** — `prompt-detect`가 실시간 플러그인 라우팅 테이블과 정확한 `Skill:` / 슬래시 커맨드 호출 문자열을 주입
-- **PDCA 페이즈 자동 라우팅** — plan → `claude-mem-knowledge-agent`, do → `frontend-design-frontend-design`, check → `coderabbit-code-review`, act → `/commit-commands:commit`
+- **PDCA 페이즈 자동 라우팅** — plan → `claude-mem:knowledge-agent`, do → `frontend-design:frontend-design`, check → `coderabbit:code-review`, act → `/commit-commands:commit`
 - **직접 플러그인 매칭 라우팅** — 설치된 플러그인 스킬/커맨드와 강하게 맞는 자연어 프롬프트는 자체 처리보다 외부 capability를 먼저 호출
 - **소울 피드백 바인딩** — 시각적 진행 게이지, git shipping 메트릭(`soul_retro`), synthesis 준비도, retro 트렌드 감지
 - **367개 테스트** (366개 통과, 0개 실패, 1개 스킵) — 실제 14개 플러그인 / 67개 스킬 / 3개 MCP 서버로 검증 완료

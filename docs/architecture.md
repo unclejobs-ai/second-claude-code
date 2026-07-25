@@ -587,11 +587,11 @@ No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls 
 
 | Input | Intent | Current top dispatch with the verified plugin set |
 |-------|--------|---------------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design-frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit-code-review` |
+| `phase=plan` | `plan` | `Skill: claude-mem:knowledge-agent` |
+| `phase=do` | `frontend-design` | `Skill: frontend-design:frontend-design` |
+| `phase=check` | `review` | `Skill: coderabbit:code-review` |
 | `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog-exploring-autocapture-events` |
+| `posthog event analysis` | `generic` | `Skill: posthog:exploring-autocapture-events` |
 
 Preferred-plugin scoring keeps common lifecycle intents stable, while generic scoring still lets newly installed plugins win when their skill or command text strongly matches the prompt. Short keywords use word-boundary checks so `bug` does not accidentally match `debugging`.
 
@@ -604,7 +604,7 @@ User types "리뷰해줘"
   ↓
 prompt-detect hook (UserPromptSubmit)
   ├── Calls getDispatchPlan(keyword="리뷰해줘")
-  ├── Top dispatch: Skill: coderabbit-code-review
+  ├── Top dispatch: Skill: coderabbit:code-review
   └── Injects [ORCHESTRATOR]: invoke that Skill before self-processing
   ↓
 External plugin result returns
@@ -618,7 +618,7 @@ PDCA still uses the same dispatcher when a full cycle enters a phase:
 PDCA enters Check phase
   ├── orchestrator_route phase=check
   ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── Auto-dispatches top pick: "Skill: coderabbit-code-review"
+  └── Auto-dispatches top pick: "Skill: coderabbit:code-review"
   ↓
 Result returned → PDCA proceeds to Act phase
   ├── orchestrator_route phase=act
@@ -647,9 +647,9 @@ The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin 
 
 ```
 ## Active Plugin Dispatch
-📋 plan → Skill: claude-mem-knowledge-agent
-🔨 do → Skill: frontend-design-frontend-design
-🔍 check → Skill: coderabbit-code-review
+📋 plan → Skill: claude-mem:knowledge-agent
+🔨 do → Skill: frontend-design:frontend-design
+🔍 check → Skill: coderabbit:code-review
 🚀 act → /commit-commands:commit
 ```
 

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
@@ -270,7 +270,7 @@ test("external dispatch: Korean review prompt routes to coderabbit before intern
   try {
     const output = runPrompt("리뷰해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for review/);
-    assert.match(output, /coderabbit-code-review/);
+    assert.match(output, /coderabbit:code-review/);
     assert.doesNotMatch(output, /scc:review/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
@@ -310,7 +310,7 @@ test("external dispatch: design improvement prompt routes to frontend-design", (
   try {
     const output = runPrompt("디자인 개선해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for frontend-design/);
-    assert.match(output, /frontend-design-frontend-design/);
+    assert.match(output, /frontend-design:frontend-design/);
     assert.doesNotMatch(output, /scc:refine/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
@@ -331,7 +331,7 @@ test("external dispatch: Korean research prompt routes to claude-mem knowledge-a
   try {
     const output = runPrompt("조사해줘", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for memory-research/);
-    assert.match(output, /claude-mem-knowledge-agent/);
+    assert.match(output, /claude-mem:knowledge-agent/);
     assert.doesNotMatch(output, /scc:research/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
@@ -351,7 +351,7 @@ test("external dispatch: strong generic match routes to installed plugin skill",
   try {
     const output = runPrompt("posthog event analysis", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.match(output, /External capability selected for generic/);
-    assert.match(output, /posthog-exploring-autocapture-events/);
+    assert.match(output, /posthog:exploring-autocapture-events/);
     assert.doesNotMatch(output, /scc:/);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
@@ -371,6 +371,44 @@ test("external dispatch: code bug prompt does not match debugging by substring",
   try {
     const output = runPrompt("fix this bug in src/app.js", { __SCC_TEST_PLUGINS_ROOT: pluginsDir });
     assert.doesNotMatch(output, /External capability selected/);
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});
+
+test("following an auto-routed command does not log a routing correction", () => {
+  const { tmp, pluginsDir } = setupPluginsRoot();
+  const commitCommands = createMockPlugin(pluginsDir, "commit-commands", {
+    description: "Git commit helper commands",
+    commands: [{ name: "commit", description: "Create a git commit" }],
+  });
+  writeInstalledPlugins(pluginsDir, [{ id: "commit-commands@test", installPath: commitCommands }]);
+
+  const dataDir = path.join(tmp, "data");
+  mkdirSync(path.join(dataDir, "soul"), { recursive: true });
+  writeFileSync(
+    path.join(dataDir, "soul", "soul-active.json"),
+    JSON.stringify({ mode: "learning" }),
+    "utf8"
+  );
+  const env = { __SCC_TEST_PLUGINS_ROOT: pluginsDir, CLAUDE_PLUGIN_DATA: dataDir };
+
+  try {
+    // The router suggests /commit-commands:commit and records it as the last auto-route.
+    const routed = runPrompt("커밋해줘", env);
+    assert.match(routed, /\/commit-commands:commit/);
+
+    // Obeying that suggestion is agreement, not a correction. The stored route used to keep its
+    // leading slash while the check strips one, so every obedient user logged a false correction.
+    runPrompt("/commit-commands:commit", env);
+
+    const obsDir = path.join(dataDir, "soul", "observations");
+    const logged = existsSync(obsDir)
+      ? readdirSync(obsDir)
+          .flatMap((f) => readFileSync(path.join(obsDir, f), "utf8").split("\n"))
+          .filter((line) => line.includes("routing_correction"))
+      : [];
+    assert.deepEqual(logged, []);
   } finally {
     rmSync(tmp, { recursive: true, force: true });
   }

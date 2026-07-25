@@ -29,13 +29,13 @@ flowchart TB
 
 | 입력 | 의도 | 1순위 디스패치 |
 | --- | --- | --- |
-| `phase=plan` | PDCA Plan | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | PDCA Do | `Skill: frontend-design-frontend-design` |
-| `phase=check` | PDCA Check | `Skill: coderabbit-code-review` |
+| `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |
+| `phase=do` | PDCA Do | `Skill: frontend-design:frontend-design` |
+| `phase=check` | PDCA Check | `Skill: coderabbit:code-review` |
 | `phase=act` | PDCA Act | `/commit-commands:commit` |
-| `코드 리뷰해줘` | 리뷰 lifecycle 의도 | `Skill: coderabbit-code-review` |
+| `코드 리뷰해줘` | 리뷰 lifecycle 의도 | `Skill: coderabbit:code-review` |
 | `커밋해줘` | Act lifecycle 의도 | `/commit-commands:commit` |
-| `posthog event analysis` | 직접 일반 플러그인 매칭 | `Skill: posthog-exploring-autocapture-events` |
+| `posthog event analysis` | 직접 일반 플러그인 매칭 | `Skill: posthog:exploring-autocapture-events` |
 
 짧은 키워드는 단어 경계 검사를 거칩니다. 예를 들어 `bug` 같은 작은 토큰이 `debugging` 안에서 우연히 매칭되는 일을 막습니다.
 
@@ -58,7 +58,7 @@ flowchart LR
 ```text
 [ORCHESTRATOR]
 Invoke this installed plugin capability before self-processing:
-Skill: coderabbit-code-review
+Skill: coderabbit:code-review
 ```
 
 모델은 먼저 해당 외부 스킬 또는 커맨드를 호출하고 결과를 통합해야 합니다. 외부 라우트가 이기지 못하면 기존 PDCA 복합 라우터, 그다음 내부 단일 스킬 라우터로 내려갑니다.

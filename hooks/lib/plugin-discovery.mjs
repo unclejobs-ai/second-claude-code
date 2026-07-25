@@ -577,7 +577,9 @@ export function buildDispatchInstructions(routes) {
     const commands = r.matched_items?.commands || r.commands.map((name) => ({ name, score: r.score || 0 }));
 
     for (const skill of skills) {
-      const name = `${r.plugin}-${skill.name}`;
+      // Plugin skills resolve as `plugin:skill`, the same shape the command branch below builds.
+      // A hyphen here produced unresolvable ids like `frontend-design-frontend-design`.
+      const name = `${r.plugin}:${skill.name}`;
       dispatchInstructions.push({
         plugin: r.plugin,
         name,

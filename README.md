@@ -82,7 +82,7 @@ See `docs/RELEASE-v1.5.0.md` for full release notes and verification.
 
 **Cross-Plugin Orchestrator** — Second Claude Code now discovers and commands *all* your installed Claude Code plugins automatically.
 
-You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit-code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog-exploring-autocapture-events` when that plugin is installed.
+You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit:code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog:exploring-autocapture-events` when that plugin is installed.
 
 No hardcoded registry. No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears. Zero maintenance.
 
@@ -97,14 +97,14 @@ graph LR
     PL --> FD[frontend-design<br/>design]
     PL --> CX[codex<br/>review]
     PL --> AT[agent-teams<br/>team-review]
-    OC --> |dispatch| SK[Skill: plugin-skill]
+    OC --> |dispatch| SK[Skill: plugin:skill]
     SK --> |execute| RS[Result]
 ```
 
 - **4 new MCP tools** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
 - **Runtime plugin discovery** — scans `~/.claude/plugins/` at session start, builds capability map from filesystem (no config)
 - **Dynamic dispatch guide** — `prompt-detect` injects a live plugin routing table and exact `Skill:` / slash-command invocation strings
-- **PDCA phase auto-routing** — plan → `claude-mem-knowledge-agent`, do → `frontend-design-frontend-design`, check → `coderabbit-code-review`, act → `/commit-commands:commit`
+- **PDCA phase auto-routing** — plan → `claude-mem:knowledge-agent`, do → `frontend-design:frontend-design`, check → `coderabbit:code-review`, act → `/commit-commands:commit`
 - **Direct plugin match routing** — strong natural-language matches to installed plugin skills/commands dispatch externally before self-processing
 - **Soul feedback binding** — visual progress gauges, git shipping metrics (`soul_retro`), synthesis readiness, retro trend detection
 - **367 tests** (366 pass, 0 fail, 1 skipped) — verified against 14 real plugins / 67 skills / 3 MCP servers

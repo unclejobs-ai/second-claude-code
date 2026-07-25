@@ -29,13 +29,13 @@ flowchart TB
 
 | Input | Intent | Top dispatch |
 | --- | --- | --- |
-| `phase=plan` | PDCA Plan | `Skill: claude-mem-knowledge-agent` |
-| `phase=do` | PDCA Do | `Skill: frontend-design-frontend-design` |
-| `phase=check` | PDCA Check | `Skill: coderabbit-code-review` |
+| `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |
+| `phase=do` | PDCA Do | `Skill: frontend-design:frontend-design` |
+| `phase=check` | PDCA Check | `Skill: coderabbit:code-review` |
 | `phase=act` | PDCA Act | `/commit-commands:commit` |
-| `코드 리뷰해줘` | review lifecycle intent | `Skill: coderabbit-code-review` |
+| `코드 리뷰해줘` | review lifecycle intent | `Skill: coderabbit:code-review` |
 | `커밋해줘` | act lifecycle intent | `/commit-commands:commit` |
-| `posthog event analysis` | direct generic plugin match | `Skill: posthog-exploring-autocapture-events` |
+| `posthog event analysis` | direct generic plugin match | `Skill: posthog:exploring-autocapture-events` |
 
 Short keyword matches are guarded by word-boundary logic so small terms do not accidentally match inside larger words, such as `bug` inside `debugging`.
 
@@ -58,7 +58,7 @@ For substantive prompts, `prompt-detect` calls `getDispatchPlan()`. If the top m
 ```text
 [ORCHESTRATOR]
 Invoke this installed plugin capability before self-processing:
-Skill: coderabbit-code-review
+Skill: coderabbit:code-review
 ```
 
 The model must then call the external skill or command first and integrate the result. If no external route wins, prompt detection continues to the older PDCA compound router and then the internal single-skill router.
