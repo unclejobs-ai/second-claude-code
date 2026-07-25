@@ -58,6 +58,17 @@
 }
 ```
 
+## Running It in the Background
+
+A workflow does not have to hold your session:
+
+```bash
+claude --bg "/scc:workflow run weekly-digest"
+claude agents        # check on it
+```
+
+`daemon_start_background_run` queues an entry and returns exactly that command as its `handoff`. The queue itself executes nothing — Claude Code's background agents do, and external actions stay gated behind approval in a real conversation. See the README section for why that split is deliberate.
+
 ## Subcommands
 
 | Command | Purpose |

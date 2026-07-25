@@ -724,7 +724,7 @@ Four changes landed in this release:
 
 Three changes landed in this release:
 
-1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing. **The run queue has no executor**: `daemon_start_background_run` writes an entry and it stays `queued`. The substrate is there; nothing drains it.
+1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing. **The run queue has no executor, by design**: `daemon_start_background_run` writes an entry and returns the command that starts it — `claude --bg "/scc:workflow run <name>"`, managed with `claude agents`. Claude Code already ships background agents, and an in-plugin executor would run outside the conversation where consent for external actions is given. The queue records intent and hands it over.
 2. **Project memory layer** — session-start can now surface durable project facts separately from `soul` identity memory.
 3. **Runtime boundary guidance** — the plugin now explicitly documents that standalone agent-runtime ideas can be borrowed without embedding a second runtime.
 

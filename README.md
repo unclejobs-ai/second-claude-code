@@ -592,6 +592,26 @@ Three ideas drive the system's design:
 
 ---
 
+## Running Work in the Background
+
+A long PDCA cycle does not have to hold your session. Queue it, then start it as a background agent:
+
+```bash
+# 1. Queue the run — returns the command that starts it
+#    (MCP: daemon_start_background_run { "workflow_name": "weekly-digest" })
+#    → handoff: claude --bg "/scc:workflow run weekly-digest"
+
+# 2. Run that command, then manage it like any other background agent
+claude --bg "/scc:workflow run weekly-digest"
+claude agents
+```
+
+**The queue does not execute anything, and that is deliberate.** Claude Code already ships background agents — reimplementing them inside a plugin would mean worse lifecycle handling, no crash recovery, and no cost control, for a feature that already exists.
+
+The stronger reason is consent. This plugin gates external actions — publishing to Notion, pushing to GitHub, sending mail — behind explicit approval *in the conversation*. A background executor has no conversation in which to ask. It would either bypass that gate or be unable to do anything worth scheduling. So the queue records the intent and hands you the command; you decide when it runs.
+
+---
+
 ## Skill Composition
 
 Skills call each other. That's where the system becomes more than the sum of its parts.
