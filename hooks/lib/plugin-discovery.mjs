@@ -103,12 +103,42 @@ function textHasKeyword(text, keyword) {
   return text.includes(keyword);
 }
 
+// Which plugin each intent prefers is the one part of routing that is not discovered — it is the
+// table above. That is fine as a default and wrong as a verdict: install a review plugin you like
+// better than the pinned one and it can never win, because the pin is worth +60.
+//
+// A JSON file at `${CLAUDE_PLUGIN_DATA}/plugin-preferences.json` overrides it per intent:
+//   { "review": ["my-reviewer"], "commit": [] }
+// An empty array drops the pin entirely and lets capabilities compete on their own merits.
+let preferenceOverridesCache = null;
+
+function loadPreferenceOverrides() {
+  if (preferenceOverridesCache) return preferenceOverridesCache;
+  const dataDir = process.env.CLAUDE_PLUGIN_DATA;
+  let overrides = {};
+  try {
+    if (dataDir) {
+      const file = join(dataDir, "plugin-preferences.json");
+      if (existsSync(file)) {
+        const parsed = JSON.parse(readFileSync(file, "utf8"));
+        if (parsed && typeof parsed === "object") overrides = parsed;
+      }
+    }
+  } catch {
+    // A malformed override must not take routing down with it — fall back to the defaults.
+  }
+  preferenceOverridesCache = overrides;
+  return overrides;
+}
+
 function makeIntent(name, profile) {
   return {
     name,
     search: profile.search || "",
     keywords: profile.keywords || [],
-    preferred_plugins: profile.preferred_plugins || [],
+    preferred_plugins: Array.isArray(loadPreferenceOverrides()[name])
+      ? loadPreferenceOverrides()[name]
+      : profile.preferred_plugins || [],
     preferred_skills: profile.preferred_skills || [],
     preferred_commands: profile.preferred_commands || [],
     deprioritized_skills: profile.deprioritized_skills || [],

@@ -413,3 +413,35 @@ test("following an auto-routed command does not log a routing correction", () =>
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test("a preference override drops the pin so other plugins can compete", async () => {
+  // INTENT_PROFILES pins review to coderabbit and the pin is worth +60, so a reviewer you prefer
+  // could never outrank it without editing source. An empty override removes the pin, which is
+  // what makes "runtime discovery" true for the one part of routing that is not discovered.
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "scc-prefs-"));
+  try {
+    const score = async (overrides) => {
+      const dataDir = path.join(tmp, overrides ? "with" : "without");
+      mkdirSync(dataDir, { recursive: true });
+      if (overrides) {
+        writeFileSync(path.join(dataDir, "plugin-preferences.json"), JSON.stringify(overrides), "utf8");
+      }
+      const out = execFileSync(
+        process.execPath,
+        ["--input-type=module", "-e",
+         "const m = await import('./hooks/lib/plugin-discovery.mjs');" +
+         "const p = m.getDispatchPlan({keyword:'review this code'});" +
+         "console.log((p.routes||[]).find(r=>r.plugin==='coderabbit')?.score ?? 0);"],
+        { cwd: root, encoding: "utf8", env: { ...process.env, CLAUDE_PLUGIN_DATA: dataDir } }
+      );
+      return Number(out.trim());
+    };
+
+    const pinned = await score(null);
+    const unpinned = await score({ review: [] });
+    if (pinned === 0) return; // coderabbit not installed here — nothing to measure
+    assert.equal(pinned - unpinned, 60, "clearing the override removes exactly the +60 pin");
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

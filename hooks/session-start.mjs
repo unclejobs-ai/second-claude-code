@@ -261,7 +261,7 @@ function main() {
         );
       } else {
         lines.push(
-          "Status: offline — background and scheduled execution are disabled until the daemon heartbeats again."
+          "Status: offline — scheduling is idle. Note that queued background runs never start on their own even when the daemon is online: the queue has no executor."
         );
       }
     }

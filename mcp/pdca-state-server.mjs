@@ -586,7 +586,9 @@ const TOOL_DEFINITIONS = [
   {
     name: "daemon_start_background_run",
     description:
-      "Queue a background workflow run in the daemon substrate. The daemon may execute it later when online.",
+      "Record a background workflow run request. This WRITES A QUEUE ENTRY ONLY — no executor " +
+      "exists, so the run stays `queued` and never starts on its own. Use it to hand a run to a " +
+      "human or an external scheduler, not to fire work in the background.",
     inputSchema: {
       type: "object",
       properties: {

@@ -32,7 +32,9 @@ flowchart TB
 2. **Intent scoring** - `getDispatchPlan()` normalizes a keyword or PDCA phase, scores plugin capabilities, applies preferred-plugin boosts, and returns ranked invocation instructions.
 3. **Prompt dispatch** - `hooks/prompt-detect.mjs` injects an `[ORCHESTRATOR]` block when the top external match is a lifecycle intent or a strong generic plugin match.
 
-**What is discovered vs. what is fixed.** Which plugins exist, and every skill/command/agent inside them, is read from disk at runtime — install one and it appears, remove one and it disappears. What is *not* dynamic is the preference table: `INTENT_PROFILES` in `plugin-discovery.mjs` hardcodes which plugin each lifecycle intent favours (review → `coderabbit`, act → `commit-commands`, design → `frontend-design`, memory/research → `claude-mem`). A newly installed review plugin is discovered and scorable, but it does not inherit the `+60` preferred-plugin boost without an edit there.
+**What is discovered vs. what is fixed.** Which plugins exist, and every skill/command/agent inside them, is read from disk at runtime — install one and it appears, remove one and it disappears. What is *not* dynamic is the preference table: `INTENT_PROFILES` in `plugin-discovery.mjs` hardcodes which plugin each lifecycle intent favours (review → `coderabbit`, act → `commit-commands`, design → `frontend-design`, memory/research → `claude-mem`). A newly installed review plugin is discovered and scorable, but it does not inherit the `+60` preferred-plugin boost by default.
+
+That default is overridable without touching source. Drop a `plugin-preferences.json` into `${CLAUDE_PLUGIN_DATA}` keyed by intent — `{"review": ["my-reviewer"], "commit": []}` — and it replaces the pinned list for that intent. An empty array removes the pin entirely and lets capabilities compete on text match alone. A malformed file is ignored rather than taking routing down.
 
 ## Verified Routes
 
