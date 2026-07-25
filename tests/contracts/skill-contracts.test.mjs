@@ -570,3 +570,21 @@ test("the agent catalog lists every agent, with the tier each one actually decla
   }
   assert.match(doc, new RegExp(`## Current Agents \\(${actual.size}\\)`), "header count");
 });
+
+test("every skill guide exists in both languages", () => {
+  const guides = readdirSync(path.join(root, "docs", "skills")).filter((f) => f.endsWith(".md"));
+  const english = guides.filter((f) => !f.endsWith(".ko.md"));
+  const missing = english
+    .filter((f) => !guides.includes(f.replace(/\.md$/, ".ko.md")))
+    .map((f) => `docs/skills/${f}`);
+  assert.deepEqual(missing, []);
+});
+
+test("the viewer guide names the producer, not just the server", () => {
+  // Both guides described PDCA as writing state.json + artifacts/*.json directly. It never did,
+  // which is why the viewer rendered an empty page — the fix was easy to land in SKILL.md and miss
+  // in the user-facing guide.
+  for (const file of ["docs/skills/viewer.md", "docs/skills/viewer.ko.md"]) {
+    assert.match(read(file), /viewer-session\.mjs/, `${file} should name the producer`);
+  }
+});

@@ -8,7 +8,7 @@
 /scc:viewer
 ```
 
-**What happens:** The skill runs `ui/scripts/start-server.sh` against the current PDCA session directory. The script serves the pre-built viewer UI from `ui/dist`, watches `state.json` and `artifacts/*.json` for changes, and prints a JSON blob with a local URL once the server is ready. Opening that URL in a browser renders each artifact -- markdown, charts, code, flow diagrams -- and updates live over WebSocket as the pipeline writes new artifacts.
+**What happens:** The skill first runs `scripts/viewer-session.mjs`, which builds the session directory from the run, then runs `ui/scripts/start-server.sh` against it. The script serves the pre-built viewer UI from `ui/dist`, watches `state.json` and `artifacts/*.json` for changes, and prints a JSON blob with a local URL once the server is ready. Opening that URL in a browser renders each artifact -- markdown, charts, code, flow diagrams -- and updates live over WebSocket as the pipeline writes new artifacts.
 
 ## Real-World Example
 
@@ -51,7 +51,7 @@ The AI agent market report cycle just finished -- show me the artifacts
 
 ```mermaid
 graph TD
-    A[PDCA pipeline writes state.json + artifacts/*.json] --> C[server.cjs watches the session directory]
+    A[viewer-session.mjs projects .data into state.json + artifacts/*.json] --> C[server.cjs watches the session directory]
     B[start-server.sh launches server.cjs] --> C
     C --> D[Changes broadcast over WebSocket]
     D --> E[Browser renders artifacts -- markdown, charts, code, flow diagrams]
@@ -96,7 +96,7 @@ Each PDCA session lives in its own directory:
 
 - **Port already in use** -- If `--port` collides with another process, the server fails to bind and `start-server.sh` returns `{"ok":false,"status":"failed",...}` with the error tail from `state/server.log`. Retry with a different `--port`.
 - **Server never starts (timeout)** -- `start-server.sh` polls for `state/server-info` for about 5 seconds; if it never appears, it returns `{"ok":false,"status":"timeout",...}`. Check `state/server.log` in the session directory for the underlying error.
-- **Blank page after opening the URL** -- The session directory has no `state.json` or nothing under `artifacts/`. Confirm the PDCA pipeline has actually written output there.
+- **Blank page after opening the URL** -- The session directory has no `state.json` or nothing under `artifacts/`. PDCA writes `.data/state` and `.data/cycles/`, not this layout, so run `scripts/viewer-session.mjs` first; skipping it is the usual cause.
 - **Viewer stopped responding** -- If the browser was idle for 30 minutes, the server auto-stopped. Re-run `start-server.sh` for the same session directory -- it's a no-op if a server is already running, or starts a fresh one otherwise. To stop it explicitly: `bash ui/scripts/stop-server.sh --session-dir "<session-dir>"`.
 
 ## Works With

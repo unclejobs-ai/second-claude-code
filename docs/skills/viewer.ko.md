@@ -10,7 +10,7 @@
 /scc:viewer
 ```
 
-**동작 방식:** 현재 PDCA 세션 디렉터리를 대상으로 `ui/scripts/start-server.sh`를 실행합니다. 이 스크립트는 미리 빌드된 뷰어 UI(`ui/dist`)를 서빙하면서 `state.json`과 `artifacts/*.json`의 변경을 감시하고, 서버가 준비되면 로컬 URL이 담긴 JSON을 출력합니다. 이 URL을 브라우저에서 열면 마크다운, 차트, 코드, 플로우 다이어그램 등 각 아티팩트가 렌더링되고, 파이프라인이 새 아티팩트를 기록할 때마다 WebSocket을 통해 화면이 실시간으로 갱신됩니다.
+**동작 방식:** 먼저 `scripts/viewer-session.mjs`가 이번 런으로 세션 디렉터리를 만들고, 그다음 그 디렉터리를 대상으로 `ui/scripts/start-server.sh`를 실행합니다. 이 스크립트는 미리 빌드된 뷰어 UI(`ui/dist`)를 서빙하면서 `state.json`과 `artifacts/*.json`의 변경을 감시하고, 서버가 준비되면 로컬 URL이 담긴 JSON을 출력합니다. 이 URL을 브라우저에서 열면 마크다운, 차트, 코드, 플로우 다이어그램 등 각 아티팩트가 렌더링되고, 파이프라인이 새 아티팩트를 기록할 때마다 WebSocket을 통해 화면이 실시간으로 갱신됩니다.
 
 ## 실전 예시
 
@@ -53,7 +53,7 @@ AI 에이전트 시장 리포트 사이클이 방금 끝났어 -- 아티팩트 �
 
 ```mermaid
 graph TD
-    A[PDCA 파이프라인이 state.json + artifacts/*.json 기록] --> C[server.cjs가 세션 디렉터리 감시]
+    A[viewer-session.mjs가 .data를 state.json + artifacts/*.json로 투영] --> C[server.cjs가 세션 디렉터리 감시]
     B[start-server.sh가 server.cjs 실행] --> C
     C --> D[변경사항을 WebSocket으로 브로드캐스트]
     D --> E[브라우저가 아티팩트 렌더링 -- 마크다운, 차트, 코드, 플로우 다이어그램]
@@ -98,7 +98,7 @@ PDCA 세션마다 다음과 같은 자체 디렉터리를 가집니다.
 
 - `--port`로 지정한 포트가 이미 사용 중이면 서버가 바인딩에 실패하고, `start-server.sh`는 `state/server.log`의 에러 내용을 담아 `{"ok":false,"status":"failed",...}`를 반환합니다. 다른 `--port` 값으로 다시 시도합니다.
 - `start-server.sh`는 약 5초 정도 `state/server-info` 생성을 기다립니다. 그 안에 생성되지 않으면 `{"ok":false,"status":"timeout",...}`를 반환하니, 세션 디렉터리의 `state/server.log`에서 실제 에러를 확인합니다.
-- URL을 열었는데 빈 화면만 보인다면 세션 디렉터리에 `state.json`이 없거나 `artifacts/` 아래 파일이 없는 경우입니다. PDCA 파이프라인이 실제로 결과물을 기록했는지 먼저 확인합니다.
+- URL을 열었는데 빈 화면만 보인다면 세션 디렉터리에 `state.json`이 없거나 `artifacts/` 아래 파일이 없는 경우입니다. PDCA는 이 레이아웃이 아니라 `.data/state`와 `.data/cycles/`에 기록하므로, `scripts/viewer-session.mjs`를 먼저 돌려야 합니다. 이걸 건너뛴 게 대부분의 원인입니다.
 - 브라우저를 30분 이상 방치하면 서버가 자동 종료됩니다. 같은 세션 디렉터리로 `start-server.sh`를 다시 실행하면 서버가 살아있을 때는 그대로 재사용하고, 죽어있을 때는 새로 띄웁니다. 수동으로 끄려면 `bash ui/scripts/stop-server.sh --session-dir "<세션 경로>"`를 실행합니다.
 
 ## 연동 스킬
