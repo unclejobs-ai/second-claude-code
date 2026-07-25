@@ -128,3 +128,22 @@ test("review numbers become a kpi artifact when a review has run", () => {
     rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test("a run_id that would escape the sessions tree is refused", () => {
+  // The default session directory is derived from a value read off disk. Dropping the id from the
+  // path would fix traversal by collapsing every run into one directory — validate instead.
+  const tmp = makeDataDir({ extra: { run_id: "../../escaped" } });
+  try {
+    assert.throws(
+      () =>
+        execFileSync(process.execPath, [script, "--data-dir", path.join(tmp, "data")], {
+          cwd: root,
+          encoding: "utf8",
+          stdio: "pipe",
+        }),
+      /not usable as a directory name/
+    );
+  } finally {
+    rmSync(tmp, { recursive: true, force: true });
+  }
+});

@@ -129,7 +129,14 @@ function main() {
     fail(`cannot read ${statePath}: ${cause.message}`);
   }
 
+  // run_id reaches us from a JSON file, and the default session directory is built from it, so a
+  // value like "../.." would write outside the sessions tree. The pipeline generates UUIDs, so an
+  // allowlist costs nothing — and dropping the id from the path instead would collapse every run
+  // into one directory, which is the isolation the viewer depends on.
   const runId = state.run_id ?? "unknown-run";
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*$/.test(runId)) {
+    fail(`run_id ${JSON.stringify(runId)} is not usable as a directory name — pass --session-dir`);
+  }
   const sessionDir = args.sessionDir ?? join(".scc", "sessions", runId);
   const artifactsDir = join(sessionDir, "artifacts");
   mkdirSync(artifactsDir, { recursive: true });
