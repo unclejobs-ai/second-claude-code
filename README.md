@@ -26,10 +26,11 @@ This isn't a coding assistant. It's a work OS — it runs the full knowledge-wor
 
 ```mermaid
 flowchart TB
-    U[One user prompt] --> R[Prompt router]
-    R --> O{External plugin wins?}
-    O -->|yes| E[Installed plugin capability]
-    O -->|no| P[Second Claude PDCA]
+    U[One user prompt] --> R{Spans phases?}
+    R -->|"yes — 'research and write'"| P[Second Claude PDCA]
+    R -->|"no — one job"| O{Specialist plugin installed?}
+    O -->|yes| E[That plugin handles it]
+    O -->|no| P
     E --> P
     P --> PLAN[Plan: research and analyze]
     PLAN --> DO[Do: write or build]
@@ -38,7 +39,41 @@ flowchart TB
     ACT --> OUT[Finished artifact plus cycle memory]
 ```
 
-Second Claude Code is the control loop. The orchestrator hands a single-purpose prompt to an installed plugin when one is a stronger fit — "코드 리뷰해줘" goes to `coderabbit` rather than the built-in reviewer. A prompt that spans phases ("알아보고 써줘") is claimed by PDCA before any plugin is consulted, because the cycle is the thing that adds the review and the correction loop.
+Second Claude Code is the control loop.
+
+---
+
+## What You Get With Nothing Else Installed
+
+**Everything below runs on this plugin alone.** No other plugin, no API key, no service.
+
+| | |
+|---|---|
+| **It refuses its own output** | Five reviewers with distinct lenses attack every draft — logic, weak points, facts, voice, structure. A review that returns zero findings is treated as a rubber stamp, not a pass. |
+| **Failures route by cause** | A thin brief goes back to Plan. A botched execution goes back to Do. A rough edge goes to Refine. Not everything is a "try again". |
+| **Gates are checks, not vibes** | Plan cannot reach Do without 5 distinct sources and an approved plan. Do cannot reach Check without a complete artifact. Each gate names what is missing. |
+| **It learns your voice** | `SOUL.md` holds your tone rules and anti-patterns, and the tone reviewer enforces them against your writing, not a generic style guide. |
+| **The run leaves a record** | Which gates fired, what each reviewer caught, every re-entry and why. Exportable as one shareable page. |
+
+The point is not that it writes. It is that **it will not let itself hand you the first draft.**
+
+### Installed plugins make it faster, not functional
+
+If you happen to have `coderabbit`, `commit-commands`, or `frontend-design` installed, single-purpose prompts route there instead of to the built-in equivalent — a specialist beats a generalist at its one job.
+
+**If you have none of them, nothing degrades.** The orchestrator finds no external match and the built-in reviewers, writer, and committer handle it. Cross-plugin dispatch is an accelerant on top of a complete system, not a dependency.
+
+```mermaid
+flowchart LR
+    P["단일 목적 프롬프트<br/>single-purpose prompt"] --> Q{"전문 플러그인 있음?<br/>specialist installed?"}
+    Q -->|yes| E["그 플러그인이 처리<br/>specialist handles it"]
+    Q -->|no| B["SCC 자체 처리<br/>SCC's own reviewers"]
+    E --> R["결과<br/>result"]
+    B --> R
+
+    style B fill:#d3f9d8,stroke:#2f9e44
+    style E fill:#e7f5ff,stroke:#1971c2
+```
 
 ---
 
@@ -80,7 +115,7 @@ See `docs/RELEASE-v1.5.0.md` for full release notes and verification.
 
 ## What's New in v1.4.0
 
-**Cross-Plugin Orchestrator** — Second Claude Code now discovers and commands *all* your installed Claude Code plugins automatically.
+**Cross-Plugin Orchestrator** — Second Claude Code discovers and commands whatever Claude Code plugins you already have. Purely additive: with none installed, the built-in equivalents run instead.
 
 You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit:code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog:exploring-autocapture-events` when that plugin is installed.
 

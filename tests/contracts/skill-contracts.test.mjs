@@ -588,3 +588,22 @@ test("the viewer guide names the producer, not just the server", () => {
     assert.match(read(file), /viewer-session\.mjs/, `${file} should name the producer`);
   }
 });
+
+test("roster diagrams show the tier distribution the agents actually declare", () => {
+  // review-flow.svg and agent-roster.svg have each drifted from agents/ at least once. A diagram
+  // that is merely out of date still reads as authoritative, so the counts are pinned here.
+  const expected = {};
+  for (const file of readdirSync(path.join(root, "agents")).filter((f) => f.endsWith(".md"))) {
+    const model = read(path.join("agents", file)).match(/^model:\s*(.+)$/m)?.[1]?.trim();
+    if (model) expected[model] = (expected[model] ?? 0) + 1;
+  }
+
+  for (const svg of ["docs/images/agent-roster.svg", "docs/images/agent-roster.ko.svg"]) {
+    const body = read(svg);
+    const found = {};
+    for (const [, tier] of body.matchAll(/>(opus|sonnet|haiku)</g)) {
+      found[tier] = (found[tier] ?? 0) + 1;
+    }
+    assert.deepEqual(found, expected, `${svg} tier counts`);
+  }
+});
