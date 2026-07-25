@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "PDCA-native Knowledge Work OS with Cross-Plugin Orchestrator — 18 skills, 17 Pokemon agents, 31 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Code Engineering Lane, and zero-key adaptive fetch",
-    "version": "1.5.2"
+    "version": "2.0.0"
   },
   "plugins": [
     {
       "name": "scc",
       "source": "./",
       "description": "PDCA-native Knowledge Work OS with Cross-Plugin Orchestrator — 18 skills, 17 Pokemon agents, 31 MCP tools, Artifact Viewer, Cycle Memory with Self-Evolution, Code Engineering Lane, and zero-key adaptive fetch",
-      "version": "1.5.2",
+      "version": "2.0.0",
       "author": {
         "name": "unclejobs-ai"
       },

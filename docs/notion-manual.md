@@ -212,4 +212,4 @@ Yes. The `write` skill targets 3,000+ words for articles, 4,000+ words for repor
 
 ---
 
-*Version 1.5.2 | MIT License*
+*Version 2.0.0 | MIT License*
