@@ -588,3 +588,33 @@ test("the viewer guide names the producer, not just the server", () => {
     assert.match(read(file), /viewer-session\.mjs/, `${file} should name the producer`);
   }
 });
+
+test("roster diagrams show the tier distribution the agents actually declare", () => {
+  // review-flow.svg and agent-roster.svg have each drifted from agents/ at least once. A diagram
+  // that is merely out of date still reads as authoritative, so the counts are pinned here.
+  const expected = {};
+  for (const file of readdirSync(path.join(root, "agents")).filter((f) => f.endsWith(".md"))) {
+    const model = read(path.join("agents", file)).match(/^model:\s*(.+)$/m)?.[1]?.trim();
+    if (model) expected[model] = (expected[model] ?? 0) + 1;
+  }
+
+  for (const svg of ["docs/images/agent-roster.svg", "docs/images/agent-roster.ko.svg"]) {
+    const body = read(svg);
+
+    // Per-agent labels: one `>tier<` per row.
+    const perAgent = {};
+    for (const [, tier] of body.matchAll(/>(opus|sonnet|haiku)</g)) {
+      perAgent[tier] = (perAgent[tier] ?? 0) + 1;
+    }
+    assert.deepEqual(perAgent, expected, `${svg} per-agent tier labels`);
+
+    // Legend totals: `>tier (N)<`. Counting only the bare form left these unchecked, which is how
+    // a legend reading "sonnet (9)" survived a pass that fixed every row beneath it.
+    const legend = Object.fromEntries(
+      [...body.matchAll(/>(opus|sonnet|haiku) \((\d+)\)</g)].map(([, tier, n]) => [tier, Number(n)])
+    );
+    if (Object.keys(legend).length) {
+      assert.deepEqual(legend, expected, `${svg} legend totals`);
+    }
+  }
+});

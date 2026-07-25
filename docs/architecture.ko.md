@@ -404,7 +404,7 @@ stateDiagram-v2
 - Act → Plan 복귀 시에는 질문을 건너뛰어요 (리서치 갭이 이미 식별된 상태)
 
 페이즈 게이트 체크리스트는 `skills/pdca/references/`에 있어요.
-`hooks/prompt-detect.mjs` 자동 라우터는 먼저 설치된 외부 플러그인 capability를 점수화합니다. 강한 외부 매칭이 있으면 자체 처리 전에 해당 Skill/command를 호출하라는 `[ORCHESTRATOR]` 지시를 주입해요. 외부 매칭이 없으면 PDCA 복합 레이어가 다중 페이즈 의도(예: "알아보고 써줘")를 감지해 `/scc:pdca`로 라우팅하고, 그다음 단일 스킬 매칭으로 내려갑니다.
+`hooks/prompt-detect.mjs` 자동 라우터는 **PDCA 복합 레이어를 먼저 태웁니다.** 다중 페이즈 의도(예: "알아보고 써줘")를 감지하면 `/scc:pdca`로 보내고 거기서 반환해요 — 외부 플랜은 계산되지 않습니다. 단일 목적 프롬프트만 아래로 내려가 단일 스킬 매칭과 외부 capability 점수화를 거치고, 강한 외부 매칭이 있으면 `[ORCHESTRATOR]` 지시가 주입돼 내장 선택을 제칩니다.
 
 ---
 
