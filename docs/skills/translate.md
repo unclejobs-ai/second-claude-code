@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:translate --input docs/skills/collect.md --target ko
+/scc:translate --input docs/skills/collect.md --target ko
 ```
 
 **What happens:** The skill detects English as the source (Korean target set explicitly), defaults to `natural` style and `preserve` format, loads `references/glossary.md` for terminology, dispatches Smeargle to draft the Korean version, dispatches Ditto to QA it for accuracy and formatting, then auto-saves the result.

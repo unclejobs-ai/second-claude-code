@@ -3,7 +3,7 @@ description: "Do/Produce phase -- newsletter, article, shorts, report, social"
 argument-hint: article "the future of vibe coding"
 ---
 
-Invoke the `/second-claude-code:write` command to produce content through the `write` skill.
+Invoke the `/scc:write` command to produce content through the `write` skill.
 
 ## Context
 - Recent captures: !`ls .captures/*.md 2>/dev/null | tail -3`

@@ -15,7 +15,7 @@ It does NOT research (Plan did that) and does NOT review (Check will do that).
 ## Pure Execution Principle
 
 Do phase skills run in **stripped mode**:
-- `/second-claude-code:write --skip-research --skip-review` — No internal research or review
+- `/scc:write --skip-research --skip-review` — No internal research or review
 - Plan already gathered data; Check will verify quality
 - This prevents duplicate work and keeps phase boundaries clean
 
@@ -31,10 +31,10 @@ PDCA's Do phase is **always** implemented by dispatching one sub-skill. The orch
 | Korean tech newsletter | `/newsletter` | Full 7-phase pipeline | research → draft → edit → publish (Notion/Beehiiv) |
 | Shorts script (60-90s, 9:16, 릴스/Reels) | `/academy-shorts` | Full pipeline | research → script → editor → MMBridge review |
 | Card news (carousel, 캐러셀, 인스타 카드) | `/card-news` | Template render pipeline | template → render (Playwright) → preview |
-| Generic article / report / blog post / decision doc | `/second-claude-code:write --skip-research --skip-review` | Pure execution from Plan artifacts | Single-pass write using research brief and analysis |
-| Different framework analysis (SWOT, Porter, OKR, RICE) | `/second-claude-code:analyze` | Framework execution | Apply named framework to Plan inputs |
-| Pre-defined multi-step workflow | `/second-claude-code:workflow` | Pipeline replay | Run a saved pipeline definition |
-| Code change / PR / refactor | `/second-claude-code:write --format code` then `/second-claude-code:review --preset code` | Two-step | Write code, then immediate review |
+| Generic article / report / blog post / decision doc | `/scc:write --skip-research --skip-review` | Pure execution from Plan artifacts | Single-pass write using research brief and analysis |
+| Different framework analysis (SWOT, Porter, OKR, RICE) | `/scc:analyze` | Framework execution | Apply named framework to Plan inputs |
+| Pre-defined multi-step workflow | `/scc:workflow` | Pipeline replay | Run a saved pipeline definition |
+| Code change / PR / refactor | `/scc:write --format code` then `/scc:review --preset code` | Two-step | Write code, then immediate review |
 
 ### Selection Algorithm (Run This At Do Phase Entry)
 
@@ -44,14 +44,14 @@ PDCA's Do phase is **always** implemented by dispatching one sub-skill. The orch
    - Newsletter keywords ("뉴스레터", "newsletter", "주간 뉴스레터") → `/newsletter`
    - Shorts keywords ("쇼츠", "shorts", "릴스", "Reels", "9:16", "60초", "academy shorts") → `/academy-shorts`
    - Card news keywords ("카드뉴스", "card news", "인스타 카드", "캐러셀", "carousel") → `/card-news`
-   - Code keywords ("PR", "리팩터", "버그 수정", "implement", "refactor") → `/second-claude-code:write --format code`
+   - Code keywords ("PR", "리팩터", "버그 수정", "implement", "refactor") → `/scc:write --format code`
 3. If no specialized format matches, scan for **generic content type**:
-   - Long-form analysis/report → `/second-claude-code:write` with target length from "Length Floors by Format" table
-   - Strategic framework → `/second-claude-code:analyze`
-   - Multi-step → `/second-claude-code:workflow`
-4. Default fallback: `/second-claude-code:write --skip-research --skip-review` with the format that best matches the Plan output's recommended scope.
+   - Long-form analysis/report → `/scc:write` with target length from "Length Floors by Format" table
+   - Strategic framework → `/scc:analyze`
+   - Multi-step → `/scc:workflow`
+4. Default fallback: `/scc:write --skip-research --skip-review` with the format that best matches the Plan output's recommended scope.
 
-**Sub-skill matching is greedy**: pick the most specialized sub-skill that fits, never the generic one when a specialized one exists. A threads article must go through `/threads`, never `/second-claude-code:write`, because `/threads` has voice-guide enforcement, cross-review with external models, and a Notion publish step that `/second-claude-code:write` does not.
+**Sub-skill matching is greedy**: pick the most specialized sub-skill that fits, never the generic one when a specialized one exists. A threads article must go through `/threads`, never `/scc:write`, because `/threads` has voice-guide enforcement, cross-review with external models, and a Notion publish step that `/scc:write` does not.
 
 ### What Sub-Skills Return to PDCA
 
@@ -73,7 +73,7 @@ PDCA validates these fields at the Do→Check gate. **A sub-skill that returns a
 If the sub-skill itself fails (errors out, hangs, returns malformed output):
 
 1. **Log the failure** with sub-skill name + input + error
-2. **Try fallback sub-skill**: e.g., `/threads` failed → fall back to `/second-claude-code:write` with explicit threads format spec from `/threads/references/article-template.md`
+2. **Try fallback sub-skill**: e.g., `/threads` failed → fall back to `/scc:write` with explicit threads format spec from `/threads/references/article-template.md`
 3. **If fallback also fails**: surface to user with "Sub-skill {name} failed in Do phase. Manual intervention needed."
 
 PDCA never silently swallows sub-skill failures. The Do gate must produce a valid artifact or fail loudly.
@@ -139,16 +139,16 @@ These floors are deliberately set high. PDCA exists to produce substantive, read
 |--------|-----------------|---------------------|--------------|-------------------------------|
 | Threads article (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 H2 or bold sections | `/threads` (its 8-phase pipeline runs inside Do) |
 | Korean tech newsletter | 10,000 | 12,000-15,000 | 6+ topics, intro + outro + CTA | `/newsletter` (its 7-phase pipeline runs inside Do) |
-| Generic article (long-form) | 4,000 | 5,000-7,000 | 5 H2 sections | `/second-claude-code:write` |
-| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections (situation, players, analysis, options, recommendation, risk) | `/second-claude-code:write` |
-| SWOT / Porter / OKR / RICE doc | 3,000 | 4,000-5,000 | 4 quadrants/items, each with evidence + counterevidence + decision | `/second-claude-code:analyze` |
+| Generic article (long-form) | 4,000 | 5,000-7,000 | 5 H2 sections | `/scc:write` |
+| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections (situation, players, analysis, options, recommendation, risk) | `/scc:write` |
+| SWOT / Porter / OKR / RICE doc | 3,000 | 4,000-5,000 | 4 quadrants/items, each with evidence + counterevidence + decision | `/scc:analyze` |
 | Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes (narration + visual cue + on-screen text per scene) | `/academy-shorts` |
 | Card news (carousel) | 8-10 cards (count, not chars) | 9-12 cards | hook + 6-8 body + CTA + source card | `/card-news` |
-| Social post (single tweet/thread post) | 280-700 chars (range, both ends fail gate) | 500-650 | 1 hook + 3-5 supporting lines | `/second-claude-code:write --format social` |
-| PRD (product requirements) | 4,000 | 5,000-7,000 | 7 sections (problem, target users, success metrics, scope, non-scope, risks, rollout plan) | `/second-claude-code:write --format prd` |
-| Code review report | 2,500 | 3,500-5,000 | 5 sections per file/PR (security, perf, architecture, tests, accessibility) | `/second-claude-code:review` |
-| Research brief (Plan output) | 3,000 | 4,000-6,000 | 8 facts with sources + 5+ links + comparison table + 1+ quotes + media list | `/second-claude-code:research` |
-| Meeting notes / decision doc | 2,000 | 2,500-3,500 | 5 sections (context, decision, rationale, alternatives, owner) | `/second-claude-code:write --format decision` |
+| Social post (single tweet/thread post) | 280-700 chars (range, both ends fail gate) | 500-650 | 1 hook + 3-5 supporting lines | `/scc:write --format social` |
+| PRD (product requirements) | 4,000 | 5,000-7,000 | 7 sections (problem, target users, success metrics, scope, non-scope, risks, rollout plan) | `/scc:write --format prd` |
+| Code review report | 2,500 | 3,500-5,000 | 5 sections per file/PR (security, perf, architecture, tests, accessibility) | `/scc:review` |
+| Research brief (Plan output) | 3,000 | 4,000-6,000 | 8 facts with sources + 5+ links + comparison table + 1+ quotes + media list | `/scc:research` |
+| Meeting notes / decision doc | 2,000 | 2,500-3,500 | 5 sections (context, decision, rationale, alternatives, owner) | `/scc:write --format decision` |
 
 ### Interpreting the Floor
 

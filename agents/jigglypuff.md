@@ -5,7 +5,7 @@ description: |
   or match a target audience consistently.
   Examples: "Check whether this sounds like our newsletter voice",
   "Review tone consistency in this article".
-model: haiku
+model: sonnet
 tools: [Read, Grep, Glob]
 permissionMode: plan
 ---

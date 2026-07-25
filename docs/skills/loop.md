@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```bash
-/second-claude-code:loop run write-core --targets skills/write/SKILL.md,commands/write.md --max-generations 2
+/scc:loop run write-core --targets skills/write/SKILL.md,commands/write.md --max-generations 2
 ```
 
 **What happens:** the loop command validates the `write-core` suite, creates an isolated `codex/loop-...` branch and run worktree, measures the baseline, generates a few candidate variants inside the selected targets, and promotes a winner only if it clears every hard gate and beats baseline by `min_delta`.

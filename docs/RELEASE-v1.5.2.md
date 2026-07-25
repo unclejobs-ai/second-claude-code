@@ -4,7 +4,7 @@ v1.5.2 adds Deep Interview as the 18th public command/skill and introduces a Cod
 
 ## Added
 
-- **Deep Interview** — `/second-claude-code:deep-interview`, `skills/deep-interview/`, and `scripts/deep-interview-runner.mjs` provide Socratic requirements discovery with Round 0 topology confirmation, ambiguity scoring, ontology convergence, language-preserving specs, internal auto-mode fragments, and approval-gated handoff.
+- **Deep Interview** — `/scc:deep-interview`, `skills/deep-interview/`, and `scripts/deep-interview-runner.mjs` provide Socratic requirements discovery with Round 0 topology confirmation, ambiguity scoring, ontology convergence, language-preserving specs, internal auto-mode fragments, and approval-gated handoff.
 - **Code Engineering Lane** — `skills/pdca/references/code-engineering-lane.md` defines the code-work specialization.
 - **Borrowed discipline, not a new runtime** — the lane absorbs useful practices from `engineering-discipline` and `Hyper-Waterfall`: worker-validator separation, stage reports, human approval gates, issue/branch/session continuity, PR or local handoff, clean-ai-slop, and Rob Pike style measurement for performance claims.
 - **Stage report template** — long or multi-stage code work now has a concrete progress-report shape covering goal, changed surface, verification, failures, and decision.

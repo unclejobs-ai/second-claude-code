@@ -3,7 +3,7 @@ description: "PDCA cycle -- orchestrate Plan→Do→Check→Act with quality gat
 argument-hint: '"AI agent market report" or --phase plan "topic" or --no-questions'
 ---
 
-Invoke the `/second-claude-code:pdca` command to run a full or partial PDCA knowledge work cycle through the `pdca` skill.
+Invoke the `/scc:pdca` command to run a full or partial PDCA knowledge work cycle through the `pdca` skill.
 
 ## Context
 - Active PDCA state: !`cat .data/state/pdca-active.json 2>/dev/null || echo "No active PDCA"`

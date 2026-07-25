@@ -22,5 +22,5 @@ Enter
 Sleep 3s
 
 # Show the auto-route detection
-Type "# Auto-routed to /second-claude-code:write"
+Type "# Auto-routed to /scc:write"
 Sleep 2s

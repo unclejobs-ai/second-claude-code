@@ -444,8 +444,8 @@ export function discoverAllPlugins() {
     const mcpServers = discoverMcpServers(pluginRoot);
     const agents = discoverAgents(pluginRoot);
 
-    // Skip self (second-claude-code itself)
-    if (manifest.name === "second-claude-code") continue;
+    // Skip self (scc itself)
+    if (manifest.name === "scc") continue;
 
     // Skip empty plugins (no skills, no commands, no MCP, no agents)
     if (skills.length === 0 && commands.length === 0 && mcpServers.length === 0 && agents.length === 0) continue;
@@ -577,7 +577,9 @@ export function buildDispatchInstructions(routes) {
     const commands = r.matched_items?.commands || r.commands.map((name) => ({ name, score: r.score || 0 }));
 
     for (const skill of skills) {
-      const name = `${r.plugin}-${skill.name}`;
+      // Plugin skills resolve as `plugin:skill`, the same shape the command branch below builds.
+      // A hyphen here produced unresolvable ids like `frontend-design-frontend-design`.
+      const name = `${r.plugin}:${skill.name}`;
       dispatchInstructions.push({
         plugin: r.plugin,
         name,

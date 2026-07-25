@@ -4,9 +4,11 @@
  * UserPromptSubmit Hook — Auto-routing with priority context injection
  *
  * Layer 0: Soul observation — silently captures user signals (no routing effect)
- * Layer 1: PDCA phase layer — detects multi-phase intent → routes to pdca orchestrator
- * Layer 2: External plugin layer — routes strong installed-plugin matches first
- * Layer 3: Skill layer — detects single-skill intent → routes to individual skill
+ * Layer 1: PDCA phase layer — multi-phase intent routes to the pdca orchestrator and RETURNS.
+ *          A compound prompt never reaches the layers below, external plugins included.
+ * Layer 2: Skill layer — scores single-skill intent into `bestMatch`, but does not return yet
+ * Layer 3: External plugin layer — a strong installed-plugin match outranks `bestMatch`;
+ *          otherwise `bestMatch` wins
  *
  * Output: JSON additionalContext injected into system-reminder so Claude
  * sees an authoritative routing instruction, not just a hint.
@@ -82,7 +84,14 @@ function writeLastAutoRoute(skill) {
   try {
     const dir = join(DATA_DIR, "soul");
     if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
-    writeFileSync(ROUTE_STATE_FILE, JSON.stringify({ skill, ts: new Date().toISOString() }), "utf8");
+    // Command dispatches arrive as "/plugin:command" while the correction check compares against a
+    // slash-stripped name. Normalize on the way in, or following the suggestion logs a correction.
+    const normalized = String(skill ?? "").replace(/^\//, "");
+    writeFileSync(
+      ROUTE_STATE_FILE,
+      JSON.stringify({ skill: normalized, ts: new Date().toISOString() }),
+      "utf8"
+    );
   } catch {
     // Non-fatal
   }
@@ -90,7 +99,7 @@ function writeLastAutoRoute(skill) {
 
 // ──────────────────────────────────────────────
 // Slash-command override detection → Soul observation
-// When a user manually invokes a skill via slash command (e.g. /second-claude-code:write),
+// When a user manually invokes a skill via slash command (e.g. /scc:write),
 // check if the auto-router had previously suggested a different route. If they differ,
 // record a routing_correction observation so the soul learning pipeline can adapt
 // future routing decisions.
@@ -99,7 +108,7 @@ if (raw.startsWith("/")) {
   try {
     const lastAutoRoute = readLastAutoRoute();
     if (lastAutoRoute && isSoulLearning(DATA_DIR)) {
-      // Extract the skill name from the slash command, e.g. "/second-claude-code:write ..." → "second-claude-code:write"
+      // Extract the skill name from the slash command, e.g. "/scc:write ..." → "scc:write"
       const slashMatch = raw.match(/^\/([\w:.-]+)/);
       const manualSkill = slashMatch ? slashMatch[1] : "";
 
@@ -426,7 +435,7 @@ if (pdcaResult.confidence >= 0.5 && pdcaResult.entry) {
     : "";
 
   let ctx = `[ROUTING] This is a knowledge-work request requiring ${phaseHint}${confNote}. ` +
-    `You MUST invoke the Skill tool with skill: "second-claude-code:pdca" BEFORE any other response. ` +
+    `You MUST invoke the Skill tool with skill: "scc:pdca" BEFORE any other response. ` +
     `This takes priority over brainstorming, debugging, or other development skills.`;
 
   const dispatchGuide = generateDispatchGuide();
@@ -434,7 +443,7 @@ if (pdcaResult.confidence >= 0.5 && pdcaResult.entry) {
     ctx += "\n\n" + dispatchGuide;
   }
 
-  writeLastAutoRoute("second-claude-code:pdca");
+  writeLastAutoRoute("scc:pdca");
 
   console.log(JSON.stringify({
     hookSpecificOutput: {
@@ -466,37 +475,37 @@ const ko = {
 const routes = [
   {
     patterns: [...ko.investigate, "debug", "bug", "error", "root cause", "failing", "failure", "broken", "unexpected behavior"],
-    skill: "second-claude-code:investigate",
+    skill: "scc:investigate",
     label: "investigate",
   },
   {
     patterns: [...ko.research, "research", "investigate", "look up", "search about", "search for information", "find out about"],
-    skill: "second-claude-code:research",
+    skill: "scc:research",
     label: "research",
   },
   {
     patterns: [...ko.review, "review this", "review my", "review the", "quality review", "quality check", "give feedback", "get feedback"],
-    skill: "second-claude-code:review",
+    skill: "scc:review",
     label: "review",
   },
   {
     patterns: [...ko.write, "newsletter", "write a report", "write an article", "write a script", "article about", "write about", "draft a", "card news"],
-    skill: "second-claude-code:write",
+    skill: "scc:write",
     label: "write",
   },
   {
     patterns: [...ko.analyze, "swot", "rice analysis", "okr", "prd", "lean canvas", "analyze", "strategic analysis", "porter", "pestle", "persona", "journey map", "pricing analysis"],
-    skill: "second-claude-code:analyze",
+    skill: "scc:analyze",
     label: "analyze",
   },
   {
     patterns: [...ko.refine, "improve this", "improve my", "improve the", "iterate on", "iterate this", "iterate until", "loop this", "loop until", "polish this", "refine this", "refine my", "refine the", "make this better", "raise the score", "raise this to"],
-    skill: "second-claude-code:refine",
+    skill: "scc:refine",
     label: "refine",
   },
   {
     patterns: [...ko.collect, "save this link", "save this url", "save for later", "collect this", "take a note", "clip this", "save to knowledge"],
-    skill: "second-claude-code:collect",
+    skill: "scc:collect",
     label: "collect",
   },
   {
@@ -521,17 +530,17 @@ const routes = [
       "find previous session",
       "recall previous session",
     ],
-    skill: "second-claude-code:workflow",
+    skill: "scc:workflow",
     label: "workflow",
   },
   {
     patterns: [...ko.discover, "find a skill", "skill for", "discover", "how do i", "how can i", "is there a skill", "find a tool for"],
-    skill: "second-claude-code:discover",
+    skill: "scc:discover",
     label: "discover",
   },
   {
     patterns: [...ko.translate, "translate", "translate this", "translate to english", "translate to korean", "in english", "in korean"],
-    skill: "second-claude-code:translate",
+    skill: "scc:translate",
     label: "translate",
   },
   {
@@ -545,7 +554,7 @@ const routes = [
       "linkedin article", "twitter post", "x.com post", "naver blog post",
       "youtube transcript", "youtube subtitles", "reddit thread",
     ],
-    skill: "second-claude-code:unblock",
+    skill: "scc:unblock",
     label: "unblock",
   },
 ];
@@ -591,6 +600,11 @@ for (const route of routes) {
 // plugins are installed or uninstalled.
 // ──────────────────────────────────────────────
 
+// ──────────────────────────────────────────────
+// Layer 3: External plugin dispatch — decided last, but outranks the Layer 2 `bestMatch`.
+// Compound prompts already returned in Layer 1, so they never arrive here.
+// ──────────────────────────────────────────────
+
 const dispatchGuide = generateDispatchGuide();
 
 // Only inject dispatchGuide for substantive prompts (> 10 chars).
@@ -619,7 +633,7 @@ if (shouldExternalDispatch(externalPlan)) {
     : "";
   const routing = `[ROUTING] This is a knowledge-work request (${bestMatch.label})${confNote}. ` +
     `You MUST invoke the Skill tool with skill: "${bestMatch.skill}" BEFORE any other response. ` +
-    `This is a content/research task — use second-claude-code, not development skills like brainstorming or TDD.`;
+    `This is a content/research task — use scc, not development skills like brainstorming or TDD.`;
 
   writeLastAutoRoute(bestMatch.skill);
 

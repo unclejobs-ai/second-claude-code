@@ -1,6 +1,6 @@
 ---
 name: viewer
-description: "Use when the user asks to open the SCC Artifact Viewer, show artifacts, inspect PDCA pipeline outputs, or after a PDCA pipeline run completes."
+description: "Use when the user asks to open the SCC Artifact Viewer, show artifacts, inspect PDCA pipeline outputs, export a session as a shareable page, or after a PDCA pipeline run completes."
 effort: low
 ---
 
@@ -51,6 +51,38 @@ The script outputs JSON with the URL. Tell the user to open it in their browser.
     ├── server-info      ← Port, PID
     └── server.pid
 ```
+
+## Export Mode — Shareable Provenance Page
+
+The live viewer is local and dies after 30 minutes. To hand someone the result, export instead:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/export-artifact.mjs" --out pdca-export.md
+```
+
+This writes one Markdown file and prints `{"out","artifacts","cycles","source"}`. Publish it with
+the Artifact tool to get a shareable URL.
+
+It reads what the pipeline actually writes — `.data/state/pdca-last-completed.json`, the
+`.data/events/pdca-{run_id}.jsonl` event log, and the `.data/cycles/` markdown — so it works on real
+runs today. Pass `--data-dir` for a different root or `--run <run_id>` to pick an older run. The
+`--session-dir` form still reads the live viewer's `state.json` + `artifacts/*.json` layout.
+
+Two things worth knowing about where the numbers come from:
+
+- The phase timeline and its durations are reconstructed from the **event log**, not from
+  `state.action_router_history` — that field is initialized to `[]` and never appended to, so
+  anything reading it reports zero re-entries forever.
+- A phase logged under a later cycle is what counts as a re-entry. If the pipeline later starts
+  writing router history, the export uses it too, but it never depends on it.
+
+What the export leads with is the **audit trail**, not the content: which gates passed, how many
+reviewers attacked the draft and what they caught, every Act re-entry with its reason, and any drift
+between planned and delivered scope. The produced artifacts follow underneath. A finished document
+cannot show that it survived five adversarial reviewers and two re-entries — this is what makes the
+PDCA record worth sharing.
+
+Charts and flows become mermaid, so there is no bundle and no external asset to break.
 
 ## Artifact JSON Format
 

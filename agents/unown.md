@@ -5,7 +5,7 @@ description: |
   a focused pass on flow, organization, and formatting.
   Examples: "Check the structure of this report",
   "Review whether this code review is organized clearly".
-model: haiku
+model: sonnet
 tools: [Read, Grep, Glob]
 permissionMode: plan
 ---

@@ -59,7 +59,7 @@ function getCrashRecovery() {
   const phase = sanitize(recovery.current_phase ?? "unknown");
   const crashedAt = sanitize(recovery.crashed_at ?? "unknown");
 
-  return `PDCA crash recovery available: "${topic}" was in ${phase} phase at ${crashedAt}. Run \`/second-claude-code:pdca\` to resume or delete ${recoveryPath} to discard.`;
+  return `PDCA crash recovery available: "${topic}" was in ${phase} phase at ${crashedAt}. Run \`/scc:pdca\` to resume or delete ${recoveryPath} to discard.`;
 }
 
 function getActiveState() {
@@ -121,7 +121,7 @@ function getActiveState() {
         : "?";
     const specPath = deepInterview.spec_path ? `, spec: ${sanitize(deepInterview.spec_path)}` : "";
     parts.push(
-      `Active deep interview: round ${round}, ambiguity ${ambiguity}, status: ${status}${specPath}. Resume with \`/second-claude-code:deep-interview resume\`.`
+      `Active deep interview: round ${round}, ambiguity ${ambiguity}, status: ${status}${specPath}. Resume with \`/scc:deep-interview resume\`.`
     );
   }
 
@@ -169,26 +169,26 @@ function main() {
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
-  lines.push("| `/second-claude-code:deep-interview` | Socratic requirements interview → scored spec → approval-gated handoff |");
-  lines.push("| `/second-claude-code:pdca` | **PDCA orchestrator** — Plan→Do→Check→Act with quality gates + Action Router |");
-  lines.push("| `/second-claude-code:research` | Deep autonomous research → structured brief |");
-  lines.push("| `/second-claude-code:write` | Content production (newsletter, article, shorts, report) |");
-  lines.push("| `/second-claude-code:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
-  lines.push("| `/second-claude-code:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
-  lines.push("| `/second-claude-code:refine` | Iterative improvement until quality target met |");
-  lines.push("| `/second-claude-code:loop` | Benchmark and evolve prompt assets inside isolated loop branches |");
-  lines.push("| `/second-claude-code:evolve` | Ouroboros maintainer loop — evolve a recurring-failure asset against a maintainer-authored check |");
-  lines.push("| `/second-claude-code:collect` | Knowledge capture & PARA organization |");
-  lines.push("| `/second-claude-code:workflow` | Custom workflow builder (chain any skills) |");
-  lines.push("| `/second-claude-code:discover` | Dynamic skill discovery & installation |");
-  lines.push("| `/second-claude-code:investigate` | Root-cause debugging for errors and unexpected behavior |");
-  lines.push("| `/second-claude-code:translate` | Soul-aware EN↔KO translation with style and format control |");
-  lines.push("| `/second-claude-code:batch` | Parallel decomposition for large homogeneous tasks |");
-  lines.push("| `/second-claude-code:soul` | Persistent identity profile synthesis and adaptation |");
-  lines.push("| `/second-claude-code:viewer` | Local artifact viewer for PDCA session outputs |");
-  lines.push("| `/second-claude-code:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
+  lines.push("| `/scc:deep-interview` | Socratic requirements interview → scored spec → approval-gated handoff |");
+  lines.push("| `/scc:pdca` | **PDCA orchestrator** — Plan→Do→Check→Act with quality gates + Action Router |");
+  lines.push("| `/scc:research` | Deep autonomous research → structured brief |");
+  lines.push("| `/scc:write` | Content production (newsletter, article, shorts, report) |");
+  lines.push("| `/scc:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
+  lines.push("| `/scc:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
+  lines.push("| `/scc:refine` | Iterative improvement until quality target met |");
+  lines.push("| `/scc:loop` | Benchmark and evolve prompt assets inside isolated loop branches |");
+  lines.push("| `/scc:evolve` | Ouroboros maintainer loop — evolve a recurring-failure asset against a maintainer-authored check |");
+  lines.push("| `/scc:collect` | Knowledge capture & PARA organization |");
+  lines.push("| `/scc:workflow` | Custom workflow builder (chain any skills) |");
+  lines.push("| `/scc:discover` | Dynamic skill discovery & installation |");
+  lines.push("| `/scc:investigate` | Root-cause debugging for errors and unexpected behavior |");
+  lines.push("| `/scc:translate` | Soul-aware EN↔KO translation with style and format control |");
+  lines.push("| `/scc:batch` | Parallel decomposition for large homogeneous tasks |");
+  lines.push("| `/scc:soul` | Persistent identity profile synthesis and adaptation |");
+  lines.push("| `/scc:viewer` | Local artifact viewer for PDCA session outputs |");
+  lines.push("| `/scc:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
   lines.push("");
-  lines.push("PDCA cycle: `/pdca` auto-detects phase and chains skills with gates.");
+  lines.push("PDCA cycle: `/scc:pdca` auto-detects phase and chains skills with gates.");
   lines.push("Or use individual skills: deep-interview, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
   lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
@@ -304,16 +304,16 @@ function main() {
             );
           } catch { /* parse fail, skip retro line */ }
         } else {
-          lines.push("No retro yet — run `/second-claude-code:soul retro` to collect shipping metrics.");
+          lines.push("No retro yet — run `/scc:soul retro` to collect shipping metrics.");
         }
 
         // Synthesis readiness call-to-action
         if (readiness.ready && readiness.proposal_due) {
           lines.push("");
-          lines.push("**Soul evolution proposal ready** — run `/second-claude-code:soul propose`");
+          lines.push("**Soul evolution proposal ready** — run `/scc:soul propose`");
         } else if (readiness.ready) {
           lines.push("");
-          lines.push("Synthesis threshold met. Next step: `/second-claude-code:soul` to manage profile.");
+          lines.push("Synthesis threshold met. Next step: `/scc:soul` to manage profile.");
         } else {
           lines.push(
             `Feedback gap: ${readiness.observation_shortfall} more observations or ${readiness.session_shortfall} more sessions needed for synthesis.`

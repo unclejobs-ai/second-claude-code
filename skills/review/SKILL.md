@@ -34,8 +34,8 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 | `deep-reviewer` | opus | logic, structure, completeness |
 | `devil-advocate` | sonnet | weakest points and blind spots |
 | `fact-checker` | sonnet | claims, numbers, sources |
-| `tone-guardian` | haiku | voice and audience fit |
-| `structure-analyst` | haiku | organization and readability |
+| `tone-guardian` | sonnet | voice and audience fit |
+| `structure-analyst` | sonnet | organization and readability |
 
 ## Presets
 
@@ -57,7 +57,7 @@ The `security` preset activates security-focused review with optional mmbridge s
 
 - **deep-reviewer** (opus): Architecture security analysis — auth flows, data boundaries, privilege escalation paths
 - **fact-checker** (sonnet): Known CVE checks, dependency vulnerability scanning, OWASP Top 10 verification
-- **structure-analyst** (haiku): Configuration audit — secrets exposure, permission models, environment isolation
+- **structure-analyst** (sonnet): Configuration audit — secrets exposure, permission models, environment isolation
 
 ### MMBridge Security (via --external)
 
@@ -68,8 +68,8 @@ mmbridge security --scope <scope> --json > /tmp/mmbridge-security-${RUN_ID}.json
 ```
 
 **Option passthrough**:
-- `--scope`: `/second-claude-code:review --preset security --scope auth` → `mmbridge security --scope auth` (default: `all`)
-- `--compliance`: `/second-claude-code:review --preset security --compliance GDPR,SOC2` → `mmbridge security --compliance GDPR,SOC2`
+- `--scope`: `/scc:review --preset security --scope auth` → `mmbridge security --scope auth` (default: `all`)
+- `--compliance`: `/scc:review --preset security --compliance GDPR,SOC2` → `mmbridge security --compliance GDPR,SOC2`
 
 ### CWE Severity Mapping
 
@@ -89,12 +89,12 @@ The `academic` preset activates academic-focused review for research papers, the
 
 - **deep-reviewer** (opus): Argument structure review — thesis clarity, logical flow between sections, claim-evidence alignment, and overall coherence of the academic argument
 - **fact-checker** (sonnet): Citation format validation — verifies references conform to the specified style (APA, MLA, or Chicago; default APA), checks for missing citations, inconsistent formatting, and broken cross-references
-- **structure-analyst** (haiku): Literature gap analysis — identifies missing key references in the field, undercited foundational works, and areas where additional literature support would strengthen the argument
+- **structure-analyst** (sonnet): Literature gap analysis — identifies missing key references in the field, undercited foundational works, and areas where additional literature support would strengthen the argument
 - **devil-advocate** (sonnet): Methodology critique and evidence quality assessment — challenges research design choices, statistical validity, sample size adequacy, potential biases, and evaluates the strength and relevance of evidence presented
 
 ### Option passthrough
 
-- `--citation-style`: `/second-claude-code:review --preset academic --citation-style APA` (default: `APA`, accepts `APA`, `MLA`, `Chicago`)
+- `--citation-style`: `/scc:review --preset academic --citation-style APA` (default: `APA`, accepts `APA`, `MLA`, `Chicago`)
 
 ### Academic review focus areas
 
@@ -274,6 +274,6 @@ When mmbridge is not found, check for standalone CLIs (`kimi`, `codex`, `gemini`
 deep-reviewer: { model: opus, constraint: "cite exact sections or lines" }
 devil-advocate: { model: sonnet, constraint: "attack exactly 3 weak points when applicable" }
 fact-checker: { model: sonnet, tools: [WebSearch, WebFetch], constraint: "include URLs for verified claims" }
-tone-guardian: { model: haiku, constraint: "check voice against guide and audience; if .data/soul/SOUL.md exists, include its ## Tone Rules and ## Anti-Patterns sections as primary voice criteria" }
-structure-analyst: { model: haiku, constraint: "check flow, hierarchy, and redundancy" }
+tone-guardian: { model: sonnet, constraint: "check voice against guide and audience; if .data/soul/SOUL.md exists, include its ## Tone Rules and ## Anti-Patterns sections as primary voice criteria" }
+structure-analyst: { model: sonnet, constraint: "check flow, hierarchy, and redundancy" }
 ```

@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:viewer
+/scc:viewer
 ```
 
 **What happens:** The skill runs `ui/scripts/start-server.sh` against the current PDCA session directory. The script serves the pre-built viewer UI from `ui/dist`, watches `state.json` and `artifacts/*.json` for changes, and prints a JSON blob with a local URL once the server is ready. Opening that URL in a browser renders each artifact -- markdown, charts, code, flow diagrams -- and updates live over WebSocket as the pipeline writes new artifacts.

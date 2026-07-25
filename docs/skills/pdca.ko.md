@@ -7,7 +7,7 @@
 ## v1.4.0에서 달라진 점
 
 - **크로스-플러그인 페이즈 디스패치** — 더 강한 외부 capability가 설치되어 있으면 PDCA 페이즈가 플러그인 생태계를 먼저 경유합니다.
-- **검증된 페이즈 1순위** — Plan → `Skill: claude-mem-knowledge-agent`, Do → `Skill: frontend-design-frontend-design`, Check → `Skill: coderabbit-code-review`, Act → `/commit-commands:commit`.
+- **검증된 페이즈 1순위** — Plan → `Skill: claude-mem:knowledge-agent`, Do → `Skill: frontend-design:frontend-design`, Check → `Skill: coderabbit:code-review`, Act → `/commit-commands:commit`.
 - **프롬프트 레벨 외부 디스패치** — `prompt-detect`가 내부 fallback 전에 `getDispatchPlan()`을 호출합니다. `posthog event analysis`처럼 강한 외부 매칭은 설치된 플러그인을 먼저 호출해요.
 - **하드코딩된 플러그인 레지스트리 없음** — `~/.claude/plugins/`에서 capability를 런타임 발견하고 정확한 `Skill:` / 슬래시 커맨드 호출 문자열로 바꿉니다.
 - **짧은 키워드 안전장치** — `bug`가 `debugging` 안에서 우연히 매칭되는 것 같은 작은 키워드 overmatch를 단어 경계 검사로 막습니다.
@@ -21,7 +21,7 @@ v1.4.0 디스패치 구조와 검증 범위는 [orchestrator-architecture.ko.md]
 - **Plan brief floor** — source 최소를 3 → 5로 올렸고, 사실 8개, named-source 인용 1개, 비교표 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
 - **리뷰어 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. False consensus 감지 시 adversarial pass 자동 디스패치.
 - **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. any P0 OR (P0+P1 ≥ 5 AND finding이 ≥ 3개 카테고리에 걸침)일 때 발동. 초기 OR 로직이 실제 4-finding patch set에서 over-trigger한 걸 발견하고 보정.
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 dispatch는 `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine` 안에서 일어나요.
+- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요.
 
 전체 강화 사양과 검증 사이클 메트릭은 [RELEASE-v1.3.0.ko.md](../RELEASE-v1.3.0.ko.md) 참고.
 
@@ -37,15 +37,15 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 
 **입력:**
 ```
-/second-claude-code:pdca "AI 에이전트 시장 보고서" --depth deep
+/scc:pdca "AI 에이전트 시장 보고서" --depth deep
 ```
 
 **진행 과정:**
-1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 가능하면 외부 메모리/리서치 디스패치가 `Skill: claude-mem-knowledge-agent`를 먼저 사용하고, 이후 이브이(Eevee), 후딘(Alakazam), 뮤츠(Mewtwo)가 결과를 구조화합니다.
+1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 가능하면 외부 메모리/리서치 디스패치가 `Skill: claude-mem:knowledge-agent`를 먼저 사용하고, 이후 이브이(Eevee), 후딘(Alakazam), 뮤츠(Mewtwo)가 결과를 구조화합니다.
 2. **Plan→Do 게이트**: 3개 이상의 출처가 포함된 리서치 브리프와 분석 아티팩트를 검증합니다.
-3. **Do**: 루브도(Smeargle, 라이터)가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다. 디자인 성격이 강한 실행은 설치되어 있을 때 `Skill: frontend-design-frontend-design`로 먼저 갈 수 있어요.
+3. **Do**: 루브도(Smeargle, 라이터)가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다. 디자인 성격이 강한 실행은 설치되어 있을 때 `Skill: frontend-design:frontend-design`로 먼저 갈 수 있어요.
 4. **Do→Check 게이트**: 아티팩트 완성도, 포맷 준수, Plan 결과 반영을 검증합니다.
-5. **Check**: 5마리 리뷰어(네이티오, 앱솔, 폴리곤, 푸린, 안농)가 합의 게이트와 함께 병렬 리뷰를 실행합니다. 코드 리뷰 프롬프트는 설치되어 있으면 `Skill: coderabbit-code-review`를 우선합니다.
+5. **Check**: 5마리 리뷰어(네이티오, 앱솔, 폴리곤, 푸린, 안농)가 합의 게이트와 함께 병렬 리뷰를 실행합니다. 코드 리뷰 프롬프트는 설치되어 있으면 `Skill: coderabbit:code-review`를 우선합니다.
 6. **Check→Act 게이트**: APPROVED → 출하. 그 외 → 액션 라우터.
 7. **Act**: 액션 라우터가 소견을 근본원인별로 분류합니다. 출하/커밋 프롬프트는 설치되어 있으면 `/commit-commands:commit`을 우선합니다:
    - 소스/가정 갭 → **Plan**으로 복귀
@@ -91,12 +91,12 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 |------|---------|------|---------------------|
 | 스레드 아티클 | 4,000 | 5,000-7,000 | `/threads` |
 | 뉴스레터 | 10,000 | 12,000-15,000 | `/newsletter` |
-| 일반 아티클 | 4,000 | 5,000-7,000 | `/second-claude-code:write` |
-| 전략 리포트 | 5,000 | 6,000-9,000 | `/second-claude-code:write` |
-| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/second-claude-code:analyze` |
+| 일반 아티클 | 4,000 | 5,000-7,000 | `/scc:write` |
+| 전략 리포트 | 5,000 | 6,000-9,000 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
 | 쇼츠 대본 | 1,800 | 2,200-2,800 | `/academy-shorts` |
 | 카드뉴스 | 8-10 카드 | 9-12 카드 | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | `/second-claude-code:write --format prd` |
+| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
 
 전체 표는 `skills/pdca/references/do-phase.md`에.
 
@@ -110,7 +110,7 @@ Do 페이즈가 사용자 프롬프트를 트리거 키워드와 그리디 매�
 | 뉴스레터, newsletter | `/newsletter` |
 | 쇼츠, shorts, 릴스 | `/academy-shorts` |
 | 카드뉴스, card news, 캐러셀 | `/card-news` |
-| (specialized 매치 없음) | `/second-claude-code:write` |
+| (specialized 매치 없음) | `/scc:write` |
 
 Sub-skill 표준: `skills/pdca/references/domain-pipeline-integration.md` (입출력 계약, 4가지 실패 모드).
 

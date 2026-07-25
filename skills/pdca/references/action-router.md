@@ -45,12 +45,12 @@ This replaces the previous flat "refine everything" approach with intelligent tr
 
 1. Compile review findings as constraints list
 2. Pass constraints to write/analyze skill
-3. Re-execute Do phase: `/second-claude-code:write --skip-research --skip-review --constraints {findings}`
+3. Re-execute Do phase: `/scc:write --skip-research --skip-review --constraints {findings}`
 4. Skip Plan (research is sufficient) and proceed to Check after Do
 
 ### Route to REFINE
 
-1. Standard behavior — dispatch `/second-claude-code:refine --file {artifact} --review {report}`
+1. Standard behavior — dispatch `/scc:refine --file {artifact} --review {report}`
 2. Refine handles iterative fix-review cycles internally
 3. Exit when target verdict reached or max iterations hit
 

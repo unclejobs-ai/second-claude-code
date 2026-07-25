@@ -14,7 +14,7 @@
 
 **입력:**
 ```
-/second-claude-code:unblock "https://news.ycombinator.com/item?id=42000000"
+/scc:unblock "https://news.ycombinator.com/item?id=42000000"
 ```
 
 **처리:**
@@ -42,7 +42,7 @@
 
 ## 언제 쓰나
 
-- Eevee 리서처가 `/second-claude-code:research` 도중 403 / blocked를 만났을 때
+- Eevee 리서처가 `/scc:research` 도중 403 / blocked를 만났을 때
 - 막힌 사이트 본문 직접 가져와야 할 때 (X, LinkedIn, Naver, Coupang, fmkorea 등)
 - WebFetch가 JS 무거운 SPA에서 빈 본문 / 잘린 본문 반환할 때
 - 파이프라인 단계가 페이지 본문 보장을 요구할 때

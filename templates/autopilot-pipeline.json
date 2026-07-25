@@ -3,34 +3,34 @@
   "description": "End-to-end workflow: research → analyze → write → review → refine. Adopted from third-party Codex orchestration autopilot pattern.",
   "steps": [
     {
-      "skill": "/second-claude-code:research",
+      "skill": "/scc:research",
       "args": "\"{{topic}}\" --depth medium",
       "output": "research-brief.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:analyze",
+      "skill": "/scc:analyze",
       "args": "--framework prd --with-research",
       "input_from": "research-brief.md",
       "output": "analysis.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:write",
+      "skill": "/scc:write",
       "args": "",
       "input_from": "analysis.md",
       "output": "draft.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:review",
+      "skill": "/scc:review",
       "args": "--preset content",
       "input_from": "draft.md",
       "output": "review-report.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:refine",
+      "skill": "/scc:refine",
       "args": "--max 3 --target APPROVED",
       "input_from": ["draft.md", "review-report.md"],
       "output": "final.md",

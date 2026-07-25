@@ -135,7 +135,7 @@ clearest signal.
    - [ ] {criterion 2 from Plan}
    - [ ] All Do→Check gate items in do-phase.md
    ```
-4. **Require review dispatch**: Run `/second-claude-code:review` with the
+4. **Require review dispatch**: Run `/scc:review` with the
    appropriate preset before allowing Act to start.
 5. Update state: set `stuck_flags: ["check_avoidance"]`.
 

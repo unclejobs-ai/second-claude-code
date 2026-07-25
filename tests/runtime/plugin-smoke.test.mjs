@@ -123,17 +123,17 @@ test("state manager supports a full read/write/list/exists/clear roundtrip", () 
 test("autopilot preset only uses supported commands, frameworks, and file handoffs", () => {
   const pipeline = readJson("templates/autopilot-pipeline.json");
   const allowedSkills = new Set([
-    "/second-claude-code:batch",
-    "/second-claude-code:soul",
-    "/second-claude-code:loop",
-    "/second-claude-code:research",
-    "/second-claude-code:write",
-    "/second-claude-code:analyze",
-    "/second-claude-code:review",
-    "/second-claude-code:refine",
-    "/second-claude-code:collect",
-    "/second-claude-code:workflow",
-    "/second-claude-code:discover",
+    "/scc:batch",
+    "/scc:soul",
+    "/scc:loop",
+    "/scc:research",
+    "/scc:write",
+    "/scc:analyze",
+    "/scc:review",
+    "/scc:refine",
+    "/scc:collect",
+    "/scc:workflow",
+    "/scc:discover",
   ]);
   const supportedFrameworks = new Set([
     "swot",
@@ -174,7 +174,7 @@ test("autopilot preset only uses supported commands, frameworks, and file handof
       }
     }
 
-    if (step.skill === "/second-claude-code:analyze") {
+    if (step.skill === "/scc:analyze") {
       const match = step.args.match(/--framework\s+([^\s]+)/);
       assert.ok(match, "analyze step should declare a framework");
       assert.equal(

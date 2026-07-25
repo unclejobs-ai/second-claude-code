@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:batch --topic "10-part newsletter series on AI infrastructure trends" --skill write --parallel 3
+/scc:batch --topic "10-part newsletter series on AI infrastructure trends" --skill write --parallel 3
 ```
 
 **What happens:** The skill dispatches an Explore agent to scope the topic, then decomposes it into independent units (minimum 2, up to 10 by default, up to 20 with `--units`). The full decomposition plan is presented as a table, and execution does not begin until the user explicitly approves it. Once approved, one agent per unit spawns in its own isolated worktree, with concurrency capped at `--parallel` (default 3). Each unit's status (`PENDING`/`RUNNING`/`DONE`/`FAILED`) is tracked as units complete, and a Batch Summary Report is saved to `.captures/batch-{run_id}/00-summary.md` once all units finish.
@@ -14,7 +14,7 @@
 
 **Input:**
 ```
-/second-claude-code:batch --topic "10-part newsletter series on AI infrastructure trends" --skill write --parallel 3 --synthesize --format article --lang en
+/scc:batch --topic "10-part newsletter series on AI infrastructure trends" --skill write --parallel 3 --synthesize --format article --lang en
 ```
 
 **Process:**

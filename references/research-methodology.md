@@ -128,6 +128,6 @@ writer:
 
 ## Integration
 
-- Called automatically by `/second-claude-code:write` before drafting
-- Called optionally by `/second-claude-code:analyze` when `--with-research` is set
+- Called automatically by `/scc:write` before drafting
+- Called optionally by `/scc:analyze` when `--with-research` is set
 - Research results are saved to `.captures/` but not deduplicated across calls within a session. Callers should check for existing `.captures/research-{slug}*.md` files before re-running to avoid redundant searches.

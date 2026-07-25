@@ -19,7 +19,7 @@ This is the quality gate that determines whether work ships or iterates.
    - Code → `code`
    - Quick validation → `quick`
    - Pre-publish final pass → `full`
-2. **Dispatch review**: Run `/second-claude-code:review --preset {selected}`.
+2. **Dispatch review**: Run `/scc:review --preset {selected}`.
    - Reviewers: Xatu (deep-reviewer), Absol (devil-advocate), Porygon (fact-checker), Jigglypuff (tone-guardian), Unown (structure-analyst)
    - Preset determines which subset is dispatched (see below)
    - **Reviewer diversity is enforced** — see "Reviewer Model Diversity Rule" section below

@@ -1,6 +1,6 @@
 # Challenge Round Protocol
 
-The adversarial review mechanism used by `/second-claude-code:analyze` to stress-test strategic analyses.
+The adversarial review mechanism used by `/scc:analyze` to stress-test strategic analyses.
 
 ---
 

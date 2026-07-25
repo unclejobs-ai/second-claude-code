@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to second-claude-code are documented here.
+All notable changes to scc are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
@@ -95,7 +95,7 @@ Other hosts (HackerNews, GitHub, etc.) unchanged — 0d is skipped when no clean
   - 5: Free archive cluster — Wayback + archive.today + AMP cache raced in parallel, plus RSS/Atom feed discovery + OG-tag rescue
   - 6: Optional paid (Tavily / Exa / Firecrawl) gated by `--allow-paid`
 - **Operational hardening** — SSRF guard rejects RFC1918 / loopback / link-local / cloud metadata hosts (including IPv6-mapped IPv4); opt-out `UNBLOCK_ALLOW_PRIVATE_HOSTS=1`. `schema_version` + `idempotency_key` envelope contract. Stagnation detection: same fail reason ×3 jumps to archive. Phase 0 reordering by URL host priors. Signal-driven dynamic skip (Phase 1 stripped_too_short → Phase 4 direct). `decisions[]` orchestration audit log.
-- **Cross-plugin orchestration** — `/second-claude-code:unblock` slash command. Auto-router patterns in `hooks/prompt-detect.mjs` (Korean + English, narrowed triggers to avoid false positives on `403` / `긁어` etc.). `skills/research/SKILL.md` falls back to unblock on blocked URLs. `agents/eevee.md` researcher invokes unblock on WebFetch failures.
+- **Cross-plugin orchestration** — `/scc:unblock` slash command. Auto-router patterns in `hooks/prompt-detect.mjs` (Korean + English, narrowed triggers to avoid false positives on `403` / `긁어` etc.). `skills/research/SKILL.md` falls back to unblock on blocked URLs. `agents/eevee.md` researcher invokes unblock on WebFetch failures.
 - **Auto-install** — first-run discovery and one-shot install of `curl-impersonate`, `lightpanda`, `yt-dlp`, `playwright` when each phase needs them. Failure to install is logged and the chain proceeds — never blocks.
 - **Bias-check enforcement** — `tests/skills/unblock/no-brand-hardcode.test.mjs` greps `engine/**` for forbidden brand names with word-boundary matching, allowlisting only the documented Phase 0a public-API routing modules.
 - **References** — `skills/unblock/references/` covers WAF detection, TLS impersonation, archive fallbacks, and the Eevee fallback flow.
@@ -130,7 +130,7 @@ Other hosts (HackerNews, GitHub, etc.) unchanged — 0d is skipped when no clean
 
 ### Fixed
 
-- **Artifact Viewer command surface** — added the missing `/second-claude-code:viewer` wrapper so the documented viewer skill is actually registered by Claude Code.
+- **Artifact Viewer command surface** — added the missing `/scc:viewer` wrapper so the documented viewer skill is actually registered by Claude Code.
 - **Viewer server lifecycle** — `ui/scripts/start-server.sh` now starts the viewer in the background, writes JSON runtime metadata, and returns the URL without blocking the slash command. Added `ui/scripts/stop-server.sh` for clean shutdown from the recorded PID.
 - **Command count alignment** — session-start, README, architecture docs, and contract tests were aligned to the then-current public command and skill surface.
 

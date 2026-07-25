@@ -3,7 +3,7 @@ description: "Check phase -- systematic debugging with root cause investigation"
 argument-hint: "<error description or symptoms>"
 ---
 
-Invoke the `/second-claude-code:investigate` command for systematic root-cause debugging through the `investigate` skill.
+Invoke the `/scc:investigate` command for systematic root-cause debugging through the `investigate` skill.
 
 ## Context
 - Current git status: !`git status --short`

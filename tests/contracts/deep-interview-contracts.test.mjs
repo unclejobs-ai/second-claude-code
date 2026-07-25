@@ -52,7 +52,7 @@ test("deep interview command, skill, and docs expose a self-serve pending-approv
     assert.match(content, /approval/i, `${label} should document approval gating`);
     assert.match(content, /ralplan/i, `${label} should name the ralplan refinement option`);
     assert.match(content, /ultragoal/i, `${label} should name the ultragoal execution option`);
-    assert.doesNotMatch(content, /\/scc\b/, `${label} must not revive the legacy /scc namespace`);
+    assert.doesNotMatch(content, /\/second-claude-code\b/, `${label} must not revive the legacy /second-claude-code namespace`);
   }
 
   assert.match(command, /docs\/skills\/deep-interview\.md/);

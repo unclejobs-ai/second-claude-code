@@ -4,7 +4,7 @@
 
 ### 1. Improvement without evidence
 **Symptom**: "I improved it" with no score comparison
-**Fix**: Compare `/second-claude-code:review` scores every iteration. Revert if the score drops.
+**Fix**: Compare `/scc:review` scores every iteration. Revert if the score drops.
 
 ### 2. Over-editing
 **Symptom**: Rewriting more than half the document in one iteration

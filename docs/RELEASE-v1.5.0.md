@@ -9,7 +9,7 @@ required; paid providers are gated behind `--allow-paid`.
 
 ## Why
 
-Before v1.5.0, `WebFetch` failure inside `/second-claude-code:research`
+Before v1.5.0, `WebFetch` failure inside `/scc:research`
 left the PDCA Plan phase stranded: a single 403 from Naver / Coupang /
 LinkedIn / fmkorea / X would silently degrade the research brief. Eevee
 fell back to Jina Reader once and stopped.
@@ -47,7 +47,7 @@ flowchart LR
 ## What Changed
 
 - **`unblock` skill** — 16th skill. Adaptive 9-phase fetch chain. Zero API keys.
-- **`/second-claude-code:unblock`** — slash command surface for direct CLI invocation.
+- **`/scc:unblock`** — slash command surface for direct CLI invocation.
 - **Auto-router patterns** — `hooks/prompt-detect.mjs` now detects hostile-URL intent (English + Korean) and dispatches to unblock.
 - **Eevee researcher fallback** — `agents/eevee.md` invokes unblock automatically on `WebFetch` failure with R5 (read trace before retry) enforcement.
 - **Research skill wiring** — `skills/research/SKILL.md` Web Engine fallback chain now lists unblock between WebFetch and Playwright.

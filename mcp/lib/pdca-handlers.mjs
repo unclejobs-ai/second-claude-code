@@ -122,11 +122,14 @@ function getPhaseContract(phase, domain = "code") {
 // ---------------------------------------------------------------------------
 
 /** Legal phase transitions. */
-const VALID_TRANSITIONS = {
+export const VALID_TRANSITIONS = {
   plan: ["do"],
   do: ["check"],
   check: ["act"],
-  act: ["plan"],
+  // act → do is the Action Router's COMPLETENESS_GAP / FORMAT_VIOLATION route: the plan held, the
+  // execution did not, so the work re-enters Do without re-planning. Both act routes consume a
+  // cycle, so max_cycles bounds them together and neither can loop forever.
+  act: ["plan", "do"],
 };
 
 /** Gates and what conditions they require. */
@@ -444,7 +447,8 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
 
   // Recycle cap: reject a new cycle before any gate evaluation or event logging,
   // so a run that has exhausted max_cycles never logs a spurious gate pass.
-  if (target_phase === "plan" && (state.cycle_count ?? 1) + 1 > state.max_cycles) {
+  const isRecycle = target_phase === "plan" || (current === "act" && target_phase === "do");
+  if (isRecycle && (state.cycle_count ?? 1) + 1 > state.max_cycles) {
     throw new Error(
       `max_cycles (${state.max_cycles}) reached. ` +
         `Cannot start another PDCA cycle. Use pdca_end_run to close the run.`
@@ -527,6 +531,9 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     }
   }
 
+  // Captured before any reset below clears it — a Do re-entry keeps the plan's evidence.
+  const previousSourcesCount = state.sources_count ?? 0;
+
   // Mark current phase as completed (skipped on a plan recycle — the reset
   // below clears `completed`, so pushing here would be immediately discarded).
   if (target_phase !== "plan" && !state.completed.includes(current)) {
@@ -539,6 +546,17 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
   if (target_phase === "plan") {
     state.cycle_count = (state.cycle_count ?? 1) + 1;
     resetCycleScopedState(state);
+  } else if (current === "act" && target_phase === "do") {
+    // Partial re-entry: the plan stands, so its gate and evidence survive while everything Do and
+    // Check produced is cleared. Without this the stale check_to_act gate would still read as
+    // passed and the re-run could reach Act again without being reviewed a second time.
+    state.cycle_count = (state.cycle_count ?? 1) + 1;
+    resetCycleScopedState(state);
+    state.completed = ["plan"];
+    state.gates.plan_to_do = true;
+    state.plan_mode_approved = true;
+    state.plan_findings_integrated = true;
+    state.sources_count = previousSourcesCount;
   }
 
   const previousPhase = current;

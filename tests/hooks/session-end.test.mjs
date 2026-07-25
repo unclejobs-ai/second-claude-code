@@ -105,9 +105,9 @@ test("session end persists a handoff from canonical state files", () => {
   assert.match(handoff, /Name: weekly-digest/);
   assert.match(handoff, /Progress: step 3\/5/);
   assert.match(handoff, /Status: running/);
-  assert.match(handoff, /\/second-claude-code:loop resume loop-write-core-20260326/);
-  assert.match(handoff, /re-run.*\/second-claude-code:refine/);
-  assert.match(handoff, /\/second-claude-code:workflow run weekly-digest/);
+  assert.match(handoff, /\/scc:loop resume loop-write-core-20260326/);
+  assert.match(handoff, /re-run.*\/scc:refine/);
+  assert.match(handoff, /\/scc:workflow run weekly-digest/);
 });
 
 test("session end prints an ANSI PDCA completion summary when a cycle has completed act", () => {

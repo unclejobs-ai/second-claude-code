@@ -10,7 +10,7 @@ Each step declares:
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `skill` | yes | The skill to invoke (e.g., `/second-claude-code:research`) |
+| `skill` | yes | The skill to invoke (e.g., `/scc:research`) |
 | `args` | yes | Arguments string. Supports `{{variable}}` placeholders. |
 | `output` | yes | Output file path. Supports `{{variable}}` placeholders. |
 | `input_from` | no | File path(s) from a previous step's `output`. String for single input, array for multiple inputs. Supports `{{variable}}` placeholders. |
@@ -68,20 +68,20 @@ Runtime flags override defaults. Defaults override empty.
   },
   "steps": [
     {
-      "skill": "/second-claude-code:research",
+      "skill": "/scc:research",
       "args": "\"{{topic}}\" --depth deep --sources web,news,academic --lang {{lang}}",
       "output": "{{output_dir}}/{{run_id}}-research.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:analyze",
+      "skill": "/scc:analyze",
       "args": "--framework {{framework}} --with-research --depth deep --lang {{lang}}",
       "input_from": "{{output_dir}}/{{run_id}}-research.md",
       "output": "{{output_dir}}/{{run_id}}-analysis.md",
       "on_fail": "abort"
     },
     {
-      "skill": "/second-claude-code:write",
+      "skill": "/scc:write",
       "args": "--format report --voice expert --skip-research --lang {{lang}}",
       "input_from": "{{output_dir}}/{{run_id}}-analysis.md",
       "output": "{{output_dir}}/{{run_id}}-report.md",

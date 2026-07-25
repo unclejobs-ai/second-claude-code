@@ -7,7 +7,7 @@
 ## 빠른 예시
 
 ```
-/second-claude-code:translate --input docs/skills/collect.md --target ko
+/scc:translate --input docs/skills/collect.md --target ko
 ```
 
 **동작 방식:** 원문이 영어임을 감지합니다(목표 언어는 `--target ko`로 이미 지정됨). 문체는 `natural`, 형식은 `preserve`가 기본값으로 적용되며, `references/glossary.md` 용어집을 불러온 뒤 Smeargle이 한국어 초안을 작성합니다. 이어서 Ditto가 정확성과 서식을 검수하고, 마지막으로 결과물을 자동 저장합니다.

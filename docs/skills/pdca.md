@@ -5,7 +5,7 @@
 ## What's New in v1.4.0
 
 - **Cross-plugin phase dispatch** — PDCA phases now route through the installed plugin ecosystem when a stronger external capability is available.
-- **Verified phase top picks** — Plan → `Skill: claude-mem-knowledge-agent`, Do → `Skill: frontend-design-frontend-design`, Check → `Skill: coderabbit-code-review`, Act → `/commit-commands:commit`.
+- **Verified phase top picks** — Plan → `Skill: claude-mem:knowledge-agent`, Do → `Skill: frontend-design:frontend-design`, Check → `Skill: coderabbit:code-review`, Act → `/commit-commands:commit`.
 - **Prompt-level external dispatch** — `prompt-detect` calls `getDispatchPlan()` before internal fallback. Strong external matches such as `posthog event analysis` dispatch to the installed plugin first.
 - **No hardcoded plugin registry** — plugin capabilities are discovered from `~/.claude/plugins/` at runtime and converted into exact `Skill:` / slash-command invocation strings.
 - **Short-keyword safety** — boundary checks prevent small keyword overmatches, such as `bug` accidentally matching inside `debugging`.
@@ -19,7 +19,7 @@ See [orchestrator-architecture.md](../orchestrator-architecture.md) for the v1.4
 - **Plan brief floors** — sources raised from 3 to 5, plus 8 facts, 1 named quote, 1 comparison table, 1 media item, 3,000 chars body minimum.
 - **Reviewer diversity rule** — Check requires ≥ 2 distinct models and ≥ 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6. False consensus detection triggers adversarial pass.
 - **5+ Rule (calibrated AND logic)** — patch vs full rewrite threshold. Fires on any P0 OR (P0+P1 ≥ 5 AND findings span ≥ 3 categories). Calibrated from initial OR logic after observing over-trigger on real 4-finding patch sets.
-- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/second-claude-code:research`, `/second-claude-code:write`, `/second-claude-code:review`, `/second-claude-code:refine`.
+- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`.
 
 See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec and verification cycle metrics.
 
@@ -35,15 +35,15 @@ Research and write a report on AI agent frameworks
 
 **Input:**
 ```
-/second-claude-code:pdca "AI agent market report" --depth deep
+/scc:pdca "AI agent market report" --depth deep
 ```
 
 **Process:**
-1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem-knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
+1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
 2. **Plan→Do Gate**: Verifies research brief with 3+ sources and analysis artifact.
-3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design-frontend-design` when that plugin is the stronger match.
+3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
-5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit-code-review` when installed.
+5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit:code-review` when installed.
 6. **Check→Act Gate**: APPROVED → ship. Others → Action Router.
 7. **Act**: Action Router classifies findings by root cause. Shipping prompts prefer `/commit-commands:commit` when installed:
    - Source/assumption gaps → back to **Plan**
@@ -89,12 +89,12 @@ Every gate now requires measurable numeric or boolean fields, not soft "looks co
 |--------|-----------|--------|---------------------|
 | Threads article | 4,000 | 5,000-7,000 | `/threads` |
 | Newsletter | 10,000 | 12,000-15,000 | `/newsletter` |
-| Generic article | 4,000 | 5,000-7,000 | `/second-claude-code:write` |
-| Strategy report | 5,000 | 6,000-9,000 | `/second-claude-code:write` |
-| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/second-claude-code:analyze` |
+| Generic article | 4,000 | 5,000-7,000 | `/scc:write` |
+| Strategy report | 5,000 | 6,000-9,000 | `/scc:write` |
+| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
 | Shorts script | 1,800 | 2,200-2,800 | `/academy-shorts` |
 | Card news | 8-10 cards | 9-12 cards | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | `/second-claude-code:write --format prd` |
+| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
 
 Full table in `skills/pdca/references/do-phase.md`.
 
@@ -108,7 +108,7 @@ Do phase greedy-matches user prompts against trigger keywords and dispatches the
 | 뉴스레터, newsletter | `/newsletter` |
 | 쇼츠, shorts, 릴스 | `/academy-shorts` |
 | 카드뉴스, card news, 캐러셀 | `/card-news` |
-| (no specialized match) | `/second-claude-code:write` |
+| (no specialized match) | `/scc:write` |
 
 Sub-skill standard: `skills/pdca/references/domain-pipeline-integration.md` (input/output contracts, 4 failure modes).
 

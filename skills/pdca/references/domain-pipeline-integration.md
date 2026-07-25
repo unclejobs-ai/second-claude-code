@@ -17,7 +17,7 @@ PDCA Cycle (orchestrator, always running)
               ├── /newsletter       (7 internal phases)
               ├── /academy-shorts   (multi-phase)
               ├── /card-news        (template + render)
-              └── /second-claude-code:write        (generic fallback)
+              └── /scc:write        (generic fallback)
 ```
 
 PDCA's Do phase **never executes the artifact write itself**. It always dispatches one sub-skill. The sub-skill owns the multi-phase work that produces the artifact, then returns control to PDCA with a standardized `DoOutput` schema.
@@ -40,7 +40,7 @@ When PDCA enters the Do phase, the dispatcher runs this algorithm:
 1. Read user prompt + Plan output `dod` field
 2. Score each candidate sub-skill against detected format keywords
 3. Pick the most specialized sub-skill that has score >= 1
-4. If no specialized match, fall back to /second-claude-code:write
+4. If no specialized match, fall back to /scc:write
 ```
 
 ### Specialized Sub-Skill Matchers
@@ -51,7 +51,7 @@ When PDCA enters the Do phase, the dispatcher runs this algorithm:
 | `/newsletter` | "뉴스레터", "newsletter", "주간 뉴스레터", "한국어 테크 뉴스레터", "Beehiiv" | High |
 | `/academy-shorts` | "쇼츠", "shorts", "릴스", "Reels", "9:16", "60초 영상", "academy shorts", "숏폼", "academy-shorts" | High |
 | `/card-news` | "카드뉴스", "card news", "인스타 카드", "캐러셀", "carousel", "card-news" | High |
-| `/second-claude-code:write` (default) | (no specialized match) | Fallback |
+| `/scc:write` (default) | (no specialized match) | Fallback |
 
 ### Match Algorithm Details
 
@@ -187,9 +187,9 @@ Shorts pipeline phases: research → script → editor → MMBridge review. Rese
 
 Card news has fewer internal phases — it's mostly template + render. PDCA's Do phase dispatches `/card-news`, which fills the template using research data and renders via Playwright. PDCA's Check then evaluates the rendered output for visual + content quality.
 
-### `/second-claude-code:write` (Generic Fallback) Integration
+### `/scc:write` (Generic Fallback) Integration
 
-When no specialized sub-skill matches, PDCA dispatches `/second-claude-code:write` directly. `/second-claude-code:write` is a thinner sub-skill — it just produces the artifact from research, without internal review or publishing. PDCA's Check phase becomes more important in this case because there's no sub-skill internal review to catch issues.
+When no specialized sub-skill matches, PDCA dispatches `/scc:write` directly. `/scc:write` is a thinner sub-skill — it just produces the artifact from research, without internal review or publishing. PDCA's Check phase becomes more important in this case because there's no sub-skill internal review to catch issues.
 
 ## Failure Handling
 
@@ -201,7 +201,7 @@ When a sub-skill fails (errors, hangs, returns invalid output, returns artifact 
 Action:
 1. Log: sub-skill name + input + error message + timestamp
 2. Discard worktree-pdca-do
-3. Try fallback: /second-claude-code:write with explicit format spec from sub-skill's template directory
+3. Try fallback: /scc:write with explicit format spec from sub-skill's template directory
 4. If fallback succeeds → continue to Check
 5. If fallback also fails → surface to user as "Do phase failed; manual intervention needed"
 ```
@@ -213,7 +213,7 @@ Action:
 1. Read sub-skill's actual output for analysis
 2. Identify which Plan findings were not adequately developed
 3. Re-dispatch sub-skill with explicit expansion instructions (see Writer Instruction Pattern in do-phase.md)
-4. Maximum 2 retries; on 3rd failure, escalate to /second-claude-code:write fallback
+4. Maximum 2 retries; on 3rd failure, escalate to /scc:write fallback
 ```
 
 ### Failure Mode 3: Sub-Skill Returns Invalid Output Format
@@ -232,7 +232,7 @@ Action:
 Action:
 1. Set 10-minute timeout per sub-skill dispatch
 2. On timeout: kill the sub-skill, log the timeout
-3. Try fallback: /second-claude-code:write
+3. Try fallback: /scc:write
 4. Surface timeout to user — long-running sub-skills usually indicate infinite loops or stuck research calls
 ```
 
@@ -280,5 +280,5 @@ This separation lets:
 
 - Sub-skills evolve independently (new domains can be added without changing PDCA)
 - PDCA evolve independently (better gates can be added without rewriting sub-skills)
-- Users invoke a single command (`/second-claude-code:pdca`) and get the right sub-skill auto-selected
+- Users invoke a single command (`/scc:pdca`) and get the right sub-skill auto-selected
 - The orchestrator stay accountable for the cross-cutting quality gates while sub-skills stay focused on their domain

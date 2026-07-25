@@ -1,7 +1,7 @@
 # Eevee → Unblock Fallback Flow
 
 When the Eevee researcher (`agents/eevee.md`, name `researcher`) hits a hostile
-URL during `/second-claude-code:research`, it must hand off to `unblock`
+URL during `/scc:research`, it must hand off to `unblock`
 rather than retry with raw curl.
 
 ## Trigger conditions

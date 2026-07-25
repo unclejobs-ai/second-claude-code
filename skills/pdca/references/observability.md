@@ -160,9 +160,9 @@ When Claude Code terminates abnormally (API error, rate limit), the `StopFailure
 On next `SessionStart`, if `pdca-crash-recovery.json` exists, the session-start hook surfaces:
 
 > PDCA crash recovery available: "{topic}" was in {phase} phase at {timestamp}.
-> Run `/second-claude-code:pdca` to resume or delete the file to discard.
+> Run `/scc:pdca` to resume or delete the file to discard.
 
-Running `/second-claude-code:pdca` detects the recovery file and resumes from the saved state.
+Running `/scc:pdca` detects the recovery file and resumes from the saved state.
 Delete `pdca-crash-recovery.json` manually to discard and start fresh.
 
 ---

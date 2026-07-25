@@ -44,7 +44,7 @@ function findAgentFileByName(expectedName) {
 function assertPromptRoutes(output, command) {
   assert.match(
     output,
-    new RegExp(`skill: \\\\\"second-claude-code:${command}\\\\\"`),
+    new RegExp(`skill: \\\\\"scc:${command}\\\\\"`),
     `prompt should route to ${command}`
   );
 }
@@ -153,7 +153,7 @@ test("state-manager written state flows through session start and session end ho
   assert.match(handoff, /Goal: Polish the brief/);
   assert.match(handoff, /Suite: write-core/);
   assert.match(handoff, /Progress: step 2\/5/);
-  assert.match(handoff, /\/second-claude-code:loop resume loop-write-core-20260326/);
-  assert.match(handoff, /re-run.*\/second-claude-code:refine/);
-  assert.match(handoff, /\/second-claude-code:workflow run autopilot/);
+  assert.match(handoff, /\/scc:loop resume loop-write-core-20260326/);
+  assert.match(handoff, /re-run.*\/scc:refine/);
+  assert.match(handoff, /\/scc:workflow run autopilot/);
 });

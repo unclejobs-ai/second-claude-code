@@ -27,7 +27,7 @@ Every token in a prompt costs money and attention. Skill descriptions must be un
 ## 5. Zero Dependency Core
 The core 8 workflows should run without installing external packages. Optional marketplace discovery may use external CLIs if they are already present, but the plugin must degrade gracefully when they are not. Installation remains `git clone` and nothing else for the core product.
 
-**Implication**: Core skills cannot require `npm install` or `pip install`. Optional integrations such as `/second-claude-code:discover` must clearly advertise capability gating and continue to provide local-scan-only behavior when external CLIs are unavailable.
+**Implication**: Core skills cannot require `npm install` or `pip install`. Optional integrations such as `/scc:discover` must clearly advertise capability gating and continue to provide local-scan-only behavior when external CLIs are unavailable.
 
 ## 6. State in Files
 All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databases, no external services, no environment variables for state. File-based state is inspectable, versionable, and survives session restarts without configuration.
@@ -35,7 +35,7 @@ All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databas
 **Implication**: Use `$CLAUDE_PLUGIN_DATA/state.json` for plugin state. Use `$CLAUDE_PLUGIN_DATA/knowledge/` for knowledge base. Never rely on in-memory state across session boundaries.
 
 ## 7. Composable
-The 8 core skills are building blocks, not endpoints. `/second-claude-code:write` calls `/second-claude-code:research` internally. `/second-claude-code:refine` wraps any other skill in an iteration cycle. `/second-claude-code:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
+The 8 core skills are building blocks, not endpoints. `/scc:write` calls `/scc:research` internally. `/scc:refine` wraps any other skill in an iteration cycle. `/scc:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
 
 **Implication**: Every skill must accept structured input and produce structured output. A skill that can only be invoked by a human prompt is incomplete -- it must also be callable by another skill.
 
@@ -62,6 +62,18 @@ Review failures route by root cause: research gaps go back to Plan, execution ga
 
 **Implication**: When Act phase receives findings, classify them before choosing a route. SOURCE_GAP/ASSUMPTION_ERROR → Plan. COMPLETENESS_GAP/FORMAT_VIOLATION → Do. EXECUTION_QUALITY → Loop.
 
+## 10. The Creative Spine Never Downgrades
+
+Model tier follows stakes, not uniformity. Two roles carry the whole run — the **writer** (Smeargle) produces the artifact, and the **deep-reviewer** (Xatu) is the only reviewer that reads it whole. Everything downstream inherits whatever those two got wrong, so their tier is a floor, not a budget line.
+
+Overrides on those two roles are **upward-only**: `opus → fable` is allowed, `opus → sonnet` is not, and neither is an automatic fallback that quietly degrades the tier when a dispatch fails. On exhausted attempts, escalate to the user rather than retrying cheaper.
+
+Supporting roles are free to sit lower, but the line is **judgment, not seniority**. A role that collects, shuttles files, or applies a fixed formula can sit on haiku — searcher, step-executor, evaluator. A role that assigns a severity or a score is doing judgment, and haiku is the wrong tool no matter how narrow its lens.
+
+This was learned the expensive way. `tone-guardian` and `structure-analyst` both produce severity grades and 0.0–1.0 scores, and both ran on haiku because they looked like small jobs. The plugin's own review transcript recorded the result: *"the tone-guardian review was the thinnest of the three, consistent with its haiku-tier model assignment"* — it returned APPROVED with zero findings while the other reviewers found real problems. A reviewer that approves everything is not a cheap reviewer, it is an absent one, and the gate it was supposed to hold silently opens.
+
+**Implication**: `--tier fable` raises the writer and deep-reviewer for high-stakes runs. There is no flag that lowers them. If a run must be cheaper, cut cycles or reviewers outright — never quietly downgrade one into a rubber stamp.
+
 ---
 
 ## Principle Interactions (updated)
@@ -71,5 +83,6 @@ Review failures route by root cause: research gaps go back to Plan, execution ga
 - **Context-efficient** + **zero dependency** = fast, cheap, portable
 - **State in files** + **zero dependency** = no setup, no infra
 - **PDCA-native** + **action router** = intelligent cycle routing, not blind iteration
+- **PDCA-native** + **creative spine** = the cycle only guarantees quality if the spine that feeds it holds
 
-When principles conflict, priority order is: Zero Dependency Core > context-efficient > few but deep > the rest.
+When principles conflict, priority order is: Zero Dependency Core > context-efficient > few but deep > the rest. The creative-spine floor is exempt — cost pressure never overrides it.

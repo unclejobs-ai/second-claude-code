@@ -3,7 +3,7 @@ description: "Check/Verify phase -- multi-perspective review with consensus gate
 argument-hint: draft.md --preset content
 ---
 
-Invoke the `/second-claude-code:review` command for multi-perspective quality review through the `review` skill.
+Invoke the `/scc:review` command for multi-perspective quality review through the `review` skill.
 
 ## Context
 - Current git status: !`git status --short`

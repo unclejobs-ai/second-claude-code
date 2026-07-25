@@ -3,7 +3,7 @@ description: "Act/Refine phase -- iterative improvement until quality target met
 argument-hint: '"raise this to 4.5/5" --max 3'
 ---
 
-Invoke the `/second-claude-code:refine` command for iterative improvement through the `refine` skill.
+Invoke the `/scc:refine` command for iterative improvement through the `refine` skill.
 
 ## Context
 - Active refine loop: !`cat .data/state/refine-active.json 2>/dev/null || echo "No active loop"`
@@ -11,7 +11,7 @@ Invoke the `/second-claude-code:refine` command for iterative improvement throug
 ## Arguments
 - First argument: improvement goal (quoted string)
 - `--max N` (max iterations, default: 3)
-- `--target "condition"` (termination condition, default: /second-claude-code:review APPROVED)
+- `--target "condition"` (termination condition, default: /scc:review APPROVED)
 - `--promise "text"` (completion promise for each iteration)
 - `--dod "criteria"` (semicolon-separated Definition of Done checklist; reviewers evaluate each criterion as PASS/FAIL per iteration)
 

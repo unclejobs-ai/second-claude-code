@@ -14,13 +14,13 @@ Review this README for quality
 
 **Input:**
 ```
-/second-claude-code:review --preset content README.md
+/scc:review --preset content README.md
 ```
 
 **Process:**
 1. Deep-reviewer (opus) analyzes logic, structure, and completeness -- cites exact lines for each finding.
 2. Devil-advocate (sonnet) attacks the 3 weakest points: grandiose claims, implied endorsements, unproven value proposition.
-3. Tone-guardian (haiku) checks voice consistency and audience fit.
+3. Tone-guardian (sonnet) checks voice consistency and audience fit.
 4. Findings are deduplicated and merged. Consensus gate applies: 1/3 approved, threshold not met.
 5. Final verdict issued with prioritized action items.
 
@@ -51,8 +51,8 @@ Review this README for quality
 | `deep-reviewer` | opus | Logic, structure, completeness |
 | `devil-advocate` | sonnet | Weakest points and blind spots |
 | `fact-checker` | sonnet | Claims, numbers, sources |
-| `tone-guardian` | haiku | Voice and audience fit |
-| `structure-analyst` | haiku | Organization and readability |
+| `tone-guardian` | sonnet | Voice and audience fit |
+| `structure-analyst` | sonnet | Organization and readability |
 
 ## Options
 

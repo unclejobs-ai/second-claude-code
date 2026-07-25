@@ -38,7 +38,7 @@ const MUTATION_STRATEGIES = [
   {
     id: "normalize-command-prefix",
     mutate(text) {
-      return text.replace(/\/scc:/g, "/second-claude-code:");
+      return text.replace(/\/second-claude-code:/g, "/scc:");
     },
   },
   {
@@ -652,7 +652,7 @@ function bundledSuiteScore(suiteName, caseId, candidateDir) {
     "write-core": {
       "write-command-surface": () =>
         scoreChecks(join(candidateDir, "commands", "write.md"), [
-          /\/second-claude-code:write/,
+          /\/scc:write/,
           /loaded `write` skill/i,
           /format \(newsletter\|article\|shorts\|report\|social\|card-news\)/i,
           /--voice peer-mentor\|expert\|casual/i,
@@ -676,7 +676,7 @@ function bundledSuiteScore(suiteName, caseId, candidateDir) {
     "review-core": {
       "review-command-surface": () =>
         scoreChecks(join(candidateDir, "commands", "review.md"), [
-          /\/second-claude-code:review/,
+          /\/scc:review/,
           /loaded `review` skill/i,
           /--preset content\|strategy\|code\|security\|quick\|full/i,
           /Return the actual review result/i,

@@ -21,12 +21,9 @@ import { logEvent, readEvents, getEventStats, listRunIds } from "../../hooks/lib
 // Domain logic extracted from mcp/pdca-state-server.mjs (pure functions)
 // ---------------------------------------------------------------------------
 
-const VALID_TRANSITIONS = {
-  plan: ["do"],
-  do: ["check"],
-  check: ["act"],
-  act: ["plan"],
-};
+// Imported, never redeclared: a local copy would let this file keep passing while the real state
+// machine changed underneath it.
+import { VALID_TRANSITIONS } from "../../mcp/lib/pdca-handlers.mjs";
 
 const GATE_REQUIRED = {
   plan_to_do: ["brief_exists", "sources_min_3", "analysis_exists", "plan_mode_approved"],
@@ -1049,8 +1046,14 @@ describe("PDCA State Server — VALID_TRANSITIONS", () => {
     assert.deepEqual(VALID_TRANSITIONS.check, ["act"]);
   });
 
-  it("act can only go to plan", () => {
-    assert.deepEqual(VALID_TRANSITIONS.act, ["plan"]);
+  it("act can go to plan (re-plan) or do (re-execute)", () => {
+    assert.deepEqual(VALID_TRANSITIONS.act, ["plan", "do"]);
+  });
+
+  it("act → do is reachable so the Action Router's execution-gap route is not dead", () => {
+    // The router classifies COMPLETENESS_GAP / FORMAT_VIOLATION as "re-enter Do". If the state
+    // machine rejected that target, one of the router's three routes could never be taken.
+    assert.ok(VALID_TRANSITIONS.act.includes("do"));
   });
 
   it("forms a complete cycle", () => {

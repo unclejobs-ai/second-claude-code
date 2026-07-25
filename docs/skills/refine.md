@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```
-/second-claude-code:refine draft.md --target 4.5 --max 3
+/scc:refine draft.md --target 4.5 --max 3
 ```
 
 **What happens:** The skill reads the current draft, dispatches reviewers as independent subagents, applies the top 3 feedback items, then re-reviews. This cycle repeats until the target score is met, the max rounds are exhausted, or improvement plateaus. A final completion gate must pass before refine exits.
@@ -13,7 +13,7 @@
 ### With Definition of Done
 
 ```
-/second-claude-code:refine draft.md --dod "no factual errors; every section has concrete examples; conclusion connects back to intro"
+/scc:refine draft.md --dod "no factual errors; every section has concrete examples; conclusion connects back to intro"
 ```
 
 **What happens:** Same review-fix loop, but reviewers also evaluate each DoD criterion as PASS/FAIL. The editor prioritizes failing DoD criteria first. Refine only exits when all DoD criteria pass AND the verdict target is met.
