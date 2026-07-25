@@ -22,21 +22,31 @@ Opens a local web UI to view PDCA pipeline results as interactive artifacts.
 
 ## Usage
 
-Start the viewer for the current PDCA session:
+Build the session directory from the current run, then serve it:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/ui/scripts/start-server.sh \
+node "${CLAUDE_PLUGIN_ROOT}/scripts/viewer-session.mjs" --session-dir "${SESSION_DIR}"
+bash "${CLAUDE_PLUGIN_ROOT}/ui/scripts/start-server.sh" \
   --session-dir "${SESSION_DIR}" \
   --dist-dir "${CLAUDE_PLUGIN_ROOT}/ui/dist"
 ```
 
-The script outputs JSON with the URL. Tell the user to open it in their browser.
+**Run the first command every time.** PDCA writes `.data/state` and `.data/cycles/`, not the layout
+the server reads — `viewer-session.mjs` is what projects one into the other. Skipping it serves the
+previous run, or an empty page on the first run.
+
+The start script outputs JSON with the URL. Tell the user to open it in their browser.
 
 ## How It Works
 
-1. The PDCA pipeline writes `state.json` and `artifacts/*.json` to the session directory
-2. The server watches these files and broadcasts changes via WebSocket
+1. `viewer-session.mjs` reads the PDCA state and cycle markdown, and writes `state.json` plus
+   `artifacts/*.json` into the session directory
+2. The server watches those files and broadcasts changes via WebSocket
 3. The browser renders artifacts in real-time: markdown, charts (Nivo), code (Shiki), flow diagrams (SVG)
+
+The two sides speak different vocabularies: PDCA runs plan/do/check/act, while the viewer's phases
+are the skill axis — research, analyze, write, review, refine. Plan feeds both research and analyze,
+so the mapping in `viewer-session.mjs` is deliberate rather than one-to-one.
 
 ## Session Directory Structure
 
@@ -70,11 +80,11 @@ runs today. Pass `--data-dir` for a different root or `--run <run_id>` to pick a
 
 Two things worth knowing about where the numbers come from:
 
-- The phase timeline and its durations are reconstructed from the **event log**, not from
-  `state.action_router_history` — that field is initialized to `[]` and never appended to, so
-  anything reading it reports zero re-entries forever.
-- A phase logged under a later cycle is what counts as a re-entry. If the pipeline later starts
-  writing router history, the export uses it too, but it never depends on it.
+- The phase timeline and its durations are reconstructed from the **event log**, which is the only
+  per-run record of when each phase actually started and ended.
+- Re-entry reasons come from `state.action_router_history`, written by `pdca_transition` whenever a
+  run leaves Act. Runs recorded before that field started being written fall back to inference: a
+  phase logged under a later cycle counts as a re-entry, but carries no reason.
 
 What the export leads with is the **audit trail**, not the content: which gates passed, how many
 reviewers attacked the draft and what they caught, every Act re-entry with its reason, and any drift

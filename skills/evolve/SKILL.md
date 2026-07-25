@@ -24,7 +24,7 @@ evolve is a **target-selection + check-authoring layer on top of `loop`**. It ru
 
 ## When to Use
 
-- The same PDCA gate (`sources_min_3`, `min_two_reviewers`, …) keeps failing across runs and the root cause is the *producing prompt asset*, not the individual run.
+- The same PDCA gate (`sources_min_5`, `min_two_reviewers`, …) keeps failing across runs and the root cause is the *producing prompt asset*, not the individual run.
 - The maintainer can express the desired structure as static regexes.
 - A fixed loop engine + promotion gates already exist (they do).
 

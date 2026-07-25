@@ -26,7 +26,7 @@ import { logEvent, readEvents, getEventStats, listRunIds } from "../../hooks/lib
 import { VALID_TRANSITIONS } from "../../mcp/lib/pdca-handlers.mjs";
 
 const GATE_REQUIRED = {
-  plan_to_do: ["brief_exists", "sources_min_3", "analysis_exists", "plan_mode_approved"],
+  plan_to_do: ["brief_exists", "sources_min_5", "analysis_exists", "plan_mode_approved"],
   do_to_check: ["artifact_exists", "artifact_complete", "plan_integrated"],
   check_to_act: ["verdict_set", "min_two_reviewers"],
   act_to_exit: ["decision_set", "root_cause_set"],
@@ -44,7 +44,7 @@ function evaluateGate(gate, state) {
   switch (gate) {
     case "plan_to_do":
       if (!artifacts.plan_research) missing.push("brief_exists");
-      if ((state.sources_count ?? 0) < 3) missing.push("sources_min_3");
+      if ((state.sources_count ?? 0) < 5) missing.push("sources_min_5");
       if (!artifacts.plan_analysis) missing.push("analysis_exists");
       if (!state.plan_mode_approved) missing.push("plan_mode_approved");
       break;
@@ -573,7 +573,7 @@ describe("PDCA State Server — Gate Evaluation Logic", () => {
     assert.equal(result.passed, false);
     assert.deepEqual(result.missing, [
       "brief_exists",
-      "sources_min_3",
+      "sources_min_5",
       "analysis_exists",
       "plan_mode_approved",
     ]);
@@ -593,10 +593,10 @@ describe("PDCA State Server — Gate Evaluation Logic", () => {
   it("plan_to_do gate fails with partial conditions", () => {
     const state = buildInitialState("Test", 3);
     state.artifacts.plan_research = "/research.md";
-    state.sources_count = 2; // less than 3
+    state.sources_count = 2; // less than 5
     const result = evaluateGate("plan_to_do", state);
     assert.equal(result.passed, false);
-    assert.ok(result.missing.includes("sources_min_3"));
+    assert.ok(result.missing.includes("sources_min_5"));
     assert.ok(result.missing.includes("analysis_exists"));
     assert.ok(result.missing.includes("plan_mode_approved"));
     assert.ok(!result.missing.includes("brief_exists"));
@@ -788,7 +788,7 @@ describe("PDCA State Server — Event Logging", () => {
     // Satisfy plan_to_do gate
     const s = readJson(env.activeFile);
     s.artifacts.plan_research = "/r.md";
-    s.sources_count = 3;
+    s.sources_count = 5;
     s.artifacts.plan_analysis = "/a.md";
     s.plan_mode_approved = true;
     writeJsonSync(env.activeFile, s);
@@ -1310,7 +1310,7 @@ describe("PDCA State Server — auto_gate on transition", () => {
 
     const state = readJson(env.activeFile);
     state.artifacts.plan_research = "/r.md";
-    state.sources_count = 3;
+    state.sources_count = 5;
     state.artifacts.plan_analysis = "/a.md";
     state.plan_mode_approved = true;
     writeJsonSync(env.activeFile, state);

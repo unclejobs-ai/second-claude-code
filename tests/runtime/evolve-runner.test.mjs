@@ -86,9 +86,9 @@ test("ledger upsert preserves the maintainer-authored check across re-harvest", 
       ts: "2026-01-01T00:00:00.000Z",
       source_kind: "gate_fail",
       asset_path: "skills/research/SKILL.md",
-      gate_rule: "sources_min_3",
-      finding_excerpt: "gate_fail: sources_min_3 (phase plan)",
-      dedup_key: "skills/research/SKILL.md::sources_min_3",
+      gate_rule: "sources_min_5",
+      finding_excerpt: "gate_fail: sources_min_5 (phase plan)",
+      dedup_key: "skills/research/SKILL.md::sources_min_5",
       source_runs: ["r1"],
       recurrence: 1,
       checkable: true,
@@ -135,13 +135,13 @@ test("harvest scan aggregates real gate_fail events into a recurring provenance 
   const data = makeTemp();
   try {
     for (const runId of ["run-a", "run-b", "run-c"]) {
-      logEvent(data, runId, { type: "gate_fail", phase: "plan", data: { missing: ["sources_min_3"] } });
+      logEvent(data, runId, { type: "gate_fail", phase: "plan", data: { missing: ["sources_min_5"] } });
     }
     scanFailures(root, data);
     const [record] = readRecords(data, { asset_path: "skills/research/SKILL.md", min_recurrence: 3 });
 
     assert.ok(record, "expected a recurring record for the research skill");
-    assert.equal(record.gate_rule, "sources_min_3");
+    assert.equal(record.gate_rule, "sources_min_5");
     assert.equal(record.recurrence, 3);
     assert.equal(record.check_author, null, "scan must not author a check");
   } finally {
@@ -155,7 +155,7 @@ test("buildSuite emits a valid suite with the floor min_delta and an inline base
     const record = {
       id: "skills-research-skill-md-sources-min-3",
       asset_path: "skills/research/SKILL.md",
-      dedup_key: "skills/research/SKILL.md::sources_min_3",
+      dedup_key: "skills/research/SKILL.md::sources_min_5",
       recurrence: 3,
       check_assertion: ["## Sources"],
       check_author: "maintainer",
@@ -193,7 +193,7 @@ test("setMaintainerCheck persists a --target asset override to disk", () => {
   try {
     upsertByDedup(data, {
       id: "rec",
-      dedup_key: "skills/research/SKILL.md::sources_min_3",
+      dedup_key: "skills/research/SKILL.md::sources_min_5",
       asset_path: "skills/research/SKILL.md",
       recurrence: 3,
       check_assertion: null,

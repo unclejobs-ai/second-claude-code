@@ -49,6 +49,17 @@ if [[ -f "$PID_FILE" ]]; then
   rm -f "$PID_FILE" "$INFO_FILE"
 fi
 
+# `ui/dist/` is gitignored, so an installed plugin ships without it. Without this check the server
+# starts happily, serves 404s, and hands back a URL that renders a blank page — the exact dead link
+# the skill's Red Flags warn about. Fail here instead, with the command that fixes it.
+if [[ ! -f "${DIST_DIR}/index.html" ]]; then
+  printf '{"ok":false,"status":"no_build","dist_dir":%s,"error":%s,"fix":%s}\n' \
+    "\"${DIST_DIR}\"" \
+    "\"viewer UI is not built — installed plugins ship without ui/dist\"" \
+    "\"cd ${SCRIPT_DIR}/.. && npm install && npm run build, or use /scc:viewer --export for a shareable page that needs no build\""
+  exit 1
+fi
+
 node "${SCRIPT_DIR}/server.cjs" \
   --session-dir "${SESSION_DIR}" \
   --dist-dir "${DIST_DIR}" \

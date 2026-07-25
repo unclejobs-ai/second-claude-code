@@ -29,9 +29,9 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 ## Workflow
 
 0. **Check existing knowledge**: search `${CLAUDE_PLUGIN_DATA}/knowledge/` for items with overlapping tags or titles before creating a new entry. If a duplicate exists, update it instead of creating a new one.
-1. Detect source type: URL, raw text, file path, or search request.
-2. **Dispatch analyst subagent** (extract + reduce): Extract the useful content, strip boilerplate, produce exactly 3 key points and a short summary. This MUST run as a separate subagent, not inline.
-3. **Dispatch connector subagent** (find shared concept): Using only the stored knowledge base (not the analyst's output framing), find a specific shared concept connecting the new item to existing knowledge. This MUST run as a separate subagent to prevent bias from the analyst's framing.
+1. Detect source type: URL, raw text, file path, or search request. **Fetch here, not later** — the `analyst` agent has no web tools, so a URL must be resolved to text before dispatch (use `/scc:unblock` if the page is gated).
+2. **Dispatch the `analyst` subagent** (extract + reduce): Extract the useful content, strip boilerplate, produce exactly 3 key points and a short summary. This MUST run as a separate subagent, not inline.
+3. **Dispatch the `knowledge-connector` subagent** (find shared concept): Using only the stored knowledge base (not the analyst's output framing), find a specific shared concept connecting the new item to existing knowledge. This MUST run as a separate subagent to prevent bias from the analyst's framing.
 4. Merge analyst and connector outputs.
 5. Classify it into PARA and save structured JSON + markdown.
 6. **Verify output**: Confirm JSON has all required fields, `key_points` has exactly 3 items, connections pass the quality gate. If any check fails, fix before saving.
@@ -96,8 +96,8 @@ See `references/para-method.md` for full ranking weights.
 ## Subagents
 
 ```yaml
-analyst: { model: haiku, tools: [WebFetch], constraint: "produce exactly 3 key points", dispatch: required }
-connector: { model: haiku, tools: [Glob, Read], constraint: "name a specific shared concept", dispatch: required }
+analyst: { model: sonnet, tools: [Read, Grep, Glob], constraint: "produce exactly 3 key points", dispatch: required }
+knowledge-connector: { model: haiku, tools: [Glob, Read], constraint: "name a specific shared concept", dispatch: required }
 ```
 
 **Dispatch requirement**: Both subagents MUST be dispatched as separate agents (e.g., via `superpowers:dispatching-parallel-agents`). Running either inline violates isolation: the connector must not see the analyst's framing, only the raw source and existing knowledge base. If subagent dispatch is unavailable, run them sequentially with explicit context barriers — pass only the original source URL/text to the connector, never the analyst's summary.

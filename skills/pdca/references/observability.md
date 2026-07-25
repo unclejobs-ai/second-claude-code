@@ -40,7 +40,7 @@ Fired by `pdca_transition` around every phase change.
 ### gate_check
 Fired each time `pdca_check_gate` is called. Always accompanied by `gate_pass` or `gate_fail`.
 ```json
-{ "type": "gate_check", "action": "plan_to_do", "data": { "passed": false, "missing": ["sources_min_3"] } }
+{ "type": "gate_check", "action": "plan_to_do", "data": { "passed": false, "missing": ["sources_min_5"] } }
 ```
 
 ### gate_pass / gate_fail

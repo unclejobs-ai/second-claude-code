@@ -51,10 +51,15 @@ const MIME = {
 }
 
 // --- WebSocket helpers (RFC 6455) ---
+// The GUID is fixed by RFC 6455 §1.3 and must be exact — a wrong one still produces a plausible
+// base64 digest, so the server answers confidently and every browser rejects the handshake with
+// "Incorrect 'Sec-WebSocket-Accept' header value". Do not retype this from memory.
+const WS_GUID = '258EAFA5-E914-47DA-95CA-C5AB0DC85B11'
+
 function computeAcceptKey(key) {
   return crypto
     .createHash('sha1')
-    .update(key + '258EAFA5-E914-47DA-95CA-5AB5A3F11BA5')
+    .update(key + WS_GUID)
     .digest('base64')
 }
 

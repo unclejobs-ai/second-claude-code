@@ -509,3 +509,38 @@ test("skill files stay within the documented 1000-word limit", () => {
     assert.ok(wordCount <= 1000, `${relPath} should stay at or under 1000 words (got ${wordCount})`);
   }
 });
+
+test("skill Subagents blocks name real agents, or say plainly that they do not", () => {
+  const agentNames = new Set(
+    readdirSync(path.join(root, "agents"))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => read(path.join("agents", f)).match(/^name:\s*(.+)$/m)?.[1]?.trim())
+      .filter(Boolean)
+  );
+
+  // A role key that is neither a real agent nor declared generic is unreachable: dispatching it
+  // resolves nothing, so the model/tools written beside it are silently ignored.
+  const GENERIC_DISCLAIMER = /not entries in `agents\/`/;
+  const offenders = [];
+
+  for (const skillDir of readdirSync(path.join(root, "skills"), { withFileTypes: true })) {
+    if (!skillDir.isDirectory()) continue;
+    const relPath = path.join("skills", skillDir.name, "SKILL.md");
+    if (!existsSync(path.join(root, relPath))) continue;
+
+    const content = read(relPath);
+    const section = content.split(/^## Subagents\s*$/m)[1];
+    if (!section) continue;
+    if (GENERIC_DISCLAIMER.test(section.split(/^## /m)[0])) continue;
+
+    const block = section.match(/```yaml\n([\s\S]*?)```/)?.[1] ?? "";
+    for (const line of block.split("\n")) {
+      const role = line.match(/^([A-Za-z][\w-]*):\s*\{/)?.[1];
+      // `reviewer: { skill: ... }` delegates to a skill, not an agent.
+      if (!role || /\{\s*skill:/.test(line)) continue;
+      if (!agentNames.has(role)) offenders.push(`${relPath}: ${role}`);
+    }
+  }
+
+  assert.deepEqual(offenders.sort(), []);
+});

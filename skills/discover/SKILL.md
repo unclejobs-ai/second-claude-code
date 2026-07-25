@@ -103,7 +103,7 @@ Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/discovers/{query
 ## Subagents
 
 ```yaml
-searcher: { model: haiku, tools: [Bash, WebSearch], constraint: "return only real results; query sources in priority order" }
-inspector: { model: sonnet, tools: [Bash, Read], constraint: "fetch and read README/SKILL.md for top 3; verify claims" }
-evaluator: { model: sonnet, tools: [Read], constraint: "score consistently; show full breakdown with rationale" }
+skill-searcher: { model: haiku, tools: [Bash, WebSearch], constraint: "return only real results; query sources in priority order" }
+skill-inspector: { model: sonnet, tools: [Bash, Read], constraint: "fetch and read README/SKILL.md for top 3; verify claims" }
+skill-evaluator: { model: sonnet, tools: [Read], constraint: "score consistently; show full breakdown with rationale" }
 ```

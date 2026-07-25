@@ -134,7 +134,7 @@ export const VALID_TRANSITIONS = {
 
 /** Gates and what conditions they require. */
 const GATE_REQUIRED = {
-  plan_to_do: ["brief_exists", "sources_min_3", "analysis_exists", "plan_mode_approved"],
+  plan_to_do: ["brief_exists", "sources_min_5", "analysis_exists", "plan_mode_approved"],
   do_to_check: ["artifact_exists", "artifact_complete", "plan_integrated"],
   check_to_act: ["verdict_set", "min_two_reviewers"],
   act_to_exit: ["decision_set", "root_cause_set"],
@@ -158,7 +158,9 @@ function evaluateGate(gate, state) {
   switch (gate) {
     case "plan_to_do":
       if (!artifacts.plan_research) missing.push("brief_exists");
-      if ((state.sources_count ?? 0) < 3) missing.push("sources_min_3");
+      // 5, not 3 — raised in v1.3.0 so the Do phase cannot inherit a single-narrative brief.
+      // phase-schemas.md and plan-phase.md recorded the raise; this check was never updated.
+      if ((state.sources_count ?? 0) < 5) missing.push("sources_min_5");
       if (!artifacts.plan_analysis) missing.push("analysis_exists");
       if (!state.plan_mode_approved) missing.push("plan_mode_approved");
       break;
@@ -192,14 +194,27 @@ function evaluateGate(gate, state) {
  * @param {object} state
  * @returns {"PROCEED" | "REFINE" | "PIVOT"}
  */
+/**
+ * Finding counts as the Act decision sees them: reviewers may report a count, a list, or both.
+ * The router history records the same numbers, so the log always explains the decision it sits next
+ * to rather than a raw field that disagrees with it.
+ * @param {object} state
+ * @returns {{ criticalCount: number, warningCount: number }}
+ */
+function countFindings(state) {
+  return {
+    criticalCount:
+      (Array.isArray(state.critical_findings) ? state.critical_findings.length : 0) +
+      (Number(state.critical_count) || 0),
+    warningCount: Math.max(
+      Number(state.warning_count) || 0,
+      Array.isArray(state.top_improvements) ? state.top_improvements.length : 0
+    ),
+  };
+}
+
 function evaluateCheckToActDecision(state) {
-  const criticalCount =
-    (Array.isArray(state.critical_findings) ? state.critical_findings.length : 0) +
-    (Number(state.critical_count) || 0);
-  const warningCount = Math.max(
-    Number(state.warning_count) || 0,
-    Array.isArray(state.top_improvements) ? state.top_improvements.length : 0
-  );
+  const { criticalCount, warningCount } = countFindings(state);
   const verdict = String(state.check_verdict || "").toUpperCase();
   const hasCriticalIssues = criticalCount > 0 || verdict === "MUST FIX";
   const hasWarnings =
@@ -531,8 +546,21 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     }
   }
 
-  // Captured before any reset below clears it — a Do re-entry keeps the plan's evidence.
+  // Captured before any reset below clears them — a Do re-entry keeps the plan's evidence, and the
+  // router's verdict has to outlive the reset that is about to wipe act_decision/act_root_cause.
   const previousSourcesCount = state.sources_count ?? 0;
+  const counts = countFindings(state);
+  const routerVerdict =
+    current === "act"
+      ? {
+          cycle: state.cycle_count ?? 1,
+          route: target_phase,
+          decision: state.act_decision ?? null,
+          root_cause: state.act_root_cause ?? null,
+          critical_count: counts.criticalCount,
+          warning_count: counts.warningCount,
+        }
+      : null;
 
   // Mark current phase as completed (skipped on a plan recycle — the reset
   // below clears `completed`, so pushing here would be immediately discarded).
@@ -557,6 +585,14 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     state.plan_mode_approved = true;
     state.plan_findings_integrated = true;
     state.sources_count = previousSourcesCount;
+  }
+
+  // Leaving Act is the moment the router's classification becomes an action, so that is where it
+  // gets recorded. The field is cumulative — resetCycleScopedState deliberately leaves it alone —
+  // so the run keeps the full list of where it was sent back to and why.
+  if (routerVerdict) {
+    if (!Array.isArray(state.action_router_history)) state.action_router_history = [];
+    state.action_router_history.push(routerVerdict);
   }
 
   const previousPhase = current;

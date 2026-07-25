@@ -9,9 +9,9 @@
 //
 // Reads what the pipeline ACTUALLY writes (`.data/state`, `.data/events/*.jsonl`, `.data/cycles/`),
 // not the `{session}/state.json` + `artifacts/*.json` layout the live viewer expects — nothing in
-// this repo produces that layout, which is why the viewer renders nothing. The phase timeline is
-// reconstructed from the event log rather than `state.action_router_history`, because that field is
-// initialized to `[]` and never appended to (see mcp/lib/pdca-handlers.mjs).
+// this repo produces that layout, which is why the viewer renders nothing. The phase timeline comes
+// from the event log; re-entry reasons come from `state.action_router_history`, with a cycle-based
+// fallback for runs recorded before that field started being written.
 //
 // Emits Markdown only (mermaid fences for the loop, flows, and charts), so the result renders as a
 // Claude Code Artifact with no bundle, no server, and no CSP problems.
@@ -201,24 +201,31 @@ function renderLoop(state, timeline) {
   }
   lines.push("  plan --> do --> check --> act");
 
-  // A phase logged in a later cycle means Act sent the work back to it.
-  const reentries = new Set(timeline.filter((t) => (t.cycle ?? 1) > 1).map((t) => t.phase));
-  for (const phase of reentries) {
-    lines.push(`  act -.->|"re-entry"| ${phase}`);
+  // The router records why it sent work back, so prefer that. Older runs predate the field being
+  // written, and a run can also be exported mid-flight; for those, a phase logged under a later
+  // cycle is the only evidence a re-entry happened, but it carries no reason.
+  const declared = (state.action_router_history ?? []).filter((entry) =>
+    PHASES.includes(entry?.route ?? entry?.to ?? entry?.target)
+  );
+  let reentryCount = declared.length;
+  if (declared.length) {
+    declared.forEach((entry, i) => {
+      const target = entry.route ?? entry.to ?? entry.target;
+      const why = entry.root_cause ?? entry.reason ?? entry.decision ?? "routed back";
+      lines.push(`  act -.->|"${i + 1}. ${mmLabel(why)}"| ${target}`);
+    });
+  } else {
+    const inferred = new Set(timeline.filter((t) => (t.cycle ?? 1) > 1).map((t) => t.phase));
+    reentryCount = inferred.size;
+    for (const phase of inferred) lines.push(`  act -.->|"re-entry"| ${phase}`);
   }
-  const declared = state.action_router_history ?? [];
-  declared.forEach((entry, i) => {
-    const target = entry?.route ?? entry?.to ?? entry?.target;
-    if (!target || !PHASES.includes(target) || reentries.has(target)) return;
-    lines.push(`  act -.->|"${i + 1}. ${mmLabel(entry?.reason ?? "routed back")}"| ${target}`);
-  });
 
   for (const phase of PHASES) {
     if (done.has(phase)) lines.push(`  style ${phase} fill:#d3f9d8,stroke:#2f9e44`);
     else if (phase === current) lines.push(`  style ${phase} fill:#fff3bf,stroke:#f08c00`);
   }
   lines.push("```");
-  return { diagram: lines.join("\n"), reentryCount: reentries.size + declared.length };
+  return { diagram: lines.join("\n"), reentryCount };
 }
 
 function renderTimeline(timeline) {

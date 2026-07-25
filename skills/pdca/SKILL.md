@@ -248,7 +248,7 @@ If you (the orchestrator) try to call `Agent(subagent_type: "eevee")`, it will f
 ```yaml
 # Plan dispatches two skills, so its roles split across them.
 # Roles handled inside /scc:research
-researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 3 distinct sources" }
+researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 5 distinct sources" }
 analyst: { model: sonnet, role: alakazam, purpose: "list gaps, flag data conflicts, verify coverage" }
 
 # Roles handled inside /scc:analyze — alakazam appears in both, pre-processing there rather than gap-listing
@@ -269,7 +269,7 @@ structure-analyst: { model: sonnet, role: unown, purpose: "check organization, f
 editor: { model: opus, role: ditto, purpose: "apply top 3 fixes per iteration, verify improvement" }
 
 # Orchestration meta-role (the PDCA orchestrator itself)
-orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
+pipeline-orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
 ```
 
 **How PDCA actually executes**: The orchestrator calls `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` as Skill invocations. Each of those skills internally dispatches the right subagents (`general-purpose`, `code-reviewer`, etc.) using the Agent tool. PDCA never bypasses this layer.
