@@ -32,9 +32,13 @@ flowchart TB
 2. **의도 점수화** - `getDispatchPlan()`이 키워드나 PDCA 페이즈를 정규화하고, 플러그인 capability를 점수화하고, preferred-plugin 보정을 적용한 뒤, 정렬된 호출 지시를 반환합니다.
 3. **프롬프트 디스패치** - `hooks/prompt-detect.mjs`가 lifecycle 의도나 강한 일반 플러그인 매칭을 발견하면 `[ORCHESTRATOR]` 블록을 주입합니다.
 
-**탐지되는 것과 고정된 것.** 어떤 플러그인이 있고 그 안에 무슨 스킬·커맨드·에이전트가 들었는지는 런타임에 디스크에서 읽습니다. 반면 고정된 건 선호 표입니다. `plugin-discovery.mjs`의 `INTENT_PROFILES`가 lifecycle 의도별 선호 플러그인(리뷰→`coderabbit`, act→`commit-commands`, 디자인→`frontend-design`, 메모리·리서치→`claude-mem`)을 박아 뒀고, 새로 깐 리뷰 플러그인은 탐지·점수화는 되지만 `+60` 선호 가산점은 그 표를 고쳐야 받습니다.
+**탐지되는 것과 고정된 것.** 어떤 플러그인이 있고 그 안에 무슨 스킬·커맨드·에이전트가 들었는지는 런타임에 디스크에서 읽습니다. 반면 고정된 건 선호 표입니다. `plugin-discovery.mjs`의 `INTENT_PROFILES`가 lifecycle 의도별 선호 플러그인(리뷰→`coderabbit`, act→`commit-commands`, 디자인→`frontend-design`, 메모리·리서치→`claude-mem`)을 박아 뒀고, 새로 깐 리뷰 플러그인은 탐지·점수화는 되지만 `+60` 선호 가산점은 기본값으로는 못 받습니다.
+
+다만 이 기본값은 소스를 고치지 않고 덮어쓸 수 있습니다. `${CLAUDE_PLUGIN_DATA}`에 `plugin-preferences.json`을 두고 의도별로 적으면 됩니다 — `{"review": ["my-reviewer"], "commit": []}`. 빈 배열이면 가산점을 아예 없애서 텍스트 매칭만으로 겨루게 합니다. 파일이 깨져 있으면 라우팅을 죽이지 않고 무시합니다.
 
 ## 검증된 라우트
+
+**기본 설정 기준**입니다. `plugin-preferences.json`으로 덮어쓰면 lifecycle 의도별 1순위가 달라지므로, 아래는 사장님 머신의 결과가 아니라 출하 기본값입니다.
 
 | 입력 | 의도 | 1순위 디스패치 |
 | --- | --- | --- |
