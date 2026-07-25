@@ -60,6 +60,17 @@
 }
 ```
 
+## 백그라운드로 돌리기
+
+워크플로가 세션을 붙잡고 있을 필요는 없어요:
+
+```bash
+claude --bg "/scc:workflow run weekly-digest"
+claude agents        # 상태 확인
+```
+
+`daemon_start_background_run`은 항목을 큐에 넣고 바로 그 명령을 `handoff`로 돌려줍니다. 큐 자체는 아무것도 실행하지 않아요 — 실행은 클로드 코드의 백그라운드 에이전트가 하고, 외부 작업은 진짜 대화 안에서의 승인 뒤에 남습니다. 왜 이렇게 나눴는지는 README에 적어 뒀어요.
+
 ## 서브커맨드
 
 | 명령 | 용도 |
