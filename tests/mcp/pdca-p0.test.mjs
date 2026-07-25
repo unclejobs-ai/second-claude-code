@@ -75,7 +75,7 @@ test("auto_gate can PASS through the MCP API when phase_result is supplied", asy
       artifacts: { plan_research: "/tmp/r.md", plan_analysis: "/tmp/a.md" },
     });
     assert.equal(blocked.transitioned, false, "blocked without gate inputs");
-    assert.ok(blocked.gate_result.missing.includes("sources_min_3"));
+    assert.ok(blocked.gate_result.missing.includes("sources_min_5"));
     assert.ok(blocked.gate_result.missing.includes("plan_mode_approved"));
 
     // With phase_result supplying the gate inputs, it must pass.
@@ -83,7 +83,7 @@ test("auto_gate can PASS through the MCP API when phase_result is supplied", asy
       target_phase: "do",
       auto_gate: true,
       artifacts: { plan_research: "/tmp/r.md", plan_analysis: "/tmp/a.md" },
-      phase_result: { sources_count: 4, plan_mode_approved: true },
+      phase_result: { sources_count: 5, plan_mode_approved: true },
     });
     assert.equal(passed.transitioned, true, "passes once gate inputs are set");
     assert.equal(h.handleGetState().current_phase, "do");

@@ -29,7 +29,7 @@ async function prepareCheckPhase(tempDir, statePatch = {}) {
       do: "/tmp/draft.md",
       check_report: "/tmp/review.md",
     },
-    sources_count: 3,
+    sources_count: 5,
     plan_mode_approved: true,
     do_artifact_complete: true,
     plan_findings_integrated: true,

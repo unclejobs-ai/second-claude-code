@@ -248,7 +248,7 @@ If you (the orchestrator) try to call `Agent(subagent_type: "eevee")`, it will f
 ```yaml
 # Plan dispatches two skills, so its roles split across them.
 # Roles handled inside /scc:research
-researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 3 distinct sources" }
+researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 5 distinct sources" }
 analyst: { model: sonnet, role: alakazam, purpose: "list gaps, flag data conflicts, verify coverage" }
 
 # Roles handled inside /scc:analyze — alakazam appears in both, pre-processing there rather than gap-listing

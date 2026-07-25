@@ -134,7 +134,7 @@ export const VALID_TRANSITIONS = {
 
 /** Gates and what conditions they require. */
 const GATE_REQUIRED = {
-  plan_to_do: ["brief_exists", "sources_min_3", "analysis_exists", "plan_mode_approved"],
+  plan_to_do: ["brief_exists", "sources_min_5", "analysis_exists", "plan_mode_approved"],
   do_to_check: ["artifact_exists", "artifact_complete", "plan_integrated"],
   check_to_act: ["verdict_set", "min_two_reviewers"],
   act_to_exit: ["decision_set", "root_cause_set"],
@@ -158,7 +158,9 @@ function evaluateGate(gate, state) {
   switch (gate) {
     case "plan_to_do":
       if (!artifacts.plan_research) missing.push("brief_exists");
-      if ((state.sources_count ?? 0) < 3) missing.push("sources_min_3");
+      // 5, not 3 — raised in v1.3.0 so the Do phase cannot inherit a single-narrative brief.
+      // phase-schemas.md and plan-phase.md recorded the raise; this check was never updated.
+      if ((state.sources_count ?? 0) < 5) missing.push("sources_min_5");
       if (!artifacts.plan_analysis) missing.push("analysis_exists");
       if (!state.plan_mode_approved) missing.push("plan_mode_approved");
       break;
