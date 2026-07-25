@@ -84,6 +84,11 @@ Resist refactoring temptation — this session is for the bug only.
 
 ## Subagents
 
+These are **configurations for general-purpose subagents**, not entries in `agents/`. There is no
+`evidence-gatherer` agent to dispatch by name — spawn a general-purpose subagent with the model,
+tools, and constraint below. The split matters more than the names: whoever gathers evidence must
+not also decide the root cause.
+
 ```yaml
 evidence-gatherer: { model: sonnet, constraint: "Read logs, grep codebase, list recent commits — evidence only, no fixes", tools: [Read, Bash, Glob, Grep] }
 root-cause-analyst: { model: opus, constraint: "Given evidence, determine the single root cause with confidence score" }

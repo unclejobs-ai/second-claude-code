@@ -121,6 +121,6 @@ See `references/workflow-definition.md` for the canonical state schema.
 ## Subagents
 
 ```yaml
-orchestrator: { model: sonnet, tools: [Read, Write, Bash], constraint: "resolve variables, execute sequentially, persist state" }
-step_executor: { model: varies, constraint: "read input file and write output file only" }
+pipeline-orchestrator: { model: sonnet, tools: [Read, Write, Bash], constraint: "resolve variables, execute sequentially, persist state" }
+pipeline-step-executor: { model: varies, constraint: "read input file and write output file only" }
 ```

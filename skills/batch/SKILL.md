@@ -157,6 +157,10 @@ State persisted at `.data/state/batch-{run_id}.json`. Schema:
 
 ## Subagents
 
+These are **configurations for general-purpose subagents**, not entries in `agents/`. There is no
+`decomposer` agent to dispatch by name — spawn a general-purpose subagent with the model, tools, and
+constraint below. (Contrast `/scc:review`, whose roles *are* real `subagent_type` values.)
+
 ```yaml
 explorer:   { model: haiku,  tools: [Read], constraint: "scope analysis only, no writing" }
 decomposer: { model: sonnet, tools: [],     constraint: "produce unit specs, verify independence" }

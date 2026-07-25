@@ -269,7 +269,7 @@ structure-analyst: { model: sonnet, role: unown, purpose: "check organization, f
 editor: { model: opus, role: ditto, purpose: "apply top 3 fixes per iteration, verify improvement" }
 
 # Orchestration meta-role (the PDCA orchestrator itself)
-orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
+pipeline-orchestrator: { model: sonnet, role: arceus, purpose: "enforce gates, manage phase transitions, never skip phases, prefer domain hand-off over self-processing" }
 ```
 
 **How PDCA actually executes**: The orchestrator calls `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` as Skill invocations. Each of those skills internally dispatches the right subagents (`general-purpose`, `code-reviewer`, etc.) using the Agent tool. PDCA never bypasses this layer.

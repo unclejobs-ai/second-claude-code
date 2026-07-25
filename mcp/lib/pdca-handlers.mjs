@@ -531,8 +531,20 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     }
   }
 
-  // Captured before any reset below clears it — a Do re-entry keeps the plan's evidence.
+  // Captured before any reset below clears them — a Do re-entry keeps the plan's evidence, and the
+  // router's verdict has to outlive the reset that is about to wipe act_decision/act_root_cause.
   const previousSourcesCount = state.sources_count ?? 0;
+  const routerVerdict =
+    current === "act"
+      ? {
+          cycle: state.cycle_count ?? 1,
+          route: target_phase,
+          decision: state.act_decision ?? null,
+          root_cause: state.act_root_cause ?? null,
+          critical_count: state.critical_count ?? 0,
+          warning_count: state.warning_count ?? 0,
+        }
+      : null;
 
   // Mark current phase as completed (skipped on a plan recycle — the reset
   // below clears `completed`, so pushing here would be immediately discarded).
@@ -557,6 +569,14 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
     state.plan_mode_approved = true;
     state.plan_findings_integrated = true;
     state.sources_count = previousSourcesCount;
+  }
+
+  // Leaving Act is the moment the router's classification becomes an action, so that is where it
+  // gets recorded. The field is cumulative — resetCycleScopedState deliberately leaves it alone —
+  // so the run keeps the full list of where it was sent back to and why.
+  if (routerVerdict) {
+    if (!Array.isArray(state.action_router_history)) state.action_router_history = [];
+    state.action_router_history.push(routerVerdict);
   }
 
   const previousPhase = current;

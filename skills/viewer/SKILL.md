@@ -70,11 +70,11 @@ runs today. Pass `--data-dir` for a different root or `--run <run_id>` to pick a
 
 Two things worth knowing about where the numbers come from:
 
-- The phase timeline and its durations are reconstructed from the **event log**, not from
-  `state.action_router_history` — that field is initialized to `[]` and never appended to, so
-  anything reading it reports zero re-entries forever.
-- A phase logged under a later cycle is what counts as a re-entry. If the pipeline later starts
-  writing router history, the export uses it too, but it never depends on it.
+- The phase timeline and its durations are reconstructed from the **event log**, which is the only
+  per-run record of when each phase actually started and ended.
+- Re-entry reasons come from `state.action_router_history`, written by `pdca_transition` whenever a
+  run leaves Act. Runs recorded before that field started being written fall back to inference: a
+  phase logged under a later cycle counts as a re-entry, but carries no reason.
 
 What the export leads with is the **audit trail**, not the content: which gates passed, how many
 reviewers attacked the draft and what they caught, every Act re-entry with its reason, and any drift
