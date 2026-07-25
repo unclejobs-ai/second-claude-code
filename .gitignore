@@ -17,6 +17,7 @@ node_modules/
 *.tsbuildinfo
 
 # Runtime artifacts
+.scc/
 .captures/
 .claude/agent-memory/
 .claude/handoffs/

@@ -136,8 +136,10 @@ test("a run_id that would escape the sessions tree is refused", () => {
   try {
     assert.throws(
       () =>
+        // cwd is the temp dir, not the repo: without --session-dir the script derives the path
+        // from run_id, and proving the guard means running the case that would escape.
         execFileSync(process.execPath, [script, "--data-dir", path.join(tmp, "data")], {
-          cwd: root,
+          cwd: tmp,
           encoding: "utf8",
           stdio: "pipe",
         }),
