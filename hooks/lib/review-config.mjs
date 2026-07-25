@@ -10,6 +10,11 @@ const PRESET_CONFIG = {
 
 const PRESET_NAMES = new Set(Object.keys(PRESET_CONFIG));
 const PRESET_PATTERNS = Array.from(PRESET_NAMES).join("|");
+// Used to recover a preset name from the reviewers a run actually dispatched, so only presets with
+// a *distinct* reviewer set can appear here. `security` is deliberately absent: it dispatches the
+// same trio as `code` (deep-reviewer + fact-checker + structure-analyst) and is distinguished by
+// its `mmbridge security` external pass, which leaves no trace in the reviewer names. Adding it
+// would create an entry that never matches, since `code` is checked first and matches identically.
 const REVIEWER_SETS = [
   { preset: "quick", reviewers: ["devil-advocate", "fact-checker"] },
   { preset: "content", reviewers: ["deep-reviewer", "devil-advocate", "tone-guardian"] },

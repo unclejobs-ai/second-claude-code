@@ -53,6 +53,10 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 
 The `security` preset activates security-focused review with optional mmbridge security integration.
 
+Its reviewer trio is identical to `code`, so a completed run cannot be told apart from a `code` run
+by reviewer names alone — what differentiates it is the `mmbridge security` external pass. Pass
+`--preset security` explicitly rather than expecting it to be inferred.
+
 ### Internal reviewers (security mode)
 
 - **deep-reviewer** (opus): Architecture security analysis — auth flows, data boundaries, privilege escalation paths
@@ -124,7 +128,7 @@ Unstructured prose output is not accepted. Each reviewer emits the `## Critic Ou
 ## Consensus Gate
 
 **Score-based consensus** (primary gate):
-- Pass condition: average score across reviewers `>= 0.7` AND no Critical findings from any reviewer
+- Pass condition: average score across reviewers `>= 0.67` AND no Critical findings from any reviewer
 - Any Critical finding forces `MUST FIX` regardless of average score or threshold count
 
 **Vote-count gate** (secondary gate, used when score-based gate passes):
@@ -233,7 +237,7 @@ When `--team-review` is set, the standard parallel dispatch is replaced by an Ag
 3. All findings are shared across the team.
 4. **Challenge round** (2 minutes max): each reviewer may dispute or reinforce other reviewers' findings. A dispute requires citing a specific counter-finding with evidence. A reinforcement counts as corroboration and raises that finding's weight.
 5. Team lead aggregates the challenged findings: disputed findings are downgraded one severity level unless a third reviewer sides with the original; reinforced findings are locked at their current severity.
-6. Consensus is computed from challenge-adjusted findings using the standard gate (`average score >= 0.7`, no Critical findings).
+6. Consensus is computed from challenge-adjusted findings using the standard gate (`average score >= 0.67`, no Critical findings).
 7. Team is shut down. Output conforms to the standard Review Report format.
 
 ## External Reviewers
