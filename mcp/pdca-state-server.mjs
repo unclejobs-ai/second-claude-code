@@ -586,9 +586,11 @@ const TOOL_DEFINITIONS = [
   {
     name: "daemon_start_background_run",
     description:
-      "Record a background workflow run request. This WRITES A QUEUE ENTRY ONLY — no executor " +
-      "exists, so the run stays `queued` and never starts on its own. Use it to hand a run to a " +
-      "human or an external scheduler, not to fire work in the background.",
+      "Record a background workflow run request and return the command that starts it. This WRITES " +
+      "A QUEUE ENTRY ONLY — nothing drains the queue, so the run stays `queued` until someone runs " +
+      "the returned `handoff` command. Claude Code's own background agents (`claude --bg`, managed " +
+      "with `claude agents`) do the executing; this records the intent and hands it over. Surface " +
+      "the handoff command to the user rather than running it silently.",
     inputSchema: {
       type: "object",
       properties: {

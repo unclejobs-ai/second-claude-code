@@ -261,7 +261,7 @@ function main() {
         );
       } else {
         lines.push(
-          "Status: offline — scheduling is idle. Note that queued background runs never start on their own even when the daemon is online: the queue has no executor."
+          "Status: offline — scheduling is idle. Queued background runs never start on their own; each carries a `claude --bg` handoff command to run when you want it."
         );
       }
     }

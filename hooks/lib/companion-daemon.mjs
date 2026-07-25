@@ -234,7 +234,22 @@ export function createBackgroundRun(dataDir, input) {
   };
 
   writeJsonAtomic(join(runsDir, `${runId}.json`), run);
-  return run;
+
+  // Nothing drains this queue, and nothing should: Claude Code already ships background agents,
+  // and a home-grown executor would run outside the conversation where external-action consent is
+  // given. So the record hands off instead — it carries the command that actually starts the work.
+  return { ...run, handoff: backgroundRunCommand(run) };
+}
+
+/**
+ * The command a human or scheduler runs to execute a queued entry.
+ * `--bg` starts a background agent and returns immediately; manage it with `claude agents`.
+ * @param {{ workflow_name: string }} run
+ * @returns {string}
+ */
+export function backgroundRunCommand(run) {
+  const prompt = `/scc:workflow run ${run.workflow_name}`;
+  return `claude --bg ${JSON.stringify(prompt)}`;
 }
 
 export function updateBackgroundRun(dataDir, runId, patch) {
