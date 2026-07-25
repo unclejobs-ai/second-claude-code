@@ -38,6 +38,8 @@ That default is overridable without touching source. Drop a `plugin-preferences.
 
 ## Verified Routes
 
+With the **default** preferences. A `plugin-preferences.json` override changes which plugin wins each lifecycle intent, so these are the shipped defaults rather than a guarantee about your machine.
+
 | Input | Intent | Top dispatch |
 | --- | --- | --- |
 | `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |

@@ -38,6 +38,8 @@ flowchart TB
 
 ## 검증된 라우트
 
+**기본 설정 기준**입니다. `plugin-preferences.json`으로 덮어쓰면 lifecycle 의도별 1순위가 달라지므로, 아래는 사장님 머신의 결과가 아니라 출하 기본값입니다.
+
 | 입력 | 의도 | 1순위 디스패치 |
 | --- | --- | --- |
 | `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |
