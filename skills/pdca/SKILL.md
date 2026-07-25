@@ -246,10 +246,14 @@ the notification payload pattern used by `hooks/session-end.mjs`.
 If you (the orchestrator) try to call `Agent(subagent_type: "eevee")`, it will fail. Always go through the chained skill, never bypass to a Pokemon role.
 
 ```yaml
+# Plan dispatches two skills, so its roles split across them.
 # Roles handled inside /scc:research
 researcher: { model: sonnet, role: eevee, purpose: "collect sources with citations, minimum 3 distinct sources" }
-analyst: { model: sonnet, role: alakazam, purpose: "apply frameworks with evidence, no generic claims" }
-strategist: { model: sonnet, role: mewtwo, purpose: "strategic synthesis, challenge assumptions" }
+analyst: { model: sonnet, role: alakazam, purpose: "list gaps, flag data conflicts, verify coverage" }
+
+# Roles handled inside /scc:analyze — alakazam appears in both, pre-processing there rather than gap-listing
+analyst: { model: sonnet, role: alakazam, purpose: "structure raw research into patterns before a framework is applied" }
+strategist: { model: sonnet, role: mewtwo, purpose: "apply the framework, cite evidence, challenge assumptions" }
 
 # Role handled inside /scc:write
 writer: { model: opus, role: smeargle, purpose: "produce artifact from plan, skip-research skip-review" }

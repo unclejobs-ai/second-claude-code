@@ -33,13 +33,18 @@ function fail(message) {
   process.exit(1);
 }
 
+const FLAGS = { "--data-dir": "dataDir", "--run": "run", "--session-dir": "sessionDir", "--out": "out" };
+
 function parseArgs(argv) {
   const args = { dataDir: ".data", run: null, sessionDir: null, out: null };
   for (let i = 0; i < argv.length; i += 1) {
-    if (argv[i] === "--data-dir") args.dataDir = argv[++i];
-    else if (argv[i] === "--run") args.run = argv[++i];
-    else if (argv[i] === "--session-dir") args.sessionDir = argv[++i];
-    else if (argv[i] === "--out") args.out = argv[++i];
+    const key = FLAGS[argv[i]];
+    if (!key) continue;
+    // Catch `--out` with nothing after it here, rather than letting an undefined path surface
+    // later as an opaque join() error.
+    const value = argv[++i];
+    if (value === undefined || value.startsWith("--")) fail(`${argv[i - 1]} needs a value`);
+    args[key] = value;
   }
   return args;
 }
@@ -77,6 +82,12 @@ function buildTimeline(events) {
   const open = new Map();
   for (const ev of events) {
     if (ev.type === "phase_start") {
+      // A phase can start again without having ended — an interrupted run, or a re-entry whose
+      // phase_end never landed. Keep the earlier attempt as an unfinished row instead of
+      // overwriting it; a provenance record that drops attempts is the failure this file exists
+      // to prevent.
+      const abandoned = open.get(ev.phase);
+      if (abandoned) timeline.push({ ...abandoned, endedAt: null, durationMs: null });
       open.set(ev.phase, { phase: ev.phase, cycle: ev.data?.cycle_count ?? 1, startedAt: ev.ts });
     } else if (ev.type === "phase_end") {
       const entry = open.get(ev.phase) ?? { phase: ev.phase, cycle: 1, startedAt: null };
@@ -136,10 +147,12 @@ function loadFromDataDir(dataDir, runId) {
   const cyclesDir = join(dataDir, "cycles");
   const artifacts = [];
   if (existsSync(cyclesDir)) {
+    // Sorted by cycle number, not by name — `cycle-NNN` is zero-padded today, but the ordering
+    // should not silently depend on that padding holding.
     const cycleDirs = readdirSync(cyclesDir, { withFileTypes: true })
       .filter((d) => d.isDirectory())
       .map((d) => d.name)
-      .sort();
+      .sort((a, b) => (parseInt(a.replace(/\D/g, ""), 10) || 0) - (parseInt(b.replace(/\D/g, ""), 10) || 0));
     for (const cycle of cycleDirs) {
       const files = readdirSync(join(cyclesDir, cycle))
         .filter((f) => f.endsWith(".md"))
