@@ -733,7 +733,15 @@ async function mapWithConcurrency(items, limit, worker) {
   }
 
   const workerCount = Math.max(1, Math.min(limit, items.length));
-  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  // allSettled, not all: `all` rejects on the first failure while its siblings keep running, and
+  // the caller's cleanup would then delete worktrees out from under evaluations still in flight —
+  // failing them too, and masking the error that actually started it. Let everyone finish, then
+  // raise the first failure.
+  const settled = await Promise.allSettled(
+    Array.from({ length: workerCount }, () => runWorker())
+  );
+  const failed = settled.find((outcome) => outcome.status === "rejected");
+  if (failed) throw failed.reason;
   return results;
 }
 

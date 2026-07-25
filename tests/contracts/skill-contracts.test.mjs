@@ -544,3 +544,29 @@ test("skill Subagents blocks name real agents, or say plainly that they do not",
 
   assert.deepEqual(offenders.sort(), []);
 });
+
+test("the agent catalog lists every agent, with the tier each one actually declares", () => {
+  // This table drifted for months: two agents kept a haiku tier they had been upgraded off, the
+  // 17th was never added, and six rows used short names that match no agent.
+  const actual = new Map(
+    readdirSync(path.join(root, "agents"))
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => read(path.join("agents", f)))
+      .map((body) => [
+        body.match(/^name:\s*(.+)$/m)?.[1]?.trim(),
+        body.match(/^model:\s*(.+)$/m)?.[1]?.trim(),
+      ])
+      .filter(([name]) => name)
+  );
+
+  const doc = read("references/agent-catalog-notes.md");
+  const listed = new Map(
+    [...doc.matchAll(/^\| ([a-z][\w-]*) \| \w+ \| (\w+) \|/gm)].map((m) => [m[1], m[2]])
+  );
+
+  assert.deepEqual([...actual.keys()].sort(), [...listed.keys()].sort(), "catalog rows vs agents/");
+  for (const [name, model] of actual) {
+    assert.equal(listed.get(name), model, `${name} tier in catalog`);
+  }
+  assert.match(doc, new RegExp(`## Current Agents \\(${actual.size}\\)`), "header count");
+});
