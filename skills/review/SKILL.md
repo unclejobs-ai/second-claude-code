@@ -53,6 +53,10 @@ Run parallel reviewers with distinct roles, then merge their findings through a 
 
 The `security` preset activates security-focused review with optional mmbridge security integration.
 
+Its reviewer trio is identical to `code`, so a completed run cannot be told apart from a `code` run
+by reviewer names alone — what differentiates it is the `mmbridge security` external pass. Pass
+`--preset security` explicitly rather than expecting it to be inferred.
+
 ### Internal reviewers (security mode)
 
 - **deep-reviewer** (opus): Architecture security analysis — auth flows, data boundaries, privilege escalation paths
@@ -216,7 +220,7 @@ This is a **display enhancement only** — it does not affect the consensus gate
 | Flag | Values | Default | Description |
 |------|--------|---------|-------------|
 | `--preset` | `content\|strategy\|code\|security\|academic\|quick\|full` | `content` | |
-| `--threshold` | number | `0.67` | |
+| `--threshold` | number | `0.67` | Vote fraction, not a score floor — 0.67 of 3 reviewers is a 2/3 majority. The average-score floor is a separate 0.7. |
 | `--strict` | flag | off | |
 | `--external` | flag | off | |
 | `--team-review` | flag | off | |

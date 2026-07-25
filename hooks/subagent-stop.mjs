@@ -300,10 +300,10 @@ function parseReviewerOutput(text, reviewerName = null) {
   warning_count += tableWarnings;
 
   // ── Score/verdict consistency check ───────────────────────────────────────
-  // If score < 0.7 but verdict is a pass verdict, downgrade to NEEDS IMPROVEMENT
+  // If the score is below the floor but the verdict is a pass verdict, downgrade it
   // so that schema-compliant reviewers with low scores don't sneak through.
   let resolvedRawVerdict = rawVerdict;
-  if (score !== null && score < 0.7 && rawVerdict !== null && PASS_VERDICTS.has(rawVerdict)) {
+  if (score !== null && score < MIN_AVERAGE_SCORE && rawVerdict !== null && PASS_VERDICTS.has(rawVerdict)) {
     resolvedRawVerdict = "NEEDS IMPROVEMENT";
   }
 
@@ -332,6 +332,11 @@ function parseReviewerOutput(text, reviewerName = null) {
  * @returns {{ verdict: string, pass_count: number, total: number, required: number, average_score: number | null } | null}
  *   Returns null when not all reviewers have reported yet.
  */
+// Two different gates, deliberately two different numbers. `threshold` is a *vote fraction* — 0.67
+// of 3 reviewers is a 2/3 majority — while MIN_AVERAGE_SCORE is a floor on the average score itself.
+// Collapsing them into one value is what made the docs claim the score gate was 0.67.
+const MIN_AVERAGE_SCORE = 0.7;
+
 function computeConsensus(reviewers, expected, threshold = 0.67) {
   if (reviewers.length < expected) return null;
 
@@ -361,12 +366,12 @@ function computeConsensus(reviewers, expected, threshold = 0.67) {
     // Score-based path: scores are available from schema-compliant reviewers.
     // Both score AND vote-count must pass — high average alone cannot override
     // a majority-reject outcome.
-    if (average_score >= 0.7 && pass_count >= required) {
+    if (average_score >= MIN_AVERAGE_SCORE && pass_count >= required) {
       const has_major_findings = reviewers.some(
         (r) => r.warning_count > 0 || r.verdict === "MINOR FIXES"
       );
       verdict = has_major_findings ? "MINOR FIXES" : "APPROVED";
-    } else if (average_score >= 0.7 && pass_count < required) {
+    } else if (average_score >= MIN_AVERAGE_SCORE && pass_count < required) {
       // High score but not enough votes — trust the votes.
       verdict = "NEEDS IMPROVEMENT";
     } else {

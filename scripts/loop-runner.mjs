@@ -733,9 +733,20 @@ async function mapWithConcurrency(items, limit, worker) {
   }
 
   const workerCount = Math.max(1, Math.min(limit, items.length));
-  await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+  // allSettled, not all: `all` rejects on the first failure while its siblings keep running, and
+  // the caller's cleanup would then delete worktrees out from under evaluations still in flight —
+  // failing them too, and masking the error that actually started it. Let everyone finish, then
+  // raise the first failure.
+  const settled = await Promise.allSettled(
+    Array.from({ length: workerCount }, () => runWorker())
+  );
+  const failed = settled.find((outcome) => outcome.status === "rejected");
+  if (failed) throw failed.reason;
   return results;
 }
+
+// Worktree checkouts are the real cost of a wider fan-out; 8 keeps a run bounded on a laptop.
+const MAX_PARALLEL = 8;
 
 async function runLoop(root, suiteName, options) {
   const { suite } = loadSuite(root, suiteName);
@@ -761,8 +772,10 @@ async function runLoop(root, suiteName, options) {
   if (!Number.isInteger(maxCandidates) || maxCandidates < 1) {
     throw new Error("budget must resolve to a positive integer candidate count");
   }
-  if (!Number.isInteger(parallel) || parallel < 1) {
-    throw new Error("parallel must be at least 1");
+  // Each unit of parallelism is a git worktree plus a candidate evaluation, so an unbounded value
+  // spawns that many checkouts at once. Capped rather than left open-ended.
+  if (!Number.isInteger(parallel) || parallel < 1 || parallel > MAX_PARALLEL) {
+    throw new Error(`parallel must be an integer between 1 and ${MAX_PARALLEL}`);
   }
   if (costLimit !== null && (!Number.isFinite(costLimit) || costLimit < 0)) {
     throw new Error("cost-limit must be a non-negative number");
@@ -818,7 +831,12 @@ async function runLoop(root, suiteName, options) {
 
   terminationReason = resolveBudgetTermination();
 
-  for (let generation = 1; generation <= maxGenerations && !terminationReason; generation += 1) {
+  // Every worktree this run creates, so a worker that throws mid-generation does not strand
+  // the siblings that already succeeded — they are not in `leaderboard` yet when Promise.all
+  // rejects, and the success-path cleanup below never runs.
+  const createdCandidates = [];
+  try {
+    for (let generation = 1; generation <= maxGenerations && !terminationReason; generation += 1) {
     const parentCandidates = elites.slice(0, Math.min(2, elites.length));
     const candidatePlans = [];
 
@@ -841,6 +859,7 @@ async function runLoop(root, suiteName, options) {
 
     const generationCandidates = await mapWithConcurrency(candidatePlans, parallel, async (plan) => {
       createWorktree(root, plan.parent.branch, plan.candidateBranch, plan.candidateWorktree);
+      createdCandidates.push({ worktree: plan.candidateWorktree, branch: plan.candidateBranch });
 
       const changedFiles = applyMutation(plan.strategy, plan.candidateWorktree, targets);
       if (changedFiles.length > 0) {
@@ -953,16 +972,17 @@ async function runLoop(root, suiteName, options) {
   writeJson(join(artifactDir, "summary.json"), summarizeRunState(finalState));
   writeJson(stateFile, finalState);
 
-  for (const entry of leaderboard) {
-    if (entry.worktree !== runWorktree) {
-      removeWorktree(root, entry.worktree);
-    }
-    if (entry.branch && entry.branch !== branch) {
-      deleteBranch(root, entry.branch);
+  return summarizeRunState(finalState);
+  } finally {
+    for (const entry of createdCandidates) {
+      if (entry.worktree && entry.worktree !== runWorktree) {
+        removeWorktree(root, entry.worktree);
+      }
+      if (entry.branch && entry.branch !== branch) {
+        deleteBranch(root, entry.branch);
+      }
     }
   }
-
-  return summarizeRunState(finalState);
 }
 
 function resumeLoop(root, runId) {

@@ -131,7 +131,7 @@ Save report to `.captures/batch-{run_id}/00-summary.md`.
 
 | Flag | Values | Default | Effect |
 |------|--------|---------|--------|
-| `--units N` | integer 2–20 | auto (up to 10) | Override max unit count |
+| `--units N` | integer 2–10 | auto (up to 10) | Override max unit count |
 | `--skill` | `write\|research\|analyze\|refine` | `write` | Skill each unit runs |
 | `--topic` | string | (required) | The overarching topic being decomposed |
 | `--parallel` | integer 1–5 | `3` | Max concurrent unit agents |

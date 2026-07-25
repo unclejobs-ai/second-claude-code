@@ -1,27 +1,28 @@
 # Agent Catalog — Future Extension Notes
 
-Current second-claude ships with 16 Pokemon-themed agents. This document catalogs additional agent roles observed in the oh-my-claudecode ecosystem that users may want to add for specialized workflows.
+Current second-claude ships with 17 Pokemon-themed agents. This document catalogs additional agent roles observed in the oh-my-claudecode ecosystem that users may want to add for specialized workflows.
 
-## Current Agents (16)
+## Current Agents (17)
 
 | Agent | Pokemon | Model | Role |
 |-------|---------|-------|------|
-| researcher | Eevee | haiku | Web search, source gathering |
+| researcher | Eevee | sonnet | Web search, source gathering |
 | analyst | Alakazam | sonnet | Data extraction, pattern recognition |
 | strategist | Mewtwo | sonnet | Framework application |
 | writer | Smeargle | opus | Content production |
 | editor | Ditto | opus | Content refinement |
 | deep-reviewer | Xatu | opus | Logic, structure, completeness review |
 | devil-advocate | Absol | sonnet | Weak points, blind spots |
-| fact-checker | Porygon | haiku | Claims, numbers, source verification |
+| fact-checker | Porygon | sonnet | Claims, numbers, source verification |
 | tone-guardian | Jigglypuff | sonnet | Voice and audience fit |
 | structure-analyst | Unown | sonnet | Organization and readability |
-| orchestrator | Arceus | sonnet | Pipeline orchestration |
-| step-executor | Machamp | sonnet | Single pipeline step execution |
-| searcher | Noctowl | haiku | External source search |
-| inspector | Magnezone | sonnet | Skill candidate inspection |
-| evaluator | Deoxys | sonnet | Skill candidate scoring |
-| connector | Abra | haiku | Knowledge linking |
+| pipeline-orchestrator | Arceus | sonnet | Pipeline orchestration |
+| pipeline-step-executor | Machamp | sonnet | Single pipeline step execution |
+| skill-searcher | Noctowl | haiku | External source search |
+| skill-inspector | Magnezone | sonnet | Skill candidate inspection |
+| skill-evaluator | Deoxys | sonnet | Skill candidate scoring |
+| knowledge-connector | Abra | haiku | Knowledge linking |
+| soul-keeper | Pikachu | opus | Persistent user identity synthesis |
 
 ## Potential Extensions
 
