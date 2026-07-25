@@ -5,7 +5,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
-## [2.1.0] - 2026-07-26
+## [2.1.0] - 2026-07-25
 
 ### Added
 
@@ -19,7 +19,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - **The Verified Routes table** listed `coderabbit` and `commit-commands` as top picks without noting those are the shipped defaults, which an override changes.
 
 
-## [2.0.0] - 2026-07-26
+## [2.0.0] - 2026-07-25
 
 ### Changed — BREAKING
 
