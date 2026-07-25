@@ -194,14 +194,27 @@ function evaluateGate(gate, state) {
  * @param {object} state
  * @returns {"PROCEED" | "REFINE" | "PIVOT"}
  */
+/**
+ * Finding counts as the Act decision sees them: reviewers may report a count, a list, or both.
+ * The router history records the same numbers, so the log always explains the decision it sits next
+ * to rather than a raw field that disagrees with it.
+ * @param {object} state
+ * @returns {{ criticalCount: number, warningCount: number }}
+ */
+function countFindings(state) {
+  return {
+    criticalCount:
+      (Array.isArray(state.critical_findings) ? state.critical_findings.length : 0) +
+      (Number(state.critical_count) || 0),
+    warningCount: Math.max(
+      Number(state.warning_count) || 0,
+      Array.isArray(state.top_improvements) ? state.top_improvements.length : 0
+    ),
+  };
+}
+
 function evaluateCheckToActDecision(state) {
-  const criticalCount =
-    (Array.isArray(state.critical_findings) ? state.critical_findings.length : 0) +
-    (Number(state.critical_count) || 0);
-  const warningCount = Math.max(
-    Number(state.warning_count) || 0,
-    Array.isArray(state.top_improvements) ? state.top_improvements.length : 0
-  );
+  const { criticalCount, warningCount } = countFindings(state);
   const verdict = String(state.check_verdict || "").toUpperCase();
   const hasCriticalIssues = criticalCount > 0 || verdict === "MUST FIX";
   const hasWarnings =
@@ -536,6 +549,7 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
   // Captured before any reset below clears them — a Do re-entry keeps the plan's evidence, and the
   // router's verdict has to outlive the reset that is about to wipe act_decision/act_root_cause.
   const previousSourcesCount = state.sources_count ?? 0;
+  const counts = countFindings(state);
   const routerVerdict =
     current === "act"
       ? {
@@ -543,8 +557,8 @@ function handleTransitionInner({ target_phase, artifacts = {}, auto_gate = false
           route: target_phase,
           decision: state.act_decision ?? null,
           root_cause: state.act_root_cause ?? null,
-          critical_count: state.critical_count ?? 0,
-          warning_count: state.warning_count ?? 0,
+          critical_count: counts.criticalCount,
+          warning_count: counts.warningCount,
         }
       : null;
 

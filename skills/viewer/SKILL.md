@@ -22,21 +22,31 @@ Opens a local web UI to view PDCA pipeline results as interactive artifacts.
 
 ## Usage
 
-Start the viewer for the current PDCA session:
+Build the session directory from the current run, then serve it:
 
 ```bash
-bash ${CLAUDE_PLUGIN_ROOT}/ui/scripts/start-server.sh \
+node "${CLAUDE_PLUGIN_ROOT}/scripts/viewer-session.mjs" --session-dir "${SESSION_DIR}"
+bash "${CLAUDE_PLUGIN_ROOT}/ui/scripts/start-server.sh" \
   --session-dir "${SESSION_DIR}" \
   --dist-dir "${CLAUDE_PLUGIN_ROOT}/ui/dist"
 ```
 
-The script outputs JSON with the URL. Tell the user to open it in their browser.
+**Run the first command every time.** PDCA writes `.data/state` and `.data/cycles/`, not the layout
+the server reads — `viewer-session.mjs` is what projects one into the other. Skipping it serves the
+previous run, or an empty page on the first run.
+
+The start script outputs JSON with the URL. Tell the user to open it in their browser.
 
 ## How It Works
 
-1. The PDCA pipeline writes `state.json` and `artifacts/*.json` to the session directory
-2. The server watches these files and broadcasts changes via WebSocket
+1. `viewer-session.mjs` reads the PDCA state and cycle markdown, and writes `state.json` plus
+   `artifacts/*.json` into the session directory
+2. The server watches those files and broadcasts changes via WebSocket
 3. The browser renders artifacts in real-time: markdown, charts (Nivo), code (Shiki), flow diagrams (SVG)
+
+The two sides speak different vocabularies: PDCA runs plan/do/check/act, while the viewer's phases
+are the skill axis — research, analyze, write, review, refine. Plan feeds both research and analyze,
+so the mapping in `viewer-session.mjs` is deliberate rather than one-to-one.
 
 ## Session Directory Structure
 

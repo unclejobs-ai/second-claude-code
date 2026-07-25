@@ -11,7 +11,9 @@ Thumbs.db
 node_modules/
 
 # Build artifacts
-ui/dist/
+# ui/dist is deliberately NOT ignored: plugins are installed by copying this repo, and there is no
+# build step on the user's machine. Ignoring it shipped a viewer that pointed at an empty directory.
+# Rebuild with `cd ui && npm install && npm run build` and commit the result when the UI changes.
 *.tsbuildinfo
 
 # Runtime artifacts

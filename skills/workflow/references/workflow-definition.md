@@ -18,10 +18,14 @@ Each step in a workflow definition is a JSON object with the following fields:
 > validates every value against the set of `output` paths declared by earlier steps, and that check
 > is the only enforcement there is. This table previously described step names and an
 > `on_fail` vocabulary of `stop`/`skip`, neither of which any template or test ever used.
+>
+> Because the comparison is literal, an `input_from` written with `{{variables}}` must resolve to
+> the *same string* as the producing step's `output`. Copy the producer's `output` verbatim rather
+> than rebuilding the path by hand.
 
 ## Variable Resolution Order
 
-Variables in `args` and `output` fields are resolved **once at run start** in this order:
+Variables in `args`, `output`, and `input_from` fields are resolved **once at run start** in this order:
 
 1. **Runtime flags** — `--topic`, `--output_dir`, `--var key=value` from the `run` command
 2. **Definition defaults** — `defaults` object in the workflow JSON
