@@ -495,6 +495,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
   const koreanAllowlistPrefixes = [
     "tests/hooks/",
     "tests/runtime/",
+    "tests/baselines/",
     "skills/pdca/",
     "skills/soul/",
     "skills/translate/",
