@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 
 import { existsSync, readFileSync } from "fs";
-import { dirname, join, resolve } from "path";
+import { join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 import { resolveProjectRoot } from "./lib/project-root.mjs";
 import { readState, writeState, clearState } from "./lib/coach-state.mjs";
 import { writeStandard } from "./lib/standard-record.mjs";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 const DEFAULT_THRESHOLD = 0.05;
 
 export function isDirectExecution(metaUrl = import.meta.url, argv1 = process.argv[1]) {
