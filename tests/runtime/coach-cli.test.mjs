@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import { runCli } from "../../scripts/coach-runner.mjs";
-import { readState, writeState } from "../../scripts/lib/coach-state.mjs";
+import { readState, writeState, stateFilePath } from "../../scripts/lib/coach-state.mjs";
 
 function withRoot(fn) {
   const dir = mkdtempSync(join(tmpdir(), "scc-cli-"));
@@ -14,6 +14,23 @@ function withRoot(fn) {
   } finally {
     rmSync(dir, { recursive: true, force: true });
   }
+}
+
+function captureStdout(fn) {
+  const writes = [];
+  const original = process.stdout.write;
+  process.stdout.write = (chunk, ...args) => {
+    writes.push(String(chunk));
+    const callback = args.find((arg) => typeof arg === "function");
+    callback?.();
+    return true;
+  };
+  try {
+    fn();
+  } finally {
+    process.stdout.write = original;
+  }
+  return writes.join("");
 }
 
 const FORK_JSON = {
@@ -79,4 +96,70 @@ test("runCli refuses to run when the resolved root is the plugin install", () =>
     () => runCli(["status"], { env: { CLAUDE_PROJECT_DIR: process.cwd() }, useRealRootResolution: true }),
     /플러그인 설치 경로/
   );
+});
+
+test("a second start against an active interview refuses and leaves state byte-for-byte unchanged", () => {
+  withRoot((root) => {
+    runCli(["start", "--idea", "first idea", "--json"], { root });
+    const statePath = stateFilePath(root);
+    const before = readFileSync(statePath, "utf8");
+    const firstState = readState(root);
+
+    assert.throws(
+      () => runCli(["start", "--idea", "second idea", "--json"], { root }),
+      (err) => err.message.includes(firstState.run_id) && err.message.includes(String(firstState.round)) && err.message.includes("--force")
+    );
+
+    assert.equal(readFileSync(statePath, "utf8"), before);
+  });
+});
+
+test("start --force overrides an active interview and prints what it discarded", () => {
+  withRoot((root) => {
+    runCli(["start", "--idea", "first idea", "--json"], { root, now: new Date("2026-06-13T00:00:00.000Z") });
+    const firstState = readState(root);
+
+    const out = captureStdout(() =>
+      runCli(["start", "--idea", "second idea", "--force", "--json"], { root, now: new Date("2026-06-13T00:01:00.000Z") })
+    );
+    const parsed = JSON.parse(out);
+
+    assert.deepEqual(parsed.discarded, {
+      run_id: firstState.run_id,
+      round: firstState.round,
+      standards_settled: 0,
+    });
+
+    const secondState = readState(root);
+    assert.notEqual(secondState.run_id, firstState.run_id);
+    assert.equal(secondState.initial_idea, "second idea");
+  });
+});
+
+test("status against a state file with no usable topology gives a clear message, not a TypeError", () => {
+  withRoot((root) => {
+    writeState(root, { active: true, status: "interviewing", round: 1 });
+
+    assert.throws(
+      () => runCli(["status", "--json"], { root }),
+      (err) =>
+        !/Cannot read propert/i.test(err.message) &&
+        err.message.includes("topology") &&
+        err.message.includes(stateFilePath(root))
+    );
+  });
+});
+
+test("answer against a state file with no usable topology gives a clear message, not a TypeError", () => {
+  withRoot((root) => {
+    writeState(root, { active: true, status: "interviewing", round: 1 });
+
+    assert.throws(
+      () => runCli(["answer", "--answer", "some answer", "--json"], { root }),
+      (err) =>
+        !/Cannot read propert/i.test(err.message) &&
+        err.message.includes("topology") &&
+        err.message.includes(stateFilePath(root))
+    );
+  });
 });

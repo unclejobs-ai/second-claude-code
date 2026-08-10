@@ -5,7 +5,7 @@ import { join, resolve } from "path";
 import { fileURLToPath } from "url";
 
 import { resolveProjectRoot } from "./lib/project-root.mjs";
-import { readState, writeState, clearState } from "./lib/coach-state.mjs";
+import { readState, writeState, clearState, stateFilePath } from "./lib/coach-state.mjs";
 import { writeStandard } from "./lib/standard-record.mjs";
 
 const DEFAULT_THRESHOLD = 0.05;
@@ -566,7 +566,7 @@ function parseArgs(argv) {
   const [command = "status", ...rest] = argv;
   const flags = {};
   const positionals = [];
-  const booleanFlags = new Set(["json"]);
+  const booleanFlags = new Set(["json", "force"]);
   for (let i = 0; i < rest.length; i += 1) {
     const item = rest[i];
     if (item.startsWith("--")) {
@@ -596,6 +596,24 @@ function output(value, json = false) {
   }
 }
 
+// A state file can be present and valid JSON while still missing the
+// topology shape every scoring path assumes (hand-edited, truncated by a
+// crashed writer before this field landed, produced by a future/older
+// schema). Every other corruption path in this CLI degrades to a clear
+// message (readState returns null on unparseable JSON; record-fork/hooks
+// coerce a non-array forks to []) — this is the one place raw property
+// access would otherwise leak a bare TypeError. Exit code stays 1: this is
+// a genuine error, not a valid "no interview" state, so it must not report
+// success.
+function assertUsableTopology(state, root) {
+  if (!state.topology || !Array.isArray(state.topology.components)) {
+    throw new Error(
+      `interview state at ${stateFilePath(root)} is missing usable topology data and can't be scored. ` +
+        "Inspect the file directly, or run `clear` to discard it and start over."
+    );
+  }
+}
+
 export function runCli(argv = process.argv.slice(2), deps = {}) {
   const root =
     deps.root && !deps.useRealRootResolution
@@ -608,16 +626,32 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
   if (command === "status" || command === "resume") {
     const state = adapter.read();
     if (!state) return output({ active: false }, json);
+    assertUsableTopology(state, root);
     return output({ active: true, ...renderProgress(state) }, json);
   }
 
   if (command === "start") {
     const idea = flags.idea || positionals.join(" ");
     if (!idea.trim()) throw new Error("start requires an idea");
+    const existing = adapter.read();
+    let discarded = null;
+    if (existing) {
+      const settled = Array.isArray(existing.forks) ? existing.forks.length : 0;
+      if (!flags.force) {
+        throw new Error(
+          `an interview is already active (run_id=${existing.run_id}, round=${existing.round}, ${settled} standard(s) settled). ` +
+            "Resume it (`resume`), finish it (`finalize`), or clear it explicitly (`clear`) — " +
+            "or pass --force to discard it and start over."
+        );
+      }
+      discarded = { run_id: existing.run_id, round: existing.round, standards_settled: settled };
+    }
     const thresholdInfo = resolveThreshold({ cwd: root, env: deps.env || process.env });
     const state = createInitialState({ idea, cwd: root, thresholdInfo, now: deps.now || new Date() });
     adapter.write(state);
-    return output({ active: true, threshold: thresholdInfo.threshold, threshold_source: thresholdInfo.threshold_source, topology: state.topology, question: "Confirm the topology before scoring." }, json);
+    const result = { active: true, threshold: thresholdInfo.threshold, threshold_source: thresholdInfo.threshold_source, topology: state.topology, question: "Confirm the topology before scoring." };
+    if (discarded) result.discarded = discarded;
+    return output(result, json);
   }
 
   if (command === "answer") {
@@ -625,6 +659,7 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     if (!answer.trim()) throw new Error("answer requires text");
     const current = adapter.read();
     if (!current) throw new Error("no active coach state");
+    assertUsableTopology(current, root);
     const confirmed = current.topology.status === "pending" ? confirmTopology(current) : current;
     const next = applyAnswer(confirmed, answer, { now: deps.now || new Date() });
     adapter.write(next);
