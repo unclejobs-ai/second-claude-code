@@ -394,3 +394,42 @@ superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 �
 - `superpowers/skills/writing-skills` — 실패 테스트 우선, "정규식으로 강제 가능하면 자동화하고 문서는 판단에만", 실패 유형에 형식 맞추기
 - `mattpocock/skills` — user-invoked와 model-invoked 분리, `disable-model-invocation` 프론트매터
 - `firecrawl/anydoc`, `firecrawl/pdf-inspector` — 로컬 문서 흡입. 이번 스펙 범위 밖이나, 붙일 때는 의존성이 아니라 `npx` 호출로 붙인다 (현재 의존성은 `@modelcontextprotocol/sdk` 하나이며 빌드 단계가 없다)
+
+## 에이전트 배치
+
+기존 17개 에이전트는 그대로 두고 역할 아래로 재배치한다. 층이 둘이 된다: 역할은 사용자와 모델이 부르는 이름이고, 에이전트는 실제로 일하는 일꾼이다.
+
+| 역할 | 부리는 에이전트 |
+|---|---|
+| coach | 없음 (사용자와 직접 대화). 챌린지 모드에서 absol을 빌려 쓴다 |
+| scout | eevee |
+| analyst | alakazam, mewtwo |
+| editor | smeargle (초안), ditto (수정) |
+| critic | xatu, absol, porygon, jigglypuff, unown |
+| manager | arceus, machamp |
+| trainer | 없음 (러너가 벤치마크를 돌린다) |
+| librarian | pikachu, abra |
+| discover 도구 전용 | noctowl, magnezone, deoxys |
+
+17개 전부 자리가 있고 고아가 없다. 역할 구분이 기존 편성과 1:1에 가깝게 맞는다는 것은 이 분해가 임의가 아니라는 증거다.
+
+coach와 trainer에 전용 에이전트가 없는 것은 결함이 아니다. coach는 사용자와 직접 대화해야 하는 역할이며 — 실사용에서 밥값을 한 이유가 그것이다 — trainer는 격리 워크트리에서 러너가 수행한다.
+
+에이전트 파일의 모델 티어는 건드리지 않는다. 변경하려면 `docs/architecture.md`의 로스터 표를 먼저 확인해야 한다.
+
+## 실행 순서
+
+한 번에 바꾸면 검토가 불가능하다. 네 단계로 나누고, 각 단계가 끝날 때마다 실제로 써 볼 수 있는 상태를 유지한다.
+
+1. **coach 완성** — 러너 루트 수정, gjc 네임스페이스 제거, 기준 문서 산출, 훅 네 지점, 테스트. 이 단계만으로 사용자가 실사용 판정을 내릴 수 있다.
+2. **검사 실행기** — `standard-check`, 실패 픽스처 규약, adversarial 흔적 기록.
+3. **나머지 7역할** — 개명, 통합, 도구로 내리기, 삭제. 베이스라인 테스트로 판정.
+4. **문서 전면** — README 양본, architecture 양본, `docs/skills/` 36→16, commands 18→12, CLAUDE.md, plugin.json, 계약 테스트.
+
+1단계에서 방향이 틀린 것으로 판명되면 3, 4단계를 하지 않는다. 순서의 목적이 그것이다.
+
+## 작업 격리
+
+이 저장소에서 여러 Claude 세션이 동시에 작업한 이력이 있다. 설계 중 실제로 작업 트리가 다른 세션의 브랜치로 옮겨져 커밋 하나가 고아가 되었고 (reflog `HEAD@{4}` 이후), `git worktree`로 복구했다.
+
+구현은 격리된 워크트리에서 진행한다. 공유 작업 디렉터리에서는 편집이 소리 없이 사라진다.
