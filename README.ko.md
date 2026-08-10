@@ -3,681 +3,137 @@
 ![version](https://img.shields.io/badge/version-2.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
----
-
 # Second Claude Code — 제2의 클로드
 
-"AI 에이전트 알아보고 보고서 써줘."
+**한 줄 입력으로 조사·초안·리뷰·수정까지 지식노동 한 사이클을 통째로 도는 Claude Code 플러그인.**
 
-이 한 줄을 치면 이브이가 웹을 뒤져요. 후딘이 패턴을 잡아요. 루브도가 3,000자를 쓰는데 — 저한테 오기도 전에 리뷰어 다섯 마리가 이미 초안을 뜯고 있어요. 네이티오가 논리를 보고, 앱솔이 약점을 치고, 폴리곤이 숫자를 검증해요.
+"AI 에이전트 알아보고 보고서 써줘." 이 한 줄이면 이브이가 웹을 뒤지고, 후딘이 패턴을 잡고, 루브도가 3,000자를 씁니다. 그리고 그게 손에 들어오기 전에 리뷰어 다섯 마리가 이미 초안을 뜯고 있습니다. 네이티오는 논리를, 앱솔은 제일 약한 주장을, 폴리곤은 숫자 하나하나를.
 
-무슨 일이 일어난 걸까요? **한 줄 입력. 전체 사이클. 플러그인 세 개 붙여놓고 기도하는 게 아니에요.**
+핵심은 글을 쓴다는 게 아닙니다. **첫 초안을 그냥 건네주지 않는다**는 겁니다.
 
 [![Second Claude Code — 제2의 클로드](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
 <sub>[SceneSteller](https://www.scenesteller.com/studio/share/G2vdkxkjpj)로 제작</sub>
 
 ![한 줄로 완성까지](docs/images/hero.ko.svg)
 
-[아키텍처](docs/architecture.ko.md) · [Architecture](docs/architecture.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [User Manual](docs/notion-manual.md) · [스킬 가이드](docs/skills/) · [GitHub Issues](https://github.com/unclejobs-ai/second-claude-code/issues) · [English README](README.md)
+[아키텍처](docs/architecture.ko.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [스킬 가이드](docs/skills/) · [체인지로그](CHANGELOG.md) · [Issues](https://github.com/unclejobs-ai/second-claude-code/issues)
 
 ---
 
-## 한눈에 보는 구조
-
-```mermaid
-flowchart TB
-    U[사용자 한 줄 입력] --> R{여러 단계에 걸치나?}
-    R -->|"예 — '알아보고 써줘'"| P[Second Claude PDCA]
-    R -->|"아니오 — 한 가지 일"| O{전문 플러그인 있음?}
-    O -->|있음| E[그 플러그인이 처리]
-    O -->|없음| P
-    E --> P
-    P --> PLAN[Plan: 조사와 분석]
-    PLAN --> DO[Do: 작성 또는 구현]
-    DO --> CHECK[Check: 리뷰와 검증]
-    CHECK --> ACT[Act: 개선, 커밋, 재라우팅]
-    ACT --> OUT[완성 결과물 + 사이클 메모리]
-```
-
-Second Claude Code는 제어 루프입니다.
-
----
-
-## 아무것도 안 깔았을 때 얻는 것
-
-**아래는 전부 이 플러그인 하나로 돕니다.** 다른 플러그인도, API 키도, 외부 서비스도 필요 없습니다.
-
-| | |
-|---|---|
-| **자기 결과물을 거부합니다** | 서로 다른 렌즈를 가진 리뷰어 다섯이 초안을 물어뜯습니다 — 논리, 약점, 사실, 목소리, 구조. 발견 0건인 리뷰는 통과가 아니라 **거수기**로 취급합니다. |
-| **실패를 원인별로 되돌립니다** | 근거가 얇으면 Plan으로, 실행이 어긋났으면 Do로, 다듬을 거리면 Refine으로. 전부 "다시 해봐"가 아닙니다. |
-| **게이트가 느낌이 아니라 검사입니다** | 서로 다른 소스 5개와 승인된 계획 없이는 Plan에서 Do로 못 넘어갑니다. 무엇이 빠졌는지 게이트가 이름을 대 줍니다. |
-| **당신의 문체를 배웁니다** | `SOUL.md`에 톤 규칙과 안티패턴이 쌓이고, 톤 리뷰어가 일반론이 아니라 **그 규칙**으로 검사합니다. |
-| **런이 기록을 남깁니다** | 어떤 게이트가 걸렸고, 리뷰어가 뭘 잡았고, 몇 번 어디로 왜 되돌아갔는지. 공유 가능한 한 장으로 내보낼 수 있습니다. |
-
-핵심은 글을 쓴다는 게 아닙니다. **첫 초안을 그냥 건네주지 않는다**는 겁니다.
-
-### 설치된 플러그인은 더 빠르게 할 뿐, 필수가 아닙니다
-
-`coderabbit`·`commit-commands`·`frontend-design` 같은 게 깔려 있으면, 단일 목적 프롬프트는 내장 기능 대신 그쪽으로 갑니다. 한 가지 일은 전문가가 낫기 때문입니다.
-
-**하나도 없어도 나빠지는 건 없습니다.** 외부 매칭이 없으면 내장 리뷰어·작성자·커미터가 그대로 처리합니다. 크로스 플러그인 디스패치는 완결된 시스템 **위에 얹는 가속기**지 의존성이 아닙니다.
-
-```mermaid
-flowchart LR
-    P["단일 목적 프롬프트"] --> Q{"전문 플러그인 있음?"}
-    Q -->|있음| E["그 플러그인이 처리"]
-    Q -->|없음| B["SCC 자체 리뷰어가 처리"]
-    E --> R["결과"]
-    B --> R
-
-    style B fill:#d3f9d8,stroke:#2f9e44
-    style E fill:#e7f5ff,stroke:#1971c2
-```
-
----
-
-## v1.5.2에서 달라진 점
-
-**Deep Interview + 코드 엔지니어링 레인** — 실행 전에 요구사항을 더 선명하게 만들고, 실행 중에는 더 엄격하게 검증합니다. v1.5.2는 18번째 공개 명령어 `/scc:deep-interview`를 추가하고, `domain=code` PDCA 작업에 계획·검증·정리·핸드오프 계약을 강화합니다.
-
-- **Deep Interview** — Round 0 topology 확인, 컴포넌트별 모호성 점수, ontology 수렴 추적, 한국어/세션 언어 보존, ralplan/ultragoal/team 승인 게이트 핸드오프를 갖춘 소크라테스식 요구사항 인터뷰입니다.
-- **실행 가능한 코드 Plan** — 수용 기준, 롤백 경로, 복잡도, 위험 작업 승인 상태를 Plan 계약에 포함합니다.
-- **worker-validator 분리** — Check는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구합니다.
-- **stage report** — 장기 또는 다단계 Do 작업은 브랜치/워크트리 격리, 단계 진행, 검증 결과, 다음 결정을 남깁니다.
-- **핸드오프 전 정리** — Act는 clean-ai-slop, 단순화, 관련 검증, 성능 주장 시 baseline/after 측정, issue/PR/local handoff state를 마무리 조건으로 둡니다.
-- **공개 문서 정렬** — README, 아키텍처 문서, Deep Interview 가이드, PDCA 스킬 가이드, stage contract, 계약 테스트가 같은 18-skill surface를 설명합니다.
-
-릴리스 노트와 검증 요약은 `docs/RELEASE-v1.5.2.ko.md` 참고.
-
-> **이전 v1.5.0에서는...**
-
-## v1.5.0에서 달라진 점
-
-**`unblock` 스킬** — WebFetch가 막히는 URL(4xx, captcha, WAF, JS-heavy SPA)을 포기하기 전에 9-phase zero-key fetch chain으로 우회합니다.
-
-- **16번째 스킬** — `/scc:unblock`이 추가돼 research fallback과 auto-router에 연결됐어요.
-- **9-phase escalation** — public API, Jina, yt-dlp, curl variants, TLS rotation, LightPanda, Playwright, free archive cluster, optional paid provider 순서로 시도합니다.
-- **운영 하드닝** — SSRF guard, `schema_version`, `idempotency_key`, stagnation detection, decisions audit log가 들어갔습니다.
-- **검증 기준선** — v1.5.0 기준 `UNBLOCK_SKIP_NETWORK_TESTS=1 npm test`에서 397개 테스트, 394개 통과, 3개 스킵.
-
-전체 릴리스 노트는 `docs/RELEASE-v1.5.0.ko.md` 참고.
-
-> **이전 v1.4.0에서는...**
-
-## v1.4.0에서 달라진 점
-
-**크로스-플러그인 오케스트레이터** — 이미 깔려 있는 Claude Code 플러그인을 실시간으로 찾아내고 지휘합니다. 순수하게 더하는 기능이라, 하나도 없으면 내장 기능이 대신 돕니다.
-
-"코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit:code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅. "posthog event analysis"처럼 특정 플러그인 의도가 강하면 설치된 PostHog 스킬 `Skill: posthog:exploring-autocapture-events`가 먼저 잡힙니다.
-
-수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐.
-
-다만 탐지가 아니라 고정된 게 하나 있습니다. 어떤 플러그인을 **선호**하는지입니다. `INTENT_PROFILES`가 리뷰는 `coderabbit`, act는 `commit-commands`, 디자인은 `frontend-design`, 메모리·리서치는 `claude-mem`으로 박아 뒀습니다. 다른 리뷰 플러그인을 깔면 탐지되고 점수도 정상으로 매겨지지만, 그 표를 고치기 전까지는 선호 가산점을 받지 못합니다.
-
-```mermaid
-graph LR
-    U[사용자 입력] --> PD[prompt-detect 훅]
-    PD --> P[PDCA 라우터]
-    P --> |check 페이즈| OC[오케스트레이터]
-    OC --> |스캔| PL{플러그인 생태계}
-    PL --> CR[coderabbit<br/>code-review]
-    PL --> CC[commit-commands<br/>commit]
-    PL --> FD[frontend-design<br/>design]
-    PL --> CX[codex<br/>review]
-    PL --> AT[agent-teams<br/>team-review]
-    OC --> |디스패치| SK[Skill: 플러그인-스킬]
-    SK --> |실행| RS[결과]
-```
-
-- **MCP 도구 4종 신규** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
-- **런타임 플러그인 탐지** — 세션 시작 시 `~/.claude/plugins/` 스캔, 파일시스템에서 capability map 자동 구축 (설정 불필요)
-- **동적 디스패치 가이드** — `prompt-detect`가 실시간 플러그인 라우팅 테이블과 정확한 `Skill:` / 슬래시 커맨드 호출 문자열을 주입
-- **PDCA 페이즈 자동 라우팅** — plan → `claude-mem:knowledge-agent`, do → `frontend-design:frontend-design`, check → `coderabbit:code-review`, act → `/commit-commands:commit`
-- **직접 플러그인 매칭 라우팅** — 설치된 플러그인 스킬/커맨드와 강하게 맞는 자연어 프롬프트는 자체 처리보다 외부 capability를 먼저 호출
-- **소울 피드백 바인딩** — 시각적 진행 게이지, git shipping 메트릭(`soul_retro`), synthesis 준비도, retro 트렌드 감지
-- **367개 테스트** (366개 통과, 0개 실패, 1개 스킵) — 실제 14개 플러그인 / 67개 스킬 / 3개 MCP 서버로 검증 완료
-
-전체 릴리스 노트와 검증 요약은 `docs/RELEASE-v1.4.0.ko.md` 참고.
-
-> **이전 v1.3.0에서는...**
-
-**PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
-
-- **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — 아키텍처 명확화. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 **Do 페이즈 안에서 디스패치**돼요 (각자의 내부 페이즈가 Do 안에서 돌아감). PDCA를 대체하는 게 아닙니다. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아가요
-- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`
-- **포맷별 길이 floor** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 스레드 아티클 ≥ 4,000자. 뉴스레터 ≥ 10,000자. 전략 리포트 ≥ 5,000자. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치, vague한 "더 길게 써" 금지
-- **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새 minimum 추가: 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자. Thin Plan → thin Do 실패 체인 차단
-- **리뷰어 모델 다양성 룰 (false consensus 감지 포함)** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼서 Goodhart 스타일 "다들 괜찮대" 거짓 신호를 잡아요
-- **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 surgical 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정. 새 로직 6/6 routing 정확도 vs 이전 OR 3/6
-- **새 284줄 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점 표준화
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
-- **확장된 페이즈 출력 스키마** — `PlanOutput`, `DoOutput`, `CheckOutput` 모두 측정 가능한 검증 필드를 갖게 됐어요 (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed` 등). PDCA가 sub-skill self-report를 신뢰하지 않고 독립 검증
-
-**검증 (2026-04-07)**: generic 토픽으로 실제 PDCA 사이클 돌렸을 때 7,981자 Plan brief (floor 3,000), 6,962자 Do 아티클 (floor 4,000), 12개 출처 인용 (floor 5), Codex 포함 2 리뷰어 (diversity score 1.0), pre-v1.3.0 baseline에서는 놓쳤을 4개 P1 findings 발견. 전체 검증 리포트는 `docs/RELEASE-v1.3.0.ko.md` 참고.
-
-<details>
-<summary><strong>v1.2.0에서 달라진 점</strong></summary>
-
-- **Dashboard 아티팩트** — KPI 카드, 차트, 마크다운을 조합한 grid layout(`2x2`, `3x1`, `1x2`) 아티팩트 타입
-- **KPI 카드 컴포넌트** — 큰 숫자 + 변화율 지표, 색상 구분(초록/빨강/회색), 추세 화살표
-- **Grid layout 시스템** — 아티팩트를 single-column 스택이 아닌 반응형 grid에 배치
-- **페이즈 프리뷰 카드** — 타임라인 뷰에서 각 페이즈의 아티팩트 썸네일 요약
-- **차트 + 마크다운 동시 표시** — 탭 전환 없이 나란히 렌더링
-- **`ui/src` 전체 소스 코드** — Vite + React + TypeScript 프로젝트로 pre-built 번들 교체, 13 컴포넌트 × 4 디렉토리, Shiki lazy loading (번들 1MB → 262KB)
-
-</details>
-
-<details>
-<summary><strong>v1.1.0에서 달라진 점</strong></summary>
-
-- **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로. 마크다운, 레이더/바/파이 차트(Nivo), 플로우 다이어그램(SVG), 코드 하이라이팅(Shiki) 4가지 타입. WebSocket 실시간 연결
-- **Viewer 스킬** — `/scc:viewer`로 뷰어 시작, 30분 비활동 시 자동 종료
-- **반응형 레이아웃** — 데스크톱(768px+) 좌우 스플릿 패널, 모바일(<768px) 드래그 바텀 시트
-- **Zero-dependency 서버** — Node.js HTTP + WebSocket with SPA fallback, RFC 6455 frame encoding, path traversal prevention
-
-</details>
-
-<details>
-<summary><strong>v1.0.0에서 달라진 점</strong></summary>
-
-- **PDCA 사이클 메모리** — 사이클이 끝나도 기억이 남아요. `.data/cycles/`에 페이즈별 마크다운, 이벤트 로그, 메트릭이 구조화돼서 저장돼요
-- **MCP 도구 3개 추가** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`가 들어와서 전체 **24개** 도구 표면이 됐어요
-- **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 4개 도메인 × 4개 페이즈 전부에 I/O 계약, DoD, 롤백 대상을 정의해요
-- **테스트 323개** — `322`개 통과, `1`개 스킵, 실패 `0`개
-- **사이클 메모리 하드닝** — 경로 순회 방지, 깨진 JSON 복구, critical-only gotcha 트리거
-
-</details>
-
-<details>
-<summary><strong>v0.9.0에서 달라진 점</strong></summary>
-
-- **테스트 기준선 정리** — 현재 검증 기준은 총 `323`개, `322`개 통과, `1`개 스킵, 실패 `0`개예요
-- **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
-- **공개 스킬 전반 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
-- **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
-- **PDCA 결정이 3갈래가 됐어요** — `pdca_transition`이 이제 `PROCEED`, `REFINE`, `PIVOT`를 구분하고, refine/pivot 최대 횟수로 무한루프를 막아요
-- **세션 끝나면 시각화까지 남아요** — 터미널 ANSI 요약 박스가 뜨고, `.data/reports/`에 Mermaid + Chart.js 기반 다크 테마 HTML 리포트가 자동 생성돼요
-- **루프와 리뷰 러너가 더 단단해졌어요** — File Mutation Queue, MAD confidence scoring, cost/time budget 제한, iterative compaction으로 레이스와 장기 세션 손실을 줄였어요
-- **MMBridge와 관측성도 강화됐어요** — optional `mmbridge` MCP 등록, Adapter Protocol(`Cli`, `Stub`, `Recording`), MetaClaw PRM effectiveness tracker가 추가됐어요
-
-</details>
-
----
-
-## 설치 후 첫 5분
-
-처음이라면 이 순서대로 따라와주세요. 5분이면 충분해요.
-
-**1단계. 설치**
-
-터미널에서 이 명령어를 입력하세요:
+## 설치
 
 ```bash
-claude plugin add github:unclejobs-ai/second-claude-code
+claude plugin marketplace add unclejobs-ai/second-claude-code
+claude plugin install scc
 ```
 
-설치가 끝나면 `Plugin installed successfully` 메시지가 나와요.
-
-**2단계. 설치 확인**
-
-새 세션을 열어보세요. 화면 상단에 이런 텍스트가 보이면 정상이에요:
+세션 열고 그냥 말하면 됩니다. 외울 슬래시 명령어는 없습니다. 라우터가 한국어든 영어든 의도를 읽습니다.
 
 ```
-# Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+AI 에이전트 알아보고 보고서 써줘
+Research the current state of AI agent frameworks and write a report
 ```
 
-이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `scc`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
-
-**3단계. 첫 프롬프트 입력**
-
-보통 이렇게 시작해요:
-
-```
-AI 에이전트 프레임워크 현황을 조사하고 보고서를 써줘
-```
-
-자동 라우터가 맞는 스킬을 골라줘요. 슬래시 명령어를 외울 필요 없어요. 영어도 돼요:
-
-```
-Research AI agent frameworks and write a report
-```
-
-**4단계. 결과 확인**
-
-프롬프트를 입력하면 다음 순서로 진행돼요:
-
-1. 리서치 에이전트(이브이, 부엉)가 소스를 수집해요
-2. 분석 에이전트(후딘)가 패턴을 정리해요
-3. 글쓰기 에이전트(루브도)가 초안을 써요
-4. 리뷰어 5마리가 초안을 검토해요
-5. 최종본이 나와요
-
-진행 중에 `[Plan]`, `[Do]`, `[Check]`, `[Act]` 같은 페이즈 표시가 보이면 정상이에요. 전체 과정은 주제 난이도에 따라 2~5분 정도 걸려요.
-
-이게 어떻게 돌아가는 걸까요?
+아무 반응이 없으면 `claude plugin list`로 설치를 확인하세요.
 
 ---
 
-## 첫 PDCA 사이클
+## 왜 쓰나
 
-v1.0.0부터 PDCA 사이클이 **기억**해요. 이전 사이클에서 뭘 배웠는지 다음 사이클이 알아요.
-
-**첫 번째 사이클 — 그냥 돌려요:**
-
-```
-AI 에이전트 프레임워크를 조사하고 보고서를 써줘
-```
-
-사이클이 끝나면 `.data/cycles/cycle-001/`에 이런 파일이 남아요:
-
-```
-.data/cycles/cycle-001/
-├── plan.md       ← Plan 페이즈 산출물
-├── do.md         ← Do 페이즈 산출물
-├── check.md      ← Check 결과 (리뷰어 소견)
-├── act.md        ← Act 결정 (PROCEED/REFINE/PIVOT)
-├── events.jsonl  ← 페이즈 전환 이벤트 로그
-└── metrics.json  ← 점수, 시간, 비용 메트릭
-```
-
-**인사이트 저장 — 배운 걸 기록해요:**
-
-사이클 도중이나 끝나고 이렇게 말하면:
-
-```
-이번 사이클에서 배운 점: 리서치 소스가 3개 미만이면 보고서 품질이 떨어진다
-```
-
-시스템이 `pdca_save_insight`를 호출해서 `.data/cycles/insights.json`에 기록해요. 카테고리(`process`, `technical`, `quality`)와 심각도(`info`, `warning`, `critical`)가 자동 분류돼요.
-
-**두 번째 사이클 — 이전 기억이 작동해요:**
-
-```
-이번엔 멀티모달 AI 에이전트에 집중해서 보고서를 써줘
-```
-
-Plan 페이즈 시작 전에 시스템이 `pdca_get_insights`를 호출해서 이전 인사이트를 읽어요. "리서치 소스가 3개 미만이면 품질이 떨어진다"는 교훈이 있으니까, 이번엔 소스를 더 많이 확보하려고 해요. 이게 **Read-Before-Act** 패턴이에요.
-
-**critical 인사이트가 3번 반복되면?**
-
-같은 critical 인사이트가 3번 이상 기록되면 `.data/proposals/gotchas-{category}.md`에 gotcha 제안이 자동으로 생성돼요. "이 실수 또 했어요. 체크리스트에 넣을까요?" 같은 거예요. 이게 **Self-Evolution**이에요.
-
-**시간 감쇠:**
-
-인사이트는 30일에 걸쳐 가중치가 1.0에서 0.0으로 떨어져요. 오래된 교훈은 자연스럽게 영향력이 줄어들어요. `min_weight` 파라미터로 너무 오래된 인사이트를 필터링할 수 있어요.
+- **자기 결과물을 거부합니다.** 서로 다른 렌즈를 가진 리뷰어 서넛에서 다섯이 초안을 물어뜯습니다. 발견 0건인 리뷰는 통과가 아니라 거수기로 취급합니다.
+- **실패를 원인별로 되돌립니다.** 근거가 얇으면 Plan으로, 실행이 어긋났으면 Do로, 다듬을 거리면 Refine으로. 전부 "다시 해봐"가 아닙니다.
+- **게이트가 느낌이 아니라 검사입니다.** 서로 다른 소스 5개와 승인된 계획 없이는 Plan에서 Do로 못 넘어갑니다. 무엇이 빠졌는지 게이트가 이름을 대 줍니다.
+- **당신의 문체를 배웁니다.** `SOUL.md`에 톤 규칙과 안티패턴이 쌓이고, 톤 리뷰어가 일반론이 아니라 그 규칙으로 검사합니다.
+- **모든 런이 기록을 남깁니다.** 어떤 게이트가 걸렸고, 리뷰어가 뭘 잡았고, 몇 번 어디로 왜 되돌아갔는지. 공유 가능한 한 장으로 내보냅니다.
+- **다른 건 아무것도 필요 없습니다.** API 키도, 두 번째 플러그인도, 외부 서비스도. 위의 전부가 이 플러그인 하나로 돕니다.
 
 ---
 
-## 이게 어떻게 돌아가는 걸까요?
+## 사이클
 
-### PDCA 흐름
+모든 프롬프트가 Plan → Do → Check → Act를 거칩니다. 단계 사이에는 통과 못 하면 못 넘어가는 게이트가 있습니다.
 
 ```
-나: "AI 에이전트 알아보고 보고서 써줘"
+"AI 에이전트 알아보고 보고서 써줘"
 
-[Plan]  이브이 + 부엉 20개 이상 소스를 크롤링, 후딘이 합성
-        ↓ 게이트: 리서치 브리프 없으면 집필 시작 안 됨
-[Do]    루브도가 리서치 기반으로 전체 초안 작성
-        ↓ 게이트: 초안은 저한테 안 오고 리뷰로 감
-[Check] 리뷰어 5마리가 병렬로 — 논리, 팩트, 톤, 구조, 약점
-        ↓ 게이트: score + vote 듀얼 게이트 + stage contract를 통과해야 승인
-[Act]   액션 라우터가 피드백을 읽어요:
-        → 거의 됐는데 다듬기 필요? REFINE.
-        → 지금 페이즈가 틀렸거나 접근이 어긋남? PIVOT.
-        → 조건 충족? PROCEED.
-
-최종본이 저한테 와요. 리뷰 끝. 팩트체크 끝. 정제 끝.
+[Plan]  20개+ 소스 크롤링, 패턴 추출, 브리프 작성
+        ↓ 게이트: 서로 다른 소스 5개 + 승인된 계획
+[Do]    그 리서치에 근거한 초안 작성
+        ↓ 게이트: 완결된 산출물, 리서치 반영 확인
+[Check] 리뷰어 3~5마리가 각자 다른 차원을 병렬로 검토
+        ↓ 게이트: 점수 + 투표 기준. Critical 하나면 무조건 차단
+[Act]   Action Router가 실패 원인을 읽고 되돌아갈 단계를 고름
 ```
 
-![PDCA Cycle](docs/images/pdca-cycle.ko.svg)
+중요한 건 Action Router입니다. 리뷰가 문제를 잡으면 근본 원인을 분류해서 그 원인이 생긴 단계로 재진입합니다. 리서치 구멍이면 리서치로 돌아가지, 뭉뚱그린 재시도로 가지 않습니다. 두 번째 패스가 첫 번째보다 확연히 나은 이유이고, 런이 뱅뱅 돌지 않고 수렴하는 이유입니다.
+
+![PDCA 사이클](docs/images/pdca-cycle.ko.svg)
 
 ---
 
-### PDCA 사이클 메모리
+## 스킬
 
-v1.0.0의 핵심이에요. PDCA가 이제 **기억하는 사이클**이 됐어요.
+18개 스킬. 80개 중에 뭘 고를지 고민할 일이 없도록, 대신 하나하나가 깊습니다. 하고 싶은 말만 하면 라우터가 알아서 붙입니다. 정밀하게 쓰고 싶으면 슬래시 명령어(`/scc:write`, `/scc:review` …)도 그대로 됩니다.
 
-#### 저장 구조
+**사이클 전체**
 
-```
-.data/cycles/
-├── cycle-001/
-│   ├── plan.md         ← 각 페이즈 산출물 (zero-context: 이 파일만 봐도 이해 가능)
-│   ├── do.md
-│   ├── check.md
-│   ├── act.md
-│   ├── events.jsonl    ← 페이즈 전환, 게이트 결정 등 이벤트 스트림
-│   └── metrics.json    ← 점수, 시간, 비용
-├── cycle-002/
-│   └── ...
-└── insights.json       ← 사이클 간 축적되는 인사이트
-```
-
-**트랜지션/종료 시 자동 저장:** 페이즈가 전환되거나 사이클이 끝나면 해당 페이즈의 마크다운과 이벤트가 자동으로 저장돼요. 별도 명령 필요 없어요.
-
-#### Read-Before-Act
-
-새 사이클이 시작되면 Plan 페이즈 진입 전에 이전 인사이트를 읽어요. 스테이지 계약의 DoD에도 "Previous cycle insights reviewed (if not first cycle)"이 들어가 있어요. 과거의 실수를 반복하지 않게 하는 구조예요.
-
-#### Self-Evolution
-
-인사이트에는 카테고리(`process`, `technical`, `quality`)와 심각도(`info`, `warning`, `critical`)가 붙어요.
-
-- **30일 시간 감쇠** — 가중치가 `1.0 → 0.0`으로 선형 감소해요. 오래된 교훈은 자연스럽게 퇴색돼요
-- **gotchas 자동 제안** — 같은 critical 인사이트가 **3번 이상** 반복되면 `.data/proposals/gotchas-{category}.md`에 제안서가 자동 생성돼요 (기존 파일에 append, 덮어쓰기 안 해요)
-- **필터링** — `min_weight`로 너무 오래된 인사이트를 걸러내고, `category`로 도메인별 인사이트만 볼 수 있어요
-
-사이클을 돌릴수록 시스템이 똑똑해져요. 첫 번째 사이클보다 다섯 번째 사이클이 더 나아요.
-
----
-
-### 도메인 인식 PDCA
-
-`pdca_start_run`에 `domain` 파라미터를 넘기면 해당 도메인에 맞는 스테이지 계약이 적용돼요. 4개 도메인이 있어요:
-
-| 도메인 | 용도 | 예시 |
-|---|---|---|
-| `code` | 코드 작성/리팩터링 | "이 모듈을 리팩터링해줘" |
-| `content` | 글쓰기, 보고서 | "AI 에이전트 보고서를 써줘" |
-| `analysis` | 데이터 분석, 전략 분석 | "시장 SWOT 분석을 해줘" |
-| `pipeline` | 멀티스텝 워크플로우 | "리서치→분석→작성 파이프라인을 돌려줘" |
-
-#### 페이즈별 Stage Contract 예시
-
-`config/stage-contracts.json`이 도메인 × 페이즈 조합마다 계약을 정의해요:
-
-**Plan 페이즈:**
-
-| 도메인 | DoD (완료 기준) |
+| 스킬 | 하는 일 |
 |---|---|
-| `code` | 테스트 가능한 태스크 분해, 실행 가능한 수용 기준과 롤백 경로, 위험 작업 승인 상태 |
-| `content` | 대상 독자 정의됨, 섹션별 분량 추정이 포함된 콘텐츠 아웃라인 |
-| `analysis` | 분석 질문과 가설이 명확, 데이터 소스 식별 및 접근 가능 |
-| `pipeline` | 파이프라인 스테이지가 I/O 계약과 함께 열거됨, 순환 의존성 없음 |
+| `pdca` | 리서치 → 작성 → 리뷰 → 원인별 재진입. 통과할 때까지 |
 
-**Do 페이즈:**
+**Plan — 모으기**
 
-| 도메인 | DoD (완료 기준) |
+| 스킬 | 하는 일 |
 |---|---|
-| `code` | 코드 컴파일/파스 에러 없음, 새 동작 테스트 또는 검증 증거 있음, 필요 시 브랜치/워크트리 격리와 stage report 있음 |
-| `content` | 초안이 plan.md 요구사항을 커버, 독자 수준에 맞는 가독성, 목표 분량 ±10% |
-| `analysis` | 데이터 수집 및 검증 완료, 분석 방법론 일관 적용, 중간 결과 재현 가능 |
-| `pipeline` | 각 스테이지의 출력이 다음 스테이지 입력 스펙에 맞음 |
+| `deep-interview` | 모호한 게 없어질 때까지 캐묻고, 승인 게이트 붙은 명세로 넘김 |
+| `research` | 20개+ 소스 크롤링, 패턴 추출, 브리프 |
+| `collect` | URL·메모를 던지면 쌓이는 게 아니라 PARA로 분류돼서 들어감 |
+| `discover` | 없는 스킬을 찾아서 설치까지 |
+| `unblock` | WebFetch가 못 뚫는 URL을 뚫음. 9단계 에스컬레이션, API 키 0개 |
 
-#### 코드 엔지니어링 레인
+**Do — 만들기**
 
-`code` 도메인은 일반 PDCA보다 한 단계 더 엄격한 코드 엔지니어링 레인을 탑니다. `engineering-discipline`에서 가져올 만한 plan → worker-validator → review-work → clean-ai-slop 흐름과, `Hyper-Waterfall`에서 가져올 만한 issue/branch/stage report/PR 기반 작업 기억 외부화를 합친 레인이에요.
-
-즉 코드 작업에서는 Plan이 테스트 가능한 수용 기준을 만들고, Do가 필요 시 브랜치나 워크트리로 격리해 단계 리포트를 남기며, Check가 구현자 자기 보고 대신 validator/reviewer 증거를 요구하고, Act가 단순화와 핸드오프를 마무리합니다. 새 OS를 얹는 게 아니라 기존 Second Claude PDCA 안에 코드 전용 실행 규율을 더한 구조예요.
-
-모든 도메인의 모든 페이즈에 **rollback target**이 정의돼 있어요. Check에서 문제가 나오면 Do로, Do에서 문제가 나오면 Plan으로 돌아가요. 도메인 지정 없이 시작하면 `content`가 기본값이에요.
-
----
-
-### 에이전트 시스템
-
-17마리 에이전트가 3개 모델 티어로 나뉘어요. 전부 opus로 돌리면 비용이 올라가요. 역할에 맞게 배분했어요.
-
-- **opus(4마리)** — 깊은 추론과 글쓰기가 필요한 자리. 네이티오(딥리뷰), 루브도(집필), 메타몽(편집), 피카츄(소울 키퍼)
-- **sonnet(11마리)** — 분석, 전략, 리서치, 인프라 실행. 이브이(리서처), 후딘(애널리스트), 뮤츠(전략가), 앱솔(데빌어드보킷), 폴리곤(팩트체커), 아르세우스, 괴력몬, 자포코일, 테오키스, 푸린(톤가디언), 안농(구조분석가)
-- **haiku(2마리)** — 검색과 지식 연결. 부엉, 캐이시. 판정이 아니라 수집이라 haiku로 충분해요
-
-PDCA 페이즈별로 어떤 에이전트가 뛰는지 보면 이래요:
-
-```
-사용자 프롬프트
-  ↓
-자동 라우터 (훅: prompt-detect.mjs)
-  ↓
-PDCA 오케스트레이터
-  ├── Plan: 이브이(sonnet) 리서치 → 후딘(sonnet) 분석
-  ├── Do:   루브도(opus) 전체 초안 작성
-  ├── Check: 리뷰어 5마리 병렬 실행
-  │          네이티오(opus) ── 논리 + 완결성
-  │          앱솔(sonnet) ─── 약점 공격
-  │          폴리곤(sonnet) ─ 팩트체크
-  │          푸린(sonnet) ──── 톤
-  │          안농(sonnet) ──── 구조
-  └── Act:  액션 라우터 → 메타몽(opus) 편집
-```
-
-각 에이전트는 전용 시스템 프롬프트와 제한된 도구 셋을 가진 서브에이전트예요. 하나가 뻗어도 다른 에이전트에 영향 안 가요.
-
-포켓몬 이름을 쓰는 이유가 있어요. 디버깅할 때 "네이티오가 논리 빈틈 발견"이 "reviewer-3가 이슈 발견"보다 추적하기 쉬워요. 이름이 역할이랑 맞아떨어지면 머릿속에서 정리가 돼요.
-
----
-
-### 품질 게이트
-
-리뷰어마다 구조화된 JSON을 출력해요:
-
-```json
-{
-  "score": 0.82,
-  "verdict": "APPROVED",
-  "findings": [
-    { "severity": "Warning", "location": "3섹션", "note": "데이터 출처 없음" },
-    { "severity": "Nitpick", "location": "도입부", "note": "문장 길이 불균형" }
-  ]
-}
-```
-
-합의 기준은 이제 두 줄로 봐야 해요:
-
-- **점수 게이트** — 프리셋마다 최소 score threshold가 있어요
-- **투표 게이트** — 프리셋마다 최소 pass vote가 있어요
-
-여기에 `Math.round` 보정이 들어가서 `2/3` 프리셋이 더 이상 `3/3`처럼 동작하지 않아요. 리뷰어 3명이면 2명이 통과시켜도 돼요. 대신 **Critical 소견은 점수와 투표를 무시하고 바로 차단**해요.
-
-**Stage Contracts:** `config/stage-contracts.json`이 code 작업과 content 작업을 구분해서 페이즈별 출구 조건을 다르게 잡아요. v1.0.0에서는 `analysis`와 `pipeline` 도메인까지 확장됐어요. 그래서 같은 PDCA라도 코드 리뷰, 보고서 리뷰, 데이터 분석 리뷰가 각각 다른 기준으로 판정돼요.
-
-**전환 결과는 세 가지예요:**
-
-- **PROCEED** — 점수, 투표, 계약 조건을 다 통과해서 다음 페이즈로 가요
-- **REFINE** — 산출물은 맞는데 디테일이 부족해서 제한된 재작업을 돌려요
-- **PIVOT** — 문제의 원인이 현재 페이즈가 아니라서 Plan/Do 같은 다른 페이즈로 방향을 틀어요
-
-게이트는 PDCA 매 페이즈 사이에 있어요. 리서치 브리프가 통과해야 집필이 시작되고, 초안이 게이트를 통과해야 저한테 와요. 급하다고 건너뛸 수 없어요 — 의도적 설계예요.
-
-**Definition of Done (DoD):** `refine` 스킬에 `--dod`를 쓰면 성공 기준을 체크리스트로 정의할 수 있어요 (예: `"팩트 오류 없음; 모든 섹션에 예시"`). 리뷰어가 매 라운드 기준별 PASS/FAIL을 평가하고, 에디터는 FAIL 기준을 우선 수정해요. 모든 DoD 기준이 PASS이고 판정 목표도 충족해야 종료돼요.
-
----
-
-### 훅 시스템
-
-8개 라이프사이클 훅이 PDCA를 지탱해요:
-
-| 훅 | 하는 일 |
+| 스킬 | 하는 일 |
 |---|---|
-| **SessionStart** | 배너 출력 + 상태 초기화 |
-| **UserPromptSubmit** | 자동 라우터 — 외부 플러그인 디스패치 + PDCA 복합 패턴 + 단일 스킬 패턴 |
-| **SubagentStart** | 리뷰 세션 컨텍스트 주입 — 에이전트 생성 시 이전 리뷰 결과를 자동으로 넘겨줘요 |
-| **SubagentStop** | 리뷰어 합의 집계 |
-| **Stop** | 세션 정리 |
-| **StopFailure** | Check 페이즈 품질 게이트 강제 — 게이트 미통과 시 프로세스 중단 |
-| **PreCompact** | 컨텍스트 압축 전 PDCA 상태 직렬화 |
-| **PostCompact** | 압축 후 상태 복원 — 긴 세션에서도 사이클 연속성을 유지해요 |
+| `write` | 아티클·보고서·뉴스레터. 리서치 근거와 리뷰 검증까지 붙어서 나옴 |
+| `analyze` | 15개 전략 프레임워크(SWOT·Porter·RICE…)를 이름만 빌리지 않고 제대로 적용 |
+| `workflow` | 스킬들을 파이프라인으로 엮어 두고 주제만 바꿔 재실행 |
+| `batch` | 큰 작업을 독립 단위로 쪼개서 동시에 실행 |
 
-UserPromptSubmit 훅이 라우팅을 담당해요. **먼저 복합 의도인지 봅니다.** "AI 에이전트 알아보고 보고서 써줘"가 여기 걸리면 `pdca`로 보내고 그 자리에서 끝냅니다 — 외부 플랜은 계산조차 안 해요. 검수와 교정 루프를 붙이는 게 사이클이니까요. 단일 목적 프롬프트만 다음 단계로 갑니다. 내장 스킬과 점수를 매긴 뒤 `getDispatchPlan()`이 설치된 전문 플러그인을 찾고, 강한 외부 매칭이 있으면 내장 선택을 제치고 `[ORCHESTRATOR]`가 주입돼요. 없으면 내장이 그대로 돕니다. 그래서 "posthog event analysis"는 PostHog가 깔려 있으면 그쪽으로 가고, "알아보고 써줘"는 어느 쪽이든 PDCA로 갑니다. 라우팅 결정에는 **신뢰도 점수(confidence scoring)**가 포함돼요 — 수정 사항은 소울 관찰로 캡처되어 장기 학습에 반영돼요.
+**Check — 검증하기**
 
----
-
-### 시각화
-
-세션이 끝나면 운영자 시점에서 두 가지가 바로 보여요:
-
-- 터미널에는 ANSI 요약 박스
-- 디스크에는 `.data/reports/` 아래 HTML 리포트
-
-예시는 이런 느낌이에요:
-
-```text
-┌──────────────── PDCA 요약 ─────────────────┐
-│ Cycle 2   Verdict: REFINE   Confidence: STRONG │
-│ Phases: Plan ✓  Do ✓  Check !  Act ↺          │
-│ Votes: 2/3  Score: 0.74  Time: 4m  Cost: $0.41 │
-│ Report: .data/reports/cycle-2.html            │
-└──────────────────────────────────────────────┘
-```
-
-HTML 리포트는 다크 테마고, Mermaid 플로우와 Chart.js 추세 그래프가 같이 들어가요. 터미널 출력이 사라져도 나중에 다시 볼 수 있는 게 포인트예요.
-
----
-
-### MCP 상태 레이어
-
-`pdca-state` MCP 서버(stdio 방식, `mcp/lib/` 핸들러 모듈로 모듈화)가 세션 간 상태와 플러그인 오케스트레이션을 관리해요. 전체 표면은 **31개 도구**예요.
-
-**코어 PDCA 도구 (7개):**
-
-| 도구 | 하는 일 |
+| 스킬 | 하는 일 |
 |---|---|
-| `pdca_get_state` | 현재 PDCA 상태 조회 |
-| `pdca_start_run` | 새 사이클 시작 (`domain` 파라미터로 도메인 지정 가능) |
-| `pdca_transition` | 페이즈 전환 — `auto_gate`로 게이트 평가, `phase_result`로 게이트 입력값 기록 |
-| `pdca_check_gate` | 품질 게이트 판정 |
-| `pdca_list_runs` | PDCA 실행 이력 조회 |
-| `pdca_end_run` | 사이클 종료 |
-| `pdca_update_stuck_flags` | 막힌 상태 강제 해소 |
+| `review` | 리뷰어 3~5마리, 서로 다른 관점, 합의 투표 |
+| `investigate` | 고치기 전에 근본 원인부터 잡음 |
 
-**사이클 메모리 도구 (3개, v1.0.0 신규):**
+**Act — 다듬기**
 
-| 도구 | 하는 일 |
+| 스킬 | 하는 일 |
 |---|---|
-| `pdca_get_cycle_history` | 특정 사이클 또는 최근 N개 사이클의 전체 기록 조회 — 페이즈별 마크다운, 메트릭 포함 |
-| `pdca_save_insight` | 인사이트 저장 — 카테고리(`process`/`technical`/`quality`), 심각도(`info`/`warning`/`critical`) 분류. critical 3회 반복 시 gotcha 자동 제안 |
-| `pdca_get_insights` | 인사이트 조회 — 30일 시간 감쇠 가중치 적용, 카테고리/최소 가중치로 필터링 |
+| `refine` | 리뷰어가 통과시킬 때까지 다시 씀. `--dod`로 합격선을 직접 지정 |
+| `translate` | 문체를 뭉개지 않는 EN↔KO 번역 |
+| `soul` | 세션을 넘어 톤 규칙을 학습하고, 당신 초안에 그 규칙을 적용 |
+| `viewer` | 런 하나를 공유 가능한 페이지로. 게이트·판정·재진입 이력 전부 |
 
-나머지 도구는 soul, project memory, daemon control, session recall, analytics, plugin orchestration 표면에 걸쳐 있어요.
+**유지보수자 전용** — 자동 라우팅되지 않는 슬래시 전용
 
-**오케스트레이터 도구 (4개, v1.4.0 신규):**
-
-| 도구 | 하는 일 |
+| 스킬 | 하는 일 |
 |---|---|
-| `orchestrator_list_plugins` | 설치된 플러그인의 스킬, 커맨드, MCP 서버, 에이전트 인벤토리 조회 |
-| `orchestrator_get_plugin` | 특정 플러그인의 발견된 capability 상세 조회 |
-| `orchestrator_route` | 키워드 또는 PDCA 페이즈에 맞는 `Skill:` / 슬래시 커맨드 디스패치 후보 반환 |
-| `orchestrator_health` | 플러그인 생태계 준비 상태 요약 |
+| `loop` | 프롬프트 자산을 고정 스위트로 벤치마크하고, 우승안만 격리 브랜치에 승급 |
+| `evolve` | 반복되는 게이트 실패를 그 실패를 만든 자산에 되먹임 |
 
-이벤트 소싱 방식으로 동작해요. 모든 PDCA 사이클이 로그로 남아요 — 페이즈 전환, 게이트 결정, 리뷰 점수, 액션 라우팅. 세션이 중간에 죽어도 마지막 체크포인트부터 재개해요. PreCompact/PostCompact 훅이 컨텍스트 압축 시에도 상태를 보존해요.
+<details>
+<summary><strong>유지보수자 루프 자세히</strong></summary>
 
-Playwright MCP는 선택 옵션이에요. JavaScript 기반 페이지가 대상인 리서치에서 이브이가 이걸 써요.
-
----
-
-## 이게 해결하는 문제
-
-AI로 글 쓰고, 리서치하고, 분석해요. 꽤 잘 돼요. 저도 몇 달을 그렇게 썼어요 — 프롬프트 치고, 결과 복사하고, 다음 프롬프트에 붙여넣고, 피드백 달라고 따로 요청하고, 수정 사항을 손으로 반영하고.
-
-문제는 이거예요. 각 도구가 따로 놀아요. 리서치가 글쓰기를 모르고, 글쓰기가 리뷰를 몰라요. 그 사이를 잇는 건 전부 제 손이에요. 콘텐츠 하나에 컨텍스트 스위칭 다섯 번.
-
-Second Claude Code는 그걸 고쳐요. 도구 모음이 아니라 제2의 클로드예요. 혼자 알아서 단계를 밟고, 실수를 스스로 잡고, 리뷰 안 거친 건 내보내지 않아요.
-
----
-
-## 이런 상황에서 쓰세요
-
-어떤 상황에서 Second Claude Code가 빛을 발하는지, 실전 시나리오 다섯 가지를 정리했어요.
-
-### 시장 조사 보고서가 급할 때
-
-내일까지 "AI 에이전트 시장 현황" 보고서를 내야 하는데, 소스 찾고 정리할 시간이 없어요.
-
-```
-AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 분석을 포함한 보고서를 써줘
-```
-
-20개 이상 소스를 크롤링하고, 패턴을 분석하고, 리뷰까지 거친 보고서가 나와요. 소스 목록도 같이 달려요.
-
-### 경쟁사 SWOT 분석이 필요할 때
-
-전략 회의 준비인데, 경쟁사 분석을 프레임워크에 맞춰서 정리해야 해요.
-
-```
-/scc:analyze swot "우리 회사의 SaaS 제품 vs 경쟁사 3개"
-```
-
-15개 내장 프레임워크(SWOT, Porter, RICE 등) 중 맞는 걸 골라서 구조화된 분석 결과를 줘요. 프레임워크를 직접 지정할 수도 있고, 주제만 던지면 자동으로 골라줘요.
-
-### 뉴스레터/블로그를 매주 써야 할 때
-
-매주 뉴스레터를 쓰는데, 매번 리서치부터 초안, 퇴고까지 반나절이 걸려요.
-
-```
-이번 주 AI 뉴스레터를 써줘. 주제: 멀티모달 에이전트의 부상. 독자층: 테크 리더
-```
-
-리서치 → 작성 → 리뷰 → 정제까지 한 번에 돌아가요. 매주 같은 패턴이면 `workflow`로 저장해두면 다음부턴 주제만 바꿔서 돌리면 돼요.
-
-### 기존 초안을 제출 전에 검증할 때
-
-보고서 초안은 다 썼는데, 논리 빈틈이나 팩트 오류가 없는지 확인하고 싶어요.
-
-```
-이 초안을 리뷰해줘. 외부 발표용이라 꼼꼼하게.
-```
-
-리뷰어 5마리가 논리, 팩트, 톤, 구조, 약점을 병렬로 검토해요. 2/3 통과 기준으로 승인 여부가 나오고, Critical 소견이 있으면 구체적인 수정 포인트를 알려줘요.
-
-### 반복 워크플로우를 자동화할 때
-
-"리서치 → 분석 → 초안 → 리뷰"를 매번 같은 순서로 돌리는데, 매번 프롬프트를 새로 치기 귀찮아요.
-
-```
-/scc:workflow run autopilot --topic "이번 달 업계 트렌드 리포트"
-```
-
-한 번 세팅해두면 주제만 바꿔서 돌릴 수 있어요. 커피 마시고 돌아오면 완성된 결과물이 기다리고 있어요.
-
----
-
-## 스킬 고르기
-
-단계니 사이클이니 신경 쓸 필요 없어요. 하고 싶은 말만 하면 돼요.
-
-글감이 잡히면 `write` 하나면 충분해요. 초안이 이미 있으면 `review`로 다섯 관점에서 피드백을 받아요. 리서치부터 퍼블리싱까지 전부 돌리고 싶으면 `pdca`가 알아서 해요.
-
-다음 작업에 뭘 쓸까요?
-
-| 하고 싶은 것 | 스킬 | 결과물 |
-|---|---|---|
-| 모호한 아이디어를 실행 승인 가능한 명세로 만들기 | `deep-interview` | 소크라테스식 질문, 모호성 점수, 실행 핸드오프 |
-| 리서치→작성→리뷰→개선 전체 사이클 | `pdca` | 조사하고 쓰고 검증한 글 — 프롬프트 하나로 |
-| 주제 파기 | `research` | 20개 이상 소스 크롤링, 패턴 분석, 브리프 |
-| SWOT, Porter, RICE 등 15개 프레임워크 | `analyze` | 구조화된 전략 분석 |
-| 아티클, 보고서, 뉴스레터 | `write` | 리서치 + 초안 + 리뷰가 한 명령어로 |
-| 3~5명 관점에서 초안 리뷰 | `review` | 병렬 리뷰 + 합의 투표 |
-| 목표 점수까지 다듬기 | `refine` | 리뷰어가 통과할 때까지 반복 — `--dod`로 성공 기준 체크리스트 지원 |
-| 프롬프트 자산 벤치마크 최적화 | `loop` | 고정 스위트 기반 루프 + 격리 우승 브랜치 |
-| 반복 실패하는 프롬프트 자산 진화 | `evolve` | 우로보로스 유지보수 루프 — 실제 게이트 실패 수확 + 메인테이너 작성 구조 체크 + 격리 우승 브랜치 |
-| URL, 메모, 발췌 저장 | `collect` | PARA 분류 기반 지식 캡처 |
-| 여러 스킬을 워크플로우로 연결 | `workflow` | 커스텀 자동화 |
-| 없는 스킬 찾아 설치 | `discover` | 새 스킬 탐색 및 설치 |
-| 나를 기억하고 학습하게 | `soul` | 너를 이해하고 기억한다 |
-| 영어↔한국어 번역 | `translate` | 소울 기반 EN↔KO 번역 — 스타일, 포맷, 용어집 지원 |
-| 대형 작업을 병렬로 쪼개기 | `batch` | 대형 작업 병렬 분해 |
-
-스킬은 전부 자연어로 반응해요. 정밀하게 쓰고 싶으면 슬래시 명령어도 돼요: `/scc:deep-interview`, `/scc:write`, `/scc:review`, `/scc:loop`, `/scc:workflow`, `/scc:discover` 등. 저는 반은 한국어, 반은 영어로 쓰는데 라우터가 알아서 처리해요. 트리거 패턴 총 ~130개.
-
-### 유지보수자용 Karpathy-Style Loop
-
-`loop`는 일반 사용자 자동 라우팅용이 아니라 유지보수자용 최적화 표면이에요. `skills/**/SKILL.md`, `commands/*.md`, `agents/*.md`, `templates/*.md` 같은 프롬프트 자산을 고정 벤치마크 스위트로 반복 평가하고, 우승 후보만 격리된 `codex/loop-...` 브랜치에 승급합니다.
-
-보통은 이렇게 써요:
+`loop`은 `skills/**/SKILL.md`, `commands/*.md`, `agents/*.md`, `templates/*.md` 같은 프롬프트 자산을 고정 벤치마크 스위트로 반복 평가하고, 최고 후보만 격리된 `codex/loop-…` 브랜치에 올립니다. 실행 상태는 `.data/state/loop-active.json`에 재개 가능하게 저장되고, 점수표·세대 히스토리·우승 diff는 `.captures/loop-<run_id>/`에 남습니다.
 
 ```bash
 /scc:loop list-suites
-/scc:loop show-suite write-core
-/scc:loop run write-core --targets skills/write/SKILL.md,commands/write.md --parallel 2 --max-generations 2
+/scc:loop run write-core --targets skills/write/SKILL.md --parallel 2 --max-generations 2
 ```
 
-실행 상태는 `.data/state/loop-active.json`에 저장되고, 점수표, 세대 히스토리, 우승 diff 같은 산출물은 `.captures/loop-<run_id>/`에 남습니다.
-
-### 우로보로스 루프 — `evolve`
-
-`evolve`는 `loop` 위에서 자기개선 고리를 닫습니다. 같은 PDCA 게이트가 여러 런에 걸쳐 반복 실패하면, 그 실제 실패를 수확하고(`list-failures`), **메인테이너**가 구조 체크를 직접 작성하게 한 뒤(`harvest <id> --assertion …`), 자산을 그대로의 `loop` 엔진에 넘겨 격리 브랜치에서 진화시킵니다. 옵티마이저는 자기 성공 기준을 절대 작성하지 않고(메인테이너가 작성), 우승안 병합은 `winner.diff`를 읽은 뒤의 수동 결정으로 남습니다. `loop`처럼 슬래시 전용입니다. 전체 설계와 적대적 리뷰 이력은 [docs/proposals/evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md)를 보세요.
+`evolve`는 그 위에서 고리를 닫습니다. 같은 게이트가 계속 실패하면 그 실제 실패들을 수확하고, 구조 체크는 **메인테이너가 직접** 작성한 뒤, 자산을 손대지 않은 `loop` 엔진에 넘깁니다. 옵티마이저가 자기 합격 기준을 쓰는 일은 없고, 우승안 병합은 `winner.diff`를 읽은 다음의 수동 결정으로 남습니다.
 
 ```bash
 /scc:evolve list-failures
@@ -685,268 +141,201 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 /scc:evolve run evolve-<id>
 ```
 
-```
-"AI 에이전트 알아보고 보고서 써줘"       →  pdca (전체 사이클)
-"이 주제로 아티클 작성해"                →  write
-"Analyze this market with SWOT"        →  analyze
-"이 초안을 리뷰해"                      →  review
-```
+전체 설계와 적대적 리뷰 이력: [evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md)
+
+</details>
 
 ---
 
 ## 리뷰 시스템
 
-글 쓰고 퍼블리시하고 나서 10분 뒤에 뻔한 실수를 발견한 적 있지 않나요?
+글 쓰고 퍼블리시하고 10분 뒤에 뻔한 실수를 발견한 적, 다들 있습니다. 그래서 모든 결과물은 손에 들어오기 전에 다중 에이전트 리뷰를 거칩니다.
 
-대부분의 AI 글쓰기 도구는 생성하고 바로 넘겨요. Second Claude Code는 생성한 다음 **자기 결과물을 공격한 후에** 넘겨요. 차이가 여기에 있어요.
+| 리뷰어 | 보는 것 |
+|---|---|
+| **네이티오(Xatu)** — 딥 리뷰어 | 논리, 완결성, 논증 흐름 |
+| **앱솔(Absol)** — 악마의 변호인 | 제일 약한 지점을 찾아서 침 |
+| **폴리곤(Porygon)** — 팩트 체커 | 숫자, 주장, 출처 전부 |
+| **푸린(Jigglypuff)** — 톤 가디언 | 목소리 일관성, 독자 적합성 |
+| **안농(Unown)** — 구조 분석가 | 가독성, 구성, 흐름 |
 
-`/scc:review`는 전문 에이전트 3~5마리를 병렬로 투입해요:
+각자 0.0~1.0 점수와 **Critical / Warning / Nitpick**으로 등급 매긴 소견을 냅니다. 게이트는 이중 트랙입니다. 점수는 얼마나 좋은지를, 투표는 몇 명이 나갈 준비가 됐다고 보는지를 말합니다. **Critical이 하나라도 있으면 점수와 무관하게 차단됩니다.**
 
-| 리뷰어 | 포켓몬 | 모델 | 하는 일 |
-|---|---|---|---|
-| 딥리뷰어 | 네이티오 (Xatu) | opus | 논리, 완결성, 논증 흐름 |
-| 데빌어드보킷 | 앱솔 (Absol) | sonnet | 가장 약한 지점을 찾아서 때려요 |
-| 팩트체커 | 폴리곤 (Porygon) | sonnet | 숫자, 주장, 출처를 전부 검증해요 |
-| 톤가디언 | 푸린 (Jigglypuff) | sonnet | 어조 일관성, 독자 적합성 |
-| 구조분석가 | 안농 (Unown) | sonnet | 가독성, 구성 |
-
-왜 포켓몬이냐고요? 이름이 역할이랑 맞아떨어져요. 네이티오는 과거와 미래를 동시에 보는 포켓몬이에요 — 구조적 결함을 잡아요. 앱솔은 재앙을 감지하는 포켓몬이에요 — 취약점을 찾아요. 폴리곤은 디지털 네이티브예요 — 데이터 기반으로 판단해요. 외우기 쉽고, 외우니까 누가 뭘 하는지 진짜로 기억하게 돼요.
-
-**합의 게이트:** 2/3 통과하면 APPROVED. Critical이 하나라도 나오면 MUST FIX. 급하다고 예외 없어요.
-
-저는 외부에 내보내는 건 `full`로 돌려요. 내부용 초안은 `quick`이면 충분해요 — 앱솔이랑 폴리곤이 심각한 문제는 1분 안에 잡아요.
-
-![Review Flow](docs/images/review-flow.ko.svg)
+![리뷰 흐름](docs/images/review-flow.ko.svg)
 
 <details>
 <summary><strong>리뷰 프리셋</strong></summary>
 
-| 프리셋 | 리뷰어 | 용도 |
+| 프리셋 | 리뷰어 | 이럴 때 |
 |---|---|---|
-| `content` | 네이티오 + 앱솔 + 푸린 | 아티클, 블로그, 뉴스레터 |
-| `strategy` | 네이티오 + 앱솔 + 폴리곤 | PRD, SWOT, 전략 문서 |
-| `code` | 네이티오 + 폴리곤 + 안농 | 코드 리뷰 |
-| `security` | 네이티오 + 폴리곤 + 안농 | 보안 감사 (CWE 분류, OWASP Top 10) |
-| `academic` | 네이티오 + 폴리곤 + 안농 | 학술 논문, 연구 산출물, 인용 검증 |
-| `quick` | 앱솔 + 폴리곤 | 빠른 검증 |
-| `full` | 5마리 전원 | 퍼블리시 전 최종 검수 |
+| `content` | 딥 + 변호인 + 톤 | 아티클, 블로그, 뉴스레터 |
+| `strategy` | 딥 + 변호인 + 팩트 | PRD, SWOT, 전략 문서 |
+| `code` | 딥 + 팩트 + 구조 | 코드 리뷰 |
+| `security` | 딥 + 팩트 + 구조 | 보안 감사(CWE, OWASP Top 10) |
+| `academic` | 딥 + 팩트 + 구조 | 논문, 연구 산출물, 인용 |
+| `quick` | 변호인 + 팩트 | 1분 안에 빠른 검증 |
+| `full` | 5마리 전부 | 퍼블리시 직전 최종 |
 
-`--external`로 MMBridge 경유 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)를 추가할 수 있어요. 지금은 Adapter Protocol(`Cli`, `Stub`, `Recording`) 뒤에 붙어 있어서, 실서버 연동은 선택으로 두고 테스트에서는 재현 가능한 stub 경로를 쓸 수 있어요. 실제 MMBridge 실행에는 별도 셋업이 필요해요.
+`--external`을 붙이면 MMBridge를 통해 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)가 붙습니다. 어댑터 프로토콜 뒤에 있어서 테스트는 결정적인 스텁 경로를 유지합니다. 실제 외부 실행은 별도 설정이 필요하고, 켜면 초안이 해당 제공자로 전송됩니다. 민감한 건 끄고 쓰세요.
 
 </details>
 
 ---
 
-## 에이전트 로스터 — 3개 모델 티어에 걸친 17마리
+## 안쪽 구조
 
-모델 분포: 4 opus / 11 sonnet / 2 haiku
+<details>
+<summary><strong>사이클 메모리 — 10번째 런은 첫 번째보다 똑똑합니다</strong></summary>
 
-| 페이즈 | 포켓몬 | 역할 | 모델 |
+단계가 넘어갈 때마다 산출물이 `.data/cycles/cycle-NNN/<phase>.md`에 저장되고, 그 결정이 사이클의 `events.jsonl`에 기록됩니다. 수동 저장은 없습니다.
+
+런이 시작되면 `.data/cycles/insights.json`부터 읽습니다. 앞선 런들이 배운 걸 들고 출발한다는 뜻입니다. 30일 지난 인사이트는 순위가 떨어지고, 특정 범주에서 Critical이 반복되면 메인테이너가 체크리스트로 승격시킬 수 있게 gotcha 제안서로 정리됩니다.
+
+```
+.data/cycles/
+├── cycle-001/
+│   ├── plan.md / do.md / check.md / act.md
+│   ├── metrics.json
+│   └── events.jsonl
+└── insights.json
+```
+
+</details>
+
+<details>
+<summary><strong>도메인 인식 게이트 — 코드와 글은 같은 잣대로 재지 않습니다</strong></summary>
+
+`pdca_start_run(domain=…)`은 `config/stage-contracts.json`에서 다른 계약 세트를 불러옵니다. 단계별 진입 조건, 종료 조건, Definition of Done이 도메인마다 다릅니다.
+
+| 도메인 | Plan | Do | Check | Act |
+|---|---|---|---|---|
+| **code** | 실행 가능한 계획 + 위험 작업 승인 게이트 | 범위 잡힌 브랜치/워크트리, 테스트, 스테이지 리포트 | 작업자 자기보고가 아니라 검증자 증거 | 정리·단순화, 핸드오프, CI 또는 로컬 검증 |
+| **content** | 출처 있는 리서치 브리프 | 인용 붙은 완성 초안 | 리뷰어 5인 합의: 논리·사실·톤 | 편집 마감, 퍼블리시 가능 상태 |
+| **analysis** | 데이터 수집 + 프레임워크 선정 | 구조화된 분석 결과 | 방법론과 숫자 검증 | 실행 가능한 권고안 |
+| **pipeline** | 스펙 + 롤백 계획 | 구현 + 드라이런 | 통합·부하 테스트 | 배포 체크리스트 확인 |
+
+`code` 도메인은 **코드 엔지니어링 레인**으로 돕니다. 네 단계는 그대로지만, 실행 가능한 인수 기준·작업자와 검증자 분리·넓은 변경에 대한 사람 승인·명시적 핸드오프 상태로 조여 둔 버전입니다.
+
+`pdca_transition`은 세 가지 중 하나를 돌려줍니다. **PROCEED**(통과), **REFINE**(거의 다 됐으니 제한된 개선 라운드 한 번 더), **PIVOT**(단계 선택이 틀렸으니 다른 단계로 재진입, 재시도 횟수 상한 적용).
+
+</details>
+
+<details>
+<summary><strong>에이전트 17마리, 모델 3티어</strong></summary>
+
+전부 opus가 아니라 **opus 4 / sonnet 11 / haiku 2**로 비용을 맞췄습니다. 각자 좁은 프롬프트와 제한된 도구만 가집니다. 작성자에게는 웹 검색이 없고, 리뷰어는 글을 쓰지 않습니다. 포켓몬 이름을 쓰는 건 로그를 읽을 때 "reviewer-3가 이슈 발견"보다 "네이티오가 논리 구멍 발견"이 훨씬 따라가기 쉽기 때문입니다.
+
+| 단계 | 에이전트 | 역할 | 모델 |
 |---|---|---|---|
-| **Plan** | 이브이 (Eevee) | 리서처 — 웹 검색, 데이터 수집 | sonnet |
-| | 부엉 (Noctowl) | 검색 전문 | haiku |
-| | 후딘 (Alakazam) | 애널리스트 — 패턴 인식, 합성 | sonnet |
-| | 뮤츠 (Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
-| **Do** | 루브도 (Smeargle) | 라이터 — 장문 콘텐츠 | opus |
-| | 아르세우스 (Arceus) | 마스터 — 범용 실행 | sonnet |
-| **Check** | 네이티오 (Xatu) | 딥리뷰어 — 논리, 구조 | opus |
-| | 앱솔 (Absol) | 데빌어드보킷 — 약점 공격 | sonnet |
-| | 폴리곤 (Porygon) | 팩트체커 — 숫자, 출처 | sonnet |
-| | 푸린 (Jigglypuff) | 톤가디언 — 어조, 독자 | sonnet |
-| | 안농 (Unown) | 구조분석가 — 가독성 | sonnet |
-| **Act** | 메타몽 (Ditto) | 에디터 — 콘텐츠 정제 | opus |
-| **인프라** | 괴력몬 (Machamp) | 스텝 실행기 | sonnet |
-| | 자포코일 (Magnezone) | 인스펙터 — 스킬 후보 검사 | sonnet |
-| | 테오키스 (Deoxys) | 평가자 — 스킬 점수 산정 | sonnet |
-| | 캐이시 (Abra) | 커넥터 — 지식 연결 | haiku |
-| | 피카츄 (Pikachu) | 소울 키퍼 — 사용자 행동 합성 | opus |
+| **Plan** | 이브이(Eevee) | 리서처 — 웹 검색, 수집 | sonnet |
+| | 야부엉(Noctowl) | 검색 전문 | haiku |
+| | 후딘(Alakazam) | 분석가 — 패턴 인식 | sonnet |
+| | 뮤츠(Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
+| **Do** | 루브도(Smeargle) | 작성자 — 롱폼 | opus |
+| | 아르세우스(Arceus) | 마스터 — 범용 실행 | sonnet |
+| **Check** | 네이티오(Xatu) | 딥 리뷰어 — 논리, 구조 | opus |
+| | 앱솔(Absol) | 악마의 변호인 | sonnet |
+| | 폴리곤(Porygon) | 팩트 체커 | sonnet |
+| | 푸린(Jigglypuff) | 톤 가디언 | sonnet |
+| | 안농(Unown) | 구조 분석가 | sonnet |
+| **Act** | 메타몽(Ditto) | 에디터 — 정제 | opus |
+| **Infra** | 괴력몬(Machamp) | 파이프라인 스텝 실행 | sonnet |
+| | 자포코일(Magnezone) | 스킬 후보 검사 | sonnet |
+| | 테오키스(Deoxys) | 스킬 후보 채점 | sonnet |
+| | 케이시(Abra) | 지식 커넥터 | haiku |
+| | 피카츄(Pikachu) | 소울 키퍼 — 행동 패턴 종합 | opus |
 
-![Agent Roster](docs/images/agent-roster.ko.svg)
+![에이전트 로스터](docs/images/agent-roster.ko.svg)
 
-[전체 아키텍처 문서 →](docs/architecture.md)
+</details>
 
----
+<details>
+<summary><strong>훅과 상태 — 라이프사이클 훅 8개, MCP 도구 31개</strong></summary>
 
-## 사고방식
+훅은 알아서 뜹니다. 부를 일이 없습니다. `SessionStart`가 상태를 초기화하고, `UserPromptSubmit`이 오토 라우터를 돌리고, `SubagentStart`가 에이전트에 리뷰 맥락을 넣고, `SubagentStop`이 리뷰어 합의를 집계하고, `Stop`이 결과물을 저장하고 정리하고, `StopFailure`가 Check 게이트 실패 시 결과물 전달을 막고, `PreCompact`/`PostCompact`가 상태를 직렬화·복원해서 컨텍스트가 압축돼도 사이클 중간부터 이어집니다.
 
-대부분의 AI 도구는 수동적이에요 — 시키면 해요. Second Claude Code는 품질에 대한 의견이 있고, 그걸 강제해요. 세 가지 생각이 전부를 관통해요.
+라우터는 복합 의도부터 봅니다. "알아보고 써줘"는 여기서 걸려 곧바로 `pdca`로 갑니다. 리뷰와 교정 루프를 붙이는 게 사이클이기 때문입니다. 단일 목적 프롬프트만 그다음 단계인 스킬 점수화와 외부 플러그인 디스패치로 넘어갑니다.
 
-**스킬 16개. 80개가 아니에요.** 하나하나가 깊어요 — 레퍼런스, 함정 문서, 품질 게이트가 내장되어 있어요. 80개 중에 뭘 골라야 하나 고민할 일이 없어요. 하고 싶은 말만 하면 16개 중 하나가 알아서 잡아요.
+전용 `pdca-state` MCP 서버(stdio)가 **도구 31개**를 노출합니다. PDCA 상태, 사이클 메모리, 소울, 프로젝트 메모리, 데몬 제어, 세션 리콜, 플러그인 오케스트레이션까지. 모든 전이·게이트 판정·리뷰 점수·라우팅이 이벤트로 남아서 런 이력을 조회할 수 있고 반복되는 실패 패턴이 눈에 보입니다.
 
-**모든 산출물은 리뷰를 거쳐요.** 이건 권장이 아니에요. 품질 게이트가 건너뛰기를 막아요. 합의 게이트를 안 통과한 초안은 물리적으로 저한테 안 와요.
+전체 도구 레퍼런스: [docs/architecture.ko.md](docs/architecture.ko.md)
 
-**실패하면 원인을 찾아서 돌아가요.** 리뷰에서 문제가 나오면 액션 라우터가 근본원인을 분류해요. 리서치가 부족하면 Plan으로. 빠진 섹션이 있으면 Do로. 다듬기 문제면 Refine으로. 모든 문제를 refine으로 밀어넣으면 시간만 낭비돼요.
+</details>
 
-그래서 실전에서 뭐가 달라지냐고요? PDCA 두 번째 사이클이 첫 번째보다 압도적으로 좋아져요. 사이클 메모리 덕분에 이전 인사이트가 자동으로 반영되고, 액션 라우터가 각 사이클을 진짜 문제에 집중시키기 때문이에요.
+<details>
+<summary><strong>크로스 플러그인 디스패치 — 가속기지 의존성이 아닙니다</strong></summary>
 
----
+오케스트레이터가 세션 시작 때 `~/.claude/plugins/`를 훑어서 찾은 걸 PDCA 단계에 매핑합니다. `coderabbit`이 깔려 있으면 "코드 리뷰해줘"는 내장 리뷰어 대신 그쪽으로 갑니다. "커밋해줘"는 `commit-commands`가 받습니다. 설치하면 나타나고 지우면 사라집니다. 설정 파일은 없습니다.
 
-## 백그라운드로 돌리기
+**하나도 없어도 나빠지는 건 없습니다.** 외부 매칭이 없으면 내장 리뷰어·작성자·커미터가 그대로 처리합니다.
 
-긴 PDCA 사이클이 세션을 붙잡고 있을 필요는 없어요. 큐에 넣고 백그라운드 에이전트로 띄우면 됩니다:
+발견이 아니라 고정된 게 하나 있습니다. 각 의도가 어떤 플러그인을 *선호*하는지입니다. `INTENT_PROFILES`는 리뷰 → `coderabbit`, act → `commit-commands`, 디자인 → `frontend-design`, 메모리 → `claude-mem`으로 출고됩니다. `CLAUDE_PLUGIN_DATA`에 `plugin-preferences.json`을 넣으면 덮어쓰고, 빈 배열을 넣으면 고정이 풀립니다.
+
+</details>
+
+<details>
+<summary><strong>백그라운드 실행 — 큐에만 넣고 자동 실행은 안 합니다</strong></summary>
+
+`daemon_start_background_run`은 그 작업을 시작하는 명령을 돌려줄 뿐, 스스로 아무것도 실행하지 않습니다.
 
 ```bash
-# 1. 큐에 등록 — 시작 명령을 돌려줍니다
-#    (MCP: daemon_start_background_run { "workflow_name": "weekly-digest" })
-#    → handoff: claude --bg "/scc:workflow run weekly-digest"
-
-# 2. 그 명령을 실행하고, 다른 백그라운드 에이전트처럼 관리
 claude --bg "/scc:workflow run weekly-digest"
 claude agents
 ```
 
-**큐는 아무것도 실행하지 않고, 그건 의도입니다.** 백그라운드 에이전트는 클로드 코드가 이미 제공합니다. 플러그인 안에서 다시 만들면 수명 관리도, 크래시 복구도, 비용 제어도 더 나쁜 버전이 됩니다.
+의도적입니다. Claude Code에 이미 백그라운드 에이전트가 있고, 플러그인 안에 다시 만들면 라이프사이클 관리도 크래시 복구도 더 나빠집니다. 더 큰 이유는 동의입니다. 이 플러그인은 퍼블리시·푸시·메일 발송을 **대화 안에서의 명시적 승인** 뒤에 둡니다. 백그라운드 실행기에는 물어볼 대화가 없습니다.
 
-더 큰 이유는 **동의**입니다. 이 플러그인은 외부 작업(Notion 발행, GitHub push, 메일 발송)을 **대화 안에서의 명시 승인** 뒤에 둡니다. 백그라운드 실행기에는 물어볼 대화가 없습니다. 그 관문을 우회하거나, 아니면 예약할 만한 일을 아무것도 못 하게 됩니다. 그래서 큐는 의도를 기록하고 명령을 건네고, **언제 돌릴지는 사장님이 정합니다.**
-
----
-
-## 스킬 조합
-
-스킬은 서로를 호출해요. 여기서 재밌어져요.
-
-| 패턴 | 돌아가는 방식 | 이럴 때 |
-|---|---|---|
-| 풀 PDCA | research → analyze → write → review → refine | 주제 잡고 글 완성까지 |
-| 빠른 검수 | review → refine | 있는 초안 다듬기 |
-| 기획만 | research → analyze | 시장 파악하고 판단하기 |
-| 자동 PDCA | `workflow run autopilot --topic "..."` | 세팅하고 커피 마시고 오면 끝 |
-
-저는 외부용은 전부 풀 PDCA로 돌려요. 내부 메모 수준이면 `write` 단독으로 충분해요 — 그것만으로도 리서치랑 리뷰를 내부적으로 자동 호출해요.
+</details>
 
 ---
 
 ## 설정
 
-설치하면 바로 돌아가요. 리서치 깊이를 바꾸고 싶거나, 리뷰 프리셋을 바꾸고 싶거나, 글쓰기 톤을 커스텀하고 싶으면 — JSON 파일 하나로 돼요.
+기본값으로 바로 돕니다. JSON 파일 하나가 전부고, 그 안의 모든 필드가 선택입니다.
 
 ```jsonc
 {
   "defaults": {
     "research_depth": "medium",     // "shallow" | "medium" | "deep"
-    "write_voice": "peer-mentor",   // 글쓰기 톤
-    "review_preset": "content",     // "content" | "strategy" | "code" | "quick" | "full"
-    "refine_max_iterations": 3,     // refine 최대 횟수
+    "write_voice": "peer-mentor",
+    "review_preset": "content",     // content | strategy | code | security | academic | quick | full
+    "refine_max_iterations": 3,
     "publish_target": "file"        // "file" | "notion"
   },
   "quality_gate": {
-    "consensus_threshold": 0.67,    // 통과에 필요한 리뷰어 비율
-    "external_reviewers": []        // MMBridge 경유: ["kimi", "qwen", "gemini", "codex"]
+    "consensus_threshold": 0.67,
+    "external_reviewers": []        // ["kimi", "qwen", "gemini", "codex"]
   }
 }
 ```
 
-전부 선택 사항이에요. 신경 안 쓰는 항목은 지워도 돼요.
-
-저는 `refine_max_iterations`를 간단한 작업엔 2, 클라이언트용엔 5로 써요. 기본값 3이면 대부분 괜찮아요. `research_depth`를 `deep`으로 올리면 소스를 두 배로 긁어와요.
-
 ---
 
-## 자주 묻는 질문
+## 한계와 선택
 
-<details>
-<summary><strong>Claude Code가 뭔가요?</strong></summary>
+여기 있는 제약은 전부 의도한 선택입니다.
 
-Anthropic이 만든 터미널 기반 AI 코딩 도구예요. 코드뿐 아니라 글쓰기, 리서치, 분석 등 지식 작업 전반에 쓸 수 있어요. Second Claude Code는 이 Claude Code 위에서 돌아가는 플러그인이에요.
+- **오토 라우팅은 프롬프트의 약 95%를 맞힙니다.** 나머지는 `/scc:*` 명령어로 직접 지정하면 됩니다.
+- **가벼운 에이전트가 대량 작업 비용을 잡아 줍니다.** 대신 플러그인을 많이 켜 두면 컨텍스트가 빠듯해집니다. 안 쓰는 건 꺼 두세요.
+- **테스트된 플랫폼은 Claude Code입니다.** OpenClaw, Codex, Gemini CLI는 SKILL.md와 ACP로 붙지만 실험적입니다.
+- **서브에이전트 결과는 완성된 뒤 한 번에 옵니다.** 중간 결과를 흘리면 게이트 모델이 깨집니다.
+- **리뷰 소견은 입력 언어와 무관하게 영어로 나옵니다.** 한국어 출력은 예정돼 있습니다.
 
-설치 방법: [claude.ai/code](https://claude.ai/code)에서 안내를 따라주세요.
-
-</details>
-
-<details>
-<summary><strong>영어로 써야 하나요?</strong></summary>
-
-아니요. 한국어로 써도 돼요. 자동 라우터가 한국어 트리거 패턴 ~50개를 인식해요. "AI 에이전트 알아보고 보고서 써줘"처럼 자연스럽게 입력하면 돼요. 영어/한국어 섞어서 써도 문제없어요.
-
-다만 리뷰 결과는 현재 영어로 나와요. 한국어 리뷰 출력은 준비 중이에요.
-
-</details>
-
-<details>
-<summary><strong>비용이 얼마나 드나요?</strong></summary>
-
-Second Claude Code 플러그인 자체는 무료(MIT 라이선스)예요. 비용은 Claude Code 사용료에서 나와요. 서브에이전트가 haiku/sonnet/opus 세 티어로 나뉘어서, 팩트체크 같은 고빈도 작업은 haiku가 처리해요. 비용 효율을 위해 설계된 구조예요.
-
-대략적으로, 보고서 하나를 풀 PDCA로 돌리면 Claude Code 기준 $0.5~2 정도 나와요. 주제 복잡도와 refine 횟수에 따라 달라져요.
-
-</details>
-
-<details>
-<summary><strong>다른 플러그인이랑 같이 쓸 수 있나요?</strong></summary>
-
-네, 같이 쓸 수 있어요. 다만 활성 플러그인이 많으면 컨텍스트 윈도우가 빡빡해질 수 있어요. 안 쓰는 플러그인은 꺼두는 걸 추천해요.
-
-Claude Code 외에 OpenClaw, Codex, Gemini CLI에서도 실험적으로 돌아가요. SKILL.md를 읽거나 ACP 프로토콜을 쓰는 플랫폼이면 호환돼요.
-
-</details>
-
-<details>
-<summary><strong>결과물이 마음에 안 들면 어떻게 하나요?</strong></summary>
-
-두 가지 방법이 있어요. 첫째, `refine`으로 목표 점수까지 반복 개선할 수 있어요. 리뷰어가 통과할 때까지 자동으로 다듬어요. 둘째, 구체적으로 피드백을 주면 돼요 — "톤을 더 캐주얼하게", "데이터를 더 넣어줘"처럼요. PDCA 사이클이 피드백 유형에 맞는 페이즈로 돌아가서 고쳐요.
-
-</details>
-
-<details>
-<summary><strong>사이클 메모리는 어떻게 관리하나요?</strong></summary>
-
-`.data/cycles/` 디렉토리에 사이클별로 저장돼요. 별도 설정 없이 자동으로 동작해요. 인사이트는 30일이 지나면 가중치가 0으로 떨어져서 자연스럽게 영향력이 사라져요. 디스크 공간이 걱정되면 오래된 사이클 디렉토리를 직접 삭제해도 돼요 — 다른 사이클에 영향 안 가요.
-
-</details>
-
----
-
-## 설계 선택과 트레이드오프
-
-제한 사항이 아니라 선택이에요. 이유가 있어요:
-
-- **자동 라우팅은 ~95% 정확해요.** 엣지 케이스에서는 `/scc:*` 슬래시 명령어로 정밀 제어가 돼요.
-- **haiku 에이전트가 비용을 낮춰요.** 팩트체크 같은 고빈도 작업에 opus를 쓸 이유가 없어요. 대신 활성 플러그인이 많으면 컨텍스트가 빡빡해져요. 안 쓰는 플러그인은 끄면 해결돼요.
-- **Claude Code가 메인 플랫폼이에요.** 완전 검증 완료. OpenClaw, Codex, Gemini CLI는 표준 프로토콜로 돌아가지만 아직 실험적이에요.
-- **서브에이전트 결과는 한꺼번에 와요.** 스트리밍이 아닌 이유: 결과가 다 나오기 전에 품질 게이트를 통과시킬 수 없기 때문이에요. 의도적 설계예요.
-- **리뷰 결과는 영어로 나와요.** 입력이 한국어여도 마찬가지예요. 한국어 출력은 준비 중이에요.
-- **사이클 메모리는 로컬 전용이에요.** `.data/cycles/`는 클라우드에 동기화되지 않아요. 팀 공유가 필요하면 git에 커밋하거나 직접 복사해야 해요.
-
-이 중에 거슬리는 게 있으면 [이슈](https://github.com/unclejobs-ai/second-claude-code/issues)를 열어주세요. 더 나은 근거가 있으면 바꿀 수 있어요.
-
----
-
-## 호환성
-
-Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫폼이면 호환돼요.
-
-| 플랫폼 | 설치 | 상태 |
-|---|---|---|
-| **Claude Code** (메인) | `claude plugin add github:unclejobs-ai/second-claude-code` | 검증 완료 |
-| **OpenClaw** | 표준 ACP 프로토콜 — 자동 감지 | 실험적 |
-| **Codex** | SKILL.md 호환 | 실험적 |
-| **Gemini CLI** | SKILL.md 호환 | 실험적 |
-
----
-
-## 기여
-
-이슈와 PR: [github.com/unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)
-
-만든 사람: [Unclejobs](https://github.com/unclejobs-ai). MIT 라이선스.
-
-이 플러그인이 시간을 절약해줬다면 GitHub 별 하나가 큰 힘이 돼요.
+납득이 안 되는 게 있으면 [이슈를 열어](https://github.com/unclejobs-ai/second-claude-code/issues) 주세요. 근거가 생기면 판단은 바뀝니다.
 
 ---
 
 <details>
-<summary><strong>15개 전략 프레임워크</strong></summary>
+<summary><strong><code>/scc:analyze</code>의 전략 프레임워크 15개</strong></summary>
 
-`/scc:analyze`는 15개 내장 프레임워크를 지원해요:
-
-| 카테고리 | 프레임워크 |
+| 분류 | 프레임워크 |
 |---|---|
 | **전략** | ansoff, porter, pestle, north-star, value-prop |
 | **기획** | prd, okr, lean-canvas, gtm, battlecard |
 | **우선순위** | rice, pricing |
 | **분석** | swot, persona, journey-map |
 
-각 프레임워크는 `skills/analyze/references/frameworks/`에 독립 문서로 있어요. 프롬프트에서 자동 선택되거나 직접 지정할 수 있어요:
+프롬프트에서 자동으로 고르거나, 직접 지정할 수 있습니다.
 
 ```bash
 /scc:analyze porter "클라우드 인프라 시장"
@@ -955,9 +344,8 @@ Claude Code용으로 만들었어요. SKILL.md를 읽거나 ACP를 쓰는 플랫
 
 </details>
 
-<details>
-<summary><strong>변경 이력</strong></summary>
+---
 
-자세한 변경사항은 [CHANGELOG.md](CHANGELOG.md)를 참조하세요.
+이슈와 PR 환영합니다. [Unclejobs](https://github.com/unclejobs-ai) 제작, MIT 라이선스.
 
-</details>
+릴리스 이력: [CHANGELOG.md](CHANGELOG.md)
