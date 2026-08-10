@@ -43,6 +43,23 @@ test("renderStandard marks a check-less standard as unenforced", () => {
   assert.match(md, /^decided: 2026-08-10$/m);
 });
 
+test("renderStandard round-trips a structured check instead of flattening it", () => {
+  // A check is a structured object, not a string like triggers — the JSON.stringify(String(v))
+  // path that jsonArray() uses for triggers would flatten it to the literal text "[object Object]",
+  // a record that claims enforcement: checked while carrying an unusable check. Phase 2's checker
+  // reading it would report a pass with nothing behind it — worse than the empty `checks: []` this
+  // replaced.
+  const fork = {
+    ...FORK,
+    checks: [{ kind: "grep", checker: "no-console-log", args: { pattern: "console.log" } }],
+  };
+  const md = renderStandard(fork, { now: NOW });
+  assert.match(md, /^enforcement: checked$/m);
+  assert.doesNotMatch(md, /\[object Object\]/, "the structured check was flattened to a string");
+  assert.match(md, /"checker":\s*"no-console-log"/, "the checker name did not survive rendering");
+  assert.match(md, /"pattern":\s*"console\.log"/, "the check's args did not survive rendering");
+});
+
 test("renderStandard keeps every rejected option and its reason", () => {
   const md = renderStandard(FORK, { now: NOW });
   assert.match(md, /고백조/);

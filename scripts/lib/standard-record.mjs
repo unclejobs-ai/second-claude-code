@@ -47,7 +47,7 @@ decided: ${decided}
 review_when: ${JSON.stringify(fork.review_when || "")}
 supersedes: ${supersedes ? JSON.stringify(supersedes) : "null"}
 triggers: ${jsonArray(fork.triggers)}
-checks: ${jsonArray(checks)}
+checks: ${JSON.stringify(checks)}
 ---
 
 # ${fork.title}
