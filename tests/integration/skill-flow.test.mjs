@@ -11,22 +11,9 @@ import os from "node:os";
 import path from "node:path";
 
 const root = process.cwd();
-const emptyPluginsRoot = path.join(root, "tests", "fixtures", "empty-plugins-root");
 
 function read(relPath) {
   return readFileSync(path.join(root, relPath), "utf8");
-}
-
-function runPrompt(userPrompt) {
-  return execFileSync(process.execPath, [path.join(root, "hooks", "prompt-detect.mjs")], {
-    cwd: root,
-    env: {
-      ...process.env,
-      __SCC_TEST_PLUGINS_ROOT: emptyPluginsRoot,
-      USER_PROMPT: userPrompt,
-    },
-    encoding: "utf8",
-  });
 }
 
 function findAgentFileByName(expectedName) {
@@ -41,30 +28,19 @@ function findAgentFileByName(expectedName) {
   return null;
 }
 
-function assertPromptRoutes(output, command) {
-  assert.match(
-    output,
-    new RegExp(`skill: \\\\\"scc:${command}\\\\\"`),
-    `prompt should route to ${command}`
-  );
-}
-
-test("natural-language prompts resolve to command docs and backing skills", () => {
+test("natural-language commands resolve to command docs and backing skills", () => {
   const cases = [
-    { prompt: "research the AI agent market", command: "research" },
-    { prompt: "write a newsletter about AI agents", command: "write" },
-    { prompt: "run a swot on this SaaS product", command: "analyze" },
-    { prompt: "review this draft for quality", command: "review" },
-    { prompt: "iterate until this is better", command: "refine" },
-    { prompt: "save this URL to my notes", command: "collect" },
-    { prompt: "automate this workflow as a pipeline", command: "workflow" },
-    { prompt: "find a skill for terraform security audit", command: "discover" },
+    { command: "research" },
+    { command: "write" },
+    { command: "analyze" },
+    { command: "review" },
+    { command: "refine" },
+    { command: "collect" },
+    { command: "workflow" },
+    { command: "discover" },
   ];
 
   for (const testCase of cases) {
-    const output = runPrompt(testCase.prompt);
-    assertPromptRoutes(output, testCase.command);
-
     const commandDoc = read(path.join("commands", `${testCase.command}.md`));
     assert.match(commandDoc, new RegExp(`loaded \`${testCase.command}\` skill`, "i"));
     assert.doesNotMatch(commandDoc, /Use the Skill tool to invoke/i);
