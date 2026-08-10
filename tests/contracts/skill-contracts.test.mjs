@@ -327,11 +327,25 @@ test("README install and command namespace match the plugin surface", () => {
   const plugin = JSON.parse(read(".claude-plugin/plugin.json"));
   const readme = read("README.md");
   const readmeKo = read("README.ko.md");
-  const expectedInstall = "claude plugin add github:unclejobs-ai/second-claude-code";
+  const expectedInstall = [
+    "claude plugin marketplace add unclejobs-ai/second-claude-code",
+    `claude plugin install ${plugin.name}`,
+  ];
   const publicPrefix = `/${plugin.name}:`;
 
   for (const doc of [readme, readmeKo]) {
-    assert.match(doc, new RegExp(expectedInstall.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+    for (const line of expectedInstall) {
+      assert.match(
+        doc,
+        new RegExp(line.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
+        "README should document the marketplace install flow the CLI actually supports"
+      );
+    }
+    assert.doesNotMatch(
+      doc,
+      /claude plugin add github:/,
+      "`claude plugin add` is not a CLI command — it prints help and installs nothing"
+    );
     assert.doesNotMatch(doc, /github:parkeungje\/second-claude\b/);
     assert.doesNotMatch(doc, /\/second-claude-code:/);
     assert.match(

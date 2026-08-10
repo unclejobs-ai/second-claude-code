@@ -23,7 +23,8 @@ The point isn't that it writes. It's that **it won't hand you the first draft.**
 ## Install
 
 ```bash
-claude plugin add github:unclejobs-ai/second-claude-code
+claude plugin marketplace add unclejobs-ai/second-claude-code
+claude plugin install scc
 ```
 
 Start a session and just talk. No slash commands to memorize — the router reads intent, in English or Korean.
@@ -39,7 +40,7 @@ Nothing happening? `claude plugin list` to confirm the install.
 
 ## Why
 
-- **It refuses its own output.** Five reviewers with different lenses attack every draft. A review that returns zero findings is treated as a rubber stamp, not a pass.
+- **It refuses its own output.** Three to five reviewers with different lenses attack every draft. A review that returns zero findings is treated as a rubber stamp, not a pass.
 - **Failures route by cause.** Thin research goes back to Plan. Botched execution goes back to Do. A rough edge goes to Refine. Not everything is "try again."
 - **Gates are checks, not vibes.** Plan can't reach Do without 5 distinct sources and an approved plan. Each gate names what's missing.
 - **It learns your voice.** `SOUL.md` holds your tone rules and anti-patterns, and the tone reviewer enforces those — not a generic style guide.
@@ -175,7 +176,7 @@ Each returns a 0.0–1.0 score plus findings tagged **Critical**, **Warning**, o
 | `quick` | Advocate + Facts | Fast validation, under a minute |
 | `full` | all 5 | Final pre-publish pass |
 
-`--external` adds cross-model review through MMBridge (Kimi, Qwen, Gemini, Codex) behind an adapter protocol, so tests keep a deterministic stubbed path. Real external runs need separate setup.
+`--external` adds cross-model review through MMBridge (Kimi, Qwen, Gemini, Codex) behind an adapter protocol, so tests keep a deterministic stubbed path. Real external runs need separate setup, and they send the draft to those providers — leave it off for anything confidential.
 
 </details>
 
@@ -251,7 +252,7 @@ Cost-optimized, not all opus: **4 opus / 11 sonnet / 2 haiku**. Each agent has a
 <details>
 <summary><strong>Hooks and state — 8 lifecycle hooks, 31 MCP tools</strong></summary>
 
-Hooks fire automatically; you never call them. `SessionStart` initializes state, `UserPromptSubmit` runs the auto-router, `SubagentStop` aggregates reviewer consensus, `StopFailure` blocks delivery when the Check gate fails, and `PreCompact`/`PostCompact` serialize and restore state so a compacted session resumes mid-cycle instead of restarting.
+Hooks fire automatically; you never call them. `SessionStart` initializes state, `UserPromptSubmit` runs the auto-router, `SubagentStart` injects review context into the agent, `SubagentStop` aggregates reviewer consensus, `Stop` saves output and cleans up, `StopFailure` blocks delivery when the Check gate fails, and `PreCompact`/`PostCompact` serialize and restore state so a compacted session resumes mid-cycle instead of restarting.
 
 The router checks compound intent first: "research and write" matches there and routes to `pdca` immediately — the cycle is the thing that adds review and correction. Only single-purpose prompts continue to skill scoring and external plugin dispatch.
 
@@ -297,7 +298,7 @@ Works out of the box. One optional JSON file, and every field in it is optional.
   "defaults": {
     "research_depth": "medium",     // "shallow" | "medium" | "deep"
     "write_voice": "peer-mentor",
-    "review_preset": "content",     // content | strategy | code | quick | full
+    "review_preset": "content",     // content | strategy | code | security | academic | quick | full
     "refine_max_iterations": 3,
     "publish_target": "file"        // "file" | "notion"
   },

@@ -23,7 +23,8 @@
 ## 설치
 
 ```bash
-claude plugin add github:unclejobs-ai/second-claude-code
+claude plugin marketplace add unclejobs-ai/second-claude-code
+claude plugin install scc
 ```
 
 세션 열고 그냥 말하면 됩니다. 외울 슬래시 명령어는 없습니다. 라우터가 한국어든 영어든 의도를 읽습니다.
@@ -39,7 +40,7 @@ Research the current state of AI agent frameworks and write a report
 
 ## 왜 쓰나
 
-- **자기 결과물을 거부합니다.** 서로 다른 렌즈를 가진 리뷰어 다섯이 초안을 물어뜯습니다. 발견 0건인 리뷰는 통과가 아니라 거수기로 취급합니다.
+- **자기 결과물을 거부합니다.** 서로 다른 렌즈를 가진 리뷰어 서넛에서 다섯이 초안을 물어뜯습니다. 발견 0건인 리뷰는 통과가 아니라 거수기로 취급합니다.
 - **실패를 원인별로 되돌립니다.** 근거가 얇으면 Plan으로, 실행이 어긋났으면 Do로, 다듬을 거리면 Refine으로. 전부 "다시 해봐"가 아닙니다.
 - **게이트가 느낌이 아니라 검사입니다.** 서로 다른 소스 5개와 승인된 계획 없이는 Plan에서 Do로 못 넘어갑니다. 무엇이 빠졌는지 게이트가 이름을 대 줍니다.
 - **당신의 문체를 배웁니다.** `SOUL.md`에 톤 규칙과 안티패턴이 쌓이고, 톤 리뷰어가 일반론이 아니라 그 규칙으로 검사합니다.
@@ -175,7 +176,7 @@ Research the current state of AI agent frameworks and write a report
 | `quick` | 변호인 + 팩트 | 1분 안에 빠른 검증 |
 | `full` | 5마리 전부 | 퍼블리시 직전 최종 |
 
-`--external`을 붙이면 MMBridge를 통해 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)가 붙습니다. 어댑터 프로토콜 뒤에 있어서 테스트는 결정적인 스텁 경로를 유지합니다. 실제 외부 실행은 별도 설정이 필요합니다.
+`--external`을 붙이면 MMBridge를 통해 크로스 모델 리뷰(Kimi, Qwen, Gemini, Codex)가 붙습니다. 어댑터 프로토콜 뒤에 있어서 테스트는 결정적인 스텁 경로를 유지합니다. 실제 외부 실행은 별도 설정이 필요하고, 켜면 초안이 해당 제공자로 전송됩니다. 민감한 건 끄고 쓰세요.
 
 </details>
 
@@ -251,7 +252,7 @@ Research the current state of AI agent frameworks and write a report
 <details>
 <summary><strong>훅과 상태 — 라이프사이클 훅 8개, MCP 도구 31개</strong></summary>
 
-훅은 알아서 뜹니다. 부를 일이 없습니다. `SessionStart`가 상태를 초기화하고, `UserPromptSubmit`이 오토 라우터를 돌리고, `SubagentStop`이 리뷰어 합의를 집계하고, `StopFailure`가 Check 게이트 실패 시 결과물 전달을 막고, `PreCompact`/`PostCompact`가 상태를 직렬화·복원해서 컨텍스트가 압축돼도 사이클 중간부터 이어집니다.
+훅은 알아서 뜹니다. 부를 일이 없습니다. `SessionStart`가 상태를 초기화하고, `UserPromptSubmit`이 오토 라우터를 돌리고, `SubagentStart`가 에이전트에 리뷰 맥락을 넣고, `SubagentStop`이 리뷰어 합의를 집계하고, `Stop`이 결과물을 저장하고 정리하고, `StopFailure`가 Check 게이트 실패 시 결과물 전달을 막고, `PreCompact`/`PostCompact`가 상태를 직렬화·복원해서 컨텍스트가 압축돼도 사이클 중간부터 이어집니다.
 
 라우터는 복합 의도부터 봅니다. "알아보고 써줘"는 여기서 걸려 곧바로 `pdca`로 갑니다. 리뷰와 교정 루프를 붙이는 게 사이클이기 때문입니다. 단일 목적 프롬프트만 그다음 단계인 스킬 점수화와 외부 플러그인 디스패치로 넘어갑니다.
 
@@ -297,7 +298,7 @@ claude agents
   "defaults": {
     "research_depth": "medium",     // "shallow" | "medium" | "deep"
     "write_voice": "peer-mentor",
-    "review_preset": "content",     // content | strategy | code | quick | full
+    "review_preset": "content",     // content | strategy | code | security | academic | quick | full
     "refine_max_iterations": 3,
     "publish_target": "file"        // "file" | "notion"
   },
