@@ -7,11 +7,11 @@ Coach settles forks. A fork is a request with more than one defensible direction
 ```bash
 /scc:coach "the voice of these posts is off and I need today's draft"
 
-node scripts/coach-runner.mjs start --idea "Settle the voice direction" --json
-node scripts/coach-runner.mjs answer --answer "The topology looks right" --json
-node scripts/coach-runner.mjs status --json
-node scripts/coach-runner.mjs record-fork --file fork.json --json
-node scripts/coach-runner.mjs finalize --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" start --idea "Settle the voice direction" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" answer --answer "The topology looks right" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" status --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-fork --file fork.json --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
 ```
 
 **What happens:** the runner resolves the ambiguity threshold, creates resumable state under the project's `.scc/`, locks Round 0 topology, scores each answer, writes one `.scc/standards/<id>/STANDARD.md` per settled fork, and returns approval options. It never runs commits, formatters, or source mutation from the coach runtime.

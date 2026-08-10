@@ -7,11 +7,11 @@ Coach는 갈림길을 확정합니다. 갈림길이란 방어 가능한 방향�
 ```bash
 /scc:coach "이 글들 문체가 안 맞는데 오늘 발행분 초안이 필요합니다"
 
-node scripts/coach-runner.mjs start --idea "문체 방향을 확정한다" --json
-node scripts/coach-runner.mjs answer --answer "토폴로지는 맞습니다" --json
-node scripts/coach-runner.mjs status --json
-node scripts/coach-runner.mjs record-fork --file fork.json --json
-node scripts/coach-runner.mjs finalize --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" start --idea "문체 방향을 확정한다" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" answer --answer "토폴로지는 맞습니다" --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" status --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-fork --file fork.json --json
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
 ```
 
 **동작 흐름:** 러너가 모호도 임계치를 해석하고, 프로젝트의 `.scc/` 아래에 재개 가능한 상태를 만들고, Round 0 토폴로지를 잠그고, 답변을 점수화하고, 확정된 갈림길마다 `.scc/standards/<id>/STANDARD.md`를 쓴 뒤 승인 옵션을 반환합니다. 코치 런타임은 커밋, 포매터, 소스 변경을 실행하지 않습니다.
