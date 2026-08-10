@@ -33,11 +33,17 @@ knowledge of each other:
 | Run | Direction chosen |
 |---|---|
 | 1 | Self-diagnostic hook + the evidence paradox (8.2M views vs 104 buyers) |
+| 2 | **Do not touch the sales post at all** — fix the hook on the non-selling posts |
 | 3 | Ledger-style retrospective — drop the ask, lead with last week's failure numbers |
 
-Both are reasonable. Neither is written down anywhere. A third session produces
-a third direction, and nothing in the system notices that a choice was made at
-all.
+Three runs, three directions, and run 2 did not merely differ — it rejected the
+premise of the request. Asked to fix the voice of a sales post, it declined,
+citing the account's own 2026-08-02 post-mortem, which measured that conversion
+was driven by cumulative exposure before the checkout page rather than by copy
+quality.
+
+All three are defensible. None is written anywhere. Nothing in the system
+notices that a choice was made at all.
 
 So the failure to counter is **not** "the model skips the question under
 pressure." It is:
@@ -62,6 +68,18 @@ Last week's sales post violated both.
 That is two of the four break points, in the user's real business, not a test
 fixture: a decision was made and recorded, then evaporated, then the next
 artifact broke it. Nobody noticed until an agent went looking a week later.
+
+Run 2 found a third instance, and this one indicts the scenario itself. The
+2026-08-02 post-mortem already measured that copy quality was not the lever;
+cumulative exposure before checkout was. The prompt these baselines were given
+— "the voice is a mess, fix the voice" — is a hypothesis the user's own data had
+already rejected. Two of the three runs then worked diligently on top of it.
+
+So the finding is not only that agents diverge. It is that a measured,
+written-down conclusion sat in the repository and neither the request nor most
+of the agents acting on it were aware the question was settled. A standard that
+loaded at session start would have put that finding in front of all three
+before the first word was drafted.
 
 ## Rationalisations
 
@@ -89,6 +107,8 @@ failures and a positive recipe is what binds.
 
 ## Method note
 
-Run 2's result is not recorded here. Runs 1 and 3 were sufficient to establish
-the finding, and the finding is about divergence between independent runs,
-which two already demonstrate.
+Three runs, three wordings of the same fork, no shared context between them.
+Run 2 noted it could not reach the live sales dashboard and said so rather than
+inventing numbers — worth recording, because the divergence is not explained by
+one agent having worse information. All three had access to the repository and
+its history; they read different parts of it and reached different conclusions.
