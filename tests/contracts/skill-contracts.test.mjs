@@ -494,6 +494,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
   // Prefix-based Korean allowlist: directories where Korean content is expected
   const koreanAllowlistPrefixes = [
     "tests/hooks/",
+    "tests/runtime/",
     "skills/pdca/",
     "skills/soul/",
     "skills/translate/",
