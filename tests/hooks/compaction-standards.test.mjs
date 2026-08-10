@@ -1,0 +1,90 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { mkdtempSync, mkdirSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { writeStandard, supersedeStandard } from "../../scripts/lib/standard-record.mjs";
+import { writeState } from "../../scripts/lib/coach-state.mjs";
+
+const root = process.cwd();
+const hookPath = path.join(root, "hooks", "compaction.mjs");
+const NOW = new Date("2026-08-10T00:00:00.000Z");
+
+function withProjectRoot(fn) {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-compact-standards-"));
+  return fn(dir);
+}
+
+function makeDataDir() {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-compact-data-"));
+  mkdirSync(path.join(dir, "state"), { recursive: true });
+  return dir;
+}
+
+function runPostCompact(projectRoot) {
+  return spawnSync(process.execPath, [hookPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PROJECT_DIR: projectRoot,
+      CLAUDE_PLUGIN_DATA: makeDataDir(),
+    },
+    input: JSON.stringify({ event: "PostCompact" }),
+    encoding: "utf8",
+  });
+}
+
+test("an active standard id survives compaction, a superseded one does not", () => {
+  withProjectRoot((projectRoot) => {
+    writeStandard(
+      projectRoot,
+      { id: "voice-two-track", title: "Two-track voice", chosen: "c", rejected: [], payload: "", review_when: "", triggers: [] },
+      { now: NOW }
+    );
+    writeStandard(
+      projectRoot,
+      { id: "old-approach", title: "Old approach", chosen: "c", rejected: [], payload: "", review_when: "", triggers: [] },
+      { now: NOW }
+    );
+    supersedeStandard(projectRoot, "old-approach");
+
+    const result = runPostCompact(projectRoot);
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.match(output.additionalContext, /voice-two-track/);
+    assert.doesNotMatch(output.additionalContext, /old-approach/);
+  });
+});
+
+test("an open coach interview survives compaction with its settled fork count", () => {
+  withProjectRoot((projectRoot) => {
+    writeState(projectRoot, { run_id: "r1", status: "in_progress", forks: ["a", "b"] });
+
+    const result = runPostCompact(projectRoot);
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.match(output.additionalContext, /coach/);
+    assert.match(output.additionalContext, /2 standard\(s\) settled/);
+  });
+});
+
+test("a finalized (pending_approval) interview is not reported as open", () => {
+  withProjectRoot((projectRoot) => {
+    writeState(projectRoot, { run_id: "r1", status: "pending_approval", forks: ["a"] });
+
+    const result = runPostCompact(projectRoot);
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout, "");
+  });
+});
+
+test("a project with no .scc tree at all produces no output and does not throw", () => {
+  withProjectRoot((projectRoot) => {
+    const result = runPostCompact(projectRoot);
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout, "");
+    assert.equal(result.stderr, "");
+  });
+});
