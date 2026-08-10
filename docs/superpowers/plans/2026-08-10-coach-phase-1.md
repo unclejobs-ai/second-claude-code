@@ -65,27 +65,46 @@ import { pathToFileURL } from "node:url";
 import { resolveProjectRoot, isInsidePluginInstall } from "../../scripts/lib/project-root.mjs";
 
 test("resolveProjectRoot prefers CLAUDE_PROJECT_DIR over cwd", () => {
-  const dir = mkdtempSync(join(tmpdir(), "scc-root-"));
+  const project = mkdtempSync(join(tmpdir(), "scc-proj-"));
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
   try {
-    const moduleUrl = pathToFileURL(join(dir, "elsewhere", "lib", "project-root.mjs")).href;
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
     const root = resolveProjectRoot({
-      env: { CLAUDE_PROJECT_DIR: dir },
+      env: { CLAUDE_PROJECT_DIR: project },
       cwd: "/some/other/place",
       moduleUrl,
     });
-    assert.equal(root, dir);
+    assert.equal(root, project);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+    rmSync(install, { recursive: true, force: true });
   }
 });
 
 test("resolveProjectRoot falls back to cwd when the env var is unset", () => {
-  const dir = mkdtempSync(join(tmpdir(), "scc-root-"));
+  const project = mkdtempSync(join(tmpdir(), "scc-proj-"));
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
   try {
-    const moduleUrl = pathToFileURL(join(dir, "elsewhere", "lib", "project-root.mjs")).href;
-    assert.equal(resolveProjectRoot({ env: {}, cwd: dir, moduleUrl }), dir);
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
+    assert.equal(resolveProjectRoot({ env: {}, cwd: project, moduleUrl }), project);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+    rmSync(install, { recursive: true, force: true });
+  }
+});
+
+test("resolveProjectRoot refuses the plugin root itself, which is the original bug", () => {
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
+  try {
+    mkdirSync(join(install, "scripts", "lib"), { recursive: true });
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
+    assert.throws(
+      () => resolveProjectRoot({ env: {}, cwd: install, moduleUrl }),
+      /\ud50c\ub7ec\uadf8\uc778 \uc124\uce58 \uacbd\ub85c/,
+      "the runner used to resolve its own install directory as the root"
+    );
+  } finally {
+    rmSync(install, { recursive: true, force: true });
   }
 });
 
@@ -175,7 +194,7 @@ export function resolveProjectRoot({
 - [ ] **Step 4: 테스트가 통과하는 것을 확인한다**
 
 Run: `node --test tests/runtime/project-root.test.mjs`
-Expected: PASS (5 tests)
+Expected: PASS (6 tests)
 
 - [ ] **Step 5: 커밋한다**
 
@@ -1410,7 +1429,7 @@ import { coachBlockReason } from "./lib/coach-block.mjs";
 - [ ] **Step 4: 테스트가 통과하는 것을 확인한다**
 
 Run: `node --test tests/hooks/coach-block.test.mjs`
-Expected: PASS (5 tests)
+Expected: PASS (6 tests)
 
 - [ ] **Step 5: StopFailure가 차단 능력을 얻지 않았는지 고정한다**
 
