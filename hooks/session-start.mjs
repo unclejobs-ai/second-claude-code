@@ -186,13 +186,6 @@ function main() {
     lines.push("");
   }
 
-  const coachState = readState(projectRoot);
-  if (coachState && coachState.status !== "pending_approval") {
-    const settled = Array.isArray(coachState.forks) ? coachState.forks.length : 0;
-    lines.push(`미완 coach 인터뷰가 있다. 확정된 갈림길 ${settled}개. \`/scc:coach resume\``);
-    lines.push("");
-  }
-
   lines.push(
     `Capabilities: ${capabilities.length > 0 ? capabilities.join(", ") : "none detected"}`
   );

@@ -49,10 +49,13 @@ test("superseded standards are not loaded", () => {
   });
 });
 
-test("an unfinished interview is announced", () => {
+test("an unfinished interview is announced exactly once, under Resumed State", () => {
   withRoot((root) => {
     writeState(root, { run_id: "r1", forks: ["a"], status: "in_progress" });
-    assert.match(runHook(root), /인터뷰/);
+    const out = runHook(root);
+    const mentions = (out.match(/Active coach run/g) || []).length;
+    assert.equal(mentions, 1, "coach state should be reported exactly once");
+    assert.match(out, /## Resumed State/);
   });
 });
 
