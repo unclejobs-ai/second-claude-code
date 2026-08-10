@@ -53,6 +53,28 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
 | `review_when` | 이 결정을 다시 열어야 할 조건. |
 | `triggers` | 나중에 이 기준을 다시 떠올려야 할 표현들. |
 
+## 준수 검사
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/standard-check.mjs" <대상 경로> [--standard <id>] [--json]
+```
+
+활성 기준의 검사를 산출물 하나에 대해 돌리고, 하나라도 실패하면 종료코드 1을 냅니다. 두 기준의 검사가 동시에 만족될 수 없으면 양쪽 실패를 다 보고하고 임의로 해소하지 않습니다. 해소는 사람이 폐기로 처리합니다.
+
+검사는 러너가 해석하는 데이터지, 실행하는 문자열이 아닙니다. 기준 문서는 사용자 프로젝트에 있고 저장소를 타고 퍼지므로, `run:` 같은 자유 문자열 필드는 조용히 무시하지 않고 오류로 거부합니다. 무시하면 작성자가 검사가 걸려 있다고 착각하게 되고, 그건 검사가 아예 없는 것보다 나쁩니다. 목록에 없는 검사기 id와 모르는 필드도 같은 이유로 거부합니다.
+
+| 검사기 | 인수 | 실패 조건 |
+|---|---|---|
+| `regex-absent` | `pattern`, `flags` | 본문에 패턴이 나타남 |
+| `regex-present` | `pattern`, `flags` | 패턴이 없음 |
+| `length-between` | `unit` (`char`\|`word`), `min`, `max` | 본문이 범위 밖 |
+| `similarity-below` | `a`, `b` (`S-A#closing` 같은 제목 경로), `threshold` | 두 구간이 임계치 이상으로 유사 |
+| `frontmatter-equals` | `field`, `value` | 대상 프런트매터 값이 다름 |
+
+검사기마다 반드시 실패해야 하는 픽스처가 `tests/fixtures/standard-checks/<검사기>/`에 딸려 있습니다. 픽스처를 이 저장소에 두는 건 의도적입니다 — 프로젝트가 픽스처를 대면 그것도 신뢰 경계를 넘는 입력이 됩니다. 검사기가 자기 픽스처를 통과시키기 시작하면 테스트가 깨집니다.
+
+통과로 세지 않는 결과가 둘 있습니다. 검사가 없는 기준은 `UNCHECKED`로 보고됩니다 — 보이기만 할 뿐 검증된 게 아닙니다. `adversarial` 검사는 `UNPROVEN`입니다. 독립 리뷰어만 답할 수 있는 질문인데 러너가 아직 그 답을 기록할 방법이 없으므로, 만족된 것으로 세지 않습니다. 둘 다 위반은 아니라서 종료코드 1을 내지는 않습니다.
+
 ## 기준 폐기
 
 기준은 지우지 않고 물립니다. `supersede --id <id>`는 프런트매터를 `status: superseded`로 바꾸고 파일은 그 자리에 둡니다. 탈락 이력이 남아 있어야 다음 세션이 이미 진 안을 다시 들고 오지 못합니다. `listActiveStandards`와 세션 시작 훅은 물린 기준을 싣지 않지만, 파일 자체는 계속 읽힙니다.

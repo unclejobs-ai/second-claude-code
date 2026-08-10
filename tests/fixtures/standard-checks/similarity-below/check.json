@@ -1,0 +1,1 @@
+{ "kind": "builtin", "checker": "similarity-below", "args": { "a": "S-A#closing", "b": "S-B#closing", "threshold": 0.8 } }

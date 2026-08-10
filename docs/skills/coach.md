@@ -53,6 +53,28 @@ Use direct execution when a standard on file already covers the fork, or the req
 | `review_when` | The condition that would reopen the decision. |
 | `triggers` | Phrases that should surface this standard again later. |
 
+## Compliance checks
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/standard-check.mjs" <target path> [--standard <id>] [--json]
+```
+
+Runs every active standard's checks against one artifact and exits 1 if any fails. Two standards whose checks cannot both be satisfied produce two failures and no arbitration — the runner reports the conflict and a human resolves it by retiring one.
+
+A check is data the runner interprets, never a string it executes. Standards live in the user's project and travel through its repository, so `run:`-style fields are refused with an error rather than ignored; an author who thinks a check is enforced while the runner steps over it is worse off than one with no check at all. The same refusal covers unknown checker ids and unknown fields.
+
+| Checker | Args | Fails when |
+|---|---|---|
+| `regex-absent` | `pattern`, `flags` | the pattern appears in the body |
+| `regex-present` | `pattern`, `flags` | the pattern is missing |
+| `length-between` | `unit` (`char`\|`word`), `min`, `max` | the body falls outside the range |
+| `similarity-below` | `a`, `b` (heading paths such as `S-A#closing`), `threshold` | the two sections score at or above the ceiling |
+| `frontmatter-equals` | `field`, `value` | the target's frontmatter field differs |
+
+Each checker ships a fixture under `tests/fixtures/standard-checks/<checker>/` that it must reject. The fixtures live in this repository rather than in the user's project, because a project-supplied fixture would be another input crossing the trust boundary. A checker that starts passing its own fixture breaks the suite.
+
+Two results are never passes. A standard with no checks is reported `UNCHECKED` — it is visible, not verified. An `adversarial` check is reported `UNPROVEN`: it names a question only an independent reviewer can answer, and the runner has no way to record that answer yet, so it never counts as satisfied. Neither sets exit 1, because neither is a violation.
+
 ## Retiring a standard
 
 A standard is retired, never deleted. `supersede --id <id>` flips its frontmatter to `status: superseded` and leaves the file where it is, so the rejected directions stay on record and a later session cannot re-propose an option that already lost. `listActiveStandards` and the SessionStart hook skip retired records; the file remains readable.

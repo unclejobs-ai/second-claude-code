@@ -152,6 +152,7 @@ export function listActiveStandards(root) {
       title: title ? title[1].trim() : entry.name,
       review_when: parseJsonScalar(frontmatter, "review_when", ""),
       triggers: parseJsonField(frontmatter, "triggers"),
+      checks: parseJsonField(frontmatter, "checks"),
       enforcement: readField(frontmatter, "enforcement") || "none",
       path,
     });

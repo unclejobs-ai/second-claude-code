@@ -31,7 +31,7 @@ If yes, this is a fork, and it gets settled on the record before anything is dra
 3. **Put every defensible direction on the table**, each with the evidence that makes it defensible. Include the one you would have picked alone. Include "do not do the thing that was asked" whenever the evidence supports it — a rejected premise is a direction to offer, not a call to make alone.
 4. **The user picks.** One question, the directions as its options.
 5. **Record the choice** before drafting: `node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-fork --file <fork.json>` writes `.scc/standards/<id>/STANDARD.md` — the chosen direction, the rejected ones and why they lost, and `review_when`, the condition that would reopen it.
-6. **Then produce the artifact**, from the standard.
+6. **Then produce the artifact**, from the standard — and run `scripts/standard-check.mjs` against it. A standard whose checks were never run against the work it governs did not govern anything.
 
 ## Runtime
 

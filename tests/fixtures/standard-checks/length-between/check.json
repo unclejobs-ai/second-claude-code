@@ -1,0 +1,1 @@
+{ "kind": "builtin", "checker": "length-between", "args": { "unit": "word", "min": 200, "max": 400 } }
