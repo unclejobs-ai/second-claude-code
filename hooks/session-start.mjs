@@ -4,8 +4,8 @@
  * SessionStart Hook — Second Claude Knowledge Work OS
  *
  * Injects core context on session startup:
- * - 18-command overview + routing rules
- * - Active loop/refine/workflow/PDCA/coach state restoration
+ * - Active standards (decision records) recorded by `/scc:coach`
+ * - Active loop/refine/workflow/PDCA state restoration
  * - Available environment capabilities
  */
 
@@ -16,7 +16,8 @@ import { sanitize, readJsonSafe } from "./lib/utils.mjs";
 import { readSoulProfile, readSoulState, isSoulLearning, readSoulReadiness, readLatestRetro } from "./lib/soul-observer.mjs";
 import { readProjectMemorySnapshot } from "./lib/project-memory.mjs";
 import { readDaemonStatus } from "./lib/companion-daemon.mjs";
-import { discoverAllPlugins, generateDispatchGuide } from "./lib/plugin-discovery.mjs";
+import { listActiveStandards } from "../scripts/lib/standard-record.mjs";
+import { readState } from "../scripts/lib/coach-state.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -62,7 +63,7 @@ function getCrashRecovery() {
   return `PDCA crash recovery available: "${topic}" was in ${phase} phase at ${crashedAt}. Run \`/scc:pdca\` to resume or delete ${recoveryPath} to discard.`;
 }
 
-function getActiveState() {
+function getActiveState(projectRoot) {
   const statePath = join(DATA_DIR, "state");
   const parts = [];
 
@@ -111,7 +112,7 @@ function getActiveState() {
     parts.push(`Active workflow: "${name}" (step ${step}/${total})`);
   }
 
-  const coach = readJsonSafe(join(statePath, "coach-active.json"));
+  const coach = readState(projectRoot);
   if (coach) {
     const status = sanitize(coach.status || "active");
     const round = Number(coach.round) || 0;
@@ -160,39 +161,38 @@ function getMmBridgeAlwaysOnMemory() {
 function main() {
   const lines = [];
   const capabilities = getCapabilities();
+  const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
   lines.push("# Second Claude Code — Knowledge Work OS");
   lines.push("");
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
-  lines.push("18 commands for all knowledge work:");
-  lines.push("");
-  lines.push("| Command | Purpose |");
-  lines.push("|---------|---------|");
-  lines.push("| `/scc:coach` | Settle a fork with more than one defensible direction into a recorded standard |");
-  lines.push("| `/scc:pdca` | **PDCA orchestrator** — Plan→Do→Check→Act with quality gates + Action Router |");
-  lines.push("| `/scc:research` | Deep autonomous research → structured brief |");
-  lines.push("| `/scc:write` | Content production (newsletter, article, shorts, report) |");
-  lines.push("| `/scc:analyze` | Strategic framework analysis (SWOT, RICE, OKR...) |");
-  lines.push("| `/scc:review` | Multi-perspective quality gate (3-5 parallel reviewers) |");
-  lines.push("| `/scc:refine` | Iterative improvement until quality target met |");
-  lines.push("| `/scc:loop` | Benchmark and evolve prompt assets inside isolated loop branches |");
-  lines.push("| `/scc:evolve` | Ouroboros maintainer loop — evolve a recurring-failure asset against a maintainer-authored check |");
-  lines.push("| `/scc:collect` | Knowledge capture & PARA organization |");
-  lines.push("| `/scc:workflow` | Custom workflow builder (chain any skills) |");
-  lines.push("| `/scc:discover` | Dynamic skill discovery & installation |");
-  lines.push("| `/scc:investigate` | Root-cause debugging for errors and unexpected behavior |");
-  lines.push("| `/scc:translate` | Soul-aware EN↔KO translation with style and format control |");
-  lines.push("| `/scc:batch` | Parallel decomposition for large homogeneous tasks |");
-  lines.push("| `/scc:soul` | Persistent identity profile synthesis and adaptation |");
-  lines.push("| `/scc:viewer` | Local artifact viewer for PDCA session outputs |");
-  lines.push("| `/scc:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
-  lines.push("");
-  lines.push("PDCA cycle: `/scc:pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: coach, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
-  lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
-  lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
-  lines.push("");
+
+  const allStandards = listActiveStandards(projectRoot);
+  const standards = allStandards.slice(0, 12);
+  if (standards.length > 0) {
+    lines.push("## 활성 기준");
+    lines.push("");
+    for (const s of standards) {
+      const when = s.review_when ? ` · 재검토: ${s.review_when}` : "";
+      const unenforced = s.enforcement === "none" ? " · 검사없음" : "";
+      lines.push(`- ${s.id} — ${s.title}${when}${unenforced}`);
+    }
+    if (allStandards.length > standards.length) {
+      lines.push(`- 그 외 ${allStandards.length - standards.length}개 더 있음 (표시 상한 12개)`);
+    }
+    lines.push("");
+    lines.push("실행 재료는 해당 기준에 걸리는 작업을 시작할 때 읽는다.");
+    lines.push("");
+  }
+
+  const coachState = readState(projectRoot);
+  if (coachState && coachState.status !== "pending_approval") {
+    const settled = Array.isArray(coachState.forks) ? coachState.forks.length : 0;
+    lines.push(`미완 coach 인터뷰가 있다. 확정된 갈림길 ${settled}개. \`/scc:coach resume\``);
+    lines.push("");
+  }
+
   lines.push(
     `Capabilities: ${capabilities.length > 0 ? capabilities.join(", ") : "none detected"}`
   );
@@ -206,7 +206,7 @@ function main() {
   }
 
   // Restore active state if any
-  const state = getActiveState();
+  const state = getActiveState(projectRoot);
   if (state) {
     lines.push("");
     lines.push("## Resumed State");
@@ -323,45 +323,6 @@ function main() {
     }
   } catch {
     // Non-fatal — soul injection errors must never break session start.
-  }
-
-  // ── Orchestrator — Active Plugin Dispatch ───────────────────────────
-  // Dynamic plugin discovery at session start. Routes PDCA phases to
-  // external plugins and generates actionable Skill invocation strings.
-  try {
-    const ecosystem = discoverAllPlugins();
-    if (ecosystem.total_plugins > 0) {
-      lines.push("");
-      lines.push("## Active Plugin Dispatch");
-      lines.push(
-        `${ecosystem.total_plugins} external plugins available: ${ecosystem.plugins.slice(0, 8).map((p) => `\`${p.name}\``).join(", ")}${ecosystem.plugins.length > 8 ? ` +${ecosystem.plugins.length - 8} more` : ""}`
-      );
-      lines.push("");
-      lines.push("**How dispatch works:** When PDCA routes to a phase, the orchestrator automatically selects the best-matching external plugin and instructs you to invoke it via the Skill tool. You don't need to decide — the dispatch is pre-computed:");
-      lines.push("");
-
-      // Quick summary of key dispatch routes
-      const routeSummary = {};
-      for (const p of ecosystem.plugins) {
-        const allText = [p.name, p.description, ...p.skills.map((/** @type {{name:string}} */ s) => s.name), ...p.commands.map((/** @type {{name:string}} */ c) => c.name)].join(" ").toLowerCase();
-        let category = null;
-        if (/\b(review|test|audit|valid|lint|secur|rabbit|code.?review)\b/.test(allText)) category = "check";
-        else if (/\b(commit|deploy|push|autofix|release)\b/.test(allText)) category = "act";
-        else if (/\b(design|build|creat|writ|generat|frontend)\b/.test(allText)) category = "do";
-        else if (/\b(research|search|explor|discover|learn|memor)\b/.test(allText)) category = "plan";
-        if (category) {
-          if (!routeSummary[category]) routeSummary[category] = [];
-          routeSummary[category].push(p.name);
-        }
-      }
-
-      const phaseIcons = { plan: "📋", do: "🔨", check: "🔍", act: "🚀" };
-      for (const [phase, plugins] of Object.entries(routeSummary)) {
-        lines.push(`- ${phaseIcons[phase] || ""} **${phase}** → ${plugins.map((n) => `\`${n}\``).join(", ")}`);
-      }
-    }
-  } catch {
-    // Non-fatal — orchestrator discovery must never break session start.
   }
 
   console.log(lines.join("\n"));

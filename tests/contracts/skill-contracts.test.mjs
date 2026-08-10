@@ -284,24 +284,6 @@ test("pdca documents the code engineering lane contract", () => {
   }
 });
 
-test("session-start command banner matches command files", () => {
-  const commandNames = readdirSync(path.join(root, "commands"))
-    .filter((fileName) => fileName.endsWith(".md"))
-    .map((fileName) => fileName.replace(/\.md$/, ""))
-    .sort();
-  const sessionStart = read(path.join("hooks", "session-start.mjs"));
-  const advertised = [...new Set([...sessionStart.matchAll(/`\/scc:([a-z-]+)`/g)]
-    .map((match) => match[1]))]
-    .sort();
-
-  assert.deepEqual(advertised, commandNames);
-  assert.match(
-    sessionStart,
-    new RegExp(`${commandNames.length} commands for all knowledge work`),
-    "session-start should keep its command count aligned with commands/*.md"
-  );
-});
-
 test("loop surfaces are documented across primary docs", () => {
   const readme = read("README.md");
   const readmeKo = read("README.ko.md");
