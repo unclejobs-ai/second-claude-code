@@ -1,0 +1,284 @@
+# Decision Standards — 딥 인터뷰를 의사결정 도구로
+
+작성일: 2026-08-10
+상태: 설계 확정, 구현 대기
+
+## 왜 이걸 하는가
+
+scc는 18개 스킬·17개 에이전트·31개 MCP 도구를 갖췄지만, 실사용에서 의사결정에 기여한 것은 딥 인터뷰와 적대 검수 둘뿐이었다. 나머지는 호출해도 결과가 달라지지 않았다.
+
+전수조사에서 확인한 원인은 셋이다.
+
+1. **PDCA 게이트가 자기신고제다.** `mcp/lib/pdca-handlers.mjs`의 게이트 조건(`sources_min_5`, `do_artifact_complete`, `plan_findings_integrated`, `reviewer_count`)은 전부 호출자가 `phase_result`로 직접 써넣는 값이다. `mergePhaseResult`는 타입만 검사한다(`PHASE_RESULT_FIELDS`, :298). `existsSync`는 파일 전체에서 활성 상태 파일 하나에만 쓰인다(:770). 산출물이 실제로 존재하는지 확인하는 코드가 없다. 결과적으로 게이트는 작정한 호출자에게 "아니오"라고 말할 수 없다.
+
+2. **딥 인터뷰가 산출물을 플러그인 캐시에 버린다.** `scripts/deep-interview-runner.mjs:634`가 `repoRootFrom(import.meta.url)`으로 루트를 잡는다. 스크립트 자기 위치다. 실제로 이전 세션의 판매 콘텐츠 스펙이 `~/.claude/plugins/cache/second-claude-code/scc/2.1.0/.gjc/specs/`에 있다. 버전 폴더 안이라 플러그인을 올리면 사라지고, 상태가 전역이라 다른 프로젝트의 인터뷰가 서로를 덮어쓴다.
+
+3. **테스트가 스킬을 검증하지 않는다.** 409개 중 408개가 통과하지만, `tests/contracts/skill-contracts.test.mjs`는 마크다운 문자열 존재를 확인하는 문서 린터다. `tests/skill-tests/` 22개 파일은 2026년 3월에 저장한 출력물이고 단언문이 없다. 18개 스킬 중 실행 코드가 있는 것은 5개뿐이라, 나머지 13개는 테스트할 대상 자체가 없다.
+
+## 목표
+
+사용자가 정의한 요구는 사슬 세 마디다.
+
+> 선택 → 그 선택의 Context가 살아서 유지 → 문서로 남음 → 산출물이 그 문서를 지킴
+
+이 사슬이 끊기는 지점 네 곳이 모두 실제로 관측됐다.
+
+| 파손 지점 | 막는 장치 |
+|---|---|
+| 세션 바뀌면 결정이 증발 | SessionStart 훅이 활성 기준을 주입 |
+| 산출물이 결정을 어김 | 준수 검사 + Stop 훅 차단 |
+| 문장이 애매해서 재해석 | 검사 없는 기준은 `enforcement: none`으로 가시화 |
+| 절차 없이 슬근 변경 | `supersedes` 체인 + 탈락 이력 보존 |
+
+## 비목표
+
+- PDCA 게이트 수정. 자기신고 문제는 확인됐으나 이 스펙에서 손대지 않는다. 기준 검사가 자리를 잡은 뒤 게이트가 그것을 읽도록 하는 게 순서다.
+- 하위호환 유지. scc는 사실상 개인 도구이므로 메이저 버전을 올리고 이전 안내만 남긴다.
+
+## 핵심 개념 — 기준 문서(Standard)
+
+갈림길 하나당 문서 하나다. 인터뷰가 결정 4개를 뽑으면 기준 문서 4개가 나온다. 하나가 낡아도 나머지는 살아 있고, 검사도 결정별로 독립한다.
+
+### 저장 위치
+
+```
+<프로젝트 루트>/.scc/standards/<id>/
+  STANDARD.md
+  payload/            # 실행 재료 (선택)
+  checks/             # 기계 검사 스크립트 + 실패 픽스처 (선택)
+```
+
+프로젝트 루트는 `CLAUDE_PROJECT_DIR`, 없으면 `process.cwd()`. `repoRootFrom(import.meta.url)`은 폐기한다.
+
+### STANDARD.md 형식
+
+```yaml
+---
+id: voice-two-track
+status: active              # active | superseded | expired
+enforcement: checked        # checked | none
+decided: 2026-08-09
+review_when: "결제 2주치 데이터 확보 시"
+supersedes: null
+checks:
+  - kind: shell
+    run: node checks/closer-similarity.mjs
+    fixture: checks/fixtures/duplicate-closer.md
+  - kind: adversarial
+    ask: "S-A와 S-B가 같은 사람이 쓴 것처럼 읽히는가? 근거 3개."
+---
+
+## 고른 것
+## 탈락            <- 안별 탈락 사유. 재론 차단용.
+## 실행 재료        <- 짧으면 인라인, 길면 payload/ 참조
+## 지키는 법
+```
+
+`checks`가 비면 `enforcement: none`으로 기록한다. 등록 자체를 막지 않는다 — 막으면 통과용 가짜 검사가 만들어진다. 대신 Stop 훅이 매 세션 "검사 없는 기준 N개"를 보고해 가시성을 유지한다.
+
+### 폐기 규약
+
+기준을 바꿀 때 옛 문서를 지우지 않는다. 새 문서가 `supersedes: <옛 id>`를 달고, 옛 문서는 `status: superseded`가 된다. 탈락 이력이 남아 있어야 다음 세션이 떨어진 안을 다시 제안하지 못한다.
+
+### 목록 조회
+
+인덱스 파일을 두지 않고 `.scc/standards/*/STANDARD.md`를 글롭한다. 인덱스는 드리프트 원인이 되고, 이 규모에서 성능 이득이 없다.
+
+## 딥 인터뷰 변경
+
+### 루트 해석
+
+```js
+function resolveProjectRoot(env = process.env, cwd = process.cwd()) {
+  const root = env.CLAUDE_PROJECT_DIR || cwd;
+  if (isInsidePluginInstall(root)) {
+    throw new Error(
+      `프로젝트 루트가 플러그인 설치 경로 안입니다: ${root}. ` +
+      `CLAUDE_PROJECT_DIR을 설정하거나 프로젝트 디렉터리에서 실행하십시오.`
+    );
+  }
+  return root;
+}
+```
+
+`isInsidePluginInstall`은 해석된 루트가 이 스크립트의 설치 경로를 조상으로 갖는지 본다. 이 가드가 옛 버그의 재발을 구조적으로 막는다.
+
+### 네임스페이스
+
+| 옛것 | 새것 |
+|---|---|
+| `.gjc/specs/` | `.scc/standards/` |
+| `.gjc/state/` | `.scc/state/` |
+| `gjc.deepInterview.ambiguityThreshold` | `scc.deepInterview.ambiguityThreshold` |
+| `$GJC_CONFIG_DIR` | 폐기 (`~/.scc/settings.json` 고정) |
+
+### 승인 선택지
+
+`ralplan`, `ultragoal`, `team`은 gjc의 명령이며 scc에 존재하지 않는다. 삭제하고 세 가지로 교체한다.
+
+1. 기준 문서를 확정하고 인터뷰 종료
+2. 계속 정제 (모호도가 임계치 위일 때)
+3. 확정된 기준을 브리핑으로 Plan Mode에 넘김
+
+3번은 기존 사용자 피드백을 반영한 것이다 — Plan 결과가 Plan Mode로 흘러들어가야 브리핑이 자연스럽다.
+
+### 종료 산출물
+
+`finalize`가 명세 한 장 대신 기준 문서 N개를 쓴다. 인터뷰 중 해결된 갈림길마다 하나씩이며, 각 문서는 그 갈림길에서 검토된 안 전부와 탈락 사유를 담는다.
+
+### 캐시 구제
+
+`~/.claude/plugins/cache/second-claude-code/scc/*/.gjc/specs/`에 남은 기존 스펙을 일회성 스크립트로 현재 프로젝트의 `.scc/standards/`로 옮긴다. 이후 재실행되지 않는다.
+
+## 훅 동작
+
+`hooks/hooks.json`은 수정하지 않는다. 6개 이벤트가 이미 등록돼 있으므로 기존 진입점의 동작만 바꾼다.
+
+### SessionStart (`hooks/session-start.mjs`)
+
+활성 기준을 한 줄씩 주입한다: `id · 고른 것 요약 · review_when`. 최대 12개. 실행 재료(`payload/`)는 읽지 않는다 — 해당 기준에 걸리는 작업이 시작될 때 읽는다. 미완 인터뷰가 있으면 다음 질문을 함께 표시한다.
+
+현행 18개 명령어 나열 배너와 플러그인 디스패치 배너는 제거한다.
+
+주입 예산: 기준 12개 기준 200단어 이하. 매 세션 로드되므로 초과하면 잘라낸다.
+
+### UserPromptSubmit (`hooks/prompt-detect.mjs`)
+
+개입은 **한 경우로 한정한다**: 요청이 활성 기준의 적용 범위를 건드릴 때, 그 기준을 제시하고 명시적 폐기 또는 준수 중 선택을 요구한다.
+
+탐지는 판단이 아니라 대조로 한다. 각 기준은 프론트매터에 `triggers` 목록(문자열 배열)을 선언하고, 훅은 프롬프트에 그중 하나가 문자 그대로 나타날 때만 발화한다. `triggers`가 비면 그 기준은 절대 발화하지 않는다.
+
+```yaml
+triggers: ["목소리", "voice", "S-A", "S-B", "클로징"]
+```
+
+"갈림길인데 기준이 없다"는 경우는 이 훅에서 다루지 않는다. 정밀하게 탐지할 방법이 없고, 추측으로 발화하면 아래의 오지시 문제가 재발한다. 미결 갈림길은 사람이 인터뷰를 부를 때 다룬다.
+
+**이 훅은 스킬 호출을 지시하지 않는다.** 현행 키워드 점수 라우팅(`[ROUTING] ... You MUST invoke the Skill tool`)은 삭제한다. 이 설계 세션 중에만 아키텍처 작업 턴에 `scc:refine`을 호출하라고 두 차례 오지시했다. 훅은 증거를 제시하고 판단은 하지 않는다.
+
+오탐이 이 훅의 유일한 실패 모드다. 신호가 모호하면 침묵한다.
+
+### Stop (`hooks/session-end.mjs`, `hooks/stop-failure.mjs`)
+
+두 가지를 차단한다.
+
+1. 인터뷰가 활성이고 미완결 → 남은 갈림길 수를 세어 차단
+2. 이번 세션에 활성 기준의 적용 대상 산출물을 썼는데 준수 검사를 안 돌림 → 실행할 명령과 함께 차단
+
+**같은 사유로는 세션당 한 번만 차단한다.** 두 번째 시도는 경고만 남기고 통과시킨다. 무한 차단은 세션 종료를 불가능하게 만든다.
+
+`enforcement: none` 기준의 개수를 함께 보고한다.
+
+### PreCompact / PostCompact (`hooks/compaction.mjs`)
+
+활성 기준 목록과 인터뷰 상태를 압축 경계 너머로 전달한다.
+
+## 준수 검사
+
+### 실행기
+
+```
+node scripts/standard-check.mjs <대상 경로> [--standard <id>]
+```
+
+활성 기준의 검사를 대상 산출물에 대해 실행한다. 출력은 기준 id, 검사 종류, 실패 사유. 위반이 하나라도 있으면 종료코드 1.
+
+### 검사 종류
+
+**shell** — 명령을 실행하고 종료코드로 판정한다. 정규식, 유사도, 길이, 포맷 등 기계적으로 판정 가능한 모든 것.
+
+**adversarial** — 명시된 질문을 독립 리뷰어에게 넘기고 판정을 받는다. 목소리·톤처럼 기계 판정이 불가능한 것에 한한다. 리뷰어 실행 흔적이 로그에 남아야 성립하며, 흔적 없는 "검토했음"은 통과로 계산하지 않는다.
+
+두 종류의 공통 성질은 **작성한 모델이 스스로 통과 도장을 찍을 수 없다**는 것이다.
+
+### 검사의 자기 증명
+
+모든 `kind: shell` 검사는 반드시 실패하는 픽스처를 하나 동봉한다. 검사가 그 픽스처에 대해 통과하면 검사 자체가 고장 난 것이므로 실행기가 그 검사를 무효로 표시하고 보고한다. 항상 통과하는 검사는 없는 검사보다 나쁘다.
+
+### 기준 충돌
+
+두 활성 기준의 검사가 동시에 만족될 수 없는 경우, 실행기는 양쪽 실패를 모두 보고하고 임의로 해소하지 않는다. 해소는 사람이 폐기 규약으로 처리한다.
+
+## 테스트
+
+superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 없이는 스킬도, 검사도 없다.
+
+### 러너
+
+- `resolveProjectRoot`가 `CLAUDE_PROJECT_DIR`을 존중하는가
+- 해석된 루트가 플러그인 설치 경로 안이면 **거부하는가** (옛 버그 자물쇠)
+- `finalize`가 갈림길 수만큼 기준 문서를 쓰는가
+- 폐기 시 옛 문서가 `superseded`로 남고 삭제되지 않는가
+
+### 훅
+
+- SessionStart가 활성 기준만 싣고 `superseded`는 제외하는가
+- SessionStart 주입이 예산(200단어) 안인가
+- **prompt-detect가 무관한 프롬프트에 안 튀는가** — 이번 세션의 오지시가 회귀 케이스
+- prompt-detect가 충돌 프롬프트에 뜨는가
+- Stop이 미완 인터뷰를 차단하고, 두 번째 시도는 통과시키는가
+
+### 검사 실행기
+
+- 실패 픽스처를 통과시키는 검사를 무효로 표시하는가
+- `enforcement: none` 기준을 통과로 세지 않고 보고하는가
+- 흔적 없는 adversarial 판정을 통과로 세지 않는가
+
+### 마이그레이션
+
+`.gjc` 단언이 박힌 기존 테스트 4개를 `.scc`로 재작성한다.
+
+- `tests/contracts/deep-interview-contracts.test.mjs:60`
+- `tests/runtime/deep-interview-runner.test.mjs:100, 238-251`
+
+### 베이스라인 (RED)
+
+딥 인터뷰 스킬의 효과를 증명하려면 스킬 없는 상태의 실패를 먼저 기록해야 한다. 모호한 요청을 압박과 함께 주고, 스킬 없는 에이전트가 질문 없이 실행으로 달리는 것과 그때 쓰는 합리화 문장을 그대로 받아 적는다. 그 문장들을 겨냥해 스킬을 고친다.
+
+이번 스펙에서는 딥 인터뷰 하나에만 적용한다.
+
+## 스킬 정리
+
+18개는 많다. 그리고 많다는 것이 호출 문제의 원인이다. 선택지가 18개면 모델이 고르지 못하고, 그래서 키워드 라우터를 붙였고, 그 라우터가 틀린다.
+
+### 남기는 기준
+
+**호출했을 때 출력이 달라지는 것이 증명돼야 한다.** 스킬 없이 같은 과제를 준 결과와 스킬을 준 결과가 구분되지 않으면 스킬이 아니다. 판정은 베이스라인 테스트로 하며, 통과하지 못한 스킬은 통합하거나 삭제한다.
+
+두 갈래로만 살아남는다.
+
+- **기계를 가진 것** — 실행 코드가 실제 일을 한다 (deep-interview, unblock, viewer, loop, evolve)
+- **독립적 반대를 만드는 것** — 작성자가 스스로 통과시킬 수 없는 판정을 붙인다 (review)
+
+### 잠정 분류
+
+베이스라인 테스트 전의 읽기이며, 테스트 결과로 뒤집힐 수 있다.
+
+| 처리 | 대상 | 근거 |
+|---|---|---|
+| 유지 | deep-interview, review, unblock, viewer | 기계 또는 독립 반대 보유 |
+| 통합 검토 | loop + evolve | 둘 다 프롬프트 자산을 격리 브랜치에서 진화시킨다. 목적이 겹친다 |
+| 통합 검토 | research + collect / analyze + refine / workflow + batch | 각 쌍이 같은 단계의 앞뒤다 |
+| 검사로 내림 | write의 길이·포맷 규칙, review의 정족수, pdca의 소스 수 | 정규식·계수로 판정 가능하므로 산문이 아니라 `standard-check`의 검사여야 한다 |
+| 삭제 후보 | write, pdca, discover, translate, soul, investigate | 실행 코드 없음. 유능한 모델의 기본 동작을 재진술 |
+
+`write`가 삭제 후보인 이유를 남겨 둔다. 121줄에 실행 코드가 0이고 의사결정 단어가 0이다. 내용은 규칙표이며, 참조하는 포맷 스펙은 각 18~23줄이다. 실사용에서 실제 집필은 캠페인의 VOICE·SPEC 문서가 했고 스킬은 통과의례였다. 남길 값이 있다면 그것은 검사이지 스킬이 아니다.
+
+### 호출 방식 분리
+
+살아남은 스킬을 두 부류로 나누고 프론트매터로 강제한다.
+
+- **user-invoked** (`disable-model-invocation: true`) — 사람이 의도적으로 부르는 진입점. 모델이 임의로 호출하지 않는다.
+- **model-invoked** — 자동으로 떠야 하는 규율. 개수를 최소로 유지하고 트리거를 좁게 쓴다.
+
+이 분리가 서면, 세션 시작 배너의 명령어 나열과 플러그인 디스패치 안내가 모두 불필요해진다. 둘 다 제거한다.
+
+### 문서 표면
+
+문서가 59개이고 양언어로 독립 유지된다. 아키텍처 문서 하나가 756줄이다. 이 표면적이 드리프트의 온상이며, `pdca-handlers.mjs`에 남은 "문서에는 반영됐으나 검사는 갱신되지 않았다"는 주석이 그 증거다. 스킬 수를 줄이는 만큼 문서도 줄인다. 삭제된 스킬의 EN/KO 문서 쌍을 함께 제거한다.
+
+## 참고한 것
+
+- `superpowers/skills/writing-skills` — 실패 테스트 우선, "정규식으로 강제 가능하면 자동화하고 문서는 판단에만", 실패 유형에 형식 맞추기
+- `mattpocock/skills` — user-invoked와 model-invoked 분리, `disable-model-invocation` 프론트매터
+- `firecrawl/anydoc`, `firecrawl/pdf-inspector` — 로컬 문서 흡입. 이번 스펙 범위 밖이나, 붙일 때는 의존성이 아니라 `npx` 호출로 붙인다 (현재 의존성은 `@modelcontextprotocol/sdk` 하나이며 빌드 단계가 없다)
