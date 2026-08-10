@@ -8,27 +8,31 @@ import { pathToFileURL } from "node:url";
 import { resolveProjectRoot, isInsidePluginInstall } from "../../scripts/lib/project-root.mjs";
 
 test("resolveProjectRoot prefers CLAUDE_PROJECT_DIR over cwd", () => {
-  const dir = mkdtempSync(join(tmpdir(), "scc-root-"));
+  const project = mkdtempSync(join(tmpdir(), "scc-proj-"));
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
   try {
-    const moduleUrl = pathToFileURL(join(dir, "elsewhere", "lib", "project-root.mjs")).href;
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
     const root = resolveProjectRoot({
-      env: { CLAUDE_PROJECT_DIR: dir },
+      env: { CLAUDE_PROJECT_DIR: project },
       cwd: "/some/other/place",
       moduleUrl,
     });
-    assert.equal(root, dir);
+    assert.equal(root, project);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+    rmSync(install, { recursive: true, force: true });
   }
 });
 
 test("resolveProjectRoot falls back to cwd when the env var is unset", () => {
-  const dir = mkdtempSync(join(tmpdir(), "scc-root-"));
+  const project = mkdtempSync(join(tmpdir(), "scc-proj-"));
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
   try {
-    const moduleUrl = pathToFileURL(join(dir, "elsewhere", "lib", "project-root.mjs")).href;
-    assert.equal(resolveProjectRoot({ env: {}, cwd: dir, moduleUrl }), dir);
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
+    assert.equal(resolveProjectRoot({ env: {}, cwd: project, moduleUrl }), project);
   } finally {
-    rmSync(dir, { recursive: true, force: true });
+    rmSync(project, { recursive: true, force: true });
+    rmSync(install, { recursive: true, force: true });
   }
 });
 
@@ -40,6 +44,21 @@ test("resolveProjectRoot refuses a root inside the plugin install", () => {
     assert.throws(
       () => resolveProjectRoot({ env: { CLAUDE_PROJECT_DIR: install }, cwd: install, moduleUrl }),
       /플러그인 설치 경로/
+    );
+  } finally {
+    rmSync(install, { recursive: true, force: true });
+  }
+});
+
+test("resolveProjectRoot refuses the plugin root itself, which is the original bug", () => {
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
+  try {
+    mkdirSync(join(install, "scripts", "lib"), { recursive: true });
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
+    assert.throws(
+      () => resolveProjectRoot({ env: {}, cwd: install, moduleUrl }),
+      /플러그인 설치 경로/,
+      "the runner used to resolve its own install directory as the root"
     );
   } finally {
     rmSync(install, { recursive: true, force: true });
