@@ -16,10 +16,6 @@ export function isDirectExecution(metaUrl = import.meta.url, argv1 = process.arg
   return argv1 ? resolve(fileURLToPath(metaUrl)) === resolve(argv1) : false;
 }
 
-export function repoRootFrom(importMetaUrl = import.meta.url) {
-  return resolve(dirname(fileURLToPath(importMetaUrl)), "..");
-}
-
 export function parseJsonObject(text, fallback = null) {
   if (!text || !String(text).trim()) return fallback;
   try {
@@ -80,14 +76,6 @@ export function classifyProjectType({ cwd = process.cwd(), idea = "", fs = { exi
   const hasSource = ["package.json", "skills", "commands", "hooks", "src", "mcp"].some((entry) => fs.existsSync(join(cwd, entry)));
   const modifiesExisting = /\b(add|update|modify|fix|improve|integrate|refactor|docs?|command|skill|hook|runner)\b/i.test(idea);
   return hasSource && modifiesExisting ? "brownfield" : "greenfield";
-}
-
-export function slugify(input = "deep-interview") {
-  return String(input)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80) || "deep-interview";
 }
 
 export function summarizeInitialIdea(input, max = 1200) {
@@ -183,7 +171,6 @@ export function createInitialState({ idea, cwd = process.cwd(), now = new Date()
     auto_answered_rounds: [],
     architect_failures: 0,
     approval_options: [],
-    spec_path: null,
   };
 }
 
@@ -623,7 +610,7 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
   if (command === "status" || command === "resume") {
     const state = adapter.read();
     if (!state) return output({ active: false }, json);
-    return output({ active: true, ...renderProgress(state), spec_path: state.spec_path }, json);
+    return output({ active: true, ...renderProgress(state) }, json);
   }
 
   if (command === "start") {
