@@ -47,8 +47,9 @@ scc는 18개 스킬·17개 에이전트·31개 MCP 도구를 갖췄지만, 실�
 <프로젝트 루트>/.scc/standards/<id>/
   STANDARD.md
   payload/            # 실행 재료 (선택)
-  checks/             # 기계 검사 스크립트 + 실패 픽스처 (선택)
 ```
+
+검사 스크립트는 프로젝트에 두지 않는다. 고정 검사기는 scc가 배포하며 기준 문서는 ID와 인수만 지정한다. 프로젝트 디렉터리에 실행 가능한 검사 코드가 놓이는 구조 자체를 만들지 않는다.
 
 프로젝트 루트는 `CLAUDE_PROJECT_DIR`, 없으면 `process.cwd()`. `repoRootFrom(import.meta.url)`은 폐기한다.
 
@@ -86,7 +87,7 @@ checks:
 
 인덱스 파일을 두지 않고 `.scc/standards/*/STANDARD.md`를 글롭한다. 인덱스는 드리프트 원인이 되고, 이 규모에서 성능 이득이 없다.
 
-## 딥 인터뷰 변경
+## coach 변경 (현행 deep-interview)
 
 ### 루트 해석
 
@@ -111,8 +112,11 @@ function resolveProjectRoot(env = process.env, cwd = process.cwd()) {
 |---|---|
 | `.gjc/specs/` | `.scc/standards/` |
 | `.gjc/state/` | `.scc/state/` |
-| `gjc.deepInterview.ambiguityThreshold` | `scc.deepInterview.ambiguityThreshold` |
+| `gjc.deepInterview.ambiguityThreshold` | `scc.coach.ambiguityThreshold` |
 | `$GJC_CONFIG_DIR` | 폐기 (`~/.scc/settings.json` 고정) |
+| `scripts/deep-interview-runner.mjs` | `scripts/coach-runner.mjs` |
+| `skills/deep-interview/` | `skills/coach/` |
+| `commands/deep-interview.md` | `commands/coach.md` |
 
 ### 승인 선택지
 
