@@ -668,20 +668,16 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     const fork = readJsonFile(file, null);
     if (!fork) throw new Error(`record-fork could not read a JSON object from ${file}`);
     if (!fork.id) throw new Error("record-fork requires the fork to declare an id");
-    if (!/[a-z0-9]/i.test(String(fork.id))) {
-      throw new Error(`record-fork: fork id "${fork.id}" has no characters left after slugifying`);
-    }
-    const id = slugify(fork.id);
 
     const current = adapter.read();
     if (!current) throw new Error("no active coach interview");
 
-    const path = writeStandard(root, { ...fork, id }, { now: deps.now || new Date() });
+    const path = writeStandard(root, fork, { now: deps.now || new Date() });
     const forks = Array.isArray(current.forks) ? current.forks : [];
-    if (!forks.includes(id)) forks.push(id);
+    if (!forks.includes(fork.id)) forks.push(fork.id);
     adapter.write({ ...current, forks });
 
-    return output({ ok: true, id, path }, json);
+    return output({ ok: true, id: fork.id, path }, json);
   }
 
   if (command === "clear") {
