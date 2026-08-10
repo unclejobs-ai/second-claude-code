@@ -42,7 +42,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 
 | 스킬 | 페이즈 | 역할 |
 |------|--------|------|
-| `deep-interview` | Requirements | 모호한 아이디어를 토폴로지와 모호성 점수로 명세화 |
+| `coach` | Requirements | 방어 가능한 방향이 둘 이상인 갈림길을 기준 문서로 확정 |
 | `research` | Plan | 자율적 다회차 웹 리서치 |
 | `analyze` | Plan / Do | 15개 전략 프레임워크 분석 |
 | `write` | Do | 장문 콘텐츠 제작 |
@@ -69,7 +69,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 second-claude/
 ├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택), mmbridge (선택)
 ├── skills/                       # 18개 스킬 (각각 SKILL.md)
-│   ├── deep-interview/           # 소크라테스식 요구사항 인터뷰 (topology, scoring, spec handoff)
+│   ├── coach/                    # 갈림길 확정 (topology, scoring, .scc/ 아래 기준 문서)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
 │   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
 │   ├── research/                 # 자율적 심층 리서치 (WebFetch + Playwright 폴백)

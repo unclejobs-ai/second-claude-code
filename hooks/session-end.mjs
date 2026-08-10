@@ -36,6 +36,8 @@ import {
 } from "./lib/companion-daemon.mjs";
 import { readEvents } from "./lib/event-log.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
+import { readState } from "../scripts/lib/coach-state.mjs";
+import { coachBlockReason } from "./lib/coach-block.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -652,7 +654,8 @@ function main() {
   } else {
     // ── PDCA quality gate ──────────────────────────────────────────────────
     const pdcaState = readJsonSafe(join(STATE_DIR, "pdca-active.json"));
-    const blockReason = pdcaBlockReason(pdcaState);
+    const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    const blockReason = pdcaBlockReason(pdcaState) || coachBlockReason(readState(projectRoot));
 
     if (blockReason) {
       // Write the guard before blocking so a second stop attempt passes through.

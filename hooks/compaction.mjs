@@ -26,6 +26,8 @@ import {
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { sanitize, readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { listActiveStandards } from "../scripts/lib/standard-record.mjs";
+import { readState } from "../scripts/lib/coach-state.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -33,6 +35,7 @@ const DATA_DIR =
   process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 const STATE_DIR = join(DATA_DIR, "state");
 const SNAPSHOT_PATH = join(STATE_DIR, "compaction-snapshot.json");
+const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -221,24 +224,56 @@ function formatRestorationContext(snapshot) {
   return lines.join("\n");
 }
 
+/**
+ * Standards and an open coach interview live on disk independent of the
+ * PDCA snapshot above — a session can compact many times without ever
+ * touching PDCA/loop/workflow state. Compaction re-summarizes everything
+ * the session knew, so an active standard can silently fall out of that
+ * summary even though it is still on disk. This re-injects it right after,
+ * immune to whatever the summarizer kept or dropped.
+ * Kept to one or two lines: this rides through the same summarization
+ * step it exists to survive.
+ */
+function buildCarryOverLines(projectRoot) {
+  const lines = [];
+  const standards = listActiveStandards(projectRoot);
+  if (standards.length > 0) {
+    lines.push(`Active standards: ${standards.map((s) => sanitize(s.id)).join(", ")}`);
+  }
+  const coach = readState(projectRoot);
+  if (coach && coach.status !== "pending_approval") {
+    const settled = Array.isArray(coach.forks) ? coach.forks.length : 0;
+    lines.push(
+      `Coach interview open — ${settled} standard(s) settled. Resume with \`/scc:coach resume\`.`
+    );
+  }
+  return lines;
+}
+
 function handlePostCompact() {
   const snapshot = readJsonSafe(SNAPSHOT_PATH);
+  const carryOver = buildCarryOverLines(PROJECT_ROOT);
 
-  if (!snapshot) {
-    // No snapshot was written — nothing to restore.
+  if (!snapshot && carryOver.length === 0) {
+    // Nothing to restore.
     process.exit(0);
   }
 
-  // Delete snapshot before emitting to avoid stale re-injection on subsequent
-  // compactions that happen before new state is written.
-  try {
-    unlinkSync(SNAPSHOT_PATH);
-  } catch {
-    // Non-fatal — if deletion fails the worst outcome is a redundant injection
-    // on the next compaction, which is harmless.
+  if (snapshot) {
+    // Delete snapshot before emitting to avoid stale re-injection on subsequent
+    // compactions that happen before new state is written.
+    try {
+      unlinkSync(SNAPSHOT_PATH);
+    } catch {
+      // Non-fatal — if deletion fails the worst outcome is a redundant injection
+      // on the next compaction, which is harmless.
+    }
   }
 
-  const context = formatRestorationContext(snapshot);
+  const parts = [];
+  if (snapshot) parts.push(formatRestorationContext(snapshot));
+  if (carryOver.length > 0) parts.push(carryOver.join("\n"));
+  const context = parts.join("\n\n");
 
   console.log(
     JSON.stringify({
@@ -246,7 +281,7 @@ function handlePostCompact() {
     })
   );
 
-  console.error("[compaction] PDCA state restored after compression");
+  console.error("[compaction] state restored after compression");
   process.exit(0);
 }
 

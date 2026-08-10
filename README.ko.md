@@ -85,7 +85,7 @@ Research the current state of AI agent frameworks and write a report
 
 | 스킬 | 하는 일 |
 |---|---|
-| `deep-interview` | 모호한 게 없어질 때까지 캐묻고, 승인 게이트 붙은 명세로 넘김 |
+| `coach` | 방어 가능한 방향이 둘 이상이면 물어보고, 고른 답을 기준 문서로 남김 |
 | `research` | 20개+ 소스 크롤링, 패턴 추출, 브리프 |
 | `collect` | URL·메모를 던지면 쌓이는 게 아니라 PARA로 분류돼서 들어감 |
 | `discover` | 없는 스킬을 찾아서 설치까지 |

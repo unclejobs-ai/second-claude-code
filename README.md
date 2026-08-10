@@ -85,7 +85,7 @@ The Action Router is the part that matters. When review finds a problem it class
 
 | Skill | What it does |
 |---|---|
-| `deep-interview` | Socratic questions until nothing's ambiguous, then an approval-gated spec |
+| `coach` | Puts a fork with more than one defensible direction to you, then records the answer as a standard |
 | `research` | 20+ sources crawled, patterns synthesized, brief delivered |
 | `collect` | Save a URL or note; it lands PARA-classified, not in a pile |
 | `discover` | Finds and installs the skill you don't have yet |

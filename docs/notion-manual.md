@@ -98,7 +98,7 @@ Both English and Korean prompts work. The system has roughly 50 Korean trigger p
 
 | Skill | What it does | When to use | Example prompt |
 |---|---|---|---|
-| `deep-interview` | Turns vague ideas into approval-gated specs with topology and ambiguity scoring | Requirements discovery before execution | "Interview me before building this feature" |
+| `coach` | Puts every defensible direction to you, then records the choice as a standard under `.scc/standards/` | A request that could go more than one way | "Decide the voice direction before drafting this post" |
 | `research` | Crawls 20+ sources, finds patterns, produces a structured brief | Digging deep into a topic | "Research the current state of AI regulation in the EU" |
 | `analyze` | Applies strategic frameworks: SWOT, Porter, RICE, PESTLE, OKR, and more (15 built-in) | Structured strategic thinking | "Run a SWOT analysis on our product vs. competitors" |
 | `write` | Produces research-backed drafts with automatic review | Articles, reports, newsletters, social content | "Write a newsletter about remote work productivity tips" |
