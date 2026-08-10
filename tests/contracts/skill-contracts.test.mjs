@@ -465,28 +465,22 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
     }
   }
 
-  // Files that intentionally contain Korean content: routing patterns, Korean user examples,
-  // and bilingual trigger tables that are part of the designed Korean-language support.
-  const koreanAllowlist = new Set([
-    "hooks/prompt-detect.mjs",
-    "hooks/session-start.mjs",
-    "hooks/lib/soul-observer.mjs",
-    "hooks/lib/coach-block.mjs",
-  ]);
-
-  // Prefix-based Korean allowlist: directories where Korean content is expected
+  // Prefix-based Korean allowlist: directories where Korean content is expected.
+  // hooks/ and tests/ have no English/Korean twin to protect \u2014 a hook or test file is Korean
+  // or it isn't, there is no *.ko.md counterpart it could drift from \u2014 so they are allowlisted
+  // by directory rather than by exact file, which otherwise needs a new entry every time a hook
+  // or test file picks up Korean text. skills/pdca, skills/soul and skills/translate stay as
+  // their own prefixes for the same reason. Everything else (docs/skills/*.md beside *.ko.md,
+  // the two READMEs) keeps the exact strictness it had before this change.
   const koreanAllowlistPrefixes = [
-    "tests/hooks/",
-    "tests/runtime/",
-    "tests/baselines/",
+    "hooks/",
+    "tests/",
     "skills/pdca/",
     "skills/soul/",
     "skills/translate/",
   ];
 
   for (const file of files) {
-    if (file.startsWith("tests/skill-tests/")) continue;
-    if (koreanAllowlist.has(file)) continue;
     if (koreanAllowlistPrefixes.some((prefix) => file.startsWith(prefix))) continue;
     assert.doesNotMatch(file, /[\uAC00-\uD7A3]/, `${file} path should not contain Hangul`);
     const content = read(file);
