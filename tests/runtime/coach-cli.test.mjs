@@ -91,6 +91,107 @@ test("the runner never writes into a .gjc directory", () => {
   });
 });
 
+function recordFork(root, fork = FORK_JSON) {
+  const forkFile = join(root, `${fork.id}.json`);
+  writeFileSync(forkFile, JSON.stringify(fork), "utf8");
+  runCli(["record-fork", "--file", forkFile, "--json"], { root });
+  return forkFile;
+}
+
+function standardBody(root, id) {
+  return readFileSync(join(root, ".scc", "standards", id, "STANDARD.md"), "utf8");
+}
+
+const REPLACEMENT_JSON = {
+  id: "voice-one-track",
+  title: "한 목소리로 간다",
+  chosen: "S-A와 S-B를 한 화자로 합친다",
+  rejected: [{ label: "두 목소리", why: "결제 데이터가 분리를 지지하지 않았다" }],
+  review_when: "구독자 1만 도달 시",
+  triggers: ["목소리"],
+};
+
+test("supersede retires a standard without deleting its file", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+
+    runCli(["supersede", "--id", "voice-two-track", "--json"], { root });
+
+    const body = standardBody(root, "voice-two-track");
+    assert.match(body, /^status: superseded$/m);
+    assert.match(body, /고백조/);
+  });
+});
+
+test("supersede --file writes the replacement pointing back at the record it retires", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+    const replacementFile = join(root, "replacement.json");
+    writeFileSync(replacementFile, JSON.stringify(REPLACEMENT_JSON), "utf8");
+
+    runCli(["supersede", "--id", "voice-two-track", "--file", replacementFile, "--json"], { root });
+
+    assert.match(standardBody(root, "voice-one-track"), /^supersedes: "voice-two-track"$/m);
+    assert.match(standardBody(root, "voice-two-track"), /^status: superseded$/m);
+    assert.deepEqual(readState(root).forks, ["voice-two-track", "voice-one-track"]);
+  });
+});
+
+test("supersede refuses an id that is not an active standard", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+    runCli(["supersede", "--id", "voice-two-track", "--json"], { root });
+
+    assert.throws(() => runCli(["supersede", "--id", "voice-two-track"], { root }), /no active standard/);
+    assert.throws(() => runCli(["supersede", "--id", "never-existed"], { root }), /no active standard/);
+  });
+});
+
+test("supersede refuses a replacement that reuses the retiring id", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    const forkFile = recordFork(root);
+
+    assert.throws(
+      () => runCli(["supersede", "--id", "voice-two-track", "--file", forkFile], { root }),
+      /cannot supersede itself/
+    );
+    assert.match(standardBody(root, "voice-two-track"), /^status: active$/m);
+  });
+});
+
+test("a colliding replacement id aborts before the old standard is retired", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+    recordFork(root, { ...REPLACEMENT_JSON, id: "payment-copy", title: "결제 카피는 짧게" });
+    const collidingFile = join(root, "colliding.json");
+    writeFileSync(collidingFile, JSON.stringify({ ...REPLACEMENT_JSON, id: "payment-copy" }), "utf8");
+
+    assert.throws(
+      () => runCli(["supersede", "--id", "voice-two-track", "--file", collidingFile], { root }),
+      /이미 다른 기준에 쓰이고 있습니다/
+    );
+    assert.match(standardBody(root, "voice-two-track"), /^status: active$/m);
+  });
+});
+
+test("supersede works outside an interview and leaves state absent", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+    runCli(["clear", "--json"], { root });
+
+    runCli(["supersede", "voice-two-track", "--json"], { root });
+
+    assert.match(standardBody(root, "voice-two-track"), /^status: superseded$/m);
+    assert.equal(readState(root), null);
+  });
+});
+
 test("runCli refuses to run when the resolved root is the plugin install", () => {
   assert.throws(
     () => runCli(["status"], { env: { CLAUDE_PROJECT_DIR: process.cwd() }, useRealRootResolution: true }),

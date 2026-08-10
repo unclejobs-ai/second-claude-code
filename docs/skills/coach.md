@@ -53,6 +53,12 @@ Use direct execution when a standard on file already covers the fork, or the req
 | `review_when` | The condition that would reopen the decision. |
 | `triggers` | Phrases that should surface this standard again later. |
 
+## Retiring a standard
+
+A standard is retired, never deleted. `supersede --id <id>` flips its frontmatter to `status: superseded` and leaves the file where it is, so the rejected directions stay on record and a later session cannot re-propose an option that already lost. `listActiveStandards` and the SessionStart hook skip retired records; the file remains readable.
+
+Pass `--file <fork.json>` as well when a new decision takes the old one's place. The replacement is written first, carrying `supersedes: "<old id>"`, and only then is the old record retired — a colliding replacement id aborts while the existing standard is still active, rather than leaving the project with none. Run it during an interview and the replacement id is appended to state; run it standalone and no state is required.
+
 ## Scoring model
 
 | Project type | Goal | Constraints | Success criteria | Brownfield context |

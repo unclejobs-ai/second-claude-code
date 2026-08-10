@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 
 import { resolveProjectRoot } from "./lib/project-root.mjs";
 import { readState, writeState, clearState, stateFilePath } from "./lib/coach-state.mjs";
-import { writeStandard } from "./lib/standard-record.mjs";
+import { writeStandard, listActiveStandards, supersedeStandard } from "./lib/standard-record.mjs";
 
 const DEFAULT_THRESHOLD = 0.05;
 
@@ -698,6 +698,47 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     adapter.write({ ...current, forks });
 
     return output({ ok: true, id: fork.id, path }, json);
+  }
+
+  if (command === "supersede") {
+    const id = flags.id || positionals[0];
+    if (typeof id !== "string" || !id) throw new Error("supersede requires --id <standard-id>");
+    if (!listActiveStandards(root).some((standard) => standard.id === id)) {
+      throw new Error(
+        `no active standard "${id}" under ${join(root, ".scc", "standards")}. ` +
+          "A retired record keeps its file but cannot be retired twice."
+      );
+    }
+
+    let replacement = null;
+    if (flags.file) {
+      const fork = readJsonFile(flags.file, null);
+      if (!fork) throw new Error(`supersede could not read a JSON object from ${flags.file}`);
+      if (!fork.id) throw new Error("supersede requires the replacement fork to declare an id");
+      if (fork.id === id) throw new Error(`a standard cannot supersede itself: "${id}"`);
+      // Write the replacement before retiring the old record. A colliding id
+      // throws here, and the project is left with its existing standard still
+      // active rather than with no active standard at all.
+      const path = writeStandard(root, fork, { now: deps.now || new Date(), supersedes: id });
+      replacement = { id: fork.id, path };
+    }
+
+    if (!supersedeStandard(root, id)) {
+      throw new Error(
+        `standard "${id}" was active a moment ago but its status line has since changed` +
+          (replacement ? `, after the replacement was written to ${replacement.path}` : "") +
+          ". Another session is writing to this project; re-read the record before retrying."
+      );
+    }
+
+    const current = adapter.read();
+    if (current && replacement) {
+      const forks = Array.isArray(current.forks) ? current.forks : [];
+      if (!forks.includes(replacement.id)) forks.push(replacement.id);
+      adapter.write({ ...current, forks });
+    }
+
+    return output({ ok: true, superseded: id, replacement }, json);
   }
 
   if (command === "clear") {

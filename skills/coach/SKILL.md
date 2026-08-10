@@ -26,7 +26,7 @@ If yes, this is a fork, and it gets settled on the record before anything is dra
 
 ## The output, in order
 
-1. **Read the standards already on file** — `.scc/standards/*/STANDARD.md`. If one covers this fork, name it, follow it, and go to step 6. A settled question is not a fork.
+1. **Read the standards already on file** — `.scc/standards/*/STANDARD.md`. If one covers this fork, name it, follow it, and go to step 6. A settled question is not a fork. If its `review_when` has come true, say so and reopen it as a fork; the old record gets retired rather than edited, and the new one records what changed.
 2. **Name the fork.** One line: what is being chosen between, in the user's own terms.
 3. **Put every defensible direction on the table**, each with the evidence that makes it defensible. Include the one you would have picked alone. Include "do not do the thing that was asked" whenever the evidence supports it — a rejected premise is a direction to offer, not a call to make alone.
 4. **The user picks.** One question, the directions as its options.

@@ -35,6 +35,8 @@ Use each mode at most once:
 
 Each settled fork becomes one standard. Call `record-fork --file <path>` with the fork id, title, chosen direction, rejected directions and why each lost, payload, `review_when`, and triggers. The runner writes `.scc/standards/<id>/STANDARD.md` and appends the id to state. Record before drafting the artifact, not after.
 
+When a standard's `review_when` has come true, the replacement does not overwrite it. Call `supersede --id <old id> --file <new fork.json>`: the new standard is written carrying `supersedes: "<old id>"`, then the old one flips to `status: superseded` and stays on file. Omit `--file` to retire a standard with nothing taking its place.
+
 ## Phase 5: approval bridge
 
 `finalize` returns the recorded standard ids and three approval options: `confirm`, `continue`, `plan-mode`. The recommended path is `confirm`. Coach itself does not implement.
