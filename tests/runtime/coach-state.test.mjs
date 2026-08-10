@@ -1,8 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, existsSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
+import {
+  mkdtempSync,
+  rmSync,
+  existsSync,
+  writeFileSync,
+  mkdirSync,
+  readdirSync,
+  utimesSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { spawn } from "node:child_process";
 
 import { readState, writeState, clearState, stateFilePath } from "../../scripts/lib/coach-state.mjs";
@@ -94,45 +102,105 @@ test("writeState leaves no temp file behind", () => {
   });
 });
 
+test("a stale temp file with an old mtime is swept on the next write", () => {
+  withTempRoot((root) => {
+    const path = stateFilePath(root);
+    mkdirSync(dirname(path), { recursive: true });
+    // Simulates a temp file stranded by a writer that was SIGKILLed between
+    // writeFileSync and renameSync — nothing in that process ran to clean up.
+    const staleTmp = `${path}.tmp-999999`;
+    writeFileSync(staleTmp, "leftover from a killed writer", "utf8");
+    const old = new Date(Date.now() - 120_000);
+    utimesSync(staleTmp, old, old);
+
+    writeState(root, { run_id: "r1" });
+
+    assert.equal(existsSync(staleTmp), false);
+  });
+});
+
+test("a fresh temp file from a concurrent writer is not swept", () => {
+  withTempRoot((root) => {
+    const path = stateFilePath(root);
+    mkdirSync(dirname(path), { recursive: true });
+    // Simulates another writer that is mid-write right now — its temp file
+    // is recent, not abandoned, and must survive a concurrent writeState.
+    const liveTmp = `${path}.tmp-888888`;
+    writeFileSync(liveTmp, "mid-write from a live writer", "utf8");
+
+    writeState(root, { run_id: "r1" });
+
+    assert.equal(existsSync(liveTmp), true);
+  });
+});
+
+// Runs `tags.length` writer processes against `writerRootArg` while reading
+// from `readRoot` for `durationMs`, then asserts every non-null read matches
+// a value a writer actually wrote. Shared by the real concurrency test and
+// the guard-fires regression test below, so both exercise the exact same
+// assertion path.
+async function runConcurrentWriteCheck({ readRoot, writerRootArg, tags, durationMs }) {
+  const writerScript = new URL("./fixtures/coach-state-writer.mjs", import.meta.url);
+  const payloads = tags.map((tag) => ({ tag, blob: tag.repeat(200_000) }));
+
+  const children = tags.map((tag) =>
+    spawn(process.execPath, [writerScript.pathname, writerRootArg, tag, String(durationMs)], {
+      stdio: "ignore",
+    })
+  );
+
+  // Read for the same time budget the writers use, so the read loop stays
+  // overlapped with active writing for its whole duration rather than
+  // spending most of its iterations on an already-stable file.
+  const readDeadline = Date.now() + durationMs;
+  const readings = [];
+  while (Date.now() < readDeadline) {
+    readings.push(readState(readRoot));
+  }
+
+  await Promise.all(
+    children.map(
+      (child) =>
+        new Promise((resolve, reject) => {
+          child.on("exit", (code) => {
+            if (code !== 0) reject(new Error(`writer fixture exited with code ${code}`));
+            else resolve();
+          });
+          child.on("error", reject);
+        })
+    )
+  );
+
+  // A writer that silently targets the wrong root (an argv-order slip, say)
+  // still exits 0 and leaves every read null. Without this, the test below
+  // would pass having verified nothing.
+  assert.ok(
+    readings.some((r) => r !== null),
+    "reader observed no writes — the writer fixture did not run against this root"
+  );
+
+  for (const reading of readings) {
+    if (reading === null) continue;
+    const matches = payloads.some((p) => JSON.stringify(p) === JSON.stringify(reading));
+    assert.equal(matches, true, `torn read observed: ${JSON.stringify(reading).slice(0, 80)}`);
+  }
+}
+
 test("concurrent writers never produce a torn read", async () => {
-  await withTempRootAsync(async (root) => {
-    const writerScript = new URL("./fixtures/coach-state-writer.mjs", import.meta.url);
-    const tags = ["a", "b", "c"];
-    const durationMs = 2000;
-    const payloads = tags.map((tag) => ({ tag, blob: tag.repeat(200_000) }));
+  await withTempRootAsync((root) =>
+    runConcurrentWriteCheck({ readRoot: root, writerRootArg: root, tags: ["a", "b", "c"], durationMs: 2000 })
+  );
+});
 
-    const children = tags.map((tag) =>
-      spawn(process.execPath, [writerScript.pathname, root, tag, String(durationMs)], {
-        stdio: "ignore",
-      })
-    );
-
-    // Read for the same time budget the writers use, so the read loop stays
-    // overlapped with active writing for its whole duration rather than
-    // spending most of its iterations on an already-stable file.
-    const readDeadline = Date.now() + durationMs;
-    const readings = [];
-    while (Date.now() < readDeadline) {
-      readings.push(readState(root));
-    }
-
-    await Promise.all(
-      children.map(
-        (child) =>
-          new Promise((resolve, reject) => {
-            child.on("exit", (code) => {
-              if (code !== 0) reject(new Error(`writer fixture exited with code ${code}`));
-              else resolve();
-            });
-            child.on("error", reject);
-          })
-      )
-    );
-
-    for (const reading of readings) {
-      if (reading === null) continue;
-      const matches = payloads.some((p) => JSON.stringify(p) === JSON.stringify(reading));
-      assert.equal(matches, true, `torn read observed: ${JSON.stringify(reading).slice(0, 80)}`);
-    }
+test("the no-writes guard fires when the writer fixture targets the wrong root", async () => {
+  await withTempRootAsync(async (readRoot) => {
+    await withTempRootAsync(async (decoyRoot) => {
+      // Stands in for the argv-order mistake the guard exists to catch: the
+      // writer runs and exits 0, but against a root the reader never sees.
+      await assert.rejects(
+        () => runConcurrentWriteCheck({ readRoot, writerRootArg: decoyRoot, tags: ["a"], durationMs: 300 }),
+        /reader observed no writes/
+      );
+    });
   });
 });
