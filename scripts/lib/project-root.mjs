@@ -1,12 +1,18 @@
-import { readdirSync, realpathSync, statSync } from "node:fs";
+import { realpathSync } from "node:fs";
 import { dirname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * Canonical form of a path: symlinks followed and case normalized to whatever
- * the filesystem actually stores. On case-insensitive systems (macOS APFS),
- * reads each directory to find the actual on-disk casing. When a path component
- * doesn't exist, trails the rest as-is (projects may not exist yet).
+ * Canonical form of a path: symlinks resolved component by component. When a
+ * component doesn't exist yet (a project directory that hasn't been created),
+ * resolution stops there and the rest of the path is appended as-is, using
+ * whatever prefix was resolved so far — so a not-yet-existing path under an
+ * existing, symlinked ancestor still compares correctly against a fully
+ * resolved root.
+ *
+ * This does NOT normalize letter case — realpathSync preserves the case it's
+ * given for real (non-symlink) path components. Case is handled separately
+ * by `equalOrInside`.
  */
 function canonical(inputPath) {
   const parts = resolve(inputPath).split(sep);
@@ -16,30 +22,33 @@ function canonical(inputPath) {
     const component = parts[i];
     if (!component) continue; // Skip empty components
 
-    let next = resolve(result, component);
-
+    const next = resolve(result, component);
     try {
-      // Check if this path exists
-      statSync(next);
-      // It exists; use realpathSync to normalize symlinks, then read parent to get correct case
-      const real = realpathSync(result);
-      const entries = readdirSync(real);
-      const actualName = entries.find((e) => e.toLowerCase() === component.toLowerCase());
-      result = resolve(real, actualName || component);
+      result = realpathSync(next);
     } catch {
-      // Path doesn't exist yet; just append it as-is
+      // Doesn't exist yet; keep going from the last resolved prefix.
       result = next;
     }
   }
 
-  // Follow any remaining symlinks in the final result
-  try {
-    result = realpathSync(result);
-  } catch {
-    // If the final path doesn't exist, return what we have
-  }
-
   return result;
+}
+
+/**
+ * True when `target` equals or is nested under `root`, checked both exactly
+ * and case-insensitively. APFS (macOS) and NTFS (Windows) default to
+ * case-insensitive-but-case-preserving, so two differently-cased strings can
+ * name the identical on-disk directory, and `canonical` above does not
+ * correct for that. Bias toward refusing: a false positive here costs a
+ * confusing error message on a case-sensitive volume where two distinct
+ * directories happen to differ only by case; a false negative would let user
+ * data get written into the plugin install.
+ */
+function equalOrInside(target, root) {
+  if (target === root || target.startsWith(root + sep)) return true;
+  const t = target.toLowerCase();
+  const r = root.toLowerCase();
+  return t === r || t.startsWith(r + sep);
 }
 
 /**
@@ -52,9 +61,7 @@ function pluginRootFrom(moduleUrl) {
 export function isInsidePluginInstall(root, moduleUrl = import.meta.url) {
   const pluginRoot = pluginRootFrom(moduleUrl);
   const target = canonical(root);
-  if (target === pluginRoot) return true;
-  // Trailing separator so `/a/scc-standards` does not match `/a/scc`.
-  return target.startsWith(pluginRoot + sep);
+  return equalOrInside(target, pluginRoot);
 }
 
 export function resolveProjectRoot({
