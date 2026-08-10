@@ -471,6 +471,7 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
     "hooks/prompt-detect.mjs",
     "hooks/session-start.mjs",
     "hooks/lib/soul-observer.mjs",
+    "hooks/lib/coach-block.mjs",
   ]);
 
   // Prefix-based Korean allowlist: directories where Korean content is expected
