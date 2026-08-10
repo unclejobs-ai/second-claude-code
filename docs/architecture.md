@@ -518,6 +518,15 @@ Research Dispatch
 
 ---
 
+## Memory Boundary
+
+Second Claude Code keeps two memory layers separate on purpose:
+
+- `soul` stores persistent user identity and preference signals.
+- Project recall comes from PDCA recovery state plus MMBridge continuity features such as memory search, handoff, and resume.
+
+This project can borrow ideas from standalone agent runtimes, but it should not embed a second runtime inside the Claude Code plugin model.
+
 ## Cycle Memory
 
 The cycle memory module (`mcp/lib/cycle-memory.mjs`) provides durable cross-cycle knowledge that survives session boundaries. It stores phase artifacts, metrics, and structured insights under `.data/cycles/`.
@@ -615,7 +624,7 @@ agents/*.md                → agent names
 .mcp.json                  → alternative MCP server declarations
 ```
 
-No hardcoded registry. Plugins appear/disappear as the user installs/uninstalls them. The capability map is rebuilt every session.
+Discovery itself has no hardcoded registry: plugins appear and disappear as the user installs and uninstalls them, and the capability map is rebuilt every session. Preference is separate — `INTENT_PROFILES` pins a preferred plugin per lifecycle intent, overridable with `plugin-preferences.json` in `CLAUDE_PLUGIN_DATA`.
 
 ### Layer 2: Intent Scoring and Dispatch Planning
 

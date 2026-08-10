@@ -250,6 +250,24 @@ Research the current state of AI agent frameworks and write a report
 </details>
 
 <details>
+<summary><strong>세션 종료 리포트 — 사이클이 대시보드를 남깁니다</strong></summary>
+
+사이클이 Act까지 가면 `session-end`가 터미널에 요약 박스를 찍습니다.
+
+```text
+┌─── PDCA Cycle #2 ───┐
+│ Plan ✓  Do ✓  Check ⚠  Act ✓  │
+│ Time: 4m  Issues: 3  Score: 74 │
+└────────────────────────────────┘
+```
+
+Check는 판정에 따라 `✓`, `⚠`, `✗`로 갈리고, 점수는 0~100입니다.
+
+같이 `.data/reports/cycle-N.html`에 자체 완결형 HTML 대시보드(와 `.mmd` 흐름도)를 쓰고 경로를 출력합니다. 단계 타임라인, 리뷰어가 올린 이슈 전부, 다음 액션이 들어갑니다. `hooks/lib/report-generator.mjs`가 만들며, 끝난 런이 터미널 스크롤백 대신 남는 산출물을 갖게 됩니다.
+
+</details>
+
+<details>
 <summary><strong>훅과 상태 — 라이프사이클 훅 8개, MCP 도구 31개</strong></summary>
 
 훅은 알아서 뜹니다. 부를 일이 없습니다. `SessionStart`가 상태를 초기화하고, `UserPromptSubmit`이 오토 라우터를 돌리고, `SubagentStart`가 에이전트에 리뷰 맥락을 넣고, `SubagentStop`이 리뷰어 합의를 집계하고, `Stop`이 결과물을 저장하고 정리하고, `StopFailure`가 Check 게이트 실패 시 결과물 전달을 막고, `PreCompact`/`PostCompact`가 상태를 직렬화·복원해서 컨텍스트가 압축돼도 사이클 중간부터 이어집니다.

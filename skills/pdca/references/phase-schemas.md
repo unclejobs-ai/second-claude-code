@@ -109,7 +109,7 @@ Produced at the end of the Do phase, passed to Check.
 | `char_count` is 0 or missing | Artifact is empty — re-run write skill |
 | `meets_length_floor: false` | Re-run writer with explicit minimum target. Tell the writer which scope is missing (which Plan finding was not expanded). Do NOT pad with filler. |
 | `meets_section_floor: false` | The artifact is structurally too thin. Re-run writer with explicit instruction to add the missing sections. |
-| `references_count < 3` | Inject Plan phase sources into artifact's references section. If Plan brief had fewer than 3 sources, the Plan gate was wrongly passed — re-enter Plan phase. |
+| `references_count < 3` | Inject Plan phase sources into artifact's references section. If Plan brief had fewer than 5 sources, the Plan gate was wrongly passed — re-enter Plan phase. |
 
 ### Cross-Reference
 

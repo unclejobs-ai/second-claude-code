@@ -100,7 +100,7 @@ All items must pass before proceeding to Do:
 |---------|--------|
 | Brief char_count < 3,000 | Re-run research with `--depth deep`. The brief is structurally too thin to support a 4,000+ char Do output. |
 | Sources < 5 | Continue research with broader query terms or add `--sources academic --sources news` |
-| Facts < 8 | Re-run research with explicit instruction to extract more discrete data points. A single 2-paragraph source rarely yields enough — pull from at least 3 sources. |
+| Facts < 8 | Re-run research with explicit instruction to extract more discrete data points. A single 2-paragraph source rarely yields enough — the gate needs 5 distinct sources anyway, so pull from all of them. |
 | Comparison table missing | Add a comparison pass: ask the researcher to identify alternatives or competing positions and tabulate them |
 | No quotes | Re-run with explicit instruction to find 1+ named-source quotes (avoid anonymous "experts say" phrases) |
 | Media inventory empty | Run media collection: WebFetch images, OG screenshots, or reference diagrams |
