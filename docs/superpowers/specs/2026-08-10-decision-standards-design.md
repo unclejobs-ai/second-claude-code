@@ -63,9 +63,9 @@ decided: 2026-08-09
 review_when: "결제 2주치 데이터 확보 시"
 supersedes: null
 checks:
-  - kind: shell
-    run: node checks/closer-similarity.mjs
-    fixture: checks/fixtures/duplicate-closer.md
+  - kind: builtin
+    checker: similarity-below
+    args: { a: "S-A#closing", b: "S-B#closing", threshold: 0.8 }
   - kind: adversarial
     ask: "S-A와 S-B가 같은 사람이 쓴 것처럼 읽히는가? 근거 3개."
 ---
@@ -128,9 +128,13 @@ function resolveProjectRoot(env = process.env, cwd = process.cwd()) {
 
 `finalize`가 명세 한 장 대신 기준 문서 N개를 쓴다. 인터뷰 중 해결된 갈림길마다 하나씩이며, 각 문서는 그 갈림길에서 검토된 안 전부와 탈락 사유를 담는다.
 
-### 캐시 구제
+### 레거시 캐시 — 이전하지 않는다
 
-`~/.claude/plugins/cache/second-claude-code/scc/*/.gjc/specs/`에 남은 기존 스펙을 일회성 스크립트로 현재 프로젝트의 `.scc/standards/`로 옮긴다. 이후 재실행되지 않는다.
+플러그인 캐시의 `.gjc/specs/`에 남은 스펙을 자동으로 옮기지 않는다. 초안에는 일회성 이전 스크립트가 있었으나 폐기한다.
+
+이유는 이 문서가 이미 진단한 내용과 모순되기 때문이다. 옛 상태는 전역이었고 프로젝트끼리 서로 덮어썼다. 그 파일들에는 어느 프로젝트 소유인지 표시가 없다. 그것을 현재 프로젝트의 활성 기준으로 옮기면 남의 결정이 이쪽 기준으로 둔갑하거나, 이미 덮어쓰인 데이터를 올바른 것으로 오인하게 된다. 오염된 데이터를 옮기는 것은 구제가 아니라 찌꺼기를 나르는 일이다.
+
+캐시에 남은 파일은 그 자리에 두고, 사용자가 내용을 직접 확인한 뒤 필요한 것만 새 인터뷰의 입력으로 쓴다. 도구는 관여하지 않는다.
 
 ## 훅 동작
 
@@ -160,16 +164,22 @@ triggers: ["목소리", "voice", "S-A", "S-B", "클로징"]
 
 오탐이 이 훅의 유일한 실패 모드다. 신호가 모호하면 침묵한다.
 
-### Stop (`hooks/session-end.mjs`, `hooks/stop-failure.mjs`)
+### Stop (`hooks/session-end.mjs`)
 
-두 가지를 차단한다.
+차단은 **오직 이 훅에서만** 일어난다. 두 가지를 막는다.
 
 1. 인터뷰가 활성이고 미완결 → 남은 갈림길 수를 세어 차단
 2. 이번 세션에 활성 기준의 적용 대상 산출물을 썼는데 준수 검사를 안 돌림 → 실행할 명령과 함께 차단
 
-**같은 사유로는 세션당 한 번만 차단한다.** 두 번째 시도는 경고만 남기고 통과시킨다. 무한 차단은 세션 종료를 불가능하게 만든다.
+기존 구현을 그대로 쓴다. `session-end.mjs:655-665`가 이미 사유 문자열을 stderr에 쓰고 exit 2로 차단하며, 차단 직전에 가드 파일을 써서 **두 번째 시도는 통과시킨다**. 초안에서 새로 설계했던 "세션당 한 번만 차단"은 이미 존재하는 동작이므로 새로 만들지 않고 사유만 추가한다.
 
 `enforcement: none` 기준의 개수를 함께 보고한다.
+
+### StopFailure (`hooks/stop-failure.mjs`) — 차단하지 않는다
+
+이 훅에는 게이트를 두지 않는다. 현재 계약이 `Exit 0 always — this hook must never block or error out visibly`(`stop-failure.mjs:10`)이고 두 종료 경로 모두 `process.exit(0)`이다. 여기에 차단 책임을 배치하면 구현자가 문서대로 작업해도 게이트가 작동하지 않는다.
+
+역할은 관측과 복구로 한정한다. 차단 사유가 발생했다는 사실의 기록까지만 담당한다.
 
 ### PreCompact / PostCompact (`hooks/compaction.mjs`)
 
@@ -187,7 +197,24 @@ node scripts/standard-check.mjs <대상 경로> [--standard <id>]
 
 ### 검사 종류
 
-**shell** — 명령을 실행하고 종료코드로 판정한다. 정규식, 유사도, 길이, 포맷 등 기계적으로 판정 가능한 모든 것.
+**builtin** — scc가 배포하는 고정 검사기를 ID로 지정하고 구조화된 인수를 넘긴다. **임의의 셸 문자열은 받지 않는다.**
+
+| 검사기 ID | 인수 | 판정 |
+|---|---|---|
+| `regex-absent` | `pattern`, `flags` | 대상에 패턴이 나타나면 실패 |
+| `regex-present` | `pattern`, `flags` | 패턴이 없으면 실패 |
+| `length-between` | `unit` (`char`\|`word`), `min`, `max` | 범위 밖이면 실패 |
+| `similarity-below` | `a`, `b` (섹션 선택자), `threshold` | 두 구간이 임계치보다 유사하면 실패 |
+| `frontmatter-equals` | `field`, `value` | 프론트매터 값이 다르면 실패 |
+
+```yaml
+checks:
+  - kind: builtin
+    checker: similarity-below
+    args: { a: "S-A#closing", b: "S-B#closing", threshold: 0.8 }
+```
+
+기준 문서는 사용자 프로젝트에 있고 저장소를 통해 전파될 수 있다. `run: <문자열>`을 실행하는 설계는 기준 문서를 임의 코드 실행 통로로 만든다. 변조되거나 신뢰할 수 없는 저장소를 연 사용자가 Stop 훅 안내를 따르다 그대로 실행하게 된다. 목록에 없는 검사가 필요하면 검사기를 scc에 추가하는 것이 유일한 경로이며, 프로젝트가 자기 검사기 코드를 실행시키는 길은 열지 않는다.
 
 **adversarial** — 명시된 질문을 독립 리뷰어에게 넘기고 판정을 받는다. 목소리·톤처럼 기계 판정이 불가능한 것에 한한다. 리뷰어 실행 흔적이 로그에 남아야 성립하며, 흔적 없는 "검토했음"은 통과로 계산하지 않는다.
 
@@ -195,7 +222,9 @@ node scripts/standard-check.mjs <대상 경로> [--standard <id>]
 
 ### 검사의 자기 증명
 
-모든 `kind: shell` 검사는 반드시 실패하는 픽스처를 하나 동봉한다. 검사가 그 픽스처에 대해 통과하면 검사 자체가 고장 난 것이므로 실행기가 그 검사를 무효로 표시하고 보고한다. 항상 통과하는 검사는 없는 검사보다 나쁘다.
+고정 검사기는 각각 반드시 실패하는 픽스처를 scc 저장소 안에 동봉하고, 그 픽스처를 통과시키면 테스트가 깨진다. 검사기가 "아니오"를 말할 수 있다는 것을 검사기 자신이 증명해야 한다. 항상 통과하는 검사는 없는 검사보다 나쁘다.
+
+픽스처가 scc 쪽에 있는 것은 의도적이다. 프로젝트가 픽스처를 제공하게 하면 그것 역시 신뢰 경계를 넘는 입력이 된다.
 
 ### 기준 충돌
 
@@ -222,9 +251,34 @@ superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 �
 
 ### 검사 실행기
 
-- 실패 픽스처를 통과시키는 검사를 무효로 표시하는가
+- 실패 픽스처를 통과시키는 검사기를 무효로 표시하는가
 - `enforcement: none` 기준을 통과로 세지 않고 보고하는가
 - 흔적 없는 adversarial 판정을 통과로 세지 않는가
+- **목록에 없는 `checker` ID를 거부하는가**
+- **`run` 같은 자유 문자열 필드가 들어오면 무시하지 않고 오류로 거부하는가** — 조용히 무시하면 기준 작성자가 실행된다고 착각한다
+
+### 신뢰 경계
+
+- 셸 문자열을 실행하는 경로가 코드에 존재하지 않는가 (부재 테스트)
+- 레거시 캐시를 읽거나 옮기는 경로가 존재하지 않는가 (부재 테스트)
+
+### 검수 독립성
+
+- 상류 참여 에이전트가 critic 후보에서 제외되는가
+- 제외 후 정족수가 모자라면 통과가 아니라 부족으로 보고하는가
+- 정족수 계산이 선언이 아니라 실행 로그를 읽어서 이뤄지는가
+
+### 종료 훅 계약
+
+- `stop-failure.mjs`가 여전히 항상 exit 0인가 (차단 책임이 새어 들어오지 않았는지 고정)
+- `session-end.mjs`가 exit 2와 사유로 차단하는가
+- 차단 후 두 번째 시도가 기존 가드 파일로 통과하는가
+
+### scout 레인
+
+- 한 레인이 실패해도 나머지 레인으로 브리프를 완성하는가
+- 실패한 레인이 브리프에 기록되는가
+- 인용 URL 기준 중복 제거가 레인 간에 동작하는가
 
 ### 마이그레이션
 
@@ -283,7 +337,26 @@ superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 �
 - **입력**: 주제, URL, 키워드
 - **산출**: 출처 링크가 달린 리서치 브리프
 - **안 하는 것**: 해석하지 않는다(analyst의 일). 초안을 쓰지 않는다(editor의 일)
-- **기계**: 웹 검색, 차단 우회 fetch 체인
+- **기계**: 웹 검색, 차단 우회 fetch 체인, 병렬 외부 레인
+
+**병렬 레인을 승계한다.** 현행 `research/SKILL.md:35`는 mmbridge를 내부 리서처와 병렬로 띄우고, `:52`에서 인용 URL을 중복 제거해 소스로 합산한다. scout를 Eevee 단독 흐름으로 정의하면 이 병렬성이 사라진다. scout 계약은 다음을 유지한다.
+
+| 레인 | 실행 | 조건 |
+|---|---|---|
+| 내부 | Eevee (Jina, 없으면 WebSearch+WebFetch) | 항상 |
+| mmbridge | `mmbridge research` (Kimi) | `--depth medium\|deep` |
+| 외부 3자 | acpx 경유 별도 모델 | 아래 참조 |
+
+세 레인은 병렬로 돌고, 결과는 인용 URL 기준으로 중복 제거해 합산한다. 한 레인이 실패해도 나머지로 진행하며, 실패 사실은 브리프에 기록한다. 레인별 타임아웃을 두고 초과분은 버린다.
+
+**외부 3자 레인 — 검증된 것과 안 된 것.** 사용자가 DeepSeek V4 Flash를 리서처로 요청했다. 조사 결과는 다음과 같다.
+
+- mmbridge 어댑터에 deepseek는 **없다**. `mmbridge_doctor` 기준 설치된 것은 kimi, acpx, qwen, codex, opencode, droid, claude뿐이다.
+- 경로는 `opencode`에 있다. `opencode models`가 `opencode/deepseek-v4-flash`, `-free`, `-pro`를 노출한다.
+- 호출 형태는 `acpx --model opencode/deepseek-v4-flash --format text opencode "<프롬프트>"`이며, 전역 옵션이 에이전트 하위명령보다 **앞에** 와야 한다. 세션이 없으면 `acpx opencode sessions new`가 먼저 필요하다.
+- **연결까지는 확인했으나 응답은 못 받았다.** 스모크 테스트에서 세션 로드와 에이전트 재연결은 성공했고 `RUNTIME: Internal error: You're out of extra usage`로 종료했다. 즉 `--model`이 DeepSeek으로 라우팅됐는지 확인되지 않았다.
+
+따라서 이 레인은 **구현 시 검증 항목**으로 남긴다. 스모크 테스트가 `opencode/deepseek-v4-flash`로 실제 응답을 받는 것을 확인하기 전에는 기본 활성화하지 않는다. 라우팅이 확인되지 않으면 mmbridge/Kimi 레인만으로 동작한다.
 
 #### analyst — 모아온 것을 구조로 바꾼다
 
@@ -401,8 +474,8 @@ superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 �
 
 | 역할 | 부리는 에이전트 |
 |---|---|
-| coach | 없음 (사용자와 직접 대화). 챌린지 모드에서 absol을 빌려 쓴다 |
-| scout | eevee |
+| coach | 없음 (사용자와 직접 대화). 챌린지 모드는 아래 격리 규약을 따른다 |
+| scout | eevee + mmbridge/Kimi 레인 + (검증 시) DeepSeek 레인 |
 | analyst | alakazam, mewtwo |
 | editor | smeargle (초안), ditto (수정) |
 | critic | xatu, absol, porygon, jigglypuff, unown |
@@ -412,6 +485,21 @@ superpowers `writing-skills`의 원칙을 채택한다: 실패하는 테스트 �
 | discover 도구 전용 | noctowl, magnezone, deoxys |
 
 17개 전부 자리가 있고 고아가 없다. 역할 구분이 기존 편성과 1:1에 가깝게 맞는다는 것은 이 분해가 임의가 아니라는 증거다.
+
+### 상류 참여자는 검수에 들어갈 수 없다
+
+핵심 불변식은 **작성에 관여한 자가 그것을 통과시키지 못한다**는 것이다. 이 불변식은 에이전트 재사용으로 조용히 깨진다.
+
+초안에서 coach의 챌린지 모드가 absol을 빌려 쓴다고 적었는데, absol은 critic 정족수에도 들어 있다. 그대로 두면 absol이 기준 형성에 관여한 뒤 같은 산출물의 검수 표를 던진다. 형식만 적대 검수이고 실질은 자기 검수다.
+
+규약은 다음과 같다.
+
+1. 어떤 기준 문서의 형성에 참여한 에이전트는 그 기준을 대상으로 하는 critic 후보와 정족수에서 **제외한다**.
+2. 참여 이력은 실행 로그에 남기며, 정족수 계산은 그 로그를 읽어서 한다. 선언이 아니라 기록으로 판정한다.
+3. 제외 후 정족수가 모자라면 통과시키지 않고 부족을 보고한다. 인원을 맞추려고 제외를 완화하지 않는다.
+4. `adversarial` 검사도 같은 규칙을 받는다. 흔적 없는 판정을 통과로 세지 않는다는 규칙과 함께 적용된다.
+
+coach의 챌린지 모드는 이 제약 아래에서만 absol을 쓴다. 실질적으로는 coach가 챌린지에 absol을 쓴 경우 그 기준의 critic에서 absol이 빠지며, 남은 네 리뷰어(xatu, porygon, jigglypuff, unown)로 정족수를 계산한다.
 
 coach와 trainer에 전용 에이전트가 없는 것은 결함이 아니다. coach는 사용자와 직접 대화해야 하는 역할이며 — 실사용에서 밥값을 한 이유가 그것이다 — trainer는 격리 워크트리에서 러너가 수행한다.
 
@@ -433,3 +521,19 @@ coach와 trainer에 전용 에이전트가 없는 것은 결함이 아니다. co
 이 저장소에서 여러 Claude 세션이 동시에 작업한 이력이 있다. 설계 중 실제로 작업 트리가 다른 세션의 브랜치로 옮겨져 커밋 하나가 고아가 되었고 (reflog `HEAD@{4}` 이후), `git worktree`로 복구했다.
 
 구현은 격리된 워크트리에서 진행한다. 공유 작업 디렉터리에서는 편집이 소리 없이 사라진다.
+
+## 찌꺼기 정리
+
+작업이 끝날 때 아래가 남아 있으면 완료가 아니다.
+
+| 대상 | 정체 | 처리 |
+|---|---|---|
+| `.gjc/` (프로젝트) | 다른 도구의 상태 — specs 3, state 4, plans, ultragoal | 제거 |
+| `.omo/`, `excalidraw.log`, `.DS_Store` | 무관한 도구 잔해 | 제거 및 `.gitignore` 반영 |
+| `soul_*` MCP 도구 6개 | 호출자가 없다. 문서와 CHANGELOG에만 이름이 있다 | librarian에 연결하거나 도구를 제거. 방치하지 않는다 |
+| `tests/skill-tests/` 22개 | 단언문 없는 2026-03 출력물 | 제거. 저장된 출력은 테스트가 아니다 |
+| 플러그인 캐시의 `.gjc/specs/` | 이전하지 않기로 한 레거시 | 손대지 않고 그대로 둔다. 도구가 읽지 않는다 |
+| `feat/decision-standards` 워크트리 | 격리 작업 공간 | 병합 후 `git worktree remove`로 회수 |
+| acpx 세션 | 스모크 테스트로 생성 | 생성한 즉시 `sessions close`로 회수 (이번 조사에서 회수 완료) |
+
+부재 테스트로 고정할 수 있는 항목은 고정한다. 목록으로만 남기면 다음 작업에서 다시 쌓인다.
