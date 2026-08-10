@@ -48,7 +48,6 @@ test("coach command, skill, and docs expose a self-serve pending-approval path",
 
   for (const [label, content] of Object.entries({ command, skill, docs })) {
     assert.match(content, /coach-runner\.mjs/, `${label} should document the runner path`);
-    assert.match(content, /Round 0|topology/i, `${label} should document topology confirmation`);
     assert.match(content, /approval/i, `${label} should document approval gating`);
     assert.match(content, /\.scc\/standards\//, `${label} should document where a settled fork lands`);
     assert.match(content, /record-fork/, `${label} should name the command that records a fork`);
@@ -57,6 +56,13 @@ test("coach command, skill, and docs expose a self-serve pending-approval path",
     assert.doesNotMatch(content, /ralplan|ultragoal/i, `${label} must not offer commands this plugin lacks`);
     assert.doesNotMatch(content, /\.gjc\//, `${label} must not revive the .gjc namespace`);
     assert.doesNotMatch(content, /\/second-claude-code\b/, `${label} must not revive the legacy /second-claude-code namespace`);
+  }
+
+  // The runner's Round 0 gate is documented where the flow is documented. SKILL.md deliberately
+  // does not restate the runner's surface: an enumeration in prose drifts the moment the runner
+  // changes, which is the drift the .gjc assertions above were catching.
+  for (const [label, content] of Object.entries({ command, docs })) {
+    assert.match(content, /Round 0|topology/i, `${label} should document topology confirmation`);
   }
 
   assert.match(command, /docs\/skills\/coach\.md/);
@@ -83,6 +89,20 @@ test("the coach skill keys on divergence, states a recipe, and stays short", () 
   assert.ok(description, "SKILL.md should declare a description");
   assert.match(description, /^Use when /);
   assert.doesNotMatch(description, /record-fork|STANDARD\.md|coach-runner/, "description should state triggers, not process");
+
+  // Over-firing is this plugin's established failure mode, so the description states when NOT to
+  // fire as well as when to. Vagueness is not a fork: it takes a clarifying question.
+  assert.match(description, /Do not use/, "description should carry an anti-trigger");
+  assert.match(description, /vague|underspecified/i, "the anti-trigger should rule out mere vagueness");
+  assert.ok(description.length <= 500, `description should stay at or under 500 characters (got ${description.length})`);
+
+  // A mechanical check runs before any judgement. resolveProjectRoot throws when the project root
+  // is inside the plugin install, and there is nowhere legitimate to write a standard in that case.
+  const checkAt = body.indexOf("coach-runner.mjs status");
+  const forkTestAt = body.indexOf("different defensible answer");
+  assert.ok(checkAt >= 0, "SKILL.md should open with the runnable precondition check");
+  assert.ok(checkAt < forkTestAt, "the precondition check should come before any judgement");
+  assert.match(body, /plugin-install-path error/, "SKILL.md should name the failure the check catches");
 
   // Sixteen of this plugin's eighteen skills answer a discipline failure that did not occur here,
   // at length. The recipe has nothing to negotiate with, so it does not need the length.

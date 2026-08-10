@@ -1,16 +1,24 @@
 ---
 name: coach
-description: "Use when a request has more than one defensible direction and no active standard covers it — a fork that has to be settled before work starts"
+description: "Use when a request has more than one defensible direction and no active standard covers it — a fork that has to be settled before work starts. Do not use merely because a request is vague or underspecified; vagueness takes a clarifying question, not a standard."
 effort: high
 ---
 
 # Coach
 
-A fork with more than one defensible direction produces a standard before it produces an artifact.
+Before anything else, confirm a standard can be written here:
+
+```bash
+node scripts/coach-runner.mjs status --json
+```
+
+Exit 1 with the plugin-install-path error means the resolved project root sits inside the plugin install, and no standard can be recorded in this location. Say that plainly and stop. Do not draft around it, and do not put the record somewhere else.
+
+When the check passes: a fork with more than one defensible direction produces a standard before it produces an artifact.
 
 ## What counts as a fork
 
-The test is not "am I unsure?". You can be entirely confident and still be one of several confident answers. The test is:
+The test is not "am I unsure?". You can be entirely confident and still be one of several confident answers. Nor is it "is this vague?" — a request that is merely underspecified takes a clarifying question and nothing more. The test is:
 
 > Could another competent agent, reading the same evidence, reach a different defensible answer?
 
@@ -27,9 +35,9 @@ If yes, this is a fork, and it gets settled on the record before anything is dra
 
 ## Runtime
 
-`node scripts/coach-runner.mjs` — `start`, `answer`, `status`, `resume`, `record-fork`, `finalize`, `clear`. The runner owns state under the project's `.scc/`, Round 0 topology confirmation, ambiguity scoring, and standard rendering.
+`scripts/coach-runner.mjs` is the authority for its own command syntax. It ships no usage output, so take syntax from the runner itself rather than from a list here, which drifts the moment the runner changes.
 
-`finalize` returns the recorded standard ids plus three approval options — `confirm`, `continue`, `plan-mode`. Coach stops at that gate; running the work is the user's call.
+Two things the runner cannot tell you: its state and its standards live under the project's `.scc/`, never under the plugin install; and `finalize` stops at an approval gate — `confirm`, `continue`, `plan-mode` — rather than running the work. That call stays the user's.
 
 See `docs/skills/coach.md` for scoring, state, artifacts, and troubleshooting.
 
