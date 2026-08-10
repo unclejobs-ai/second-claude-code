@@ -25,9 +25,17 @@ function canonical(inputPath) {
     const next = resolve(result, component);
     try {
       result = realpathSync(next);
-    } catch {
-      // Doesn't exist yet; keep going from the last resolved prefix.
-      result = next;
+    } catch (err) {
+      if (err && err.code === "ENOENT") {
+        // Doesn't exist yet; keep going from the last resolved prefix.
+        result = next;
+        continue;
+      }
+      // Anything else (EACCES on an unreadable ancestor, ELOOP, ENOTDIR, ...)
+      // must not silently fall back to unresolved `resolve()` semantics for
+      // the rest of the path — that would reopen the symlink/case bypass this
+      // guard exists to close. Fail closed instead of guessing.
+      throw new Error(`경로를 확인할 수 없습니다: ${next} (${err && err.code}). ${err && err.message}`);
     }
   }
 

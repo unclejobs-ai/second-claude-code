@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, rmSync, symlinkSync, realpathSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, symlinkSync, realpathSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -134,5 +134,41 @@ test("a project directory that does not exist yet still resolves", () => {
   } finally {
     rmSync(project, { recursive: true, force: true });
     rmSync(install, { recursive: true, force: true });
+  }
+});
+
+test("an unreadable ancestor does not make the guard fail open", (t) => {
+  if (typeof process.getuid === "function" && process.getuid() === 0) {
+    t.skip("chmod 000 does not restrict access when running as root");
+    return;
+  }
+
+  const install = mkdtempSync(join(tmpdir(), "scc-plugin-"));
+  const holder = mkdtempSync(join(tmpdir(), "scc-holder-"));
+  try {
+    mkdirSync(join(install, "scripts", "lib"), { recursive: true });
+    mkdirSync(join(install, "nested"), { recursive: true });
+    const moduleUrl = pathToFileURL(join(install, "scripts", "lib", "project-root.mjs")).href;
+    const link = join(holder, "link-into-plugin");
+    symlinkSync(join(install, "nested"), link, "dir");
+
+    // Sanity check: normally this is caught.
+    assert.equal(isInsidePluginInstall(link, moduleUrl), true);
+
+    // Make the symlink's containing directory unreadable. A stat/realpath on
+    // `link` now fails with EACCES, not ENOENT -- the guard must not treat
+    // that the same as "doesn't exist yet" and silently fall back to
+    // unresolved comparison.
+    chmodSync(holder, 0o000);
+    try {
+      const result = isInsidePluginInstall(link, moduleUrl);
+      assert.equal(result, true, "must not fail open to false on a permission error");
+    } catch {
+      // Throwing is also an acceptable fail-closed response.
+    }
+  } finally {
+    chmodSync(holder, 0o700);
+    rmSync(install, { recursive: true, force: true });
+    rmSync(holder, { recursive: true, force: true });
   }
 });
