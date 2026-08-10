@@ -168,22 +168,31 @@ function main() {
   lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
   lines.push("");
 
-  const allStandards = listActiveStandards(projectRoot);
-  const standards = allStandards.slice(0, 12);
-  if (standards.length > 0) {
-    lines.push("## 활성 기준");
-    lines.push("");
-    for (const s of standards) {
-      const when = s.review_when ? ` · 재검토: ${s.review_when}` : "";
-      const unenforced = s.enforcement === "none" ? " · 검사없음" : "";
-      lines.push(`- ${s.id} — ${s.title}${when}${unenforced}`);
+  try {
+    const allStandards = listActiveStandards(projectRoot);
+    const standards = allStandards.slice(0, 12);
+    if (standards.length > 0) {
+      lines.push("## 활성 기준");
+      lines.push("");
+      for (const s of standards) {
+        const id = sanitize(s.id);
+        // 15 chars, not the 200-char default: up to 12 lines share one 200-word
+        // budget, so per-field length has to stay short enough for all 12 to fit.
+        const title = sanitize(s.title, 15);
+        const reviewWhen = sanitize(s.review_when, 15);
+        const when = reviewWhen ? ` · 재검토: ${reviewWhen}` : "";
+        const unenforced = s.enforcement === "none" ? " · 검사없음" : "";
+        lines.push(`- ${id} — ${title}${when}${unenforced}`);
+      }
+      if (allStandards.length > standards.length) {
+        lines.push(`- 그 외 ${allStandards.length - standards.length}개 더 있음 (표시 상한 12개)`);
+      }
+      lines.push("");
+      lines.push("실행 재료는 해당 기준에 걸리는 작업을 시작할 때 읽는다.");
+      lines.push("");
     }
-    if (allStandards.length > standards.length) {
-      lines.push(`- 그 외 ${allStandards.length - standards.length}개 더 있음 (표시 상한 12개)`);
-    }
-    lines.push("");
-    lines.push("실행 재료는 해당 기준에 걸리는 작업을 시작할 때 읽는다.");
-    lines.push("");
+  } catch {
+    // Non-fatal — standards injection errors must never break session start.
   }
 
   lines.push(

@@ -47,7 +47,7 @@ decided: ${decided}
 review_when: ${JSON.stringify(fork.review_when || "")}
 supersedes: ${supersedes ? JSON.stringify(supersedes) : "null"}
 triggers: ${jsonArray(fork.triggers)}
-checks: []
+checks: ${jsonArray(checks)}
 ---
 
 # ${fork.title}
@@ -136,7 +136,14 @@ export function listActiveStandards(root) {
     if (!entry.isDirectory()) continue;
     const path = standardPath(root, entry.name);
     if (!existsSync(path)) continue;
-    const body = readFileSync(path, "utf8");
+    let body;
+    try {
+      body = readFileSync(path, "utf8");
+    } catch {
+      // One unreadable record (STANDARD.md exists as a directory, a permission
+      // error, ...) must not silence every other standard on file.
+      continue;
+    }
     const frontmatter = frontmatterOf(body);
     if (readField(frontmatter, "status") !== "active") continue;
     const title = body.match(/^# (.+)$/m);

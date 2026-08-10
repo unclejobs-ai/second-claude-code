@@ -238,7 +238,7 @@ function buildCarryOverLines(projectRoot) {
   const lines = [];
   const standards = listActiveStandards(projectRoot);
   if (standards.length > 0) {
-    lines.push(`Active standards: ${standards.map((s) => s.id).join(", ")}`);
+    lines.push(`Active standards: ${standards.map((s) => sanitize(s.id)).join(", ")}`);
   }
   const coach = readState(projectRoot);
   if (coach && coach.status !== "pending_approval") {

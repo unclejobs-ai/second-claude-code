@@ -66,6 +66,12 @@ function pluginRootFrom(moduleUrl) {
   return canonical(resolve(dirname(fileURLToPath(moduleUrl)), "..", ".."));
 }
 
+/**
+ * Throws on any filesystem error from `canonical()` other than ENOENT (e.g.
+ * EACCES on an unreadable ancestor, ELOOP, ENOTDIR) — it fails closed rather
+ * than guessing. Callers (including the `coach status --json` precondition
+ * check) must let that throw surface rather than swallow it.
+ */
 export function isInsidePluginInstall(root, moduleUrl = import.meta.url) {
   const pluginRoot = pluginRootFrom(moduleUrl);
   const target = canonical(root);

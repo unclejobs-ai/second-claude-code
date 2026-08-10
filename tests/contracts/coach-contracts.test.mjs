@@ -98,11 +98,20 @@ test("the coach skill keys on divergence, states a recipe, and stays short", () 
 
   // A mechanical check runs before any judgement. resolveProjectRoot throws when the project root
   // is inside the plugin install, and there is nowhere legitimate to write a standard in that case.
-  const checkAt = body.indexOf("coach-runner.mjs status");
+  const checkAt = body.indexOf("coach-runner.mjs");
   const forkTestAt = body.indexOf("different defensible answer");
   assert.ok(checkAt >= 0, "SKILL.md should open with the runnable precondition check");
   assert.ok(checkAt < forkTestAt, "the precondition check should come before any judgement");
   assert.match(body, /plugin-install-path error/, "SKILL.md should name the failure the check catches");
+
+  // The precondition is read and run from a user project directory, never from the plugin's own
+  // checkout — a bare relative path resolves against the caller's cwd and only "worked" before by
+  // accident, the exact bug this phase closed (see C3, whole-branch review, 2026-08-10).
+  assert.match(
+    body,
+    /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/coach-runner\.mjs" status --json/,
+    "the precondition check should resolve the runner via CLAUDE_PLUGIN_ROOT, not a path relative to the caller's cwd"
+  );
 
   // Sixteen of this plugin's eighteen skills answer a discipline failure that did not occur here,
   // at length. The recipe has nothing to negotiate with, so it does not need the length.

@@ -12,6 +12,7 @@
 
 import { readFileSync } from "fs";
 import { listActiveStandards } from "../scripts/lib/standard-record.mjs";
+import { sanitize } from "./lib/utils.mjs";
 
 function readHookPayload() {
   if (process.stdin.isTTY) return null;
@@ -46,14 +47,22 @@ const hookPayload = readHookPayload();
 const raw = extractPrompt(hookPayload) || process.env.USER_PROMPT || "";
 const projectRoot = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-const hits = listActiveStandards(projectRoot).filter((standard) =>
-  (standard.triggers || []).some((trigger) => trigger && raw.includes(trigger))
-);
+let hits = [];
+try {
+  hits = listActiveStandards(projectRoot).filter((standard) =>
+    (standard.triggers || []).some((trigger) => trigger && raw.includes(trigger))
+  );
+} catch {
+  // Non-fatal — a malformed standard record must not break every prompt.
+  hits = [];
+}
 
 if (hits.length > 0) {
   const lines = ["이 요청이 활성 기준의 적용 범위에 닿습니다.", ""];
   for (const hit of hits) {
-    lines.push(`- **${hit.id}** — ${hit.title}`);
+    const id = sanitize(hit.id);
+    const title = sanitize(hit.title);
+    lines.push(`- **${id}** — ${title}`);
     lines.push(`  ${hit.path}`);
   }
   lines.push("");

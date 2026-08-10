@@ -18,7 +18,15 @@ function fork(id, title) {
 function runHook(root) {
   return execFileSync("node", [HOOK], {
     encoding: "utf8",
-    env: { ...process.env, CLAUDE_PROJECT_DIR: root },
+    env: {
+      ...process.env,
+      CLAUDE_PROJECT_DIR: root,
+      // Isolate from this machine's real plugin state (loop/daemon/etc. left
+      // over from dogfooding) and pin capabilities, so output — and the word
+      // count the budget test below measures — depends only on the fixture.
+      CLAUDE_PLUGIN_DATA: join(root, ".plugin-data"),
+      SECOND_CLAUDE_CAPABILITIES: '["git","node"]',
+    },
     input: "{}",
   });
 }
@@ -61,8 +69,18 @@ test("an unfinished interview is announced exactly once, under Resumed State", (
 
 test("the standards block stays within its 200-word budget", () => {
   withRoot((root) => {
-    for (let i = 0; i < 20; i += 1) {
-      writeStandard(root, fork(`std-${i}`, `기준 ${i}`), { now: NOW });
+    // Plausible record lengths, not the near-empty "when"/"기준 0" fixtures
+    // `fork()` uses elsewhere: a 12-word title and a 15-word review condition,
+    // repeated across the full 12-standard display cap — the shape a real
+    // project's `.scc/standards/` would actually reach.
+    const title = Array.from({ length: 12 }, (_, j) => `단어${j}`).join(" ");
+    const reviewWhen = Array.from({ length: 15 }, (_, j) => `조건${j}`).join(" ");
+    for (let i = 0; i < 12; i += 1) {
+      writeStandard(
+        root,
+        { id: `std-${i}`, title, chosen: "c", rejected: [], payload: "", review_when: reviewWhen, triggers: [`std-${i}`] },
+        { now: NOW }
+      );
     }
     const out = runHook(root);
     const block = out.split("## 활성 기준")[1] || "";
