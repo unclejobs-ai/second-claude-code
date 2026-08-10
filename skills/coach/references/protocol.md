@@ -1,12 +1,12 @@
-# Deep Interview Protocol
+# Coach Protocol
 
 ## Phase 0: threshold resolution
 
-Resolve `gjc.deepInterview.ambiguityThreshold` before any user-facing interview text, state write, topology question, or score. Precedence is project settings, user settings, then default `0.05`. Persist both `threshold` and `threshold_source`.
+Resolve `scc.coach.ambiguityThreshold` before any user-facing text, state write, topology question, or score. Precedence is project settings, user settings, then default `0.05`. Persist both `threshold` and `threshold_source`.
 
 ## Phase 1: initialization
 
-Create interview state with a prompt-safe initial idea, inferred language, project type, threshold metadata, empty rounds, and pending topology. Brownfield interviews must gather repository facts before asking the user about codebase choices.
+Read `.scc/standards/*/STANDARD.md` first; a fork already settled there is cited rather than reopened. Then create state with a prompt-safe initial idea, inferred language, project type, threshold metadata, empty rounds, and pending topology. Brownfield runs must gather repository facts before asking the user about codebase choices.
 
 ## Round 0: topology gate
 
@@ -31,10 +31,10 @@ Use each mode at most once:
 - Round 6+: simplifier, to remove accidental complexity.
 - Round 8+ with high ambiguity: ontologist, to stabilize the core entity.
 
-## Phase 4: spec crystallization
+## Phase 4: fork recording
 
-When ambiguity is at or below threshold, or the user accepts early-exit risk, render the final spec. Include metadata, clarity breakdown, topology, goal, constraints, non-goals, acceptance criteria, resolved assumptions, technical context, ontology, convergence, and transcript.
+Each settled fork becomes one standard. Call `record-fork --file <path>` with the fork id, title, chosen direction, rejected directions and why each lost, payload, `review_when`, and triggers. The runner writes `.scc/standards/<id>/STANDARD.md` and appends the id to state. Record before drafting the artifact, not after.
 
 ## Phase 5: approval bridge
 
-Return pending approval options. The recommended path is ralplan consensus refinement. Ultragoal or team execution requires explicit selection after the spec exists. Deep Interview itself does not implement.
+`finalize` returns the recorded standard ids and three approval options: `confirm`, `continue`, `plan-mode`. The recommended path is `confirm`. Coach itself does not implement.

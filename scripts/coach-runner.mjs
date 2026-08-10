@@ -406,7 +406,7 @@ export function renderProgress(state) {
   };
 }
 
-export function renderSpec(state, { title = "Deep Interview Spec", generatedAt = new Date() } = {}) {
+export function renderSpec(state, { title = "Coach Briefing", generatedAt = new Date() } = {}) {
   const ko = state.language?.code === "ko";
   const labels = ko
     ? {
@@ -624,7 +624,7 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     const answer = flags.answer || positionals.join(" ");
     if (!answer.trim()) throw new Error("answer requires text");
     const current = adapter.read();
-    if (!current) throw new Error("no active deep interview state");
+    if (!current) throw new Error("no active coach state");
     const confirmed = current.topology.status === "pending" ? confirmTopology(current) : current;
     const next = applyAnswer(confirmed, answer, { now: deps.now || new Date() });
     adapter.write(next);
@@ -633,7 +633,7 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
 
   if (command === "finalize") {
     const current = adapter.read();
-    if (!current) throw new Error("no active deep interview state");
+    if (!current) throw new Error("no active coach state");
     const next = finalizeState(current, { now: deps.now || new Date() });
     adapter.write(next);
     return output(
@@ -655,7 +655,7 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     if (!fork.id) throw new Error("record-fork requires the fork to declare an id");
 
     const current = adapter.read();
-    if (!current) throw new Error("no active coach interview");
+    if (!current) throw new Error("no active coach state");
 
     const path = writeStandard(root, fork, { now: deps.now || new Date() });
     const forks = Array.isArray(current.forks) ? current.forks : [];

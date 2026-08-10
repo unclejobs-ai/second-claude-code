@@ -1,4 +1,4 @@
-# Deep Interview Gotchas
+# Coach Gotchas
 
 ## Skipping Round 0 breaks sibling coverage
 
@@ -10,7 +10,11 @@ For brownfield work, inspect the repo first. Ask the user to decide only after c
 
 ## A low ambiguity score is not execution approval
 
-Deep Interview ends at a spec plus approval options. Even a clear spec must not trigger ralplan, ultragoal, team, commits, formatters, or product source edits from the interview runtime.
+Coach ends at recorded standards plus approval options. Even a clear picture must not trigger commits, formatters, or product source edits from the coach runtime.
+
+## Confidence is not the same as convergence
+
+A confident answer and a settled fork are different things. Three agents can each be sure and each be somewhere else. The question that catches this is whether another competent agent could answer differently on the same evidence.
 
 ## Auto-mode output is advisory until validated
 

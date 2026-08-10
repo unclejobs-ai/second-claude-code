@@ -1,4 +1,4 @@
-# Deep Interview Fixtures
+# Coach Fixtures
 
 ## Four-component fixture
 
@@ -17,7 +17,7 @@ The detailed Review UI must not replace the less-detailed siblings. Later scorin
 
 ## Korean language fixture
 
-Use escaped Hangul strings in JavaScript tests so repository-wide Hangul policy remains intact while runtime output still proves Korean preservation. The runtime test should assert Korean headings and approval labels after finalization into a temp root.
+Use escaped Hangul strings in JavaScript tests so repository-wide Hangul policy remains intact while runtime output still proves Korean preservation. The runtime test should assert Korean headings and approval labels after finalization against a temp root.
 
 ## Auto-mode validator fixture
 
@@ -44,6 +44,22 @@ Valid research response:
 
 Invalid cases must return `{ ok: false, errors }` without throwing: non-object response, `candidates` object instead of array, too few candidates, invalid confidence, blank fallback, and extra keys.
 
+## Fork fixture
+
+```json
+{
+  "id": "voice-two-track",
+  "title": "Two voices, or one",
+  "chosen": "Keep S-A and S-B as separate speakers",
+  "rejected": [{ "label": "Confessional", "why": "Discounts trust retroactively" }],
+  "payload": "### Voice A\nA dry observer.",
+  "review_when": "Two weeks of checkout data are in",
+  "triggers": ["voice", "S-A"]
+}
+```
+
+An id outside `^[a-z0-9][a-z0-9-]{0,63}$` must fail loudly rather than be rewritten, so two distinct decisions cannot collide onto one standard.
+
 ## Approval fixture
 
-Finalization should produce a spec path, `pending_approval` state, and option ids `ralplan`, `ultragoal`, `team`, `continue`. It should not emit workflow execution commands.
+Finalization should produce recorded standard ids, `pending_approval` state, and option ids `confirm`, `continue`, `plan-mode`. It should not emit workflow execution commands.

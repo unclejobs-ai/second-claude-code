@@ -5,7 +5,7 @@
  *
  * Injects core context on session startup:
  * - 18-command overview + routing rules
- * - Active loop/refine/workflow/PDCA/deep-interview state restoration
+ * - Active loop/refine/workflow/PDCA/coach state restoration
  * - Available environment capabilities
  */
 
@@ -111,17 +111,17 @@ function getActiveState() {
     parts.push(`Active workflow: "${name}" (step ${step}/${total})`);
   }
 
-  const deepInterview = readJsonSafe(join(statePath, "deep-interview-active.json"));
-  if (deepInterview) {
-    const status = sanitize(deepInterview.status || "active");
-    const round = Number(deepInterview.round) || 0;
+  const coach = readJsonSafe(join(statePath, "coach-active.json"));
+  if (coach) {
+    const status = sanitize(coach.status || "active");
+    const round = Number(coach.round) || 0;
     const ambiguity =
-      typeof deepInterview.current_ambiguity === "number"
-        ? `${Math.round(deepInterview.current_ambiguity * 10000) / 100}%`
+      typeof coach.current_ambiguity === "number"
+        ? `${Math.round(coach.current_ambiguity * 10000) / 100}%`
         : "?";
-    const specPath = deepInterview.spec_path ? `, spec: ${sanitize(deepInterview.spec_path)}` : "";
+    const forks = Array.isArray(coach.forks) ? coach.forks.length : 0;
     parts.push(
-      `Active deep interview: round ${round}, ambiguity ${ambiguity}, status: ${status}${specPath}. Resume with \`/scc:deep-interview resume\`.`
+      `Active coach run: round ${round}, ambiguity ${ambiguity}, ${forks} standard(s) recorded, status: ${status}. Resume with \`/scc:coach resume\`.`
     );
   }
 
@@ -169,7 +169,7 @@ function main() {
   lines.push("");
   lines.push("| Command | Purpose |");
   lines.push("|---------|---------|");
-  lines.push("| `/scc:deep-interview` | Socratic requirements interview → scored spec → approval-gated handoff |");
+  lines.push("| `/scc:coach` | Settle a fork with more than one defensible direction into a recorded standard |");
   lines.push("| `/scc:pdca` | **PDCA orchestrator** — Plan→Do→Check→Act with quality gates + Action Router |");
   lines.push("| `/scc:research` | Deep autonomous research → structured brief |");
   lines.push("| `/scc:write` | Content production (newsletter, article, shorts, report) |");
@@ -189,7 +189,7 @@ function main() {
   lines.push("| `/scc:unblock` | Zero-key adaptive fetch chain for blocked / WAF-gated URLs |");
   lines.push("");
   lines.push("PDCA cycle: `/scc:pdca` auto-detects phase and chains skills with gates.");
-  lines.push("Or use individual skills: deep-interview, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
+  lines.push("Or use individual skills: coach, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, investigate, translate, batch, soul, viewer.");
   lines.push("Action Router: review failures route by root cause (Plan/Do/Refine).");
   lines.push('Say it naturally — "알아보고 보고서 써줘" routes to full PDCA cycle.');
   lines.push("");

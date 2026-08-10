@@ -1,12 +1,12 @@
 ---
 kind: skill-fragment
-parent: deep-interview
+parent: coach
 name: auto-research-greenfield
 ---
 
 # Auto Research Greenfield Fragment
 
-Internal-only prompt fragment for Deep Interview. This file is not a public skill, command, or `skill://` route.
+Internal-only prompt fragment for Coach. This file is not a public skill, command, or `skill://` route.
 
 ## Purpose
 

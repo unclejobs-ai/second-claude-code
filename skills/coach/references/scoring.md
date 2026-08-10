@@ -1,4 +1,4 @@
-# Deep Interview Scoring
+# Coach Scoring
 
 ## Dimensions
 

@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync } from "no
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { runCli } from "../../scripts/deep-interview-runner.mjs";
+import { runCli } from "../../scripts/coach-runner.mjs";
 import { readState, writeState } from "../../scripts/lib/coach-state.mjs";
 
 function withRoot(fn) {

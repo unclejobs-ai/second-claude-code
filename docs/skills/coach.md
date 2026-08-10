@@ -1,0 +1,101 @@
+# Coach Skill
+
+Coach settles forks. A fork is a request with more than one defensible direction — the test is whether another competent agent, reading the same evidence, could reach a different defensible answer, not whether this one feels uncertain. Coach confirms the scope topology, asks one question per round, scores ambiguity after each answer, records each settled fork as a standard under the project, and stops at approval options.
+
+## Quick example
+
+```bash
+/scc:coach "the voice of these posts is off and I need today's draft"
+
+node scripts/coach-runner.mjs start --idea "Settle the voice direction" --json
+node scripts/coach-runner.mjs answer --answer "The topology looks right" --json
+node scripts/coach-runner.mjs status --json
+node scripts/coach-runner.mjs record-fork --file fork.json --json
+node scripts/coach-runner.mjs finalize --json
+```
+
+**What happens:** the runner resolves the ambiguity threshold, creates resumable state under the project's `.scc/`, locks Round 0 topology, scores each answer, writes one `.scc/standards/<id>/STANDARD.md` per settled fork, and returns approval options. It never runs commits, formatters, or source mutation from the coach runtime.
+
+## When to use
+
+Use `/scc:coach` when:
+
+- the request has two or more directions that are each defensible on the evidence;
+- the evidence supports declining the request as written, and that has to be the user's call rather than yours;
+- multiple components could be built independently and the topology is not stable;
+- a decision made here will constrain later work and needs to survive the session.
+
+Use direct execution when a standard on file already covers the fork, or the request already carries concrete files, symbols, acceptance criteria, or an approved plan.
+
+## Runtime flow
+
+1. Resolve `scc.coach.ambiguityThreshold` from project settings, user settings, or the default `0.05`.
+2. Read `.scc/standards/*/STANDARD.md`. A fork already settled there is followed and cited, not reopened.
+3. Detect brownfield versus greenfield and gather repository facts before asking codebase questions.
+4. Run Round 0 topology confirmation and lock every top-level component.
+5. Ask one question per round, targeting the weakest active component and clarity dimension, with every defensible direction as an option.
+6. Score ambiguity using the greenfield or brownfield weighted formula.
+7. Preserve the session language in questions, options, reports, and standards.
+8. Record each settled fork with `record-fork --file <path>` before drafting the artifact.
+9. Stop at pending approval options: `confirm`, `continue`, `plan-mode`.
+
+## The fork file
+
+`record-fork` reads its input from a file rather than argv, because the payload carries newlines and non-ASCII prose that a shell round-trip mangles.
+
+| Field | Meaning |
+|---|---|
+| `id` | Lowercase, digits and hyphens, 1-64 characters. Becomes the standard directory name. |
+| `title` | What the fork was, in the user's terms. |
+| `chosen` | The direction the user picked. |
+| `rejected` | The other defensible directions, each with `label` and `why` it lost. |
+| `payload` | The content the standard carries forward. |
+| `review_when` | The condition that would reopen the decision. |
+| `triggers` | Phrases that should surface this standard again later. |
+
+## Scoring model
+
+| Project type | Goal | Constraints | Success criteria | Brownfield context |
+|---|---:|---:|---:|---:|
+| Greenfield | 40% | 30% | 30% | - |
+| Brownfield | 35% | 25% | 25% | 15% |
+
+Ambiguity is `1 - weighted_clarity`. The default resolved threshold is `0.05`, but settings may lower or raise it. Multi-component runs use the weakest active component/dimension pair and rotate between tied weak components so one detailed sibling cannot hide unclear siblings.
+
+## State and artifacts
+
+- Runtime state: `<project>/.scc/state/coach.json`.
+- Standards: `<project>/.scc/standards/<id>/STANDARD.md`, one per settled fork.
+- Internal fragments: `skills/coach/references/fragments/auto-research-greenfield.md` and `auto-answer-uncertain.md`.
+- Contract tests: `tests/runtime/coach-runner.test.mjs`, `tests/runtime/coach-cli.test.mjs`, and `tests/contracts/coach-contracts.test.mjs`.
+
+## Safety gates
+
+- Round 0 topology must happen before scored rounds.
+- Multi-component runs must rotate across weak sibling components instead of overfitting to one detailed component.
+- Auto-mode fragments are internal `kind: skill-fragment` prompts only; they are not public commands or `skill://` routes.
+- Auto-mode responses must validate exact shape, non-empty rationale/fallback fields, and `low|medium|high` confidence.
+- Invalid auto-mode output must fall back safely and increment diagnostic failure accounting.
+- Final output is a recorded standard plus approval options, not execution.
+
+## Reference docs
+
+- [Protocol](../../skills/coach/references/protocol.md)
+- [Scoring](../../skills/coach/references/scoring.md)
+- [Fixtures](../../skills/coach/references/fixtures.md)
+- [Troubleshooting](../../skills/coach/references/troubleshooting.md)
+- [Example transcript](../../skills/coach/references/example-transcript.md)
+- [Acceptance checklist](../../skills/coach/references/acceptance-checklist.md)
+- [Gotchas](../../skills/coach/gotchas.md)
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| Coach asks about facts already visible in the repo | Gather brownfield context first and cite file paths or symbols in the next question. |
+| A direction gets picked without the user seeing the alternatives | Ask whether another competent agent could answer differently; if so, put every direction in one question. |
+| Ambiguity does not fall | Target the weakest component/dimension pair and use ontology-style questions if core nouns are unstable. |
+| Session language regresses unexpectedly | Preserve `language.instruction` in state and pass it into question, standard, and option rendering. |
+| Auto-mode response looks plausible but malformed | Reject it through the validator, record `architect_failures`, and continue the manual path. |
+| `record-fork` refuses the id | Ids are `^[a-z0-9][a-z0-9-]{0,63}$`. Give the fork an ASCII id; the title carries the user's wording. |
+| User wants implementation immediately | Record the standard, show the risk if ambiguity is still high, and require explicit execution approval. |

@@ -1,4 +1,4 @@
-# Deep Interview Example Transcript
+# Coach Example Transcript
 
 ## Initial idea
 

@@ -18,7 +18,7 @@ import {
   runCli,
   validateAutoAnswerResponse,
   validateAutoResearchResponse,
-} from "../../scripts/deep-interview-runner.mjs";
+} from "../../scripts/coach-runner.mjs";
 const KO_PREFIX = "\uD55C\uAD6D\uC5B4\uB85C";
 const KO_ANSWER = "\uC131\uACF5 \uAE30\uC900\uC740 \uC0AC\uC6A9\uC790\uAC00 \uD1A0\uD3F4\uB85C\uC9C0, \uC810\uC218, \uC2B9\uC778 \uB300\uAE30 \uC2A4\uD399\uC744 \uD55C \uD750\uB984\uC5D0\uC11C \uD655\uC778\uD558\uB294 \uAC83\uC785\uB2C8\uB2E4.";
 const KO_DECISION_QUESTION = "\uBB34\uC5C7\uC744 \uBC18\uB4DC\uC2DC \uACB0\uC815\uD574\uC57C \uD569\uB2C8\uAE4C";
@@ -27,7 +27,7 @@ const KO_TOPOLOGY = "\uD1A0\uD3F4\uB85C\uC9C0";
 const KO_TOPOLOGY_OK = "\uD1A0\uD3F4\uB85C\uC9C0\uB294 \uB9DE\uC2B5\uB2C8\uB2E4.";
 
 function tempRoot() {
-  return mkdtempSync(join(tmpdir(), "deep-interview-test-"));
+  return mkdtempSync(join(tmpdir(), "coach-test-"));
 }
 
 function captureStdout(fn) {
@@ -47,11 +47,11 @@ function captureStdout(fn) {
   return writes.join("");
 }
 
-test("deep interview preserves multi-component topology and Korean approval output", () => {
+test("coach preserves multi-component topology and Korean approval output", () => {
   const root = tempRoot();
   try {
     const state = createInitialState({
-      idea: `${KO_PREFIX} CSV ingest, normalize, review UI, export reports, docs Deep Interview improvement`,
+      idea: `${KO_PREFIX} CSV ingest, normalize, review UI, export reports, docs Coach question quality improvement`,
       type: "brownfield",
       thresholdInfo: { threshold: 0.05, threshold_source: "default" },
       now: new Date("2026-06-13T00:00:00.000Z"),
