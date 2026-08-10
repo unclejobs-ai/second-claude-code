@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -13,6 +13,7 @@ import {
   finalizeState,
   findWeakestTarget,
   recordAutoModeFailure,
+  renderSpec,
   resolveThreshold,
   runCli,
   validateAutoAnswerResponse,
@@ -23,7 +24,6 @@ const KO_ANSWER = "\uC131\uACF5 \uAE30\uC900\uC740 \uC0AC\uC6A9\uC790\uAC00 \uD1
 const KO_DECISION_QUESTION = "\uBB34\uC5C7\uC744 \uBC18\uB4DC\uC2DC \uACB0\uC815\uD574\uC57C \uD569\uB2C8\uAE4C";
 const KO_METADATA = "\uBA54\uD0C0\uB370\uC774\uD130";
 const KO_TOPOLOGY = "\uD1A0\uD3F4\uB85C\uC9C0";
-const KO_APPROVAL = "\uBA85\uC2DC \uC2B9\uC778";
 const KO_TOPOLOGY_OK = "\uD1A0\uD3F4\uB85C\uC9C0\uB294 \uB9DE\uC2B5\uB2C8\uB2E4.";
 
 function tempRoot() {
@@ -92,14 +92,11 @@ test("deep interview preserves multi-component topology and Korean approval outp
     assert.match(buildQuestion(target, answered.language), new RegExp(KO_DECISION_QUESTION));
 
     const finalized = finalizeState(answered, {
-      root,
-      slug: "korean-topology-flow",
       now: new Date("2026-06-13T00:03:00.000Z"),
     });
     assert.equal(finalized.status, "pending_approval");
-    assert.match(finalized.spec_path, /\.gjc\/specs\/deep-interview-korean-topology-flow\.md$/);
-    assert.ok(finalized.spec_path.startsWith(root));
-    const spec = readFileSync(finalized.spec_path, "utf8");
+    assert.deepEqual(finalized.standard_ids, []);
+    const spec = renderSpec(answered, { generatedAt: new Date("2026-06-13T00:03:00.000Z") });
     assert.match(spec, new RegExp(`## ${KO_METADATA}`));
     assert.match(spec, new RegExp(`## ${KO_TOPOLOGY}`));
     assert.match(spec, /Ingestion/);
@@ -108,8 +105,8 @@ test("deep interview preserves multi-component topology and Korean approval outp
     assert.match(spec, /Export/);
     assert.match(spec, /Documentation/);
     assert.match(spec, /Interview Quality/);
-    assert.ok(finalized.approval_options.some((option) => option.id === "ralplan" && option.recommended));
-    assert.ok(finalized.approval_options.some((option) => option.label.includes(KO_APPROVAL)));
+    assert.ok(finalized.approval_options.some((option) => option.id === "confirm" && option.recommended));
+    assert.ok(finalized.approval_options.some((option) => option.label.includes("Plan Mode")));
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -213,17 +210,17 @@ test("runner CLI uses injected state, boolean --json parsing, and approval non-e
     assert.ok(Number.parseFloat(answered.ambiguity) < 100);
     assert.equal(store.value.topology.status, "confirmed");
 
-    const finalizeOut = captureStdout(() => runCli(["finalize", "--json", "--slug", "cli-non-execution"], {
+    const finalizeOut = captureStdout(() => runCli(["finalize", "--json"], {
       root,
       adapter,
       now: new Date("2026-06-13T00:07:00.000Z"),
       env: { HOME: root },
     }));
     const finalized = JSON.parse(finalizeOut);
-    assert.match(finalized.spec_path, /deep-interview-cli-non-execution\.md$/);
+    assert.deepEqual(finalized.standard_ids, []);
     assert.equal(store.value.status, "pending_approval");
-    assert.deepEqual(finalized.approval_options.map((option) => option.id), ["ralplan", "ultragoal", "team", "continue"]);
-    assert.doesNotMatch(JSON.stringify(finalized), /\/skill:|gjc\s+(ralplan|ultragoal|team)/i);
+    assert.deepEqual(finalized.approval_options.map((option) => option.id), ["confirm", "continue", "plan-mode"]);
+    assert.doesNotMatch(JSON.stringify(finalized), /\/skill:|ralplan|ultragoal/i);
     assert.equal(store.writes, 3);
     assert.equal(store.cleared, false);
   } finally {
@@ -235,20 +232,20 @@ test("threshold resolution honors project override before user and default", () 
   const root = tempRoot();
   const home = tempRoot();
   try {
-    const userSettingsDir = join(home, ".gjc");
-    const projectSettingsDir = join(root, ".gjc");
+    const userSettingsDir = join(home, ".scc");
+    const projectSettingsDir = join(root, ".scc");
     mkdirSync(userSettingsDir, { recursive: true });
     mkdirSync(projectSettingsDir, { recursive: true });
-    writeFileSync(join(userSettingsDir, "settings.json"), JSON.stringify({ gjc: { deepInterview: { ambiguityThreshold: 0.2 } } }), "utf8");
-    writeFileSync(join(projectSettingsDir, "settings.json"), JSON.stringify({ gjc: { deepInterview: { ambiguityThreshold: 0.07 } } }), "utf8");
+    writeFileSync(join(userSettingsDir, "settings.json"), JSON.stringify({ scc: { coach: { ambiguityThreshold: 0.2 } } }), "utf8");
+    writeFileSync(join(projectSettingsDir, "settings.json"), JSON.stringify({ scc: { coach: { ambiguityThreshold: 0.07 } } }), "utf8");
     const project = resolveThreshold({ cwd: root, env: { HOME: home } });
     assert.equal(project.threshold, 0.07);
-    assert.equal(project.threshold_source, "./.gjc/settings.json");
+    assert.equal(project.threshold_source, "./.scc/settings.json");
 
     rmSync(projectSettingsDir, { recursive: true, force: true });
     const user = resolveThreshold({ cwd: root, env: { HOME: home } });
     assert.equal(user.threshold, 0.2);
-    assert.match(user.threshold_source, /\.gjc\/settings\.json$/);
+    assert.match(user.threshold_source, /\.scc\/settings\.json$/);
 
     rmSync(userSettingsDir, { recursive: true, force: true });
     const fallback = resolveThreshold({ cwd: root, env: { HOME: home } });

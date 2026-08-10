@@ -1,13 +1,15 @@
 #!/usr/bin/env node
 
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { fileURLToPath } from "url";
-import { execFileSync } from "child_process";
+
+import { resolveProjectRoot } from "./lib/project-root.mjs";
+import { readState, writeState, clearState } from "./lib/coach-state.mjs";
+import { writeStandard } from "./lib/standard-record.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const DEFAULT_STATE_KEY = "deep-interview-active";
 const DEFAULT_THRESHOLD = 0.05;
 
 export function isDirectExecution(metaUrl = import.meta.url, argv1 = process.argv[1]) {
@@ -41,19 +43,19 @@ export function resolveThreshold(options = {}) {
   const env = options.env ?? process.env;
   const cwd = options.cwd ?? process.cwd();
   const home = env.HOME || env.USERPROFILE || "";
-  const configDir = env.GJC_CONFIG_DIR || (home ? join(home, ".gjc") : "");
+  const configDir = home ? join(home, ".scc") : "";
   const userPath = options.userSettingsPath || (configDir ? join(configDir, "settings.json") : null);
-  const projectPath = options.projectSettingsPath || join(cwd, ".gjc", "settings.json");
+  const projectPath = options.projectSettingsPath || join(cwd, ".scc", "settings.json");
   const readJson = options.readJson || ((path) => readJsonFile(path));
 
-  const userValue = readJson(userPath)?.gjc?.deepInterview?.ambiguityThreshold;
-  const projectValue = readJson(projectPath)?.gjc?.deepInterview?.ambiguityThreshold;
+  const userValue = readJson(userPath)?.scc?.coach?.ambiguityThreshold;
+  const projectValue = readJson(projectPath)?.scc?.coach?.ambiguityThreshold;
 
   if (validThreshold(projectValue)) {
-    return thresholdResult(projectValue, "./.gjc/settings.json");
+    return thresholdResult(projectValue, "./.scc/settings.json");
   }
   if (validThreshold(userValue)) {
-    return thresholdResult(userValue, userPath || "[$GJC_CONFIG_DIR|~/.gjc]/settings.json");
+    return thresholdResult(userValue, userPath || "~/.scc/settings.json");
   }
   return thresholdResult(DEFAULT_THRESHOLD, "default");
 }
@@ -538,55 +540,34 @@ export function renderSpec(state, { title = "Deep Interview Spec", generatedAt =
   return `# ${title}\n\n## ${labels.metadata}\n- ${labels.generated}: ${generatedAt.toISOString()}\n- ${labels.type}: ${state.type}\n- ${labels.threshold}: ${state.threshold}\n- ${labels.thresholdSource}: ${state.threshold_source}\n- ${labels.ambiguity}: ${Math.round((state.current_ambiguity || 0) * 10000) / 100}%\n\n## ${labels.clarityBreakdown}\n| ${labels.component} | ${labels.dimensionGoal} | ${labels.dimensionConstraints} | ${labels.dimensionCriteria} | ${labels.dimensionContext} |\n|---|---:|---:|---:|---:|\n${clarityRows}\n\n## ${labels.topology}\n| ${labels.component} | ${labels.status} | ${labels.description} | ${labels.coverage} |\n|-----------|--------|-------------|----------|\n${rows}\n\n## ${labels.goal}\n${state.initial_idea}\n\n## ${labels.constraints}\n${constraints}\n\n## ${labels.nonGoals}\n- ${labels.noExplicitNonGoals}\n\n## ${labels.criteria}\n${criteria}\n\n## ${labels.assumptions}\n| ${ko ? "라운드" : "Round"} | ${labels.q} | ${ko ? "해결" : "Resolution"} |\n|---|---|---|\n${assumptions}\n\n## ${labels.technicalContext}\n${technicalContext}\n\n## ${labels.ontology}\n| ${labels.entity} | ${labels.entityType} | ${labels.fields} | ${labels.relationships} |\n|---|---|---|---|\n${ontologyRows}\n\n## ${labels.convergence}\n| Round | Entity Count | New | Stable | Stability |\n|---|---:|---|---|---|\n${convergenceRows}\n\n## ${labels.transcript}\n${transcript || labels.noRounds}\n`;
 }
 
-export function renderApprovalOptions(specPath, ambiguity, language = { code: "en" }) {
+export function renderApprovalOptions(standardIds, ambiguity, language = { code: "en" }) {
   const ko = language?.code === "ko";
+  const count = Array.isArray(standardIds) ? standardIds.length : 0;
   return ko
     ? [
-        { id: "ralplan", label: "ralplan 합의로 명세 다듬기", recommended: true, specPath, ambiguity },
-        { id: "ultragoal", label: "명시 승인 후 ultragoal로 실행", recommended: false, specPath, ambiguity },
-        { id: "team", label: "tmux 병렬 실행이 필요할 때만 team으로 실행", recommended: false, specPath, ambiguity },
-        { id: "continue", label: "인터뷰 계속하기", recommended: false, specPath, ambiguity },
+        { id: "confirm", label: `기준 ${count}개를 확정하고 인터뷰 종료`, recommended: true, standardIds, ambiguity },
+        { id: "continue", label: "계속 정제하기", recommended: false, standardIds, ambiguity },
+        { id: "plan-mode", label: "확정된 기준을 브리핑으로 Plan Mode에 넘기기", recommended: false, standardIds, ambiguity },
       ]
     : [
-        { id: "ralplan", label: "Refine with ralplan consensus", recommended: true, specPath, ambiguity },
-        { id: "ultragoal", label: "Execute with ultragoal after explicit approval", recommended: false, specPath, ambiguity },
-        { id: "team", label: "Execute with team only when tmux parallelization is required", recommended: false, specPath, ambiguity },
-        { id: "continue", label: "Continue interviewing", recommended: false, specPath, ambiguity },
+        { id: "confirm", label: `Confirm ${count} standard(s) and end the interview`, recommended: true, standardIds, ambiguity },
+        { id: "continue", label: "Keep refining", recommended: false, standardIds, ambiguity },
+        { id: "plan-mode", label: "Hand the confirmed standards to Plan Mode as a briefing", recommended: false, standardIds, ambiguity },
       ];
 }
 
-export function createStateAdapter({ root = repoRootFrom(), key = DEFAULT_STATE_KEY, env = process.env } = {}) {
-  const script = join(root, "scripts", "state-manager.sh");
-  const run = (args, inputEnv = env) => execFileSync(script, args, { encoding: "utf8", env: inputEnv });
+export function createStateAdapter({ root }) {
   return {
-    read() {
-      return parseJsonObject(run(["read", key]), null);
-    },
-    write(value) {
-      run(["write", key, JSON.stringify(value)]);
-      return value;
-    },
-    clear() {
-      run(["clear", key]);
-    },
+    read: () => readState(root),
+    write: (value) => writeState(root, value),
+    clear: () => clearState(root),
   };
 }
 
-export function writeSpecFile(state, { root = process.cwd(), slug, now = new Date() } = {}) {
-  const safeSlug = slugify(slug || state.initial_idea || state.run_id);
-  const specDir = join(root, ".gjc", "specs");
-  mkdirSync(specDir, { recursive: true });
-  const specPath = join(specDir, `deep-interview-${safeSlug}.md`);
-  const title = state.language?.code === "ko" ? `Deep Interview 명세: ${safeSlug}` : `Deep Interview Spec: ${safeSlug}`;
-  writeFileSync(specPath, renderSpec(state, { title, generatedAt: now }), "utf8");
-  return specPath;
-}
-
-export function finalizeState(state, { root = process.cwd(), slug, now = new Date() } = {}) {
+export function finalizeState(state, { now = new Date() } = {}) {
   const next = structuredCloneCompat(state);
-  const specPath = writeSpecFile(next, { root, slug, now });
-  next.spec_path = specPath;
-  next.approval_options = renderApprovalOptions(specPath, next.current_ambiguity, next.language);
+  next.standard_ids = Array.isArray(next.forks) ? [...next.forks] : [];
+  next.approval_options = renderApprovalOptions(next.standard_ids, next.current_ambiguity, next.language);
   next.status = "pending_approval";
   next.updated_at = now.toISOString();
   return next;
@@ -631,8 +612,11 @@ function output(value, json = false) {
 }
 
 export function runCli(argv = process.argv.slice(2), deps = {}) {
-  const root = deps.root || repoRootFrom(import.meta.url);
-  const adapter = deps.adapter || createStateAdapter({ root, env: deps.env || process.env });
+  const root =
+    deps.root && !deps.useRealRootResolution
+      ? deps.root
+      : resolveProjectRoot({ env: deps.env || process.env, cwd: deps.cwd || process.cwd() });
+  const adapter = deps.adapter || createStateAdapter({ root });
   const { command, flags, positionals } = parseArgs(argv);
   const json = Boolean(flags.json);
 
@@ -665,9 +649,39 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
   if (command === "finalize") {
     const current = adapter.read();
     if (!current) throw new Error("no active deep interview state");
-    const next = finalizeState(current, { root, slug: flags.slug, now: deps.now || new Date() });
+    const next = finalizeState(current, { now: deps.now || new Date() });
     adapter.write(next);
-    return output({ active: true, spec_path: next.spec_path, approval_options: next.approval_options, ambiguity: next.current_ambiguity }, json);
+    return output(
+      {
+        active: true,
+        standard_ids: next.standard_ids,
+        approval_options: next.approval_options,
+        ambiguity: next.current_ambiguity,
+      },
+      json
+    );
+  }
+
+  if (command === "record-fork") {
+    const file = flags.file;
+    if (!file) throw new Error("record-fork requires --file <path>");
+    const fork = readJsonFile(file, null);
+    if (!fork) throw new Error(`record-fork could not read a JSON object from ${file}`);
+    if (!fork.id) throw new Error("record-fork requires the fork to declare an id");
+    if (!/[a-z0-9]/i.test(String(fork.id))) {
+      throw new Error(`record-fork: fork id "${fork.id}" has no characters left after slugifying`);
+    }
+    const id = slugify(fork.id);
+
+    const current = adapter.read();
+    if (!current) throw new Error("no active coach interview");
+
+    const path = writeStandard(root, { ...fork, id }, { now: deps.now || new Date() });
+    const forks = Array.isArray(current.forks) ? current.forks : [];
+    if (!forks.includes(id)) forks.push(id);
+    adapter.write({ ...current, forks });
+
+    return output({ ok: true, id, path }, json);
   }
 
   if (command === "clear") {

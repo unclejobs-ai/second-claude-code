@@ -57,7 +57,7 @@ test("deep interview command, skill, and docs expose a self-serve pending-approv
 
   assert.match(command, /docs\/skills\/deep-interview\.md/);
   assert.match(skill, /docs\/skills\/deep-interview\.md/);
-  assert.match(docs, /\.gjc\/specs\/deep-interview-\{slug\}\.md/);
+  assert.match(docs, /\.scc\/standards\//);
   assert.match(docs, /must fall back safely and increment diagnostic failure accounting/i);
 });
 
