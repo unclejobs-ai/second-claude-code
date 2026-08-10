@@ -1,27 +1,6 @@
 # PDCA
 
-> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), external plugin dispatch, Action Router, and 16 Pokemon-themed conceptual roles.
-
-## What's New in v1.4.0
-
-- **Cross-plugin phase dispatch** — PDCA phases now route through the installed plugin ecosystem when a stronger external capability is available.
-- **Verified phase top picks** — Plan → `Skill: claude-mem:knowledge-agent`, Do → `Skill: frontend-design:frontend-design`, Check → `Skill: coderabbit:code-review`, Act → `/commit-commands:commit`.
-- **Prompt-level external dispatch** — `prompt-detect` calls `getDispatchPlan()` before internal fallback. Strong external matches such as `posthog event analysis` dispatch to the installed plugin first.
-- **No hardcoded plugin registry** — plugin capabilities are discovered from `~/.claude/plugins/` at runtime and converted into exact `Skill:` / slash-command invocation strings.
-- **Short-keyword safety** — boundary checks prevent small keyword overmatches, such as `bug` accidentally matching inside `debugging`.
-
-See [orchestrator-architecture.md](../orchestrator-architecture.md) for the v1.4.0 dispatch architecture and validation coverage.
-
-## What's New in v1.3.0
-
-- **PDCA is the main orchestrator, sub-skills are building blocks** — `/threads`, `/newsletter`, `/academy-shorts`, `/card-news` run **inside** PDCA's Do phase via greedy domain auto-routing. PDCA's Check still runs after the sub-skill's internal review for an outside-perspective second pass.
-- **Hard length floors per format** — Do gate fails below minimum: threads ≥ 4,000 chars, newsletter ≥ 10,000, strategy report ≥ 5,000, shorts script ≥ 1,800. Sub-skill re-dispatched with specific scope expansion instructions.
-- **Plan brief floors** — sources raised from 3 to 5, plus 8 facts, 1 named quote, 1 comparison table, 1 media item, 3,000 chars body minimum.
-- **Reviewer diversity rule** — Check requires ≥ 2 distinct models and ≥ 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6. False consensus detection triggers adversarial pass.
-- **5+ Rule (calibrated AND logic)** — patch vs full rewrite threshold. Fires on any P0 OR (P0+P1 ≥ 5 AND findings span ≥ 3 categories). Calibrated from initial OR logic after observing over-trigger on real 4-finding patch sets.
-- **Pokemon role labels clarified** — Eevee/Smeargle/Xatu are conceptual roles, NOT direct Agent dispatch targets. Real dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`.
-
-See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec and verification cycle metrics.
+> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), external plugin dispatch, Action Router, and Pokemon-themed conceptual roles.
 
 ## Quick Example
 
@@ -29,7 +8,7 @@ See [RELEASE-v1.3.0.md](../RELEASE-v1.3.0.md) for the full strengthening spec an
 Research and write a report on AI agent frameworks
 ```
 
-**What happens:** The PDCA orchestrator detects compound intent (research + write), enters the full cycle, and chains Plan (research + analyze) → Do (write) → Check (review) → Act (loop or route back) with quality gates between each transition. In v1.4.0, each phase can first dispatch to a stronger installed plugin capability before internal Second Claude skills run.
+**What happens:** The PDCA orchestrator detects compound intent (research + write), enters the full cycle, and chains Plan (research + analyze) → Do (write) → Check (review) → Act (loop or route back) with quality gates between each transition. Each phase can first dispatch to a stronger installed plugin capability before internal Second Claude skills run.
 
 ## Real-World Example
 
@@ -40,7 +19,7 @@ Research and write a report on AI agent frameworks
 
 **Process:**
 1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
-2. **Plan→Do Gate**: Verifies research brief with 3+ sources and analysis artifact.
+2. **Plan→Do Gate**: Verifies research brief with 5+ distinct sources and analysis artifact.
 3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
 5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit:code-review` when installed.
@@ -62,7 +41,7 @@ Research and write a report on AI agent frameworks
 | `--no-questions` | skip Question Protocol | `false` |
 | `--domain` | `code\|content\|analysis\|pipeline` | `code` |
 
-The `--domain` flag (new in v1.0.0) selects domain-specific stage contracts, Definition of Done criteria, and rollback targets for each phase transition.
+The `--domain` flag selects domain-specific stage contracts, Definition of Done criteria, and rollback targets for each phase transition.
 
 ### Code Engineering Lane
 
@@ -72,7 +51,7 @@ When `--domain code` is active, PDCA loads the Code Engineering Lane from `skill
 
 ![PDCA Cycle](../images/pdca-cycle.svg)
 
-### Phase Gates (v1.3.0 Hardened)
+### Phase Gates
 
 Every gate now requires measurable numeric or boolean fields, not soft "looks complete" judgments.
 
