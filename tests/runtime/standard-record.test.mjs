@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtempSync, rmSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -113,5 +113,91 @@ test("listActiveStandards returns an empty list when the tree is absent", () => 
 test("supersedeStandard returns false for an unknown id", () => {
   withRoot((root) => {
     assert.equal(supersedeStandard(root, "nope"), false);
+  });
+});
+
+test("writeStandard rejects an id containing ../, and nothing is written outside the root", () => {
+  withRoot((root) => {
+    const maliciousId = "../../../evil";
+    assert.throws(() => writeStandard(root, { ...FORK, id: maliciousId }, { now: NOW }));
+    const wouldHaveEscaped = join(root, ".scc", "standards", maliciousId, "STANDARD.md");
+    assert.equal(existsSync(wouldHaveEscaped), false);
+  });
+});
+
+test("writeStandard rejects an id containing a newline", () => {
+  withRoot((root) => {
+    assert.throws(() =>
+      writeStandard(root, { ...FORK, id: "legit\nstatus: superseded" }, { now: NOW })
+    );
+  });
+});
+
+test("writeStandard rejects an empty id", () => {
+  withRoot((root) => {
+    assert.throws(() => writeStandard(root, { ...FORK, id: "" }, { now: NOW }));
+  });
+});
+
+test("a record with a malformed review_when does not prevent the other records from listing", () => {
+  withRoot((root) => {
+    writeStandard(root, FORK, { now: NOW });
+    const brokenDir = join(root, ".scc", "standards", "broken-record");
+    mkdirSync(brokenDir, { recursive: true });
+    writeFileSync(
+      join(brokenDir, "STANDARD.md"),
+      [
+        "---",
+        "id: broken-record",
+        "status: active",
+        "enforcement: none",
+        'review_when: "unterminated',
+        "triggers: []",
+        "checks: []",
+        "---",
+        "",
+        "# broken",
+        "",
+      ].join("\n"),
+      "utf8"
+    );
+    const active = listActiveStandards(root);
+    assert.equal(active.length, 2);
+    const broken = active.find((s) => s.id === "broken-record");
+    assert.equal(broken.review_when, "");
+    assert.ok(active.some((s) => s.id === "voice-two-track"));
+  });
+});
+
+test("supersedeStandard succeeds on status:  active with two spaces", () => {
+  withRoot((root) => {
+    const path = writeStandard(root, FORK, { now: NOW });
+    const twoSpaced = readFileSync(path, "utf8").replace(/^status: active$/m, "status:  active");
+    writeFileSync(path, twoSpaced, "utf8");
+    assert.equal(supersedeStandard(root, "voice-two-track"), true);
+    assert.match(readFileSync(path, "utf8"), /^status: superseded$/m);
+  });
+});
+
+test("supersedeStandard returns false on a second call and leaves the file unchanged", () => {
+  withRoot((root) => {
+    const path = writeStandard(root, FORK, { now: NOW });
+    assert.equal(supersedeStandard(root, "voice-two-track"), true);
+    const afterFirst = readFileSync(path, "utf8");
+    assert.equal(supersedeStandard(root, "voice-two-track"), false);
+    assert.equal(readFileSync(path, "utf8"), afterFirst);
+  });
+});
+
+test("a status: active line inside the preserved body survives two supersede calls untouched", () => {
+  withRoot((root) => {
+    const forkWithBodyStatus = { ...FORK, payload: "status: active\n\nleave this line alone" };
+    const path = writeStandard(root, forkWithBodyStatus, { now: NOW });
+    supersedeStandard(root, "voice-two-track");
+    supersedeStandard(root, "voice-two-track");
+    const md = readFileSync(path, "utf8");
+    assert.match(md, /^status: superseded$/m);
+    assert.match(md, /^status: active$/m);
+    assert.match(md, /leave this line alone/);
   });
 });

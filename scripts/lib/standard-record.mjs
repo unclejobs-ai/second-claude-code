@@ -1,5 +1,17 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { randomUUID } from "node:crypto";
+import { basename, dirname, join } from "node:path";
+
+const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+
+function assertValidId(id) {
+  if (typeof id !== "string" || !ID_PATTERN.test(id)) {
+    throw new Error(
+      `기준 id는 소문자·숫자·하이픈 1~64자여야 합니다: ${JSON.stringify(id)}`
+    );
+  }
+  return id;
+}
 
 function standardsDir(root) {
   return join(root, ".scc", "standards");
@@ -11,6 +23,12 @@ function standardPath(root, id) {
 
 function jsonArray(values) {
   return `[${(values || []).map((v) => JSON.stringify(String(v))).join(", ")}]`;
+}
+
+function writeFileAtomic(path, content) {
+  const tmp = join(dirname(path), `.${basename(path)}.${randomUUID()}.tmp`);
+  writeFileSync(tmp, content, "utf8");
+  renameSync(tmp, path);
 }
 
 export function renderStandard(fork, { now = new Date(), supersedes = null } = {}) {
@@ -57,24 +75,40 @@ ${
 }
 
 export function writeStandard(root, fork, options = {}) {
+  assertValidId(fork.id);
   const path = standardPath(root, fork.id);
   mkdirSync(join(standardsDir(root), fork.id), { recursive: true });
-  writeFileSync(path, renderStandard(fork, options), "utf8");
+  writeFileAtomic(path, renderStandard(fork, options));
   return path;
 }
 
-function readField(body, field) {
-  const match = body.match(new RegExp(`^${field}:\\s*(.*)$`, "m"));
+function frontmatterOf(body) {
+  const match = body.match(/^---\n([\s\S]*?)\n---\n/);
+  return match ? match[1] : "";
+}
+
+function readField(frontmatter, field) {
+  const match = frontmatter.match(new RegExp(`^${field}:\\s*(.*)$`, "m"));
   return match ? match[1].trim() : "";
 }
 
-function parseJsonField(body, field) {
-  const raw = readField(body, field);
+function parseJsonField(frontmatter, field) {
+  const raw = readField(frontmatter, field);
   try {
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
+  }
+}
+
+function parseJsonScalar(frontmatter, field, fallback) {
+  const raw = readField(frontmatter, field);
+  if (!raw) return fallback;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
   }
 }
 
@@ -87,14 +121,15 @@ export function listActiveStandards(root) {
     const path = standardPath(root, entry.name);
     if (!existsSync(path)) continue;
     const body = readFileSync(path, "utf8");
-    if (readField(body, "status") !== "active") continue;
+    const frontmatter = frontmatterOf(body);
+    if (readField(frontmatter, "status") !== "active") continue;
     const title = body.match(/^# (.+)$/m);
     out.push({
-      id: readField(body, "id") || entry.name,
+      id: readField(frontmatter, "id") || entry.name,
       title: title ? title[1].trim() : entry.name,
-      review_when: JSON.parse(readField(body, "review_when") || '""'),
-      triggers: parseJsonField(body, "triggers"),
-      enforcement: readField(body, "enforcement") || "none",
+      review_when: parseJsonScalar(frontmatter, "review_when", ""),
+      triggers: parseJsonField(frontmatter, "triggers"),
+      enforcement: readField(frontmatter, "enforcement") || "none",
       path,
     });
   }
@@ -102,9 +137,20 @@ export function listActiveStandards(root) {
 }
 
 export function supersedeStandard(root, id) {
+  assertValidId(id);
   const path = standardPath(root, id);
   if (!existsSync(path)) return false;
   const body = readFileSync(path, "utf8");
-  writeFileSync(path, body.replace(/^status: active$/m, "status: superseded"), "utf8");
+  const match = body.match(/^(---\n)([\s\S]*?)(\n---\n)/);
+  if (!match) return false;
+  const updated = match[2].replace(/^status:\s*active\s*$/m, "status: superseded");
+  if (updated === match[2]) return false;
+  const next =
+    body.slice(0, match.index) +
+    match[1] +
+    updated +
+    match[3] +
+    body.slice(match.index + match[0].length);
+  writeFileAtomic(path, next);
   return true;
 }
