@@ -15,6 +15,7 @@ import { fileURLToPath } from "url";
 import { resolveProjectRoot } from "./lib/project-root.mjs";
 import { listActiveStandards } from "./lib/standard-record.mjs";
 import { validateCheck, runCheck } from "./lib/standard-checkers.mjs";
+import { readVerdicts, findVerdict, sha256 } from "./lib/adversarial-log.mjs";
 
 export function isDirectExecution(metaUrl = import.meta.url, argv1 = process.argv[1]) {
   return argv1 ? resolve(fileURLToPath(metaUrl)) === resolve(argv1) : false;
@@ -47,7 +48,13 @@ export function checkTarget({ root, targetPath, standardId = null }) {
   if (!existsSync(targetPath) || !statSync(targetPath).isFile()) {
     throw new Error(`no such target file: ${targetPath}`);
   }
-  const target = parseTarget(readFileSync(targetPath, "utf8"));
+  const raw = readFileSync(targetPath, "utf8");
+  const target = parseTarget(raw);
+  // Verdicts are bound to the bytes the reviewer read. Edit the artifact and
+  // every adversarial answer about it goes back to unproven, which is the point:
+  // a review of last week's draft says nothing about this one.
+  const targetSha = sha256(raw);
+  const verdicts = readVerdicts(root);
 
   const active = listActiveStandards(root);
   const selected = standardId ? active.filter((standard) => standard.id === standardId) : active;
@@ -70,7 +77,16 @@ export function checkTarget({ root, targetPath, standardId = null }) {
       continue;
     }
     checks.forEach((check, index) => validateCheck(check, index));
-    const results = checks.map((check, index) => runCheck(check, target, index));
+    const results = checks.map((check, index) =>
+      runCheck(
+        check,
+        target,
+        index,
+        check.kind === "adversarial"
+          ? findVerdict(verdicts, { standard: standard.id, ask: check.ask, targetSha })
+          : null
+      )
+    );
     for (const result of results) {
       if (result.status === "fail") {
         failures.push({ standard: standard.id, checker: result.checker, reason: result.reason });
@@ -81,7 +97,7 @@ export function checkTarget({ root, targetPath, standardId = null }) {
     standards.push({ id: standard.id, enforcement: standard.enforcement, results });
   }
 
-  return { target: targetPath, standards, failures, unchecked, unproven, ok: failures.length === 0 };
+  return { target: targetPath, target_sha256: targetSha, standards, failures, unchecked, unproven, ok: failures.length === 0 };
 }
 
 function render(report) {
@@ -91,6 +107,9 @@ function render(report) {
   }
   for (const item of report.unproven) {
     lines.push(`UNPROVEN ${item.standard} — adversarial, needs an independent reviewer: ${item.ask}`);
+  }
+  if (report.unproven.length > 0) {
+    lines.push(`  record answers against target_sha256 ${report.target_sha256}`);
   }
   for (const id of report.unchecked) {
     lines.push(`UNCHECKED ${id} — no checks on file, so nothing here verifies it`);

@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import { resolveProjectRoot } from "./lib/project-root.mjs";
 import { readState, writeState, clearState, stateFilePath } from "./lib/coach-state.mjs";
 import { writeStandard, listActiveStandards, supersedeStandard } from "./lib/standard-record.mjs";
+import { appendVerdict } from "./lib/adversarial-log.mjs";
 
 const DEFAULT_THRESHOLD = 0.05;
 
@@ -549,11 +550,37 @@ export function createStateAdapter({ root }) {
   };
 }
 
-export function finalizeState(state, { now = new Date() } = {}) {
+// What finalize would be papering over if it ran right now. The spec allows a
+// user to accept residual risk explicitly, so these are not hard stops -- but
+// they have to be named and accepted on the record rather than passed in
+// silence, which is what finalize used to do.
+export function openRisks(state) {
+  const out = [];
+  const topologyStatus = state.topology?.status;
+  if (topologyStatus !== "confirmed") {
+    out.push(`topology is ${topologyStatus || "unknown"}, not confirmed`);
+  }
+  const ambiguity = state.current_ambiguity;
+  if (typeof ambiguity === "number" && typeof state.threshold === "number" && ambiguity > state.threshold) {
+    out.push(`ambiguity ${ambiguity.toFixed(3)} is above the ${state.threshold} threshold`);
+  }
+  return out;
+}
+
+export function finalizeState(state, { now = new Date(), acceptedRisk = null } = {}) {
   const next = structuredCloneCompat(state);
   next.standard_ids = Array.isArray(next.forks) ? [...next.forks] : [];
   next.approval_options = renderApprovalOptions(next.standard_ids, next.current_ambiguity, next.language);
   next.status = "pending_approval";
+  if (acceptedRisk) {
+    next.risk_accepted = {
+      at: now.toISOString(),
+      reason: acceptedRisk.reason,
+      risks: acceptedRisk.risks,
+      ambiguity: next.current_ambiguity,
+      threshold: next.threshold,
+    };
+  }
   next.updated_at = now.toISOString();
   return next;
 }
@@ -669,7 +696,25 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
   if (command === "finalize") {
     const current = adapter.read();
     if (!current) throw new Error("no active coach state");
-    const next = finalizeState(current, { now: deps.now || new Date() });
+    assertUsableTopology(current, root);
+
+    const risks = openRisks(current);
+    const accepted = flags["accept-risk"];
+    let acceptedRisk = null;
+    if (risks.length > 0) {
+      if (accepted === true) {
+        throw new Error('--accept-risk needs the reason you are accepting it: --accept-risk "<why>"');
+      }
+      if (typeof accepted !== "string" || !accepted.trim()) {
+        throw new Error(
+          `finalize refused — ${risks.join("; ")}. ` +
+            'Keep answering, or put the acceptance on the record: --accept-risk "<why>".'
+        );
+      }
+      acceptedRisk = { reason: accepted.trim(), risks };
+    }
+
+    const next = finalizeState(current, { now: deps.now || new Date(), acceptedRisk });
     adapter.write(next);
     return output(
       {
@@ -677,9 +722,30 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
         standard_ids: next.standard_ids,
         approval_options: next.approval_options,
         ambiguity: next.current_ambiguity,
+        risk_accepted: next.risk_accepted || null,
       },
       json
     );
+  }
+
+  // The interview's durable output is the standards, which live in their own
+  // files. State is the resumable remainder, and once the user confirms there
+  // is nothing left to resume -- so it goes. That also settles the three-way
+  // disagreement over `pending_approval`: session-end read it as closed, start
+  // read it as open, and SessionStart offered to resume it. With the file gone,
+  // all three agree.
+  if (command === "confirm") {
+    const current = adapter.read();
+    if (!current) throw new Error("no active coach state");
+    if (current.status !== "pending_approval") {
+      throw new Error(
+        `confirm needs a finalized interview; this one is ${JSON.stringify(current.status)}. ` +
+          "Run `finalize` first, or `clear` to discard the interview without confirming."
+      );
+    }
+    const standardIds = Array.isArray(current.standard_ids) ? current.standard_ids : [];
+    adapter.clear();
+    return output({ ok: true, active: false, confirmed: standardIds }, json);
   }
 
   if (command === "record-fork") {
@@ -698,6 +764,20 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     adapter.write({ ...current, forks });
 
     return output({ ok: true, id: fork.id, path }, json);
+  }
+
+  // Answers to adversarial checks come in here rather than through
+  // standard-check, which stays read-only: the thing that grades the work must
+  // not also be the thing that records passing grades.
+  if (command === "record-verdict") {
+    if (!flags.file) throw new Error("record-verdict requires --file <path>");
+    const verdict = readJsonFile(flags.file, null);
+    if (!verdict) throw new Error(`record-verdict could not read a JSON object from ${flags.file}`);
+    if (!listActiveStandards(root).some((standard) => standard.id === verdict.standard)) {
+      throw new Error(`no active standard ${JSON.stringify(verdict.standard)} to record a verdict against`);
+    }
+    const record = appendVerdict(root, verdict, { now: deps.now || new Date() });
+    return output({ ok: true, ...record }, json);
   }
 
   if (command === "supersede") {

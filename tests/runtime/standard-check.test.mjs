@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { runCli, checkTarget, parseTarget } from "../../scripts/standard-check.mjs";
 import { checkerIds, runCheck, validateCheck, selectSection } from "../../scripts/lib/standard-checkers.mjs";
 import { writeStandard } from "../../scripts/lib/standard-record.mjs";
+import { appendVerdict, sha256 } from "../../scripts/lib/adversarial-log.mjs";
 
 const FIXTURES = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "standard-checks");
 
@@ -117,6 +118,106 @@ test("an adversarial check is unproven until an independent reviewer answers it"
       false,
       "an unanswered adversarial check must never read as a pass"
     );
+  });
+});
+
+test("a recorded verdict answers the adversarial check it was written for", () => {
+  withRoot((root) => {
+    const ask = "S-A와 S-B가 같은 사람이 쓴 것처럼 읽히는가?";
+    const targetPath = seed(root, { checks: [{ kind: "adversarial", ask }] });
+    appendVerdict(root, {
+      standard: "voice-two-track",
+      ask,
+      target_sha256: sha256(readFileSync(targetPath, "utf8")),
+      verdict: "pass",
+      reviewer: "codex",
+    });
+
+    const report = checkTarget({ root, targetPath });
+
+    assert.equal(report.standards[0].results[0].status, "pass");
+    assert.equal(report.unproven.length, 0);
+    assert.equal(report.ok, true);
+  });
+});
+
+test("a reviewer answering no is a failure, not an unproven check", () => {
+  withRoot((root) => {
+    const ask = "과장 없이 읽히는가?";
+    const targetPath = seed(root, { checks: [{ kind: "adversarial", ask }] });
+    appendVerdict(root, {
+      standard: "voice-two-track",
+      ask,
+      target_sha256: sha256(readFileSync(targetPath, "utf8")),
+      verdict: "fail",
+      reviewer: "codex",
+      note: "두 번째 문단이 과장이다",
+    });
+
+    const report = checkTarget({ root, targetPath });
+
+    assert.equal(report.ok, false);
+    assert.match(report.failures[0].reason, /codex answered no — 두 번째 문단이 과장이다/);
+  });
+});
+
+test("editing the artifact sends its verdicts back to unproven", () => {
+  withRoot((root) => {
+    const ask = "과장 없이 읽히는가?";
+    const targetPath = seed(root, { checks: [{ kind: "adversarial", ask }] });
+    appendVerdict(root, {
+      standard: "voice-two-track",
+      ask,
+      target_sha256: sha256(readFileSync(targetPath, "utf8")),
+      verdict: "pass",
+      reviewer: "codex",
+    });
+    writeFileSync(targetPath, "# 초안\n\n고쳐 쓴 본문.\n", "utf8");
+
+    const report = checkTarget({ root, targetPath });
+
+    assert.equal(report.standards[0].results[0].status, "unproven");
+    assert.equal(report.unproven.length, 1);
+  });
+});
+
+test("a verdict for a different question does not answer this one", () => {
+  withRoot((root) => {
+    const targetPath = seed(root, { checks: [{ kind: "adversarial", ask: "과장 없이 읽히는가?" }] });
+    appendVerdict(root, {
+      standard: "voice-two-track",
+      ask: "전혀 다른 질문인가?",
+      target_sha256: sha256(readFileSync(targetPath, "utf8")),
+      verdict: "pass",
+      reviewer: "codex",
+    });
+
+    assert.equal(checkTarget({ root, targetPath }).standards[0].results[0].status, "unproven");
+  });
+});
+
+test("a verdict without a reviewer or a target hash is refused", () => {
+  withRoot((root) => {
+    const base = { standard: "voice-two-track", ask: "?", verdict: "pass", reviewer: "codex", target_sha256: "a".repeat(64) };
+    assert.throws(() => appendVerdict(root, { ...base, reviewer: "  " }), /non-empty "reviewer"/);
+    assert.throws(() => appendVerdict(root, { ...base, target_sha256: "short" }), /target_sha256/);
+    assert.throws(() => appendVerdict(root, { ...base, verdict: "maybe" }), /"pass" or "fail"/);
+  });
+});
+
+test("one torn line in the verdict log does not hide the verdicts after it", () => {
+  withRoot((root) => {
+    const ask = "과장 없이 읽히는가?";
+    const targetPath = seed(root, { checks: [{ kind: "adversarial", ask }] });
+    const sha = sha256(readFileSync(targetPath, "utf8"));
+    mkdirSync(join(root, ".scc", "checks"), { recursive: true });
+    writeFileSync(
+      join(root, ".scc", "checks", "adversarial.jsonl"),
+      `{"standard":"voice-two-tr\n${JSON.stringify({ standard: "voice-two-track", ask, target_sha256: sha, verdict: "pass", reviewer: "codex" })}\n`,
+      "utf8"
+    );
+
+    assert.equal(checkTarget({ root, targetPath }).standards[0].results[0].status, "pass");
   });
 });
 

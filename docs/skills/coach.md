@@ -39,6 +39,10 @@ Use direct execution when a standard on file already covers the fork, or the req
 8. Record each settled fork with `record-fork --file <path>` before drafting the artifact.
 9. Stop at pending approval options: `confirm`, `continue`, `plan-mode`.
 
+`finalize` refuses while the topology is unconfirmed or ambiguity sits above the threshold, and names which one is open. That is not a hard stop — the spec allows a user to accept residual risk — but the acceptance has to be explicit and on the record: `--accept-risk "<why>"` stores the reason, the risks, and the numbers it was accepted against. A bare `--accept-risk` with no reason is refused, so acceptance cannot become reflexive.
+
+`confirm` closes a finalized interview and removes `.scc/state/coach.json`. The decisions survive in their standards; state was only the resumable remainder, and once confirmed there is nothing to resume. That also settles a three-way disagreement: session-end read `pending_approval` as closed, `start` read it as open, and SessionStart offered to resume it. With the file gone, all three agree.
+
 ## The fork file
 
 `record-fork` reads its input from a file rather than argv, because the payload carries newlines and non-ASCII prose that a shell round-trip mangles.
@@ -73,7 +77,19 @@ A check is data the runner interprets, never a string it executes. Standards liv
 
 Each checker ships a fixture under `tests/fixtures/standard-checks/<checker>/` that it must reject. The fixtures live in this repository rather than in the user's project, because a project-supplied fixture would be another input crossing the trust boundary. A checker that starts passing its own fixture breaks the suite.
 
-Two results are never passes. A standard with no checks is reported `UNCHECKED` — it is visible, not verified. An `adversarial` check is reported `UNPROVEN`: it names a question only an independent reviewer can answer, and the runner has no way to record that answer yet, so it never counts as satisfied. Neither sets exit 1, because neither is a violation.
+A standard with no checks is reported `UNCHECKED` — visible, not verified, and never a pass. It does not set exit 1, because it is not a violation.
+
+### Adversarial checks
+
+An `adversarial` check names a question no regex settles — whether two posts read as one voice, whether a claim is overstated. It is `UNPROVEN` until a reviewer's answer is on file:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file <verdict.json>
+```
+
+The verdict carries `standard`, the exact `ask`, `verdict` (`pass`/`fail`), `reviewer`, an optional `note`, and `target_sha256` — the hash of the artifact the reviewer actually read, which `standard-check` prints alongside every `UNPROVEN` line. Answers append to `.scc/checks/adversarial.jsonl`; the log is append-only because five sessions share the project and a read-modify-write would drop whichever verdict lost the race.
+
+Binding a verdict to bytes is what keeps it honest: edit the artifact and its answers go back to `UNPROVEN`, since a review of last week's draft says nothing about this one. Verdicts are recorded through the coach runner rather than through `standard-check`, so the tool that grades the work is never the tool that records passing grades.
 
 ## Retiring a standard
 

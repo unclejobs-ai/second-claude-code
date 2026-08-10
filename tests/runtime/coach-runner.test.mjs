@@ -210,7 +210,15 @@ test("runner CLI uses injected state, boolean --json parsing, and approval non-e
     assert.ok(Number.parseFloat(answered.ambiguity) < 100);
     assert.equal(store.value.topology.status, "confirmed");
 
-    const finalizeOut = captureStdout(() => runCli(["finalize", "--json"], {
+    // One answer leaves ambiguity far above the threshold. Finalizing here is
+    // allowed, but only against a named acceptance -- the bare `finalize` that
+    // used to work is asserted below to be refused.
+    assert.throws(
+      () => runCli(["finalize", "--json"], { root, adapter, env: { HOME: root } }),
+      /finalize refused — ambiguity .* above the .* threshold/
+    );
+
+    const finalizeOut = captureStdout(() => runCli(["finalize", "--json", "--accept-risk", "오늘 밤 발행이라 여기서 끊는다"], {
       root,
       adapter,
       now: new Date("2026-06-13T00:07:00.000Z"),
@@ -218,6 +226,8 @@ test("runner CLI uses injected state, boolean --json parsing, and approval non-e
     }));
     const finalized = JSON.parse(finalizeOut);
     assert.deepEqual(finalized.standard_ids, []);
+    assert.equal(finalized.risk_accepted.reason, "오늘 밤 발행이라 여기서 끊는다");
+    assert.match(finalized.risk_accepted.risks.join(" "), /ambiguity/);
     assert.equal(store.value.status, "pending_approval");
     assert.deepEqual(finalized.approval_options.map((option) => option.id), ["confirm", "continue", "plan-mode"]);
     assert.doesNotMatch(JSON.stringify(finalized), /\/skill:|ralplan|ultragoal/i);

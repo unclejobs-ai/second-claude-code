@@ -192,6 +192,133 @@ test("supersede works outside an interview and leaves state absent", () => {
   });
 });
 
+test("record-verdict appends a reviewer's answer and refuses one for an inactive standard", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root);
+    const verdictFile = join(root, "verdict.json");
+    const verdict = {
+      standard: "voice-two-track",
+      ask: "과장 없이 읽히는가?",
+      target_sha256: "a".repeat(64),
+      verdict: "pass",
+      reviewer: "codex",
+    };
+    writeFileSync(verdictFile, JSON.stringify(verdict), "utf8");
+
+    runCli(["record-verdict", "--file", verdictFile, "--json"], { root, now: new Date("2026-08-10T12:00:00.000Z") });
+
+    const logged = JSON.parse(readFileSync(join(root, ".scc", "checks", "adversarial.jsonl"), "utf8").trim());
+    assert.equal(logged.reviewer, "codex");
+    assert.equal(logged.at, "2026-08-10T12:00:00.000Z");
+
+    writeFileSync(verdictFile, JSON.stringify({ ...verdict, standard: "never-existed" }), "utf8");
+    assert.throws(() => runCli(["record-verdict", "--file", verdictFile], { root }), /no active standard/);
+  });
+});
+
+const SETTLED_STATE = {
+  run_id: "r1",
+  forks: [],
+  threshold: 0.05,
+  current_ambiguity: 0.02,
+  topology: { status: "confirmed", components: [{ name: "one" }] },
+};
+
+test("finalize refuses an unconfirmed topology and names what is open", () => {
+  withRoot((root) => {
+    writeState(root, { ...SETTLED_STATE, topology: { status: "pending", components: [{ name: "one" }] } });
+
+    assert.throws(
+      () => runCli(["finalize", "--json"], { root }),
+      /finalize refused — topology is pending, not confirmed/
+    );
+    assert.equal(readState(root).status, undefined);
+  });
+});
+
+test("finalize refuses ambiguity above the threshold", () => {
+  withRoot((root) => {
+    writeState(root, { ...SETTLED_STATE, current_ambiguity: 0.4 });
+
+    assert.throws(() => runCli(["finalize", "--json"], { root }), /ambiguity 0\.400 is above the 0\.05 threshold/);
+  });
+});
+
+test("--accept-risk without a reason is refused, so acceptance cannot be reflexive", () => {
+  withRoot((root) => {
+    writeState(root, { ...SETTLED_STATE, current_ambiguity: 0.4 });
+
+    assert.throws(() => runCli(["finalize", "--accept-risk"], { root }), /needs the reason/);
+    assert.throws(() => runCli(["finalize", "--accept-risk", "   "], { root }), /put the acceptance on the record/);
+  });
+});
+
+test("--accept-risk records what was accepted, by whom it was named, and against what numbers", () => {
+  withRoot((root) => {
+    writeState(root, { ...SETTLED_STATE, current_ambiguity: 0.4 });
+
+    runCli(["finalize", "--json", "--accept-risk", "발행 마감이 오늘이다"], {
+      root,
+      now: new Date("2026-08-10T12:00:00.000Z"),
+    });
+
+    const recorded = readState(root).risk_accepted;
+    assert.equal(recorded.reason, "발행 마감이 오늘이다");
+    assert.equal(recorded.ambiguity, 0.4);
+    assert.equal(recorded.threshold, 0.05);
+    assert.equal(recorded.at, "2026-08-10T12:00:00.000Z");
+    assert.match(recorded.risks.join(" "), /ambiguity 0\.400/);
+  });
+});
+
+test("finalize under the threshold needs no acceptance and records none", () => {
+  withRoot((root) => {
+    writeState(root, SETTLED_STATE);
+
+    runCli(["finalize", "--json"], { root });
+
+    const state = readState(root);
+    assert.equal(state.status, "pending_approval");
+    assert.equal(state.risk_accepted, undefined);
+  });
+});
+
+test("confirm closes the interview so nothing is left to resume", () => {
+  withRoot((root) => {
+    writeState(root, SETTLED_STATE);
+    recordFork(root);
+    runCli(["finalize", "--json"], { root });
+
+    runCli(["confirm", "--json"], { root });
+
+    assert.equal(readState(root), null);
+    // The decision survives; only the resumable remainder is gone.
+    assert.match(standardBody(root, "voice-two-track"), /^status: active$/m);
+  });
+});
+
+test("confirm refuses an interview that was never finalized", () => {
+  withRoot((root) => {
+    writeState(root, SETTLED_STATE);
+
+    assert.throws(() => runCli(["confirm"], { root }), /confirm needs a finalized interview/);
+    assert.notEqual(readState(root), null);
+  });
+});
+
+test("a confirmed interview leaves start free to open the next one", () => {
+  withRoot((root) => {
+    writeState(root, SETTLED_STATE);
+    runCli(["finalize", "--json"], { root });
+    runCli(["confirm", "--json"], { root });
+
+    runCli(["start", "--idea", "다음 갈림길", "--json"], { root });
+
+    assert.equal(readState(root).initial_idea, "다음 갈림길");
+  });
+});
+
 test("runCli refuses to run when the resolved root is the plugin install", () => {
   assert.throws(
     () => runCli(["status"], { env: { CLAUDE_PROJECT_DIR: process.cwd() }, useRealRootResolution: true }),

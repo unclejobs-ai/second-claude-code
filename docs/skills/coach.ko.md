@@ -39,6 +39,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
 8. 초안을 쓰기 전에 `record-fork --file <path>`로 확정된 갈림길을 기록합니다.
 9. 승인 대기 옵션(`confirm`, `continue`, `plan-mode`)에서 멈춥니다.
 
+`finalize`는 토폴로지가 확정되지 않았거나 모호도가 임계치 위면 거부하고, 어느 쪽이 열려 있는지 이름을 댑니다. 무조건 막는 건 아닙니다 — 스펙이 남은 위험을 사용자가 받아들이는 길을 허용합니다 — 다만 그 수용이 명시적이고 기록으로 남아야 합니다. `--accept-risk "<이유>"`는 이유와 열린 위험, 그리고 어떤 숫자를 놓고 받아들였는지를 함께 저장합니다. 이유 없는 맨 `--accept-risk`는 거부합니다. 수용이 반사적으로 되면 게이트가 아니니까요.
+
+`confirm`은 확정된 인터뷰를 닫고 `.scc/state/coach.json`을 지웁니다. 결정은 기준 문서에 남습니다. 상태 파일은 재개용 나머지였고, 확정한 뒤에는 재개할 게 없습니다. 이걸로 세 갈래 해석도 정리됩니다 — session-end는 `pending_approval`을 닫힌 것으로, `start`는 열린 것으로, 세션 시작은 재개할 런으로 봤습니다. 파일이 없으면 셋의 답이 같아집니다.
+
 ## 갈림길 파일
 
 `record-fork`는 인자를 argv가 아니라 파일로 받습니다. 본문에 줄바꿈과 비ASCII 산문이 들어가고, 셸을 통과하며 깨지기 때문입니다.
@@ -73,7 +77,19 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/standard-check.mjs" <대상 경로> [--stand
 
 검사기마다 반드시 실패해야 하는 픽스처가 `tests/fixtures/standard-checks/<검사기>/`에 딸려 있습니다. 픽스처를 이 저장소에 두는 건 의도적입니다 — 프로젝트가 픽스처를 대면 그것도 신뢰 경계를 넘는 입력이 됩니다. 검사기가 자기 픽스처를 통과시키기 시작하면 테스트가 깨집니다.
 
-통과로 세지 않는 결과가 둘 있습니다. 검사가 없는 기준은 `UNCHECKED`로 보고됩니다 — 보이기만 할 뿐 검증된 게 아닙니다. `adversarial` 검사는 `UNPROVEN`입니다. 독립 리뷰어만 답할 수 있는 질문인데 러너가 아직 그 답을 기록할 방법이 없으므로, 만족된 것으로 세지 않습니다. 둘 다 위반은 아니라서 종료코드 1을 내지는 않습니다.
+검사가 없는 기준은 `UNCHECKED`로 보고됩니다. 보이기만 할 뿐 검증된 게 아니고, 통과로 세지 않습니다. 위반은 아니라서 종료코드 1을 내지는 않습니다.
+
+### adversarial 검사
+
+`adversarial`은 정규식으로 가릴 수 없는 질문입니다 — 두 글이 한 사람이 쓴 것처럼 읽히는가, 이 주장이 과장인가. 리뷰어의 답이 파일에 남기 전까지는 `UNPROVEN`입니다.
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file <verdict.json>
+```
+
+판정에는 `standard`, 질문 원문 `ask`, `verdict`(`pass`/`fail`), `reviewer`, 선택 `note`, 그리고 `target_sha256` — 리뷰어가 실제로 읽은 산출물의 해시 — 가 들어갑니다. 해시는 `standard-check`가 `UNPROVEN` 줄마다 같이 찍어 줍니다. 답은 `.scc/checks/adversarial.jsonl`에 덧붙입니다. 덧붙이기만 하는 이유는 이 프로젝트에서 다섯 세션이 동시에 돌기 때문입니다. 읽고-고쳐-쓰면 경합에서 진 판정이 사라집니다.
+
+판정을 바이트에 묶는 게 핵심입니다. 산출물을 고치면 그에 달린 답은 전부 `UNPROVEN`으로 돌아갑니다 — 지난주 초안을 본 리뷰는 이번 초안에 대해 아무 말도 하지 않았으니까요. 판정을 `standard-check`이 아니라 coach 러너로 받는 것도 같은 이유입니다. 채점하는 도구가 합격 도장까지 찍게 두지 않습니다.
 
 ## 기준 폐기
 

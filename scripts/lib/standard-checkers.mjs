@@ -199,10 +199,19 @@ export function validateCheck(check, index) {
   return check;
 }
 
-export function runCheck(check, target, index = 0) {
+export function runCheck(check, target, index = 0, verdict = null) {
   validateCheck(check, index);
   if (check.kind === "adversarial") {
-    return { kind: "adversarial", status: "unproven", ask: check.ask };
+    if (!verdict) return { kind: "adversarial", status: "unproven", ask: check.ask };
+    return verdict.verdict === "pass"
+      ? { kind: "adversarial", status: "pass", ask: check.ask, reviewer: verdict.reviewer }
+      : {
+          kind: "adversarial",
+          status: "fail",
+          checker: "adversarial",
+          ask: check.ask,
+          reason: `${verdict.reviewer} answered no${verdict.note ? ` — ${verdict.note}` : ""}`,
+        };
   }
   const result = CHECKERS.get(check.checker)(target, check.args || {});
   return result.ok
