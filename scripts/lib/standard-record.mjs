@@ -74,9 +74,25 @@ ${
 `;
 }
 
+function existingTitleOf(path) {
+  if (!existsSync(path)) return null;
+  const match = readFileSync(path, "utf8").match(/^# (.+)$/m);
+  return match ? match[1].trim() : null;
+}
+
 export function writeStandard(root, fork, options = {}) {
   assertValidId(fork.id);
   const path = standardPath(root, fork.id);
+  const existingTitle = existingTitleOf(path);
+  // A colliding id would otherwise erase a different decision's rejected options,
+  // which is the one thing this record exists to preserve. Same title means the
+  // caller is updating a record it already owns; a different title means two
+  // decisions were handed the same id and one of them is about to disappear.
+  if (existingTitle !== null && existingTitle !== fork.title) {
+    throw new Error(
+      `id "${fork.id}"는 이미 다른 기준에 쓰이고 있습니다: 기존 "${existingTitle}" / 새 "${fork.title}". id는 결정마다 서로 다르고 의미 있게 지어야 합니다.`
+    );
+  }
   mkdirSync(join(standardsDir(root), fork.id), { recursive: true });
   writeFileAtomic(path, renderStandard(fork, options));
   return path;

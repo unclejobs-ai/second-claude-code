@@ -201,3 +201,31 @@ test("a status: active line inside the preserved body survives two supersede cal
     assert.match(md, /leave this line alone/);
   });
 });
+
+test("writing the same id twice with the same title succeeds and updates the record", () => {
+  withRoot((root) => {
+    writeStandard(root, FORK, { now: NOW });
+    const updatedFork = { ...FORK, chosen: "바뀐 결정문" };
+    const path = writeStandard(root, updatedFork, { now: NOW });
+    assert.match(readFileSync(path, "utf8"), /바뀐 결정문/);
+  });
+});
+
+test("writing the same id with a different title throws, and the original file is left byte-for-byte unchanged", () => {
+  withRoot((root) => {
+    const path = writeStandard(root, FORK, { now: NOW });
+    const before = readFileSync(path, "utf8");
+    assert.throws(() => writeStandard(root, { ...FORK, title: "다른 결정" }, { now: NOW }));
+    assert.equal(readFileSync(path, "utf8"), before);
+  });
+});
+
+test("the collision error names both titles", () => {
+  withRoot((root) => {
+    writeStandard(root, FORK, { now: NOW });
+    assert.throws(
+      () => writeStandard(root, { ...FORK, title: "다른 결정" }, { now: NOW }),
+      (err) => err.message.includes(FORK.title) && err.message.includes("다른 결정")
+    );
+  });
+});
