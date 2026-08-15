@@ -61,6 +61,41 @@ test("investigate is gone from every surface, not just from skills/", () => {
   }
 });
 
+// The six soul_* tools shipped with no caller, while the skill hand-rolled the
+// same operations against a different layout: `observations.jsonl` and
+// `meta.json`, which neither the hooks nor the handlers have ever read or
+// written. Two half-features that could not see each other.
+test("the soul skill drives the soul_* tools instead of a second storage layout", () => {
+  const server = read("mcp/pdca-state-server.mjs");
+  const soulTools = [...new Set([...server.matchAll(/name:\s*"(soul_[a-z_]+)"/g)].map((m) => m[1]))];
+  assert.ok(soulTools.length >= 6, "expected the soul tool family to be registered");
+
+  const skill = read("skills/soul/SKILL.md");
+  for (const tool of soulTools) {
+    assert.match(skill, new RegExp(tool), `skills/soul/SKILL.md should drive ${tool}`);
+  }
+  for (const orphanPath of ["observations.jsonl", "meta.json"]) {
+    assert.doesNotMatch(
+      skill,
+      new RegExp(orphanPath.replace(".", "\\.")),
+      `the skill must not prescribe ${orphanPath} — nothing else reads or writes it`
+    );
+  }
+});
+
+// PDCA chains its sub-skills by slash command, so the skills it dispatches have
+// to stay reachable. Only the maintainer loops, which nothing chains to and
+// which both READMEs already promise are never auto-routed, are pinned shut.
+test("only the maintainer loops are marked user-invoked", () => {
+  const userInvoked = [];
+  for (const name of readdirSync(path.join(root, "skills"))) {
+    const file = path.join(root, "skills", name, "SKILL.md");
+    if (!existsSync(file)) continue;
+    if (/^disable-model-invocation:\s*true$/m.test(readFileSync(file, "utf8"))) userInvoked.push(name);
+  }
+  assert.deepEqual(userInvoked.sort(), ["evolve", "loop"]);
+});
+
 // The map pointed at skills/investigate/SKILL.md for a release after nothing
 // read it. A dangling target makes the loop evolve a file that is not there.
 test("every evolve asset-map target resolves to a file that exists", () => {

@@ -453,6 +453,28 @@ coach 스킬의 효과를 증명하려면 스킬 없는 상태의 실패를 먼�
 
 `write`가 유일하게 확실한 삭제 후보인 이유를 남겨 둔다. 121줄에 실행 코드가 0이고 의사결정 단어가 0이다. 내용은 규칙표이며, 참조하는 포맷 스펙은 각 18~23줄이다. 실사용에서 실제 집필은 캠페인의 VOICE·SPEC 문서가 했고 스킬은 통과의례였다. 남길 값이 있다면 그것은 검사이지 스킬이 아니다.
 
+### 확정 (2026-08-15)
+
+위 잠정 분류 중 베이스라인 없이 판정 가능한 것을 확정했다. 재론하지 말 것.
+
+**`investigate` 삭제 · `viewer`/`unblock` 도구로 내림** — 실행됨. `standard-check`이 세 번째 도구로 합류. 15 skills / 18 commands.
+
+**`discover`는 스킬로 유지한다.** 이 문서가 자기모순이었다 — 「도구로 내리는 것」과 「판정 보류」에 동시에 들어 있었다. 판정 근거는 구조다. `discover`는 서브에이전트 셋(`skill-searcher`, `skill-evaluator`, `skill-inspector`)을 부려 후보를 가중 기준으로 점수 매기고 추천한다. 그건 실행이 아니라 판단이다. 「도구로 내리는 것」의 기준은 "판단이 없고 실행만 하는 것"이므로 `discover`는 해당하지 않는다.
+
+**통합하지 않는다** — `loop`+`evolve`, `research`+`collect`, `analyze`+`refine`, `workflow`+`batch` 전부.
+
+- `evolve`는 `loop`를 **부른다**. 실패 수확 → 메인테이너가 체크 작성 → 손대지 않은 loop 엔진에 넘김. 중복이 아니라 층이다. 합치면 "옵티마이저가 자기 합격 기준을 쓰지 않는다"는 경계가 안 보이게 된다.
+- 나머지 셋은 인접하지 `,` 중복이 아니다. `research`는 크롤·종합해서 브리프를 내고 `collect`는 받은 자료를 PARA로 분류한다. `workflow`는 스킬을 순서로 엮고 `batch`는 한 작업을 병렬로 쪼갠다. `analyze`(Plan/Do)와 `refine`(Act)은 같은 단계의 앞뒤조차 아니다.
+- 인접은 중복이 아니다. 베이스라인이 어떤 스킬에 행동 차이가 없다고 나오면 그때 **삭제**하면 된다. 그건 통합과 다른 판정이다.
+
+**호출 방식 분리는 `loop`·`evolve`에만 적용한다.** 둘은 `disable-model-invocation: true`를 달았고, 계약 테스트가 정확히 이 둘만 그렇다는 것을 고정한다. 나머지 13개에 달지 않은 이유는 **PDCA가 하위 스킬을 슬래시 명령으로 체이닝하기 때문**이다(`skills/pdca/SKILL.md`: Plan → `/scc:research`, Do → `/scc:write`, Check → `/scc:review`, Act → `/scc:refine`). 두 호출 경로가 서로 독립인지 확인하지 않은 채 프론트매터를 쓸어 담으면 제품에서 가장 많이 쓰는 경로가 조용히 끊긴다. 풀려면 실제 하네스에서 "명령으로 체이닝된 스킬이 `disable-model-invocation` 아래에서도 뜨는가"를 한 번 돌려 보면 된다.
+
+**`soul` 배선은 도구 쪽으로 붙였다.** 조사해 보니 고아는 도구가 아니라 스킬이었다. `skills/soul/SKILL.md`가 `observations.jsonl`·`meta.json`이라는 저장 배치를 지시하고 있었는데, 훅(`hooks/lib/soul-observer.mjs`)과 MCP 핸들러(`mcp/lib/soul-handlers.mjs`)는 둘 다 `soul/observations/YYYY-MM-DD.jsonl`·`soul-active.json`을 쓴다. 스킬이 시키는 대로 적은 관측은 아무도 종합하지 않고, 스킬이 읽으라는 파일은 아무도 쓰지 않았다. 한 기능의 반쪽 둘이 서로를 못 보고 있었다. 스킬의 절차를 `soul_*` 도구 호출로 갈아 끼우고, 계약 테스트가 모든 `soul_*` 도구를 스킬이 지목하는지와 옛 배치 이름이 사라졌는지를 본다.
+
+나머지 17개 MCP 도구(`daemon_*`, `orchestrator_*`, `project_memory_*`, `session_recall_search`, 사이클 메모리 `pdca_*`)는 결함이 아니다. MCP 서버의 목적이 "PDCA 상태를 임의의 MCP 클라이언트에 노출"하는 것이고, 훅은 MCP 도구를 호출할 수 없어 같은 라이브러리를 직접 쓴다. 프롬프트에 이름이 없다는 것이 죽었다는 뜻은 아니다.
+
+**남은 결정 하나**: MCP 저장 규약이 `CLAUDE_PLUGIN_DATA ?? <plugin>/.data`이다. 핸들러 여섯 개가 전부 이 패턴이라 의도된 설계지만, `soul/SOUL.md`는 플러그인 런타임 상태가 아니라 사용자 데이터다. 환경변수를 안 잡으면 재설치 때 사라진다. 규약 전체를 바꾸는 일이라 손대지 않았다.
+
 ### 호출 방식 분리
 
 살아남은 스킬을 두 부류로 나누고 프론트매터로 강제한다.

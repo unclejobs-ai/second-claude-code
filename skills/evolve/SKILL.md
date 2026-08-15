@@ -2,6 +2,7 @@
 name: evolve
 description: "Use when a prompt asset keeps causing the same PDCA gate failure and you want to evolve it against a maintainer-authored structural check"
 effort: high
+disable-model-invocation: true
 ---
 
 ## Iron Law

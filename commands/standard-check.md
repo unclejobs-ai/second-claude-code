@@ -35,3 +35,5 @@ it read as a pass:
 
 You did not write these standards and you do not get to grade your own compliance with them. If the
 artifact under check is one you produced this session, say so when you report the result.
+
+See `docs/skills/standard-check.md` for the checker reference and the verdict format.

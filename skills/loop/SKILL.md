@@ -2,6 +2,7 @@
 name: loop
 description: "Use when benchmarking and evolving prompt assets through a fixed-suite optimization loop"
 effort: high
+disable-model-invocation: true
 ---
 
 ## Iron Law

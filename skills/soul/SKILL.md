@@ -29,16 +29,20 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 
 ## Subcommands
 
-| Subcommand | Description |
-|------------|-------------|
-| `init` | Bootstrap a fresh observation log and SOUL.md stub from a template |
-| `learn` | Record new observations from the current session into the observation log |
-| `show` | Display current SOUL.md with evidence citations |
-| `propose` | Run full synthesis and output a proposed SOUL.md diff — does not write yet |
-| `apply` | Write the proposed SOUL.md to `.data/soul/SOUL.md` after user review |
-| `diff` | Compare current SOUL.md against a proposed version, highlighting changes |
-| `reset` | Archive current SOUL.md and start a fresh observation log |
-| `retro` | Show shipping metrics from git history across projects |
+The observation store is written by the SessionStart/SubagentStart/Stop hooks and read through the
+`soul_*` MCP tools. **Never append to it by hand.** Two writers with two layouts is how this skill
+previously produced observations nothing ever synthesized.
+
+| Subcommand | Description | Backed by |
+|------------|-------------|-----------|
+| `init` | Create a SOUL.md stub from a template | file write (the observation store starts itself) |
+| `learn` | Record an observation the hooks would not have caught | `soul_record_observation` |
+| `show` | Display current SOUL.md with evidence citations | `soul_get_profile`, `soul_get_observations` |
+| `propose` | Run full synthesis and output a proposed SOUL.md — does not write | `soul_get_readiness`, `soul_get_synthesis_context` |
+| `apply` | Write the proposed SOUL.md after user review | file write |
+| `diff` | Compare current SOUL.md against a proposed version | file read |
+| `reset` | Archive current SOUL.md | file move |
+| `retro` | Shipping metrics from git history across projects | `soul_retro` |
 
 ## Options
 
@@ -46,128 +50,90 @@ Build and maintain a persistent user identity profile from behavioral signals ob
 |------|--------|---------|--------|
 | `--mode` | `manual\|learning\|hybrid` | `hybrid` | manual = only user-triggered; learning = auto-observe every session; hybrid = auto-observe + user-triggered synthesis |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | Starter template for `init` |
-| `--import` | file path | none | Import observations from an external file into the log |
 | `--period` | `week\|month\|quarter` | `week` | Time range for `retro` metrics |
 | `--projects` | comma-separated paths | auto-detect | Project directories for `retro` git scanning |
 
 ### Mode Behavior
 
-- **manual**: Observations are only recorded when user explicitly calls `soul learn`. No automatic logging.
-- **learning**: SessionStart hook adds a learn call to every session automatically. Synthesis still requires explicit `soul propose`.
-- **hybrid**: Same as learning, plus prompts for synthesis after every 10th new observation.
+The mode lives in `soul-active.json` and the hooks read it — `learning` and `hybrid` are what turn
+automatic observation on.
+
+- **manual**: nothing is recorded unless the user calls `soul learn`.
+- **learning**: the hooks observe every session. Synthesis still requires `soul propose`.
+- **hybrid**: learning, plus a synthesis prompt once `proposal_due` is set.
 
 ## Workflow
 
 ### `init`
 
-1. Check if `.data/soul/` already exists — if so, warn user and require explicit `--force` flag
-2. Load template from `references/templates/{template}.md`
-3. Create `.data/soul/SOUL.md` (stub from template, all fields empty/TBD)
-4. Create `.data/soul/observations.jsonl` (empty log)
-5. Write init timestamp and template name to `.data/soul/meta.json`
+1. If `SOUL.md` already exists, warn and require `--force`.
+2. Load `references/templates/{template}.md` and write it as the SOUL.md stub.
+
+The observation log needs no bootstrap. The hooks create it on first signal.
 
 ### `learn`
 
-1. Dispatch **analyst** (Alakazam, sonnet) to scan the current session for signals matching `references/observation-signals.md` catalog
-2. Analyst returns structured observations in the format: `{ signal_type, context, raw_text, inferred_pattern, session_id, timestamp }`
-3. Validate: reject observations missing `signal_type` or `raw_text`
-4. Append valid observations to `.data/soul/observations.jsonl`
-5. Report count: "Added N observations (total: M)"
+For a signal the hooks did not catch. Call `soul_record_observation` with `signal`, `category`
+(`correction` | `emotional` | `style`), optional `confidence`, and `raw_context` trimmed to 200
+characters. Report the count it returns.
 
 ### `show`
 
-1. Read `.data/soul/SOUL.md`
-2. For each dimension, load supporting observations from `observations.jsonl` by citation ID
-3. Render SOUL.md with evidence citations inline
-4. Report observation log stats: total count, last 5 session IDs, oldest/newest timestamps
+1. `soul_get_profile` → the profile and its metadata. A null profile means synthesis has not run.
+2. `soul_get_observations` for the citations behind each dimension.
+3. Render the profile with its evidence inline, then the pool stats.
 
 ### `propose`
 
-1. Check minimum threshold: `observations.jsonl` must contain ≥10 sessions OR ≥30 observations. If below threshold, output gap report and stop.
-2. If `observations.jsonl` contains `shipping` signal entries, include the most recent 4 as quantitative evidence for the "Work Patterns" and "Shipping Cadence" dimensions
-3. Dispatch **soul-keeper** (Pikachu, opus) with full observation log + shipping metrics + current SOUL.md (if exists)
-4. Soul-keeper applies synthesis algorithm from `references/synthesis-algorithm.md`
-5. Output proposed SOUL.md with full evidence citations
-6. If current SOUL.md exists: run `diff` automatically and surface any dimension with >30% shift
-7. Do NOT write to file — output is for review only
+1. `soul_get_readiness`. Below threshold (10 sessions or 30 observations), print the shortfall and stop.
+2. `soul_get_synthesis_context` — recency-weighted observations, shipping entries, the current
+   profile, and a drift pre-check, already assembled. Do not re-read the files it summarizes.
+3. Dispatch **soul-keeper** (Pikachu, opus) with that context. It applies
+   `references/synthesis-algorithm.md`.
+4. Output the proposed SOUL.md with citations. Surface any dimension the drift pre-check flags above
+   30% with the words `SIGNIFICANT DRIFT DETECTED`.
+5. Write nothing. `propose` ends in review.
 
 ### `apply`
 
-1. Require that `propose` has been run in this session (check for proposed output in conversation)
-2. Prompt user: "Apply this soul update? This will overwrite `.data/soul/SOUL.md`. [yes/no]"
-3. On yes: write proposed SOUL.md to `.data/soul/SOUL.md`, append apply event to `meta.json`
-4. On no: discard proposed output, leave current SOUL.md unchanged
+1. Require that `propose` ran in this session.
+2. Ask: "Apply this soul update? This overwrites SOUL.md. [yes/no]"
+3. On yes, write the proposed profile. On no, discard it and leave the profile untouched.
 
 ### `diff`
 
-1. Read current `.data/soul/SOUL.md`
-2. Read proposed SOUL.md from argument or current session output
-3. Diff dimension-by-dimension: new dimensions, removed dimensions, changed characterizations
-4. Flag any dimension with semantic shift >30% (see `references/synthesis-algorithm.md` for drift detection)
-5. Output side-by-side table
+Read the current profile via `soul_get_profile`, compare dimension by dimension against the proposed
+one, and flag semantic shifts above 30% per `references/synthesis-algorithm.md`.
 
 ### `retro`
 
-1. Determine project directories:
-   - If `--projects` provided, use those paths
-   - Otherwise, auto-detect: scan parent directory of current working directory for sibling directories containing `.git/`
-2. For each project, run git log for the `--period` range:
-   - Collect: commit count, lines added/removed, files changed, commit timestamps, commit message subjects
-3. Compute metrics per `references/retro-metrics.md` specification:
-   - **Per-project**: commits, net lines, top 3 changed files
-   - **Aggregate**: total commits, shipping streak (consecutive days with 1+ commit across any project), active hours heatmap, project distribution
-4. If `.data/soul/SOUL.md` exists, compare current cadence against the "Shipping Cadence" section — note acceleration, deceleration, or project focus shifts
-5. Output formatted retro report with metrics table + trend summary
-6. Append a `shipping` observation to `observations.jsonl` with aggregated metrics as evidence (signal_type: `shipping`, one entry per retro invocation)
+Call `soul_retro` with `period` and optional `projects`. It scans the git history, computes the
+metrics in `references/retro-metrics.md`, detects the trend against previous retros, and appends the
+`shipping` observation itself. Render its report; do not recompute what it returns and do not write
+the observation a second time.
 
 ### `reset`
 
-1. Require explicit confirmation: "This will archive your current SOUL.md and start fresh. [yes/no]"
-2. On yes: move `.data/soul/SOUL.md` to `.data/soul/archive/SOUL-{timestamp}.md`, clear `observations.jsonl`, reset `meta.json`
-3. Template is preserved — only observations and synthesized soul are cleared
+1. Require explicit confirmation.
+2. Archive the current SOUL.md under `archive/SOUL-{timestamp}.md`.
+3. Leave the observation log alone unless the user asks for it. The pool is the evidence; discarding
+   it silently destroys every citation the next profile would rest on.
 
 ## Storage
 
-> **Data directory**: `.data/soul/` relative to the plugin root. Create with `mkdir -p` before writing.
+Under `CLAUDE_PLUGIN_DATA` when set, otherwise `<plugin>/.data`. The hooks, the MCP handlers, and
+this skill must all use the same layout — they did not, and that is what made half the pipeline
+invisible to the other half.
 
-| File | Description |
-|------|-------------|
-| `.data/soul/SOUL.md` | The synthesized soul document |
-| `.data/soul/observations.jsonl` | Append-only observation log (one JSON object per line) |
-| `.data/soul/meta.json` | Init timestamp, template, last synthesis date, observation count |
-| `.data/soul/archive/` | Archived soul versions from `reset` calls |
+| Path | Written by | Description |
+|------|-----------|-------------|
+| `soul/SOUL.md` | this skill (`apply`) | The synthesized profile |
+| `soul/observations/YYYY-MM-DD.jsonl` | hooks, `soul_record_observation` | Daily append-only signal log |
+| `soul/soul-active.json` | hooks | Session and observation counters, `proposal_due` flag |
+| `soul/archive/` | this skill (`reset`) | Archived profiles |
 
-### Observation Log Entry Format
-
-```json
-{
-  "id": "obs-{timestamp}-{n}",
-  "session_id": "session-{YYYY-MM-DD}-{topic-slug}",
-  "signal_type": "correction|style|expertise|decision|emotional|shipping",
-  "context": "brief description of what was happening",
-  "raw_text": "exact quote or paraphrase of the signal",
-  "inferred_pattern": "what this reveals about the user",
-  "timestamp": "ISO-8601",
-  "weight": 1
-}
-```
-
-### Shipping Observation Entry Format
-
-`shipping` entries use the same schema with structured `raw_text`:
-
-```json
-{
-  "id": "obs-{timestamp}-retro",
-  "session_id": "retro-{YYYY-MM-DD}",
-  "signal_type": "shipping",
-  "context": "retro --period week",
-  "raw_text": "{\"period\":\"2026-03-18..2026-03-25\",\"total_commits\":47,\"streak_days\":12,\"projects\":{\"christmas-ai-studio\":28,\"second-claude\":11,\"fronmpt-academy\":8},\"net_lines\":2340,\"peak_hours\":[14,15,22]}",
-  "inferred_pattern": "ships daily across 3 projects, heaviest in christmas-ai-studio, afternoon + late night peaks",
-  "timestamp": "ISO-8601",
-  "weight": 1
-}
-```
+Set `CLAUDE_PLUGIN_DATA` to keep this outside the plugin directory. Without it the store sits in the
+plugin install and does not survive a reinstall.
 
 ## Subagents
 

@@ -22,6 +22,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 ### Fixed
 
 - **Contract tests that asserted the wrong thing.** One required commands and skills to be the identical list; it now states the real rule — every skill needs a command, and a command with no skill must be a declared tool. Another held the docs at a hardcoded "18 skills" while the directory changed underneath; it now derives the count from disk. A third let the evolve asset map point at files that do not exist.
+- **The `soul` skill wrote to a layout nothing else used.** It prescribed `observations.jsonl` and `meta.json`; the hooks and the MCP handlers both use `soul/observations/YYYY-MM-DD.jsonl` and `soul-active.json`. Observations recorded the skill's way were never synthesized, and the file it told you to read was never written. Its procedures now drive the six `soul_*` tools, and a contract test holds them together. The unimplemented `--import` flag is gone.
+- **`loop` and `evolve` are marked `disable-model-invocation: true`.** Both READMEs already promised they are never auto-routed; nothing enforced it. The other 13 skills are deliberately untouched — PDCA chains its sub-skills by slash command, and pinning those shut without testing the interaction would break the most-used path in the product.
 - **Architecture docs** duplicated six releases of changelog that had drifted from `CHANGELOG.md`, and documented none of the standards system. The duplication is now a pointer and the subsystem has a section in both languages.
 
 ## [2.1.0] - 2026-07-25
