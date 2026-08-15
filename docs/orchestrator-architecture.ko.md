@@ -106,7 +106,7 @@ second-claude/
 │       ├── soul-handlers.mjs
 │       └── ...
 ├── tests/
-│   ├── hooks/prompt-detect.test.mjs   # 29개 테스트
+│   ├── hooks/prompt-detect-standards.test.mjs  # 6개 테스트
 │   └── mcp/orchestrator-handlers.test.mjs  # 17개 테스트
 └── config/
     └── stage-contracts.json           # PDCA 페이즈 계약
@@ -114,7 +114,7 @@ second-claude/
 
 ## 검증 범위
 
-- `npm test`: 총 368개 테스트, 367개 통과, 1개 스킵.
-- `tests/hooks/prompt-detect.test.mjs`: 한국어 리뷰, 커밋, 디자인, 리서치 프롬프트가 내부 fallback 전에 외부 capability로 디스패치되는지 검증합니다.
+- `npm test`: 총 505개 테스트, 504개 통과, 1개 스킵.
+- `tests/hooks/prompt-detect-standards.test.mjs`: 활성 기준의 트리거 문자열이 프롬프트에 그대로 들어 있으면 그 기준과 파일 경로를 띄우는지 검증합니다. 이 훅이 들고 있던 키워드 라우터는 제거됐습니다. 근거만 제시하고 스킬 호출을 지시하지 않습니다.
 - `tests/mcp/orchestrator-handlers.test.mjs`: 실제 발견된 플러그인 데이터, preferred phase routing, 일반 플러그인 매칭, 짧은 키워드 경계 guard를 검증합니다.
 - `tests/integration/skill-flow.test.mjs`: 더 강한 외부 플러그인 라우트가 없을 때 기존 PDCA 복합 라우팅이 유지되는지 검증합니다.

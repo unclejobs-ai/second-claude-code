@@ -106,7 +106,7 @@ second-claude/
 │       ├── soul-handlers.mjs
 │       └── ...
 ├── tests/
-│   ├── hooks/prompt-detect.test.mjs   # 29 tests
+│   ├── hooks/prompt-detect-standards.test.mjs  # 6 tests
 │   └── mcp/orchestrator-handlers.test.mjs  # 17 tests
 └── config/
     └── stage-contracts.json           # PDCA phase contracts
@@ -114,7 +114,7 @@ second-claude/
 
 ## Validation Coverage
 
-- `npm test`: 368 tests total, 367 passing, 1 skipped.
-- `tests/hooks/prompt-detect.test.mjs`: Korean review, commit, design, and research prompts dispatch to external capabilities before internal fallback.
+- `npm test`: 505 tests total, 504 passing, 1 skipped.
+- `tests/hooks/prompt-detect-standards.test.mjs`: a prompt containing a standard's literal trigger surfaces that standard and its path. The keyword router this hook used to carry was removed — it names evidence and never instructs a skill invocation.
 - `tests/mcp/orchestrator-handlers.test.mjs`: plugin list/get/route/health handlers cover real discovered plugin data, preferred phase routing, generic plugin matches, and short-keyword boundary guards.
 - `tests/integration/skill-flow.test.mjs`: confirms the prompt router still preserves PDCA compound routing when no stronger external plugin route wins.

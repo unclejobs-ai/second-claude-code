@@ -92,6 +92,23 @@ graph TD
     H --> I[Verdict + Action Items]
 ```
 
+## Reviewer Independence
+
+Whoever helped produce something does not get to certify it. Agent reuse is what breaks this
+quietly: an upstream phase borrows a reviewer-named agent, and that agent later votes on the work
+it helped shape.
+
+A reviewer-named agent starting while the active run is in any phase other than Check is recorded as
+an upstream participant. At aggregation its report is kept — findings are still findings — and its
+vote is not counted.
+
+If exclusion leaves the panel short, the verdict is `BLOCKED — QUORUM SHORT`, naming who was barred
+and how many independent reviewers are missing. There is no path that reaches quorum by relaxing an
+exclusion. Dispatch a replacement that was not upstream.
+
+The list clears once consensus is computed, so borrowing an agent once does not bar it from every
+review that follows.
+
 ## Gotchas
 
 - **Reviewer convergence** -- Reviewers are dispatched with independent context. Do not let them see each other's output.

@@ -8,7 +8,7 @@
 /scc:soul learn
 ```
 
-**What happens:** The skill dispatches the analyst subagent to scan the current session for behavioral signals (corrections, style, expertise, decisions, emotional markers), rejects any observation missing a `signal_type` or `raw_text`, appends the valid ones to `observations.jsonl`, and reports "Added N observations (total: M)".
+**What happens:** The skill dispatches the analyst subagent to scan the current session for behavioral signals (corrections, style, expertise, decisions, emotional markers), rejects any observation missing a `signal_type` or `raw_text`, appends the valid ones through `soul_record_observation`, and reports "Added N observations (total: M)".
 
 ## Subcommands
 
@@ -60,7 +60,6 @@
 |------|--------|---------|--------|
 | `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual` = only user-triggered observation; `learning` = auto-observe every session; `hybrid` = auto-observe + prompts for synthesis after every 10th new observation |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | Starter template for `init` |
-| `--import` | file path | none | Import observations from an external file into the log |
 | `--period` | `week\|month\|quarter` | `week` | Time range for `retro` metrics |
 | `--projects` | comma-separated paths | auto-detect | Project directories for `retro` git scanning |
 
@@ -74,11 +73,11 @@
 
 ```mermaid
 graph TD
-    A[learn scans session for signals] --> C[Append to observations.jsonl]
-    B[retro scans git log across projects] --> C
+    A[hooks observe every session] --> C[soul/observations/YYYY-MM-DD.jsonl]
+    B[soul_retro scans git log across projects] --> C
     C --> D{10+ sessions or 30+ observations?}
     D -->|No| E[Output gap report, stop]
-    D -->|Yes| F[Dispatch soul-keeper with observations + current SOUL.md]
+    D -->|Yes| F[soul_get_synthesis_context, then dispatch soul-keeper]
     F --> G[Apply synthesis algorithm + anti-generic filter]
     G --> H[Output proposed SOUL.md with evidence citations]
     H --> I[apply writes .data/soul/SOUL.md]
@@ -88,7 +87,7 @@ If a current SOUL.md already exists, `propose` automatically runs `diff` against
 
 ## Observation Categories
 
-Each observation logged to `observations.jsonl` carries one of six `signal_type` values:
+Each observation carries one of six `signal_type` values:
 
 | Signal Type | Triggered By |
 |------------|--------------|
@@ -119,10 +118,17 @@ The `default` template (other options: `developer`, `writer`, `researcher`) synt
 
 | File | Description |
 |------|------|
-| `.data/soul/SOUL.md` | The synthesized soul document |
-| `.data/soul/observations.jsonl` | Append-only observation log (one JSON object per line) |
-| `.data/soul/meta.json` | Init timestamp, template, last synthesis date, observation count |
-| `.data/soul/archive/` | Archived soul versions from `reset` calls |
+| `soul/SOUL.md` | The synthesized soul document |
+| `soul/observations/YYYY-MM-DD.jsonl` | Daily append-only signal log, written by the hooks and `soul_record_observation` |
+| `soul/soul-active.json` | Session and observation counters, mode, `proposal_due` flag |
+| `soul/archive/` | Archived profiles from `reset` calls |
+
+Rooted at `CLAUDE_PLUGIN_DATA` when set, otherwise `<plugin>/.data`. Set it — without it the store
+sits inside the plugin install and a reinstall takes it with the directory.
+
+The skill never appends to this store by hand. It reads and writes through the `soul_*` MCP tools,
+which is what the hooks use too. An earlier version prescribed `observations.jsonl` and `meta.json`,
+files nothing else ever read or wrote, so half the pipeline was invisible to the other half.
 
 ## Gotchas
 

@@ -34,6 +34,26 @@ It auto-detects which phase to enter from natural language and chains the approp
 
 *`analyze` spans both phases: in Plan it synthesizes research findings; in Do it can apply a different framework for the production artifact.
 
+### The 15 skills
+
+| Skill | Phase | Role |
+|---|---|---|
+| `coach` | Requirements | Settles a fork with two or more defensible directions into a standard |
+| `research` | Plan | Autonomous multi-round web research |
+| `analyze` | Plan / Do | 15 strategic frameworks |
+| `write` | Do | Long-form content production |
+| `review` | Check | Multi-perspective quality gate (up to 5 parallel reviewers) |
+| `refine` | Act | Iterative improvement to a target |
+| `loop` | Optimization | Fixed-suite prompt asset optimization (maintainer-only) |
+| `evolve` | Maintenance | Evolves a recurring-failure asset against a maintainer-authored check (maintainer-only) |
+| `collect` | Plan | PARA-classified knowledge capture |
+| `workflow` | Do | Custom pipeline builder |
+| `discover` | Plan | Skill discovery and installation |
+| `batch` | Do | Parallel decomposition of large homogeneous work |
+| `soul` | Extend | User identity profile synthesis |
+| `translate` | Extend | Soul-aware EN↔KO translation |
+| `pdca` | Full cycle | Orchestrator (meta-skill) |
+
 Three commands sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one.
 
 ## Decision Standards
@@ -756,6 +776,15 @@ The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin 
 ### What Changed in prompt-detect
 
 The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. In addition, prompt-detect now calls `getDispatchPlan()` for each substantive prompt. If the top external match is a known lifecycle intent or a strong generic plugin match, it injects an `[ORCHESTRATOR]` instruction that requires invoking that Skill/command before self-processing. When plugins change, both the guide and the immediate dispatch target change automatically.
+
+---
+
+### Soul Feedback Binding (Phase 5)
+
+- `soul_retro` — collects git shipping metrics (commit counts, streak, peak hours, trend detection)
+- `soul_get_synthesis_context` — assembles the observation data the synthesis step needs
+- `soul_get_readiness` — reports whether the pool has crossed the synthesis threshold (30 observations or 10 sessions)
+- SessionStart injects the progress gauge, the retro summary, and the synthesis call to action
 
 ---
 

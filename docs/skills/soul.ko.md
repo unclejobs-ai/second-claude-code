@@ -10,7 +10,7 @@
 /scc:soul learn
 ```
 
-**동작 방식:** analyst 서브에이전트가 현재 세션을 스캔해 행동 신호(정정, 스타일, 전문성, 의사결정, 감정 신호)를 추출합니다. `signal_type`이나 `raw_text`가 빠진 관찰은 거부되며, 유효한 항목만 `observations.jsonl`에 추가한 뒤 "Added N observations (total: M)" 형태로 결과를 보고합니다.
+**동작 방식:** analyst 서브에이전트가 현재 세션을 스캔해 행동 신호(정정, 스타일, 전문성, 의사결정, 감정 신호)를 추출합니다. `signal_type`이나 `raw_text`가 빠진 관찰은 거부되며, 유효한 항목만 `soul_record_observation`으로 기록한 뒤 "Added N observations (total: M)" 형태로 결과를 보고합니다.
 
 ## 서브커맨드
 
@@ -62,7 +62,6 @@
 |--------|-----|--------|------|
 | `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual`은 사용자가 직접 호출할 때만 관찰, `learning`은 매 세션 자동 관찰, `hybrid`는 자동 관찰에 더해 새 관찰 10개마다 종합을 제안 |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | `init`의 시작 템플릿 |
-| `--import` | 파일 경로 | 없음 | 외부 파일의 관찰을 로그로 가져오기 |
 | `--period` | `week\|month\|quarter` | `week` | `retro` 지표의 기간 범위 |
 | `--projects` | 콤마로 구분된 경로 | 자동 감지 | `retro`가 git을 스캔할 프로젝트 디렉터리 |
 
@@ -76,11 +75,11 @@
 
 ```mermaid
 graph TD
-    A[learn scans session for signals] --> C[Append to observations.jsonl]
-    B[retro scans git log across projects] --> C
+    A[hooks observe every session] --> C[soul/observations/YYYY-MM-DD.jsonl]
+    B[soul_retro scans git log across projects] --> C
     C --> D{10+ sessions or 30+ observations?}
     D -->|No| E[Output gap report, stop]
-    D -->|Yes| F[Dispatch soul-keeper with observations + current SOUL.md]
+    D -->|Yes| F[soul_get_synthesis_context, then dispatch soul-keeper]
     F --> G[Apply synthesis algorithm + anti-generic filter]
     G --> H[Output proposed SOUL.md with evidence citations]
     H --> I[apply writes .data/soul/SOUL.md]
@@ -90,7 +89,7 @@ graph TD
 
 ## 관찰 카테고리
 
-`observations.jsonl`에 기록되는 모든 관찰은 6가지 `signal_type` 중 하나에 속합니다.
+모든 관찰은 6가지 `signal_type` 중 하나에 속합니다.
 
 | Signal Type | 트리거 조건 |
 |------------|-----------|
@@ -121,10 +120,14 @@ graph TD
 
 | 파일 | 설명 |
 |------|------|
-| `.data/soul/SOUL.md` | 종합된 소울 문서 |
-| `.data/soul/observations.jsonl` | 추가 전용 관찰 로그 (한 줄에 JSON 객체 하나) |
-| `.data/soul/meta.json` | 초기화 시각, 템플릿, 마지막 종합 날짜, 관찰 수 |
-| `.data/soul/archive/` | `reset` 호출로 보관된 이전 소울 버전 |
+| `soul/SOUL.md` | 종합된 소울 문서 |
+| `soul/observations/YYYY-MM-DD.jsonl` | 날짜별 추가 전용 신호 로그. 훅과 `soul_record_observation`이 씁니다 |
+| `soul/soul-active.json` | 세션·관찰 카운터, 모드, `proposal_due` 플래그 |
+| `soul/archive/` | `reset`으로 보관된 이전 프로필 |
+
+기준 경로는 `CLAUDE_PLUGIN_DATA`가 있으면 그것, 없으면 `<plugin>/.data`입니다. 잡아 두십시오. 안 잡으면 저장소가 플러그인 설치 폴더 안에 앉고, 재설치할 때 폴더째 사라집니다.
+
+스킬은 이 저장소에 직접 덧붙이지 않습니다. 훅이 쓰는 것과 같은 `soul_*` MCP 도구로 읽고 씁니다. 예전 버전은 아무도 읽지도 쓰지도 않는 파일 배치를 지시하고 있어서, 파이프라인의 반쪽이 나머지 반쪽을 못 보고 있었습니다.
 
 ## 주의사항
 
@@ -133,6 +136,15 @@ graph TD
 - 채팅에서는 직설적이고 리포트에서는 장황한 사용자는 모순이 아닙니다. 이런 경우는 평균으로 뭉개지 않고 "X 상황에서는 Y" 형태의 조건부 규칙으로 남깁니다.
 - SOUL.md는 사용자가 업무 맥락으로 명시적으로 제공하지 않는 한 의료 정보, 재정 상태, 관계 상태, 정치·종교 성향을 절대 기록하지 않습니다. 민감한 신호가 관찰되면 내용 없이 "민감 신호 생략됨"으로만 기록합니다.
 - 어떤 차원이든 30%를 초과하는 변화는 자동 반영되지 않습니다. `propose`가 "SIGNIFICANT DRIFT DETECTED"로 표시하며 사용자의 명시적 확인을 요구합니다.
+
+## 문제 해결
+
+- **`propose`가 프로필 대신 부족 보고서를 낸다** -- 최소치(세션 10회 또는 관찰 30건) 미만입니다. `learn`을 더 돌리거나 `hybrid`/`learning` 모드로 자동 관찰을 쌓으십시오.
+- **어떤 차원이 흔한 자기소개처럼 읽힌다** -- 근거 인용 2개 이상을 못 채워 anti-generic 필터가 거부한 것입니다. 구체적인 세션을 더 쌓고 `propose`를 다시 돌리십시오.
+- **`SIGNIFICANT DRIFT DETECTED`가 떴다** -- 어떤 차원이 현재 SOUL.md에서 30% 넘게 움직였습니다. diff를 읽고 명시적으로 동의한 뒤 `apply` 하십시오. 큰 변동은 자동 적용되지 않습니다.
+- **`apply`가 쓸 게 없다고 한다** -- `apply`는 같은 세션에서 `propose`가 먼저 돌아야 합니다. 방금 제안·검토되지 않은 SOUL.md는 쓰지 않습니다.
+- **`init`이 이미 있다고 경고한다** -- `--force`로 진행하거나, 현재 프로필을 보관하고 새로 시작할 의도라면 `reset`을 쓰십시오.
+- **관찰이 안 쌓인다** -- 모드가 `manual`이면 훅이 자동 관찰하지 않습니다. `soul-active.json`의 모드를 확인하십시오. `CLAUDE_PLUGIN_DATA`를 안 잡았다면 저장소가 플러그인 폴더 안에 있어 재설치 때 사라졌을 수 있습니다.
 
 ## 연동 스킬
 

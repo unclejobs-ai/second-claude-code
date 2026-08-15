@@ -2,6 +2,8 @@
 
 > The ouroboros maintainer loop — evolve a recurring-failure prompt asset against a maintainer-authored structural check.
 
+**Maintainer-only.** The skill carries `disable-model-invocation: true` — it runs only when you call `/scc:evolve`.
+
 `evolve` sits on top of `loop`. It does not optimize anything itself; it selects *which* asset is structurally weak from real PDCA failures, takes a maintainer-authored check, and hands the asset to the unmodified `loop` engine.
 
 ## Quick Example

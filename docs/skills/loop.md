@@ -2,6 +2,8 @@
 
 > Benchmark and evolve prompt assets with a fixed-suite optimization loop.
 
+**Maintainer-only.** The skill carries `disable-model-invocation: true`, so it runs only when you call `/scc:loop`. Nothing auto-routes to it and nothing chains into it.
+
 ## Quick Example
 
 ```bash
