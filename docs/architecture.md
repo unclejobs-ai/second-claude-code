@@ -331,6 +331,26 @@ When PDCA enters the Do phase, the dispatcher matches the user prompt against tr
 
 Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md` (284 lines).
 
+### Reviewer Independence (Check Gate)
+
+Whoever helped produce something does not get to certify it. Agent reuse breaks this quietly: the
+critic roster and the agents an upstream phase borrows come from the same pool, so one name can
+shape a decision and then vote on the work that decision governs — adversarial in form, self-review
+in substance.
+
+The discriminator is the active run's phase, not a heuristic. A reviewer-named agent starting while
+`pdca-active.json` reports any phase other than `check` was borrowed upstream; `subagent-start`
+records it in `state/upstream-participants.json`.
+
+At aggregation, an excluded reviewer keeps its report — the findings are still findings — and loses
+its vote. If exclusion leaves the panel short, consensus is `BLOCKED — QUORUM SHORT` and names who
+was barred and how many independent reviewers are missing. Quorum is never reached by relaxing an
+exclusion, because a rule that bends to fit the headcount is not a rule. The list is cleared once
+consensus is computed, so a name borrowed upstream once is not barred from every review thereafter.
+
+The standards side carries the same invariant: a fork file records `participants`, and
+`record-verdict` refuses a verdict from anyone on that list.
+
 ### Reviewer Diversity (Check Gate)
 
 The Check phase enforces reviewer model diversity to prevent false consensus:

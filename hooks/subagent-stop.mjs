@@ -39,6 +39,7 @@ import { fileURLToPath } from "url";
 import { readJsonSafe, sanitize, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
+import { readParticipantNames, clearParticipants } from "./lib/participation.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -337,8 +338,27 @@ function parseReviewerOutput(text, reviewerName = null) {
 // Collapsing them into one value is what made the docs claim the score gate was 0.67.
 const MIN_AVERAGE_SCORE = 0.7;
 
-function computeConsensus(reviewers, expected, threshold = 0.67) {
-  if (reviewers.length < expected) return null;
+function computeConsensus(reviewers, expected, threshold = 0.67, excluded = []) {
+  if (reviewers.length + excluded.length < expected) return null;
+
+  // Rule 3 of the independence protocol: when exclusion leaves the panel short,
+  // report the shortfall instead of passing. Relaxing an exclusion to reach
+  // quorum would turn the rule into a suggestion, which is the same as not
+  // having it.
+  if (reviewers.length < expected) {
+    return {
+      verdict: "BLOCKED — QUORUM SHORT",
+      pass_count: 0,
+      total: reviewers.length,
+      required: expected,
+      average_score: null,
+      excluded,
+      reason:
+        `${excluded.join(", ")} helped produce this artifact and cannot review it. ` +
+        `${reviewers.length} independent reviewer(s) reported, ${expected} required. ` +
+        "Dispatch replacements that were not upstream; do not lower the bar to fit.",
+    };
+  }
 
   const total = reviewers.length;
   // Clamp threshold to a safe range to prevent trivially easy or impossible gates.
@@ -453,6 +473,14 @@ function main() {
       s.preset = config.preset;
     }
 
+    // An agent that ran upstream of this artifact keeps its report on file --
+    // the findings are still worth reading -- but its vote does not count.
+    const upstream = new Set(readParticipantNames(STATE_DIR));
+    if (upstream.has(record.name)) {
+      record.excluded = true;
+      record.excluded_reason = "ran upstream of this artifact";
+    }
+
     // Avoid duplicate entries for the same named reviewer (last-write wins).
     const existingIndex = s.reviewers.findIndex((r) => r.name === record.name);
     if (existingIndex !== -1) {
@@ -461,8 +489,12 @@ function main() {
       s.reviewers.push(record);
     }
 
+    const eligible = s.reviewers.filter((r) => !r.excluded);
+    const excludedNames = s.reviewers.filter((r) => r.excluded).map((r) => r.name);
+    s.excluded_reviewers = excludedNames;
+
     // Compute consensus when all reviewers have reported.
-    const consensusResult = computeConsensus(s.reviewers, expected, threshold);
+    const consensusResult = computeConsensus(eligible, expected, threshold, excludedNames);
     s.consensus = consensusResult
       ? {
           verdict: consensusResult.verdict,
@@ -470,9 +502,15 @@ function main() {
           total: consensusResult.total,
           required: consensusResult.required,
           average_score: consensusResult.average_score,
+          excluded: excludedNames,
+          reason: consensusResult.reason ?? null,
           computed_at: new Date().toISOString(),
         }
       : null;
+
+    // One Do -> Check pass. Clearing here keeps a name borrowed upstream once
+    // from barring that agent from every review thereafter.
+    if (consensusResult) clearParticipants(STATE_DIR);
 
     ensureDir(STATE_DIR);
     writeJsonAtomic(AGGREGATION_FILE, s);
@@ -499,18 +537,29 @@ function main() {
       (record.warning_count > 0 ? ` (${record.warning_count} Warning)` : "")
   );
 
+  if (Array.isArray(state.excluded_reviewers) && state.excluded_reviewers.length > 0) {
+    lines.push(
+      `[EXCLUDED] ${state.excluded_reviewers.join(", ")} ran upstream of this artifact. ` +
+        "Findings still count as findings; the votes do not count toward quorum."
+    );
+  }
+
   if (state.consensus) {
     const c = state.consensus;
-    const scoreLabel =
-      c.average_score !== null && c.average_score !== undefined
-        ? ` avg_score=${c.average_score.toFixed(2)} [score-gate]`
-        : " [vote-gate]";
-    lines.push(
-      `CONSENSUS: ${c.verdict} (${c.pass_count}/${c.total} pass, required ${c.required}${scoreLabel})`
-    );
-    lines.push(
-      `Review complete. Proceed with the consensus verdict: ${c.verdict}.`
-    );
+    if (c.reason) {
+      lines.push(`CONSENSUS: ${c.verdict} — ${c.reason}`);
+    } else {
+      const scoreLabel =
+        c.average_score !== null && c.average_score !== undefined
+          ? ` avg_score=${c.average_score.toFixed(2)} [score-gate]`
+          : " [vote-gate]";
+      lines.push(
+        `CONSENSUS: ${c.verdict} (${c.pass_count}/${c.total} pass, required ${c.required}${scoreLabel})`
+      );
+      lines.push(
+        `Review complete. Proceed with the consensus verdict: ${c.verdict}.`
+      );
+    }
   } else {
     lines.push(
       `Waiting for ${expected - reported} more reviewer(s) before consensus can be computed.`

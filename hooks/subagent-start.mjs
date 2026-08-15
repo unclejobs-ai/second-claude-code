@@ -22,6 +22,7 @@ import { fileURLToPath } from "url";
 import { readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
+import { recordParticipant } from "./lib/participation.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -120,6 +121,26 @@ function main() {
 
   // Fast-exit: not a known reviewer.
   if (!reviewerName) {
+    process.exit(0);
+  }
+
+  // A reviewer-named agent starting outside the Check phase was borrowed by an
+  // upstream phase, not dispatched to a panel. The active run's phase is the
+  // discriminator: absence of the aggregation file is not, because the review
+  // skill's own safety net depends on exactly that condition.
+  const activePhase = readJsonSafe(join(STATE_DIR, "pdca-active.json"))?.current_phase;
+  if (typeof activePhase === "string" && activePhase && activePhase !== "check") {
+    recordParticipant(STATE_DIR, reviewerName);
+    console.log(
+      JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "SubagentStart",
+          additionalContext:
+            `[UPSTREAM] ${reviewerName} is running in the ${activePhase} phase, not on a review panel. ` +
+            "It is now barred from the quorum that judges this artifact — dispatch a different reviewer in Check.",
+        },
+      })
+    );
     process.exit(0);
   }
 

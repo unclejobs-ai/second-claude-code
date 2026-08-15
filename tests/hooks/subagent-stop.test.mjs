@@ -380,3 +380,67 @@ test("subagent stop downgrades low-score pass verdicts to NEEDS IMPROVEMENT", ()
   assert.equal(aggregation.reviewers[0].is_pass, false);
   assert.match(output.hookSpecificOutput.additionalContext, /Latest: fact-checker → NEEDS IMPROVEMENT score=0\.55/);
 });
+
+// ── Upstream participation exclusion ────────────────────────────────────────
+
+function writeParticipants(tempDir, names) {
+  writeFileSync(
+    path.join(tempDir, "state", "upstream-participants.json"),
+    JSON.stringify({ participants: names.map((name) => ({ name, at: "2026-08-15T00:00:00.000Z" })) })
+  );
+}
+
+function reviewerPayload(name, verdict, score) {
+  return {
+    agent_type: name,
+    output: [`Reviewer: ${name}`, `Score: ${score}`, verdict].join("\n"),
+  };
+}
+
+test("a reviewer that ran upstream keeps its findings but loses its vote", () => {
+  const tempDir = makeTempDataDir();
+  writeAggregation(tempDir, { expected_reviewers: 2, threshold: 0.67, reviewers: [], started_reviewers: [] });
+  writeParticipants(tempDir, ["devil-advocate"]);
+
+  runHook(tempDir, reviewerPayload("devil-advocate", "APPROVED", "0.95"));
+
+  const state = readAggregation(tempDir);
+  const record = state.reviewers.find((r) => r.name === "devil-advocate");
+  assert.equal(record.excluded, true);
+  assert.deepEqual(state.excluded_reviewers, ["devil-advocate"]);
+  assert.equal(state.consensus, null, "one excluded reviewer cannot reach a 2-reviewer quorum");
+});
+
+test("exclusion that leaves the panel short blocks instead of passing", () => {
+  const tempDir = makeTempDataDir();
+  writeAggregation(tempDir, { expected_reviewers: 2, threshold: 0.67, reviewers: [], started_reviewers: [] });
+  writeParticipants(tempDir, ["devil-advocate"]);
+
+  runHook(tempDir, reviewerPayload("devil-advocate", "APPROVED", "0.95"));
+  const result = runHook(tempDir, reviewerPayload("fact-checker", "APPROVED", "0.95"));
+
+  const consensus = readAggregation(tempDir).consensus;
+  assert.equal(consensus.verdict, "BLOCKED — QUORUM SHORT");
+  assert.match(consensus.reason, /devil-advocate helped produce this artifact/);
+  assert.match(consensus.reason, /1 independent reviewer\(s\) reported, 2 required/);
+  assert.match(result.stdout, /BLOCKED — QUORUM SHORT/);
+  assert.doesNotMatch(result.stdout, /Proceed with the consensus verdict/);
+});
+
+test("an untainted panel still reaches consensus and clears the participant list", () => {
+  const tempDir = makeTempDataDir();
+  writeAggregation(tempDir, { expected_reviewers: 2, threshold: 0.67, reviewers: [], started_reviewers: [] });
+  writeParticipants(tempDir, ["structure-analyst"]);
+
+  runHook(tempDir, reviewerPayload("deep-reviewer", "APPROVED", "0.9"));
+  runHook(tempDir, reviewerPayload("fact-checker", "APPROVED", "0.9"));
+
+  const state = readAggregation(tempDir);
+  assert.equal(state.consensus.verdict, "APPROVED");
+  assert.deepEqual(state.excluded_reviewers, []);
+
+  const participants = JSON.parse(
+    readFileSync(path.join(tempDir, "state", "upstream-participants.json"), "utf8")
+  );
+  assert.deepEqual(participants.participants, [], "the list is scoped to one Do -> Check pass");
+});
