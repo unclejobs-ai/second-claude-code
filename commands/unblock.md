@@ -3,7 +3,7 @@ description: "Plan/Gather phase -- adaptive zero-key fetch chain for blocked or 
 argument-hint: "https://example.com/blocked-article"
 ---
 
-Invoke the `/scc:unblock` command to run the loaded `unblock` skill — adaptive 9-phase fetch chain for URLs that WebFetch can't crack (4xx, captcha, WAF, JS-heavy SPAs).
+Run the adaptive 9-phase fetch chain for URLs that WebFetch can't crack (4xx, captcha, WAF, JS-heavy SPAs).
 
 ## Context
 - Cache dir: !`echo "${UNBLOCK_CACHE_DIR:-$HOME/.cache/unblock}"`
@@ -26,7 +26,7 @@ Invoke the `/scc:unblock` command to run the loaded `unblock` skill — adaptive
 Run the chain by invoking the CLI:
 
 ```bash
-node skills/unblock/engine/cli.mjs "<input>" [options]
+node "${CLAUDE_PLUGIN_ROOT}/skills/unblock/engine/cli.mjs" "<input>" [options]
 ```
 
 Return the validated content directly. If the chain exhausts without success,

@@ -66,7 +66,7 @@ Use this shape for `stage-n-report.md`, an issue comment, or a PR progress note:
 
 ## Dispatch Notes
 
-- Use `investigate` for root-cause debugging before editing unknown failures.
+- Use superpowers `systematic-debugging` for root-cause work before editing unknown failures.
 - Use `review` with the `code` preset for the Check phase.
 - Use `workflow` only when the user asks for a reusable process artifact.
 - Use `loop` only when improving the prompt, workflow, or skill itself, not as a replacement for code verification.

@@ -52,7 +52,7 @@ function findAgentFileByName(expectedName) {
 
 test("skill descriptions use trigger-only frontmatter", () => {
   const skillsDir = path.join(root, "skills");
-  const skillNames = readdirSync(skillsDir);
+  const skillNames = readdirSync(skillsDir).filter((name) => existsSync(path.join(skillsDir, name, "SKILL.md")));
 
   for (const skillName of skillNames) {
     const file = path.join(skillsDir, skillName, "SKILL.md");
@@ -182,6 +182,21 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
 
   for (const name of commandNames) {
     const content = read(path.join("commands", `${name}.md`));
+    // A tool-only command has no skill to point at. It carries its own runbook,
+    // which is exactly why it does not need a slot in the skill list.
+    if (!existsSync(path.join(root, "skills", name, "SKILL.md"))) {
+      assert.match(
+        content,
+        /CLAUDE_PLUGIN_ROOT/,
+        `${name} is a tool-only command and must carry the command that runs it`
+      );
+      assert.doesNotMatch(
+        content,
+        /(loaded|through the) `[a-z-]+` skill/i,
+        `${name} has no skill and must not tell the model to load one`
+      );
+      continue;
+    }
     assert.match(
       content,
       new RegExp(`Invoke the \`/scc:${name}\` command`, "i"),
@@ -291,11 +306,17 @@ test("loop surfaces are documented across primary docs", () => {
   const architectureKo = read("docs/architecture.ko.md");
   const claude = read("CLAUDE.md");
 
+  // Derived, not hardcoded: this assertion shipped as a literal 18 and then
+  // held the docs at 18 while the skill list changed underneath it.
+  const skillCount = readdirSync(path.join(root, "skills")).filter((name) =>
+    existsSync(path.join(root, "skills", name, "SKILL.md"))
+  ).length;
+
   for (const doc of [readme, readmeKo, architecture, architectureKo, claude]) {
     assert.match(
       doc,
-      /18 commands|18 slash commands|18 skills|18\uAC1C \uC2A4\uD0AC|18\uAC1C \uC2AC\uB798\uC2DC/i,
-      "top-level docs should reflect the new loop surface"
+      new RegExp(`${skillCount} (commands|slash commands|skills)|${skillCount}\uAC1C (\uC2A4\uD0AC|\uC2AC\uB798\uC2DC)`, "i"),
+      `top-level docs should say ${skillCount} skills, matching what is on disk`
     );
     assert.match(
       doc,
@@ -494,7 +515,9 @@ test("core docs and skills outside bilingual READMEs do not contain Hangul", () 
 const WORD_LIMIT_EXEMPTIONS = new Set(["pdca", "refine", "review", "soul", "batch", "translate", "workflow"]);
 
 test("skill files stay within the documented 1000-word limit", () => {
-  const skillDirs = readdirSync(path.join(root, "skills"));
+  const skillDirs = readdirSync(path.join(root, "skills")).filter((dir) =>
+    existsSync(path.join(root, "skills", dir, "SKILL.md"))
+  );
   for (const dir of skillDirs) {
     if (WORD_LIMIT_EXEMPTIONS.has(dir)) continue;
     const relPath = path.join("skills", dir, "SKILL.md");

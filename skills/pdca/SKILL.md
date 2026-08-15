@@ -58,7 +58,7 @@ The lane adds code-specific gates:
 - Check must separate worker output from validator/reviewer proof.
 - Act must clean, simplify, and record handoff state before completion.
 
-Use the lane as a specialization layer, not as a replacement for `investigate`, `review`, `workflow`, or `loop`.
+Use the lane as a specialization layer, not as a replacement for `review`, `workflow`, or `loop`.
 
 ### Do-Phase Sub-Skill Selection
 

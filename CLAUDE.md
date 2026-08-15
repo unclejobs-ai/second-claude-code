@@ -1,6 +1,8 @@
 # Second Claude Code
 
-Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+
+`viewer`, `unblock`, and `standard-check` ship as commands with no skill: they execute and make no judgment, so they take no slot in the skill list. `skills/unblock/` still holds the fetch engine.
 
 ## Key Conventions
 
@@ -24,8 +26,8 @@ node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf
 # Verify all agents have required frontmatter
 for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmatter: $f"; done
 
-# Verify all skills have SKILL.md
-for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
+# Verify all skills have SKILL.md — skills/unblock/ is engine-only by design
+for d in skills/*/; do [ -f "${d}SKILL.md" ] || [ "$d" = "skills/unblock/" ] || echo "MISSING SKILL.md: $d"; done
 
 # Run full test suite
 npm test

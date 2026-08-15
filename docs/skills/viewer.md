@@ -46,6 +46,26 @@ The AI agent market report cycle just finished -- show me the artifacts
 |------|--------|---------|
 | `--session-dir` | path to a `.scc/sessions/{id}` directory | current PDCA session |
 | `--port` | port number | `3847` |
+| `--export` | write a shareable page instead of serving | off |
+
+## Export mode
+
+The live viewer is local and dies after 30 minutes of inactivity. To hand someone the result, export instead:
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/export-artifact.mjs" --out pdca-export.md
+```
+
+This writes one Markdown file and prints `{"out","artifacts","cycles","source"}`. Publish it with the Artifact tool to get a shareable URL. Charts and flows become mermaid, so there is no bundle and no external asset to break.
+
+It reads what the pipeline actually writes — `.data/state/pdca-last-completed.json`, the `.data/events/pdca-{run_id}.jsonl` event log, and the `.data/cycles/` markdown. Pass `--data-dir` for a different root or `--run <run_id>` to pick an older run. The `--session-dir` form still reads the live viewer's `state.json` + `artifacts/*.json` layout.
+
+Two things about where the numbers come from:
+
+- The phase timeline and its durations are reconstructed from the **event log**, the only per-run record of when each phase started and ended.
+- Re-entry reasons come from `state.action_router_history`, written by `pdca_transition` whenever a run leaves Act. Runs recorded before that field existed fall back to inference: a phase logged under a later cycle counts as a re-entry, but carries no reason.
+
+The export leads with the **audit trail**, not the content: which gates passed, how many reviewers attacked the draft and what they caught, every Act re-entry with its reason, and any drift between planned and delivered scope. The artifacts follow underneath. A finished document cannot show that it survived five adversarial reviewers and two re-entries — that record is what makes the page worth sharing.
 
 ## How It Works
 

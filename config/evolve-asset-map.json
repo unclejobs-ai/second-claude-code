@@ -10,8 +10,7 @@
     "plan_integrated": "skills/write/SKILL.md",
     "verdict_set": "skills/review/SKILL.md",
     "min_two_reviewers": "skills/review/SKILL.md",
-    "decision_set": "skills/refine/SKILL.md",
-    "root_cause_set": "skills/investigate/SKILL.md"
+    "decision_set": "skills/refine/SKILL.md"
   },
   "phase": {
     "plan": "skills/research/SKILL.md",

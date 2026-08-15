@@ -18,7 +18,7 @@ Invoke `unblock` when **any** of:
 ## Call shape
 
 ```bash
-node skills/unblock/engine/cli.mjs "<URL>" --json
+node "${CLAUDE_PLUGIN_ROOT}/skills/unblock/engine/cli.mjs" "<URL>" --json
 ```
 
 Returns JSON with `ok`, `phase`, `probe`, `content`, `title`, `meta`, `trace`.

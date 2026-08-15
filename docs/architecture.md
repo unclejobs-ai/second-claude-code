@@ -25,7 +25,6 @@ directly to `Plan → Do → Check → Act`.
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
-| Check | Debug | `investigate` |
 | **Optimization** | **Evolve** | **`loop`** |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
@@ -47,7 +46,7 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional), mmbridge (optional)
-├── skills/                       # 18 skills (SKILL.md each)
+├── skills/                       # 15 skills (SKILL.md each)
 │   ├── coach/                    # Fork settlement (topology, scoring, standards under .scc/)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
@@ -67,7 +66,6 @@ second-claude/
 │   ├── soul/                     # User identity profile synthesis
 │   │   └── references/           # Observation signals, synthesis algorithm, templates
 │   ├── translate/                # Soul-aware EN↔KO translation
-│   ├── investigate/              # Root-cause debugging
 │   ├── viewer/                   # Local artifact viewer
 │   └── unblock/                  # Zero-key adaptive 9-phase fetch chain (anti-WAF, captcha, SPA)
 │       ├── engine/               # CLI + chain + 10 probes + orchestrator
@@ -220,8 +218,8 @@ Supporting commands reinforce the same loop:
 
 ```mermaid
 flowchart LR
-    CMD["/scc:viewer"] --> SKILL[skills/viewer/SKILL.md]
-    SKILL --> START[ui/scripts/start-server.sh]
+    CMD["/scc:viewer"] --> RUNNER[scripts/viewer-session.mjs]
+    RUNNER --> START[ui/scripts/start-server.sh]
     START --> SERVER[server.cjs background process]
     SERVER --> META[server.pid + server-info.json]
     SERVER --> API["/api/state + WebSocket"]

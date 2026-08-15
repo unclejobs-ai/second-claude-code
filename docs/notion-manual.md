@@ -41,7 +41,7 @@ Start a new Claude Code session. You should see this in the context injection:
 
 ```
 # Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+18 commands for all knowledge work — 15 skills plus the tool-only viewer, unblock, and standard-check:
 ```
 
 If it does not appear, run `claude plugin list` to confirm the plugin is installed.
@@ -108,7 +108,6 @@ Both English and Korean prompts work. The system has roughly 50 Korean trigger p
 | `workflow` | Chains multiple skills into a reusable pipeline | Automating recurring multi-step tasks | "Create a workflow: research, write, review, refine" |
 | `discover` | Searches the marketplace for new capabilities with safety scoring | Finding skills for tasks not covered | "Find a skill that helps with email marketing copy" |
 | `pdca` | Orchestrates the full Plan-Do-Check-Act cycle from one prompt | End-to-end knowledge work in one shot | "Research AI agents and write a comprehensive report" |
-| `investigate` | Root-cause debugging for errors and unexpected behavior | Something is broken and you need to know why | "Investigate why the API returns 500 on large payloads" |
 | `translate` | EN-KO translation with style control (literal / natural / creative) | Translating content while preserving formatting | "Translate this article to Korean in a natural tone" |
 | `batch` | Decomposes large tasks into independent parallel units | Processing many similar items at once | "Batch-analyze these 10 competitor landing pages" |
 | `soul` | Observes your patterns and synthesizes a persistent identity profile | Adapting the system to your style over time | "Show my soul profile" or "Propose a soul evolution" |

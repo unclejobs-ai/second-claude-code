@@ -1,12 +1,12 @@
 # Second Claude Code — Agent Instructions
 
-Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
-skills/                     — 18 skill directories (coach, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate, investigate, viewer, unblock)
+skills/                     — 15 skill directories (coach, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate) plus skills/unblock/ which holds the fetch engine but ships no SKILL.md
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
@@ -38,8 +38,8 @@ node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf
 # Verify all agents have required frontmatter
 for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmatter: $f"; done
 
-# Verify all skills have SKILL.md
-for d in skills/*/; do [ -f "${d}SKILL.md" ] || echo "MISSING SKILL.md: $d"; done
+# Verify all skills have SKILL.md — skills/unblock/ is engine-only by design
+for d in skills/*/; do [ -f "${d}SKILL.md" ] || [ "$d" = "skills/unblock/" ] || echo "MISSING SKILL.md: $d"; done
 ```
 
 ## Do Not

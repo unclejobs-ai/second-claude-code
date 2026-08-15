@@ -24,21 +24,51 @@ function markdownFilesUnder(relPath) {
   return files;
 }
 
-test("coach public surfaces are registered as the eighteenth command and skill", () => {
+// Commands and skills are no longer the same list. A command with no skill is a
+// tool -- it executes and makes no judgment, so it does not spend a slot in the
+// skill list. A skill without a command would be unreachable, and stays banned.
+const TOOL_ONLY_COMMANDS = ["standard-check", "unblock", "viewer"];
+
+test("every skill has a command, and the tool-only commands have no skill", () => {
   assert.ok(existsSync(path.join(root, "commands", "coach.md")));
   assert.ok(existsSync(path.join(root, "skills", "coach", "SKILL.md")));
 
-  const commands = readdirSync(path.join(root, "commands")).filter((name) => name.endsWith(".md"));
-  const skills = readdirSync(path.join(root, "skills")).filter((name) => existsSync(path.join(root, "skills", name, "SKILL.md")));
-  assert.equal(commands.length, 18);
-  assert.equal(skills.length, 18);
-  const commandNames = commands.map((name) => name.replace(/\.md$/, "")).sort();
-  const skillNames = skills.toSorted();
-  assert.deepEqual(commandNames, skillNames);
+  const commands = readdirSync(path.join(root, "commands"))
+    .filter((name) => name.endsWith(".md"))
+    .map((name) => name.replace(/\.md$/, ""))
+    .sort();
+  const skills = readdirSync(path.join(root, "skills"))
+    .filter((name) => existsSync(path.join(root, "skills", name, "SKILL.md")))
+    .toSorted();
+
+  for (const skill of skills) {
+    assert.ok(commands.includes(skill), `skill "${skill}" has no command and cannot be reached`);
+  }
+  assert.deepEqual(
+    commands.filter((name) => !skills.includes(name)),
+    TOOL_ONLY_COMMANDS,
+    "a command with no skill must be one of the declared tools"
+  );
 
   const manifest = JSON.parse(read(".claude-plugin/plugin.json"));
-  assert.match(manifest.description, /18 skills/);
+  assert.match(manifest.description, new RegExp(`${skills.length} skills`));
   assert.match(manifest.description, /17 Pokemon agents/);
+});
+
+test("investigate is gone from every surface, not just from skills/", () => {
+  for (const surface of ["skills/investigate", "commands/investigate.md", "docs/skills/investigate.md"]) {
+    assert.equal(existsSync(path.join(root, surface)), false, `${surface} should be deleted`);
+  }
+});
+
+// The map pointed at skills/investigate/SKILL.md for a release after nothing
+// read it. A dangling target makes the loop evolve a file that is not there.
+test("every evolve asset-map target resolves to a file that exists", () => {
+  const map = JSON.parse(read("config/evolve-asset-map.json"));
+  const targets = [...Object.values(map.gate_rule), ...Object.values(map.phase), map.fallback];
+  for (const target of targets) {
+    assert.equal(existsSync(path.join(root, target)), true, `asset-map target ${target} does not exist`);
+  }
 });
 
 test("coach command, skill, and docs expose a self-serve pending-approval path", () => {

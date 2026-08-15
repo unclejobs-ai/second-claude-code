@@ -73,7 +73,7 @@ The Action Router is the part that matters. When review finds a problem it class
 
 ## Skills
 
-18 skills, each deep enough that you never have to pick between eighty. Say what you want; the router handles the rest. Slash commands (`/scc:write`, `/scc:review`, …) are there when you want to be precise.
+15 skills, each deep enough that you never have to pick between eighty. Say what you want; the router handles the rest. Slash commands (`/scc:write`, `/scc:review`, …) are there when you want to be precise.
 
 **The whole cycle**
 
@@ -89,7 +89,6 @@ The Action Router is the part that matters. When review finds a problem it class
 | `research` | 20+ sources crawled, patterns synthesized, brief delivered |
 | `collect` | Save a URL or note; it lands PARA-classified, not in a pile |
 | `discover` | Finds and installs the skill you don't have yet |
-| `unblock` | Fetches what WebFetch can't — 9-phase escalation, zero API keys |
 
 **Do — produce**
 
@@ -105,7 +104,6 @@ The Action Router is the part that matters. When review finds a problem it class
 | Skill | What it does |
 |---|---|
 | `review` | 3–5 reviewers, different lenses, consensus vote |
-| `investigate` | Root-causes the failure before anyone touches the fix |
 
 **Act — improve**
 
@@ -114,7 +112,14 @@ The Action Router is the part that matters. When review finds a problem it class
 | `refine` | Rewrites until reviewers pass; `--dod` lets you set the bar |
 | `translate` | EN↔KO that keeps your voice instead of flattening it |
 | `soul` | Learns your tone rules across sessions and enforces them on your drafts |
-| `viewer` | Opens a run as a shareable page: gates, verdicts, every re-entry |
+
+**Tools** — slash commands with no judgment in them, so they take no slot in the skill list
+
+| Command | What it does |
+|---|---|
+| `/scc:viewer` | Opens a run as a shareable page: gates, verdicts, every re-entry |
+| `/scc:unblock` | Fetches what WebFetch can't — 9-phase escalation, zero API keys |
+| `/scc:standard-check` | Runs your recorded standards against an artifact and reports every violation |
 
 **Maintainer-only** — slash commands, never auto-routed
 

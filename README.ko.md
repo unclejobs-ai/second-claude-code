@@ -73,7 +73,7 @@ Research the current state of AI agent frameworks and write a report
 
 ## 스킬
 
-18개 스킬. 80개 중에 뭘 고를지 고민할 일이 없도록, 대신 하나하나가 깊습니다. 하고 싶은 말만 하면 라우터가 알아서 붙입니다. 정밀하게 쓰고 싶으면 슬래시 명령어(`/scc:write`, `/scc:review` …)도 그대로 됩니다.
+15개 스킬. 80개 중에 뭘 고를지 고민할 일이 없도록, 대신 하나하나가 깊습니다. 하고 싶은 말만 하면 라우터가 알아서 붙입니다. 정밀하게 쓰고 싶으면 슬래시 명령어(`/scc:write`, `/scc:review` …)도 그대로 됩니다.
 
 **사이클 전체**
 
@@ -89,7 +89,6 @@ Research the current state of AI agent frameworks and write a report
 | `research` | 20개+ 소스 크롤링, 패턴 추출, 브리프 |
 | `collect` | URL·메모를 던지면 쌓이는 게 아니라 PARA로 분류돼서 들어감 |
 | `discover` | 없는 스킬을 찾아서 설치까지 |
-| `unblock` | WebFetch가 못 뚫는 URL을 뚫음. 9단계 에스컬레이션, API 키 0개 |
 
 **Do — 만들기**
 
@@ -105,7 +104,6 @@ Research the current state of AI agent frameworks and write a report
 | 스킬 | 하는 일 |
 |---|---|
 | `review` | 리뷰어 3~5마리, 서로 다른 관점, 합의 투표 |
-| `investigate` | 고치기 전에 근본 원인부터 잡음 |
 
 **Act — 다듬기**
 
@@ -114,7 +112,14 @@ Research the current state of AI agent frameworks and write a report
 | `refine` | 리뷰어가 통과시킬 때까지 다시 씀. `--dod`로 합격선을 직접 지정 |
 | `translate` | 문체를 뭉개지 않는 EN↔KO 번역 |
 | `soul` | 세션을 넘어 톤 규칙을 학습하고, 당신 초안에 그 규칙을 적용 |
-| `viewer` | 런 하나를 공유 가능한 페이지로. 게이트·판정·재진입 이력 전부 |
+
+**도구** — 판단이 없는 슬래시 명령. 스킬 목록의 자리를 쓰지 않습니다
+
+| 명령 | 하는 일 |
+|---|---|
+| `/scc:viewer` | 런 하나를 공유 가능한 페이지로. 게이트·판정·재진입 이력 전부 |
+| `/scc:unblock` | WebFetch가 못 뚫는 URL을 뚫음. 9단계 에스컬레이션, API 키 0개 |
+| `/scc:standard-check` | 기록해 둔 기준을 산출물에 대고 돌려서 위반을 전부 보고 |
 
 **유지보수자 전용** — 자동 라우팅되지 않는 슬래시 전용
 

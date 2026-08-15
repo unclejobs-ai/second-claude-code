@@ -46,9 +46,9 @@ if (!enabled) {
       "/scc:collect",
       "/scc:workflow",
       "/scc:discover",
-      "/scc:investigate",
       "/scc:translate",
       "/scc:viewer",
+      "/scc:standard-check",
     ]) {
       assert.match(output, new RegExp(command.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
     }

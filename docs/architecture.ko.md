@@ -38,7 +38,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 
 핵심은 새 런타임을 얹는 게 아니라, 기존 Plan → Do → Check → Act 게이트를 코드 작업에 맞게 더 엄격하게 만드는 거예요. Plan에서는 테스트 가능한 수용 기준과 영향 범위를 확정하고, Do에서는 필요하면 브랜치나 워크트리로 격리해 단계별로 진행하며, Check에서는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구해요. Act에서는 clean-ai-slop, 단순화, 성능 측정이 필요할 때의 Rob Pike식 baseline/after 비교, PR 또는 로컬 리포트 핸드오프를 마무리 조건으로 둡니다.
 
-### 18개 스킬 목록
+### 15개 스킬 목록
 
 | 스킬 | 페이즈 | 역할 |
 |------|--------|------|
@@ -56,7 +56,6 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 | `batch` | Do | 대규모 동종 작업 병렬 분해/실행 |
 | `soul` | 확장 | 사용자 정체성 프로필 합성 |
 | `translate` | 확장 | 소울 기반 EN↔KO 번역 |
-| `investigate` | Check | 원인 조사 중심 디버깅 |
 | `viewer` | 확장 | PDCA 산출물 로컬 뷰어 |
 | `unblock` | Plan | 9-phase zero-key fetch chain (차단/WAF/SPA URL 우회) |
 | `pdca` | 전체 | 오케스트레이터 (메타스킬) |
@@ -68,7 +67,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 ```
 second-claude/
 ├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택), mmbridge (선택)
-├── skills/                       # 18개 스킬 (각각 SKILL.md)
+├── skills/                       # 15개 스킬 (각각 SKILL.md)
 │   ├── coach/                    # 갈림길 확정 (topology, scoring, .scc/ 아래 기준 문서)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
 │   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
@@ -88,13 +87,12 @@ second-claude/
 │   ├── soul/                     # 사용자 정체성 프로필 합성
 │   │   └── references/           # 관찰 시그널, 합성 알고리즘, 템플릿
 │   ├── translate/                # 소울 기반 EN↔KO 번역
-│   ├── investigate/              # 원인 조사 중심 디버깅
 │   ├── viewer/                   # PDCA 산출물 로컬 뷰어
 │   └── unblock/                  # zero-key 9-phase 차단 우회 fetch 체인
 │       ├── engine/               # CLI + 체인 + 10개 probe + 오케스트레이터
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
-├── commands/                     # 18개 슬래시 커맨드 래퍼
+├── commands/                     # 18개 슬래시 커맨드 래퍼 (스킬 15 + 도구 전용 3)
 ├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (8개 훅)
 │   ├── hooks.json                # 훅 설정
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)
@@ -234,8 +232,8 @@ flowchart TD
 
 ```mermaid
 flowchart LR
-    CMD["/scc:viewer"] --> SKILL[skills/viewer/SKILL.md]
-    SKILL --> START[ui/scripts/start-server.sh]
+    CMD["/scc:viewer"] --> RUNNER[scripts/viewer-session.mjs]
+    RUNNER --> START[ui/scripts/start-server.sh]
     START --> SERVER[server.cjs 백그라운드 프로세스]
     SERVER --> META[server.pid + server-info.json]
     SERVER --> API["/api/state + WebSocket"]
