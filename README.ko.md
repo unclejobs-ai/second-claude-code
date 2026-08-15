@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-2.1.0-blue)
+![version](https://img.shields.io/badge/version-3.0.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code — 제2의 클로드

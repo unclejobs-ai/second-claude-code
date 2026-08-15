@@ -5,6 +5,18 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-08-15
+
+Decisions stop dying with the session. A settled fork becomes a record in your
+project, the record carries checks, and the checks run against the work it
+governs. Nothing in this release lets a thing certify itself.
+
+### Changed — BREAKING
+
+- **`/scc:investigate` is removed.** superpowers `systematic-debugging` does the same work better, and carrying a second copy meant maintaining the worse one. Skill, command, and both doc pairs are gone. Users without superpowers installed lose that entry point; `git revert` on the removal restores every file if that trade is wrong for you.
+- **`viewer` and `unblock` are no longer skills.** Both still ship as `/scc:viewer` and `/scc:unblock` with unchanged behaviour, joined by the new `/scc:standard-check`. None of the three makes a judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `skills/unblock/` keeps the fetch engine and its tests; it simply has no `SKILL.md`. **15 skills, 18 commands** — commands and skills are no longer the same list.
+- **`finalize` refuses an unsettled interview.** It used to run at any ambiguity and against an unconfirmed topology, so a standard could come out of an interview that had settled nothing. It now names what is open and stops. Accepting the residual risk is still allowed and must be explicit: `--accept-risk "<why>"` records the reason, the open risks, and the numbers it was accepted against. A bare `--accept-risk` is refused. Scripted callers that relied on an unconditional `finalize` will need the flag.
+
 ### Added
 
 - **Decision standards.** `/scc:coach` settles a fork and writes the answer into the project as `.scc/standards/<id>/STANDARD.md` — the chosen direction, every rejected option with why it lost, the condition that would reopen it, and any checks. Sessions read the active ones at startup. Runners refuse to write anywhere inside the plugin install; an earlier release resolved the project root from `import.meta.url` and filed user specifications into the plugin cache.
@@ -17,9 +29,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ### Changed
 
-- **`finalize` is gated.** It ran at any ambiguity and against an unconfirmed topology, so a standard could come out of an interview that had settled nothing. It now names what is open and refuses. Accepting the residual risk is still allowed but must be explicit and recorded: `--accept-risk "<why>"` stores the reason, the open risks, and the numbers it was accepted against. A bare `--accept-risk` is refused.
-- **`investigate` is removed** from skills, commands, and docs. superpowers `systematic-debugging` does the same work better, and the second copy was the one being maintained badly. Its entry is gone from the evolve asset map, which had pointed at a `SKILL.md` nothing read.
-- **`viewer` and `unblock` ship as commands with no skill**, joined by `standard-check`. None of them makes a judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `skills/unblock/` keeps the engine and its tests. **15 skills, 18 commands.**
+- **`discover` stays a skill; nothing was merged.** The design doc listed `discover` under both "demote to a tool" and "pending judgment"; it dispatches three subagents and scores candidates on weighted criteria, which is judgment, so the demotion rule does not reach it. `loop`+`evolve`, `research`+`collect`, `workflow`+`batch` and `analyze`+`refine` stay separate — `evolve` calls `loop`, and the rest are adjacent rather than duplicate. Adjacency is not duplication.
+- **`loop` and `evolve` carry `disable-model-invocation: true`.** Both READMEs already promised they are never auto-routed and nothing enforced it. The other 13 skills are deliberately untouched: PDCA chains sub-skills by slash command, and pinning those shut without testing that interaction would break the most-used path in the product.
+- **The evolve asset map no longer points at a file nothing reads.** `root_cause_set` had targeted `skills/investigate/SKILL.md` for a release; the entry is gone and a contract test now proves every target resolves.
 
 ### Fixed
 

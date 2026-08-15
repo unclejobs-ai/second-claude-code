@@ -55,6 +55,36 @@ test("every skill has a command, and the tool-only commands have no skill", () =
   assert.match(manifest.description, /17 Pokemon agents/);
 });
 
+// marketplace.json sat at "18 skills" through a release that shipped 15,
+// because the count check only ever looked at the docs.
+test("every shipped manifest agrees with the skill count on disk and with each other", () => {
+  const skillCount = readdirSync(path.join(root, "skills")).filter((name) =>
+    existsSync(path.join(root, "skills", name, "SKILL.md"))
+  ).length;
+
+  const plugin = JSON.parse(read(".claude-plugin/plugin.json"));
+  const marketplace = JSON.parse(read(".claude-plugin/marketplace.json"));
+  const pkg = JSON.parse(read("package.json"));
+
+  const descriptions = [
+    plugin.description,
+    marketplace.metadata?.description,
+    ...(marketplace.plugins || []).map((entry) => entry.description),
+  ].filter(Boolean);
+  assert.ok(descriptions.length >= 3, "expected a description on the plugin and both marketplace entries");
+  for (const description of descriptions) {
+    assert.match(description, new RegExp(`${skillCount} skills`), `"${description.slice(0, 40)}…" is stale`);
+  }
+
+  const versions = [
+    plugin.version,
+    pkg.version,
+    marketplace.metadata?.version,
+    ...(marketplace.plugins || []).map((entry) => entry.version),
+  ].filter(Boolean);
+  assert.equal(new Set(versions).size, 1, `manifest versions disagree: ${versions.join(", ")}`);
+});
+
 test("investigate is gone from every surface, not just from skills/", () => {
   for (const surface of ["skills/investigate", "commands/investigate.md", "docs/skills/investigate.md"]) {
     assert.equal(existsSync(path.join(root, surface)), false, `${surface} should be deleted`);
