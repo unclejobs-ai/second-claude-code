@@ -773,8 +773,19 @@ export function runCli(argv = process.argv.slice(2), deps = {}) {
     if (!flags.file) throw new Error("record-verdict requires --file <path>");
     const verdict = readJsonFile(flags.file, null);
     if (!verdict) throw new Error(`record-verdict could not read a JSON object from ${flags.file}`);
-    if (!listActiveStandards(root).some((standard) => standard.id === verdict.standard)) {
+    const target = listActiveStandards(root).find((standard) => standard.id === verdict.standard);
+    if (!target) {
       throw new Error(`no active standard ${JSON.stringify(verdict.standard)} to record a verdict against`);
+    }
+    // The invariant the whole record exists to protect: whoever helped settle a
+    // fork does not get to pass the work that fork governs. Judged from the
+    // record, not from a declaration of independence.
+    const participants = Array.isArray(target.participants) ? target.participants : [];
+    if (participants.some((name) => String(name) === String(verdict.reviewer))) {
+      throw new Error(
+        `${JSON.stringify(verdict.reviewer)} helped settle "${target.id}" and cannot review the work it governs. ` +
+          `Participants: ${participants.join(", ")}. Use a reviewer who was not upstream of this decision.`
+      );
     }
     const record = appendVerdict(root, verdict, { now: deps.now || new Date() });
     return output({ ok: true, ...record }, json);

@@ -69,6 +69,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file verd
 }
 ```
 
+`reviewer`가 그 기준의 `participants`에 올라 있으면 판정 자체를 거부합니다. 갈림길을 정하는 데 관여한 쪽은 그 기준이 다스리는 작업을 통과시키지 못합니다.
+
 `target_sha256`은 `standard-check`이 찍어 준 해시입니다. 산출물을 고치면 그에 달린 판정은 `UNPROVEN`으로 돌아갑니다. 지난주 초안을 본 리뷰는 이번 초안에 대해 아무 말도 하지 않았으니까요. 판정은 `.scc/checks/adversarial.jsonl`에 덧붙고, 이 명령이 아니라 coach 러너로 받습니다. 채점하는 도구가 합격 도장까지 찍는 일은 없어야 합니다.
 
 ## 지켜야 할 것

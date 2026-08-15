@@ -217,6 +217,64 @@ test("record-verdict appends a reviewer's answer and refuses one for an inactive
   });
 });
 
+test("a verdict from someone who helped settle the fork is refused", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root, { ...FORK_JSON, participants: ["devil-advocate", "alakazam"] });
+    const verdictFile = join(root, "verdict.json");
+    writeFileSync(
+      verdictFile,
+      JSON.stringify({
+        standard: "voice-two-track",
+        ask: "과장 없이 읽히는가?",
+        target_sha256: "a".repeat(64),
+        verdict: "pass",
+        reviewer: "devil-advocate",
+      }),
+      "utf8"
+    );
+
+    assert.throws(
+      () => runCli(["record-verdict", "--file", verdictFile], { root }),
+      /helped settle "voice-two-track" and cannot review/
+    );
+    assert.equal(existsSync(join(root, ".scc", "checks", "adversarial.jsonl")), false);
+  });
+});
+
+test("a reviewer who was not upstream of the decision is accepted", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root, { ...FORK_JSON, participants: ["devil-advocate"] });
+    const verdictFile = join(root, "verdict.json");
+    writeFileSync(
+      verdictFile,
+      JSON.stringify({
+        standard: "voice-two-track",
+        ask: "과장 없이 읽히는가?",
+        target_sha256: "a".repeat(64),
+        verdict: "pass",
+        reviewer: "fact-checker",
+      }),
+      "utf8"
+    );
+
+    runCli(["record-verdict", "--file", verdictFile, "--json"], { root });
+
+    const logged = JSON.parse(readFileSync(join(root, ".scc", "checks", "adversarial.jsonl"), "utf8").trim());
+    assert.equal(logged.reviewer, "fact-checker");
+  });
+});
+
+test("record-fork keeps the participant list on the standard", () => {
+  withRoot((root) => {
+    writeState(root, { run_id: "r1", forks: [] });
+    recordFork(root, { ...FORK_JSON, participants: ["devil-advocate", "alakazam"] });
+
+    assert.match(standardBody(root, "voice-two-track"), /^participants: \["devil-advocate", "alakazam"\]$/m);
+  });
+});
+
 const SETTLED_STATE = {
   run_id: "r1",
   forks: [],

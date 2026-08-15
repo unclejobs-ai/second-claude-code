@@ -56,6 +56,7 @@ Use direct execution when a standard on file already covers the fork, or the req
 | `payload` | The content the standard carries forward. |
 | `review_when` | The condition that would reopen the decision. |
 | `triggers` | Phrases that should surface this standard again later. |
+| `participants` | Agents that helped settle the fork. They are barred from reviewing the work it governs. |
 
 ## Compliance checks
 
@@ -88,6 +89,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file <ver
 ```
 
 The verdict carries `standard`, the exact `ask`, `verdict` (`pass`/`fail`), `reviewer`, an optional `note`, and `target_sha256` — the hash of the artifact the reviewer actually read, which `standard-check` prints alongside every `UNPROVEN` line. Answers append to `.scc/checks/adversarial.jsonl`; the log is append-only because five sessions share the project and a read-modify-write would drop whichever verdict lost the race.
+
+`record-verdict` refuses a verdict whose `reviewer` appears in the standard's `participants`. Whoever helped settle a fork does not get to pass the work that fork governs, and the refusal is judged from the record rather than from a declaration of independence.
 
 Binding a verdict to bytes is what keeps it honest: edit the artifact and its answers go back to `UNPROVEN`, since a review of last week's draft says nothing about this one. Verdicts are recorded through the coach runner rather than through `standard-check`, so the tool that grades the work is never the tool that records passing grades.
 

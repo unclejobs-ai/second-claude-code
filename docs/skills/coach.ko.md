@@ -56,6 +56,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
 | `payload` | 기준 문서가 이후로 실어 나를 내용. |
 | `review_when` | 이 결정을 다시 열어야 할 조건. |
 | `triggers` | 나중에 이 기준을 다시 떠올려야 할 표현들. |
+| `participants` | 갈림길을 정하는 데 관여한 에이전트. 이 기준이 다스리는 작업의 검수에서 제외됩니다. |
 
 ## 준수 검사
 
@@ -88,6 +89,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file <ver
 ```
 
 판정에는 `standard`, 질문 원문 `ask`, `verdict`(`pass`/`fail`), `reviewer`, 선택 `note`, 그리고 `target_sha256` — 리뷰어가 실제로 읽은 산출물의 해시 — 가 들어갑니다. 해시는 `standard-check`가 `UNPROVEN` 줄마다 같이 찍어 줍니다. 답은 `.scc/checks/adversarial.jsonl`에 덧붙입니다. 덧붙이기만 하는 이유는 이 프로젝트에서 다섯 세션이 동시에 돌기 때문입니다. 읽고-고쳐-쓰면 경합에서 진 판정이 사라집니다.
+
+`record-verdict`는 `reviewer`가 그 기준의 `participants`에 있으면 거부합니다. 갈림길을 정하는 데 관여한 쪽은 그 기준이 다스리는 작업을 통과시키지 못합니다. 판정 근거는 선언이 아니라 기록입니다.
 
 판정을 바이트에 묶는 게 핵심입니다. 산출물을 고치면 그에 달린 답은 전부 `UNPROVEN`으로 돌아갑니다 — 지난주 초안을 본 리뷰는 이번 초안에 대해 아무 말도 하지 않았으니까요. 판정을 `standard-check`이 아니라 coach 러너로 받는 것도 같은 이유입니다. 채점하는 도구가 합격 도장까지 찍게 두지 않습니다.
 

@@ -75,6 +75,8 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-verdict --file verd
 }
 ```
 
+A verdict is refused outright when its `reviewer` is listed in the standard's `participants` — whoever helped settle the fork cannot pass the work it governs.
+
 The `target_sha256` is the hash `standard-check` printed. Edit the artifact and its verdicts return
 to `UNPROVEN` — a review of last week's draft says nothing about this one. Verdicts append to
 `.scc/checks/adversarial.jsonl`, and they go through the coach runner rather than through this

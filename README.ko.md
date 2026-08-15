@@ -34,6 +34,14 @@ AI 에이전트 알아보고 보고서 써줘
 Research the current state of AI agent frameworks and write a report
 ```
 
+시작하기 전에 `CLAUDE_PLUGIN_DATA`를 플러그인 디렉터리 바깥 경로로 잡아 두십시오. 런타임 상태 — PDCA 런, 사이클 메모리, `SOUL.md` 프로필 — 가 이걸 안 잡으면 플러그인 설치 폴더 안에 쌓이고, 재설치할 때 그 폴더가 통째로 지워집니다.
+
+```bash
+export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
+```
+
+결정은 영향받지 않습니다. 기준 문서는 프로젝트의 `.scc/` 아래에 있고, 거기가 제자리입니다.
+
 아무 반응이 없으면 `claude plugin list`로 설치를 확인하세요.
 
 ---

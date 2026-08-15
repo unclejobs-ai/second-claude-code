@@ -47,6 +47,7 @@ decided: ${decided}
 review_when: ${JSON.stringify(fork.review_when || "")}
 supersedes: ${supersedes ? JSON.stringify(supersedes) : "null"}
 triggers: ${jsonArray(fork.triggers)}
+participants: ${jsonArray(fork.participants)}
 checks: ${JSON.stringify(checks)}
 ---
 
@@ -152,6 +153,10 @@ export function listActiveStandards(root) {
       title: title ? title[1].trim() : entry.name,
       review_when: parseJsonScalar(frontmatter, "review_when", ""),
       triggers: parseJsonField(frontmatter, "triggers"),
+      // Who helped settle this fork. They are barred from reviewing the work it
+      // governs -- a verdict from an author is a self-review wearing a reviewer's
+      // name.
+      participants: parseJsonField(frontmatter, "participants"),
       checks: parseJsonField(frontmatter, "checks"),
       enforcement: readField(frontmatter, "enforcement") || "none",
       path,

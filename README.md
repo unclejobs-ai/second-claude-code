@@ -34,6 +34,14 @@ Research the current state of AI agent frameworks and write a report
 AI 에이전트 알아보고 보고서 써줘
 ```
 
+Set `CLAUDE_PLUGIN_DATA` to a path outside the plugin directory before you start. Runtime state — PDCA runs, cycle memory, and your `SOUL.md` profile — is written under the plugin install without it, and a reinstall wipes that directory.
+
+```bash
+export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
+```
+
+Decisions are unaffected: standards live in your project under `.scc/`, which is where they belong.
+
 Nothing happening? `claude plugin list` to confirm the install.
 
 ---
