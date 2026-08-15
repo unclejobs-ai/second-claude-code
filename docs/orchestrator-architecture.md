@@ -4,7 +4,7 @@
 
 Second Claude Code v1.4.x added a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
 
-v1.5.0 extends this with the `unblock` skill — a 9-phase zero-key fetch chain that the auto-router and Eevee researcher invoke when a URL returns 4xx, captcha, WAF, or empty SPA body. See `skills/unblock/` and `commands/unblock.md` for the slash-command surface, and the auto-router patterns in `hooks/prompt-detect.mjs`.
+v1.5.0 extends this with the `unblock` chain — a 9-phase zero-key fetch chain that the auto-router and Eevee researcher invoke when a URL returns 4xx, captcha, WAF, or empty SPA body. It ships as `/scc:unblock` with no skill of its own; see `skills/unblock/engine/` and `commands/unblock.md`, and the auto-router patterns in `hooks/prompt-detect.mjs`.
 
 ## Dispatch Layers
 

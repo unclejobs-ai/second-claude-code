@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- **Decision standards.** `/scc:coach` settles a fork and writes the answer into the project as `.scc/standards/<id>/STANDARD.md` — the chosen direction, every rejected option with why it lost, the condition that would reopen it, and any checks. Sessions read the active ones at startup. Runners refuse to write anywhere inside the plugin install; an earlier release resolved the project root from `import.meta.url` and filed user specifications into the plugin cache.
+- **`supersede`.** Retires a standard by flipping `status` to `superseded` and keeping the file, so the rejected options stay on record. With `--file` it writes the replacement first, carrying `supersedes: "<old id>"`, so a colliding id aborts while the existing standard is still active. `supersedeStandard` had been implemented and tested for a release with no caller — the only way to retire a standard was deleting its directory by hand.
+- **`/scc:standard-check`.** Runs the active standards against one artifact, exit 1 on any failure. Five fixed checkers: `regex-absent`, `regex-present`, `length-between`, `similarity-below`, `frontmatter-equals`. Checks are data the runner interprets, never strings it executes — `run:`/`command:`/`shell:` fields, unknown checker ids, and unknown fields are refused with an error rather than skipped. Each checker ships a fixture in this repository that it must reject, and the suite fails if one starts passing its own fixture.
+- **`record-verdict`.** Puts a reviewer's answer to an `adversarial` check on file, bound to the sha256 of the artifact they read. Editing the artifact returns its verdicts to `UNPROVEN`. Verdicts go through the coach runner, never through `standard-check`, so the tool that grades the work is not the tool that records passing grades.
+- **`confirm`.** Closes a finalized interview and drops the state file, ending a three-way disagreement over `pending_approval` that session-end read as closed, `start` as open, and SessionStart as resumable.
+
+### Changed
+
+- **`finalize` is gated.** It ran at any ambiguity and against an unconfirmed topology, so a standard could come out of an interview that had settled nothing. It now names what is open and refuses. Accepting the residual risk is still allowed but must be explicit and recorded: `--accept-risk "<why>"` stores the reason, the open risks, and the numbers it was accepted against. A bare `--accept-risk` is refused.
+- **`investigate` is removed** from skills, commands, and docs. superpowers `systematic-debugging` does the same work better, and the second copy was the one being maintained badly. Its entry is gone from the evolve asset map, which had pointed at a `SKILL.md` nothing read.
+- **`viewer` and `unblock` ship as commands with no skill**, joined by `standard-check`. None of them makes a judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `skills/unblock/` keeps the engine and its tests. **15 skills, 18 commands.**
+
+### Fixed
+
+- **Contract tests that asserted the wrong thing.** One required commands and skills to be the identical list; it now states the real rule — every skill needs a command, and a command with no skill must be a declared tool. Another held the docs at a hardcoded "18 skills" while the directory changed underneath; it now derives the count from disk. A third let the evolve asset map point at files that do not exist.
+- **Architecture docs** duplicated six releases of changelog that had drifted from `CHANGELOG.md`, and documented none of the standards system. The duplication is now a pointer and the subsystem has a section in both languages.
+
 ## [2.1.0] - 2026-07-25
 
 ### Added

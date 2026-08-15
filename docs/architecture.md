@@ -25,15 +25,53 @@ directly to `Plan → Do → Check → Act`.
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
-| **Optimization** | **Evolve** | **`loop`** |
+| **Optimization** | **Evolve** | **`loop`**, `evolve` |
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
-| **Artifacts** | **View** | **`viewer`** |
 
 The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
 It auto-detects which phase to enter from natural language and chains the appropriate skills.
 
 *`analyze` spans both phases: in Plan it synthesizes research findings; in Do it can apply a different framework for the production artifact.
+
+Three commands sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one.
+
+## Decision Standards
+
+A session ends and its reasoning goes with it. The next session re-proposes an option that already lost, and nothing on disk says otherwise. Standards are the fix: one record per settled fork, written by the project, read by every session that follows.
+
+| Concern | Where it lives |
+|---|---|
+| Root resolution, plugin-path refusal | `scripts/lib/project-root.mjs` |
+| Interview state (resumable, atomic write) | `scripts/lib/coach-state.mjs` → `<project>/.scc/state/coach.json` |
+| Standard record (render, write, list, retire) | `scripts/lib/standard-record.mjs` → `<project>/.scc/standards/<id>/STANDARD.md` |
+| Reviewer verdicts on adversarial checks | `scripts/lib/adversarial-log.mjs` → `<project>/.scc/checks/adversarial.jsonl` |
+| Interview and record commands | `scripts/coach-runner.mjs` |
+| Compliance runner | `scripts/standard-check.mjs`, checkers in `scripts/lib/standard-checkers.mjs` |
+
+```mermaid
+flowchart LR
+    FORK["fork with 2+ defensible directions"] --> RECORD["coach-runner record-fork"]
+    RECORD --> STD[".scc/standards/&lt;id&gt;/STANDARD.md"]
+    STD --> CHECK["standard-check &lt;artifact&gt;"]
+    CHECK --> PASS["pass / FAIL / UNPROVEN / UNCHECKED"]
+    STD --> RETIRE["coach-runner supersede"]
+    RETIRE --> OLD["status: superseded, file kept"]
+    CHECK -.->|adversarial| VERDICT["coach-runner record-verdict"]
+    VERDICT --> LOG[".scc/checks/adversarial.jsonl"]
+```
+
+Four invariants hold this together.
+
+**A record is retired, never deleted.** `supersede` flips `status: active` to `superseded` and leaves the file. The rejected options and why they lost stay readable, which is the only thing that stops a later session from re-proposing them. A replacement is written first, carrying `supersedes: "<old id>"`, so a colliding id aborts while the existing standard is still active.
+
+**A check is data, not code.** Standards live in the user's project and travel through its repository. Five fixed checkers — `regex-absent`, `regex-present`, `length-between`, `similarity-below`, `frontmatter-equals` — take structured arguments. A `run:`-style field, an unknown checker id, and an unknown field are all refused with an error rather than skipped, because an author who believes a check is enforced while the runner steps over it is worse off than one with no check at all.
+
+**A checker must be able to say no.** Each one ships a fixture in this repository that it must reject, and the suite fails if a checker starts passing its own fixture. The fixtures live here rather than in the user's project, because a project-supplied fixture would be another input crossing the trust boundary.
+
+**Nobody stamps their own work.** An `adversarial` check stays `UNPROVEN` until a reviewer's answer is on file, bound to the sha256 of the artifact they actually read — edit the artifact and the answers return to unproven. Verdicts are recorded through the coach runner, never through `standard-check`, so the tool that grades the work is not the tool that records passing grades. A standard with no checks reports `UNCHECKED`: visible, not verified, and never a pass.
+
+The runner refuses to write anywhere inside the plugin install. An earlier release resolved the project root from `import.meta.url` and filed user specifications into the plugin cache; `project-root.mjs` now rejects that path, symlinks and case variants included.
 
 ### Code Engineering Lane
 
@@ -66,13 +104,12 @@ second-claude/
 │   ├── soul/                     # User identity profile synthesis
 │   │   └── references/           # Observation signals, synthesis algorithm, templates
 │   ├── translate/                # Soul-aware EN↔KO translation
-│   ├── viewer/                   # Local artifact viewer
-│   └── unblock/                  # Zero-key adaptive 9-phase fetch chain (anti-WAF, captcha, SPA)
+│   └── unblock/                  # Engine only — no SKILL.md; ships as /scc:unblock
 │       ├── engine/               # CLI + chain + 10 probes + orchestrator
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 18 slash command wrappers
-├── hooks/                        # Auto-routing + context injection (8 hooks)
+├── commands/                     # 18 slash commands — 15 skill wrappers + 3 tools
+├── hooks/                        # Auto-routing + context injection (7 files, 8 events)
 │   ├── hooks.json                # Hook configuration
 │   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)
 │   ├── prompt-detect.mjs         # Intent detection + dynamic plugin dispatch injection
@@ -90,7 +127,7 @@ second-claude/
 │       └── ...                        # pdca-handlers, memory-handlers, etc.
 ├── references/                   # Design principles, consensus gate
 ├── templates/                    # Output templates
-├── scripts/                      # Shell utilities
+├── scripts/                      # coach-runner, standard-check, viewer-session, export-artifact, evolve-runner
 └── config/                       # User configuration
 ```
 
@@ -100,7 +137,7 @@ second-claude/
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
 | `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
 | `commands/` | Thin wrappers that route `/scc:*` invocations to the matching skill. |
-| `hooks/` | 8 lifecycle hooks across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
+| `hooks/` | 7 hook files registered across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
 ---
@@ -395,7 +432,7 @@ before falling through to single-skill matching.
 
 ## Lifecycle Hooks
 
-8 hooks registered across 8 events in `hooks/hooks.json`:
+7 hook files registered across 8 events in `hooks/hooks.json` (`compaction.mjs` serves both PreCompact and PostCompact):
 
 | Event | Hook file | Behavior |
 |-------|-----------|----------|
@@ -702,62 +739,8 @@ The old 900-token hardcoded `<skill-check>` block was replaced with `generateDis
 
 ---
 
-## What's New in 1.3.0
+## Earlier releases
 
-PDCA Hard Gates release. Nine specific strengthenings to the PDCA orchestrator close the structural holes that allowed self-processing fallbacks and sparse output to slip through soft gates in v1.0.0.
-
-1. **PDCA Is the Main Orchestrator (Architecture Clarification)** — Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`) are explicitly building blocks called inside PDCA's Do phase, not replacements for PDCA. Sub-skill internal multi-phase pipelines run inside PDCA's Do, gated by their own contracts and wrapped by PDCA's Plan + Check + Act for upstream rigor and downstream validation.
-2. **Domain Auto-Routing** — Do phase greedy-matches user prompts against domain trigger keywords. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, otherwise `/scc:write`. The most specialized sub-skill always wins; never the generic one when a specialized one exists.
-3. **Hard Length Floors per Format** — Do gate fails if artifact is below format minimum. 11 formats with calibrated `min_chars`, `target_chars`, `min_sections`. Below floor → sub-skill re-dispatched with specific scope expansion. Generic "make it longer" prompts are explicitly forbidden.
-4. **Plan Brief Floors** — Sources raised from 3 to 5; 8 facts, 1 named-source quote, 1 comparison table, 1 acknowledged gap, 1 media item, 3,000-char body now mandatory.
-5. **Reviewer Model Diversity Rule** — Check phase requires at least 2 distinct models with at least 1 external (Codex, Kimi, Qwen, Gemini, Droid) for content/strategy/full presets. Diversity score ≥ 0.6 enforced for >2 reviewers.
-6. **False Consensus Detection** — All reviewers APPROVED with avg > 0.9 and zero critical findings triggers an automatic adversarial pass with an unused external model before exit.
-7. **5+ Rule (Calibrated AND Logic)** — Patch vs full rewrite trigger. Fires on (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND findings span ≥ 3 categories. Calibrated from initial OR logic after observing over-trigger on a real 4-finding patch set.
-8. **New `domain-pipeline-integration.md`** — 284-line standard for sub-skill input/output contracts, failure handling (4 modes), integration points with adjacent phases.
-9. **Pokemon Role Label Clarification** — Eevee/Smeargle/Xatu/etc. are conceptual roles, NOT direct Agent dispatch targets. Real subagent dispatch happens inside `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine`. Past failure mode (orchestrator self-processing because Pokemon names didn't dispatch) is now structurally impossible.
-
-Verification cycle (2026-04-07): generic-topic PDCA run achieved 7,981-char Plan brief, 6,962-char Do article, Codex+sonnet diverse reviewers, surfaced 4 P1 findings the v1.0.0 baseline would have missed.
-
-## What's New in 1.0.0
-
-Four changes landed in this release:
-
-1. **Cycle Memory** — New persistence layer (`mcp/lib/cycle-memory.mjs`, 230 lines) stores per-cycle phase markdown, metrics, and cross-cycle insights under `.data/cycles/`. Three new MCP tools (`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`) expose the memory to any MCP client.
-2. **Domain-Aware Contracts** — `pdca_start_run` now accepts a `domain` parameter (`code | content | analysis | pipeline`) that selects stage-specific contracts, Definition of Done criteria, and rollback targets for each phase transition.
-3. **Read-Before-Act Wiring** — `handleStartRun` automatically loads the 10 most recent insights (weight ≥ 0.1) so each new cycle starts with accumulated learnings. `handleTransition` auto-saves phase artifacts to cycle memory. `handleEndRun` persists cycle metrics.
-4. **Self-Evolution** — When a critical insight is recorded 3+ times, `saveInsight` auto-generates a gotcha proposal under `.data/proposals/gotchas-{category}.md`, surfacing repeated failure patterns as reusable checklists.
-
-## What's New in 0.5.3
-
-Three changes landed in this release:
-
-1. **Companion daemon foundation** — local daemon helpers and CLI entrypoints were added for scheduling, background runs, notification routing, and session recall indexing. **The run queue has no executor, by design**: `daemon_start_background_run` writes an entry and returns the command that starts it — `claude --bg "/scc:workflow run <name>"`, managed with `claude agents`. Claude Code already ships background agents, and an in-plugin executor would run outside the conversation where consent for external actions is given. The queue records intent and hands it over.
-2. **Project memory layer** — session-start can now surface durable project facts separately from `soul` identity memory.
-3. **Runtime boundary guidance** — the plugin now explicitly documents that standalone agent-runtime ideas can be borrowed without embedding a second runtime.
-
-## What's New in 0.5.1
-
-Three changes in this release (on top of 0.5.0):
-
-1. **SubagentStart Hook** — New lifecycle hook (`hooks/subagent-start.mjs`) initializes review session context when subagents spawn. Registered via `hooks.json` on the `SubagentStart` event.
-2. **Agent Model Upgrades** — Eevee (researcher) promoted from haiku to sonnet for deeper research quality. Porygon (fact-checker) promoted from haiku to sonnet for more reliable verification.
-3. **MMBridge Full Integration (Phase 1–3)** — 10 MMBridge commands integrated across all PDCA phases: research, review, security, debate, gate, followup, resume, diff, memory, handoff. See the MMBridge Integration section below.
-
-## What's New in 0.5.0
-
-Two additions shipped in this release (on top of 0.4.0):
-
-1. **Soul System** — 10th skill (`/scc:soul`) builds and maintains a persistent user identity profile. Voice, tone rules, and anti-patterns are injected into the write skill and tone-guardian reviewer.
-2. **Playwright MCP** — Optional browser automation server added to `.claude-plugin/plugin.json`. When `WebFetch` fails on a JavaScript-heavy or dynamic URL, the researcher agent falls back to `browser_navigate` + `browser_snapshot` (accessibility tree extraction). Gracefully degrades if the server is not installed.
-
-## What's New in 0.4.0
-
-Five major additions shipped in this release:
-
-1. **MCP State Server** — A 6-tool stdio MCP server (`mcp/pdca-state-server.mjs`) exposes PDCA state to any MCP-aware client. Tools: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
-2. **Critic Schema + Score-Based Consensus** — Reviewers now emit structured JSON (0.0–1.0 score, severity-tagged findings). Consensus gate switches from vote-count to score-primary: >= 0.7 average + no Critical findings = APPROVED.
-3. **Lifecycle Hooks** — Hook count expanded from 3 to 6 (later 8 in 0.5.1): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. Compaction hooks preserve PDCA state across context compression.
-4. **StuckDetector** — Runtime anti-pattern detection catches Plan Churn, Check Avoidance, and Scope Creep before they waste cycles. Fires on every phase transition.
-5. **Worktree Isolation** — Do phase now runs in an isolated `git worktree`. The working tree is merged on APPROVED verdict and discarded on MUST FIX, preventing partial work from polluting the main branch.
+1.3.0 and before are recorded in [CHANGELOG.md](../CHANGELOG.md). They were duplicated here for several releases, and the copies drifted from the real one.
 
 </details>

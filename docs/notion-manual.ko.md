@@ -44,8 +44,11 @@ Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 
 ```
 # Second Claude Code — Knowledge Work OS
-18개 명령. 스킬 15개에 도구 전용 viewer·unblock·standard-check을 더한 것입니다:
+
+PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)
 ```
+
+프로젝트에 기준 문서가 쌓이면 그 아래에 **활성 기준** 목록이 붙어요. 활성 기준을 최대 12개까지, 재검토 조건과 함께 보여줘요. 배너는 명령을 나열하지 않아요. 매 세션 시작마다 명령 목록을 읊는 건, 모델이 이미 볼 수 있는 걸 알려주려고 컨텍스트를 쓰는 일이라 없앴어요.
 
 안 보이면 `claude plugin list`로 플러그인이 제대로 설치됐는지 확인하세요.
 
@@ -207,6 +210,7 @@ Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 | 프롬프트 자산을 개선할 때 | **루프** (`loop`) | 벤치마크 기반 프롬프트 진화, 격리 브랜치에서 실행 |
 | 반복 실패하는 프롬프트 자산을 개선할 때 | **진화** (`evolve`) | 메인테이너 체크 기반 자산 진화 |
 | 막힌 URL을 가져와야 할 때 | **언블록** (`unblock`) | 차단/JS/캡차성 URL을 단계별로 복구 |
+| 기준을 지켰는지 확인할 때 | **기준 검사** (`standard-check`) | 기록해 둔 기준을 산출물 하나에 대고 돌려서 위반을 전부 보고 |
 | URL, 메모, 자료를 저장할 때 | **수집** (`collect`) | PARA 분류 기반 지식 캡처 |
 | 여러 스킬을 자동화할 때 | **워크플로우** (`workflow`) | 스킬 체이닝, 저장/재사용 가능 |
 | 새 스킬을 찾고 싶을 때 | **탐색** (`discover`) | 마켓플레이스 검색, 점수 평가, 승인 후 설치 |

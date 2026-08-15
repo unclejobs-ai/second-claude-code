@@ -40,6 +40,7 @@ Nothing happening? `claude plugin list` to confirm the install.
 
 ## Why
 
+- **Decisions outlive the session.** When a question has two defensible answers, it asks instead of guessing, then writes the answer to your project as a standard — the direction you picked, the ones you rejected, and why each lost. The next session reads it before it starts.
 - **It refuses its own output.** Three to five reviewers with different lenses attack every draft. A review that returns zero findings is treated as a rubber stamp, not a pass.
 - **Failures route by cause.** Thin research goes back to Plan. Botched execution goes back to Do. A rough edge goes to Refine. Not everything is "try again."
 - **Gates are checks, not vibes.** Plan can't reach Do without 5 distinct sources and an approved plan. Each gate names what's missing.
@@ -68,6 +69,34 @@ Every prompt runs through Plan → Do → Check → Act, with hard gates between
 The Action Router is the part that matters. When review finds a problem it classifies the root cause and re-enters the phase that caused it — a research gap goes back to research, not to a generic retry. That's why the second pass is dramatically better than the first, and why runs converge instead of looping.
 
 ![PDCA Cycle](docs/images/pdca-cycle.svg)
+
+---
+
+## Standards — the part that survives the session
+
+You settle something on Tuesday. On Thursday a fresh session proposes the option you already rejected, because nothing on disk says you rejected it.
+
+`/scc:coach` asks when a request has more than one defensible direction — the test is whether another competent agent reading the same evidence could land somewhere else, not whether this one feels unsure. You pick. It writes the answer into **your project**, not into a chat log:
+
+```
+.scc/standards/voice-two-track/STANDARD.md
+```
+
+The record carries the direction you chose, every option that lost and why, what would reopen the question, and any checks it can be verified with. Sessions read it at startup. Retiring one keeps the file and flips it to `superseded`, because the rejected options are the part that stops the same argument from happening a third time.
+
+Then the standards check the work:
+
+```bash
+/scc:standard-check drafts/launch-post.md
+```
+
+```
+FAIL no-hype / regex-absent — the target contains "단순히", which /단순히/ forbids
+UNPROVEN no-hype — adversarial, needs an independent reviewer: does this read without overstatement?
+  record answers against target_sha256 d0281896…
+```
+
+Checks are data, not code — five fixed checkers with structured arguments, and a standard carrying a `run:` field is rejected outright rather than executed, because standards travel through repositories. Questions no regex can settle stay `UNPROVEN` until a reviewer answers them, and the answer is bound to the exact bytes they read: edit the draft and it goes back to unproven. The tool that grades the work never records the passing grade.
 
 ---
 

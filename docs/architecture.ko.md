@@ -20,11 +20,12 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 
 | PDCA | 사용자 페이즈 | 주요 스킬 |
 |------|--------------|-----------|
+| Requirements | Clarify | `coach` |
 | Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
 | Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
 | Check | Verify | `review` |
 | Act | Refine | `refine` |
-| **최적화** | **Evolve** | **`loop`** |
+| **최적화** | **Evolve** | **`loop`**, `evolve` |
 | **오케스트레이터** | **전체 사이클** | **`pdca`** |
 | **정체성** | **확장** | **`soul`** |
 
@@ -56,9 +57,48 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 | `batch` | Do | 대규모 동종 작업 병렬 분해/실행 |
 | `soul` | 확장 | 사용자 정체성 프로필 합성 |
 | `translate` | 확장 | 소울 기반 EN↔KO 번역 |
-| `viewer` | 확장 | PDCA 산출물 로컬 뷰어 |
-| `unblock` | Plan | 9-phase zero-key fetch chain (차단/WAF/SPA URL 우회) |
 | `pdca` | 전체 | 오케스트레이터 (메타스킬) |
+
+스킬 목록 밖에 명령 셋이 있습니다 — `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`. 실행만 하고 판단이 없습니다. 판단 0인 항목이 스킬 목록에 앉아 있으면 모델의 선택지만 갉아먹습니다.
+
+---
+
+## 기준 문서 (Decision Standards)
+
+세션이 끝나면 그 안의 판단도 함께 사라집니다. 다음 세션이 이미 탈락한 안을 다시 들고 오는데, 디스크에는 아니라고 말해 주는 게 아무것도 없습니다. 기준 문서가 그 자리를 메웁니다. 갈림길 하나가 정해질 때마다 문서 하나. 프로젝트가 들고 있고, 뒤따르는 모든 세션이 읽습니다.
+
+| 관심사 | 사는 곳 |
+|---|---|
+| 루트 해석, 플러그인 경로 거부 | `scripts/lib/project-root.mjs` |
+| 인터뷰 상태 (재개 가능, 원자적 쓰기) | `scripts/lib/coach-state.mjs` → `<project>/.scc/state/coach.json` |
+| 기준 문서 (렌더·쓰기·목록·폐기) | `scripts/lib/standard-record.mjs` → `<project>/.scc/standards/<id>/STANDARD.md` |
+| adversarial 검사에 대한 리뷰어 판정 | `scripts/lib/adversarial-log.mjs` → `<project>/.scc/checks/adversarial.jsonl` |
+| 인터뷰·기록 명령 | `scripts/coach-runner.mjs` |
+| 준수 검사 실행기 | `scripts/standard-check.mjs`, 검사기는 `scripts/lib/standard-checkers.mjs` |
+
+```mermaid
+flowchart LR
+    FORK["방어 가능한 방향이 둘 이상인 갈림길"] --> RECORD["coach-runner record-fork"]
+    RECORD --> STD[".scc/standards/&lt;id&gt;/STANDARD.md"]
+    STD --> CHECK["standard-check &lt;산출물&gt;"]
+    CHECK --> PASS["pass / FAIL / UNPROVEN / UNCHECKED"]
+    STD --> RETIRE["coach-runner supersede"]
+    RETIRE --> OLD["status: superseded, 파일은 남음"]
+    CHECK -.->|adversarial| VERDICT["coach-runner record-verdict"]
+    VERDICT --> LOG[".scc/checks/adversarial.jsonl"]
+```
+
+이걸 붙들고 있는 불변식이 넷입니다.
+
+**폐기는 삭제가 아닙니다.** `supersede`는 `status: active`를 `superseded`로 바꾸고 파일은 그대로 둡니다. 탈락한 안과 진 이유가 계속 읽히고, 그게 다음 세션이 같은 안을 다시 꺼내지 못하게 하는 유일한 장치입니다. 대체 문서를 `supersedes: "<옛 id>"`와 함께 먼저 쓰기 때문에, id가 충돌하면 기존 기준이 아직 살아 있는 상태에서 중단됩니다.
+
+**검사는 코드가 아니라 데이터입니다.** 기준 문서는 사용자 프로젝트에 있고 저장소를 타고 퍼집니다. 고정 검사기 다섯 — `regex-absent`, `regex-present`, `length-between`, `similarity-below`, `frontmatter-equals` — 이 구조화된 인수를 받습니다. `run:` 류 필드, 목록에 없는 검사기 id, 모르는 필드는 건너뛰지 않고 오류로 거부합니다. 검사가 걸린 줄 아는데 러너가 조용히 넘어가면, 검사가 아예 없는 것보다 나쁩니다.
+
+**검사기는 "아니오"를 말할 수 있어야 합니다.** 검사기마다 반드시 실패해야 하는 픽스처가 이 저장소에 딸려 있고, 검사기가 자기 픽스처를 통과시키기 시작하면 스위트가 깨집니다. 픽스처를 여기 두는 건 의도적입니다 — 프로젝트가 픽스처를 대면 그것도 신뢰 경계를 넘는 입력이 됩니다.
+
+**자기 작업에 자기가 도장을 찍지 않습니다.** `adversarial` 검사는 리뷰어의 답이 파일에 남기 전까지 `UNPROVEN`이고, 그 답은 리뷰어가 실제로 읽은 산출물의 sha256에 묶입니다. 산출물을 고치면 답은 다시 unproven으로 돌아갑니다. 판정은 `standard-check`이 아니라 coach 러너로 받습니다. 채점하는 도구가 합격 도장까지 찍게 두지 않습니다. 검사가 없는 기준은 `UNCHECKED`입니다 — 보이지만 검증된 건 아니고, 통과로 세지 않습니다.
+
+러너는 플러그인 설치 경로 안에는 아무것도 쓰지 않습니다. 예전 릴리스가 `import.meta.url`로 프로젝트 루트를 잡아 사용자 스펙을 플러그인 캐시에 넣고 있었고, `project-root.mjs`가 지금은 그 경로를 거부합니다. 심링크와 대소문자 변형까지 포함해서요.
 
 ---
 
@@ -87,13 +127,12 @@ second-claude/
 │   ├── soul/                     # 사용자 정체성 프로필 합성
 │   │   └── references/           # 관찰 시그널, 합성 알고리즘, 템플릿
 │   ├── translate/                # 소울 기반 EN↔KO 번역
-│   ├── viewer/                   # PDCA 산출물 로컬 뷰어
-│   └── unblock/                  # zero-key 9-phase 차단 우회 fetch 체인
+│   └── unblock/                  # 엔진만 있음 — SKILL.md 없이 /scc:unblock으로 나감
 │       ├── engine/               # CLI + 체인 + 10개 probe + 오케스트레이터
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
 ├── commands/                     # 18개 슬래시 커맨드 래퍼 (스킬 15 + 도구 전용 3)
-├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (8개 훅)
+├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (파일 7개, 이벤트 8개)
 │   ├── hooks.json                # 훅 설정
 │   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)
 │   ├── session-start.mjs         # 세션 배너 + 상태 초기화 (SessionStart)
@@ -104,7 +143,7 @@ second-claude/
 │   └── compaction.mjs            # PDCA 상태 스냅샷/복원 (PreCompact, PostCompact)
 ├── references/                   # 설계 원칙, 합의 게이트
 ├── templates/                    # 출력 템플릿
-├── scripts/                      # 셸 유틸리티
+├── scripts/                      # coach-runner, standard-check, viewer-session, export-artifact, evolve-runner
 ├── mcp/lib/cycle-memory.mjs      # 사이클 메모리 영속 (페이즈 스냅샷, 인사이트, 메트릭스)
 └── config/                       # 사용자 설정
 ```
@@ -115,7 +154,7 @@ second-claude/
 | `skills/pdca/` | 페이즈 게이트 체크리스트, 액션 라우터, 질문 프로토콜이 `references/`에 있는 메타스킬이에요. |
 | `agents/` | 3개 모델 티어에 걸친 17개 포켓몬 테마 서브에이전트 정의예요. 아래 에이전트 로스터를 참고하세요. |
 | `commands/` | `/scc:*` 호출을 해당 스킬로 연결하는 얇은 래퍼예요. |
-| `hooks/` | 8개 이벤트에 걸친 8개 라이프사이클 훅이에요: 자동 라우팅, 서브에이전트 시작/종료, 세션 관리, 컴팩션, 품질 게이트. |
+| `hooks/` | 훅 파일 7개가 8개 이벤트에 등록돼 있어요: 자동 라우팅, 서브에이전트 시작/종료, 세션 관리, 컴팩션, 품질 게이트. |
 | `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 방법론. |
 
 ---
@@ -595,7 +634,7 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ## 라이프사이클 훅
 
-8개 이벤트에 걸쳐 8개 훅이 등록돼 있어요. `hooks/hooks.json`에서 설정해요.
+훅 파일 7개가 8개 이벤트에 등록돼 있어요 (`compaction.mjs`가 PreCompact와 PostCompact 둘 다 맡습니다). `hooks/hooks.json`에서 설정해요.
 
 | 이벤트 | 훅 파일 | 동작 |
 |--------|--------|------|
@@ -728,62 +767,8 @@ mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
 
 ---
 
-## 1.3.0 변경사항
+## 이전 릴리스
 
-PDCA 하드 게이트 릴리스. PDCA 오케스트레이터에 9개 구체 강화를 박아서, v1.0.0의 약한 게이트로 셀프 처리 fallback과 sparse 출력이 슬쩍 통과하던 구조적 구멍을 막았어요.
-
-1. **PDCA가 메인 오케스트레이터 (아키텍처 명확화)** — Sub-skill(`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`)은 PDCA의 Do 페이즈 안에서 호출되는 빌딩 블록이지 PDCA를 대체하는 게 아닙니다. Sub-skill 내부 멀티 페이즈 파이프라인은 PDCA의 Do 안에서 돌아가고, sub-skill 자체 계약으로 게이팅되며, PDCA의 Plan + Check + Act가 그 위아래를 감싸요.
-2. **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 그리디 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`. 가장 specialized한 sub-skill이 항상 우선이고, specialized가 있을 때 generic으로 가는 건 절대 금지.
-3. **포맷별 길이 floor 강제** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 11개 포맷에 보정된 `min_chars`, `target_chars`, `min_sections`. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치. Generic "더 길게 써" 프롬프트는 명시적으로 금지돼요.
-4. **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새로 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자가 의무화됐어요.
-5. **리뷰어 모델 다양성 룰** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. >2 리뷰어일 때 diversity score ≥ 0.6.
-6. **False consensus 감지** — 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
-7. **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정.
-8. **새 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점을 정의한 284줄 표준.
-9. **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 Agent dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능.
-
-검증 사이클 (2026-04-07): generic 토픽 PDCA 실행으로 7,981자 Plan brief, 6,962자 Do 아티클, Codex+sonnet 다양 리뷰어, v1.0.0 baseline에서는 놓쳤을 4 P1 findings 발견.
-
-## 1.0.0 변경사항
-
-이번 릴리스에는 네 가지가 추가됐어요.
-
-1. **사이클 메모리** — 새로운 영속 레이어(`mcp/lib/cycle-memory.mjs`, 230줄)가 사이클별 페이즈 마크다운, 메트릭스, 교차 사이클 인사이트를 `.data/cycles/`에 저장해요. 3개의 새 MCP 도구(`pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`)가 메모리를 MCP 클라이언트에 노출해요.
-2. **도메인 인식 계약** — `pdca_start_run`이 이제 `domain` 매개변수(`code | content | analysis | pipeline`)를 받아서 페이즈 전환마다 단계별 계약, 완료 정의(DoD), 롤백 대상을 선택해요.
-3. **Read-Before-Act 연결** — `handleStartRun`이 자동으로 최근 10개 인사이트(가중치 ≥ 0.1)를 불러와서 각 새 사이클이 축적된 학습으로 시작해요. `handleTransition`이 페이즈 아티팩트를 자동 저장하고, `handleEndRun`이 사이클 메트릭스를 영속해요.
-4. **자기 진화** — 치명적 인사이트가 3회 이상 기록되면 `saveInsight`가 `.data/proposals/gotchas-{category}.md`에 주의사항 제안을 자동 생성해서 반복되는 실패 패턴을 재사용 가능한 체크리스트로 표면화해요.
-
-## 0.5.3 변경사항
-
-이번 릴리스에는 세 가지가 추가됐어요.
-
-1. **컴패니언 데몬 기반** — 스케줄링, 백그라운드 실행, 알림 라우팅, 세션 리콜 인덱싱을 위한 로컬 데몬 헬퍼와 CLI 진입점을 추가했어요. **run 큐에 실행기가 없는 건 의도입니다** — `daemon_start_background_run`은 항목을 쓰고 그걸 시작하는 명령(`claude --bg "/scc:workflow run <name>"`, 관리는 `claude agents`)을 함께 돌려줍니다. 백그라운드 에이전트는 클로드 코드가 이미 제공하고, 플러그인 안에서 실행기를 돌리면 **외부 작업 동의를 받는 대화 밖**에서 돌게 됩니다. 큐는 의도를 기록하고 넘깁니다.
-2. **프로젝트 메모리 레이어** — 세션 시작 시 `soul`과 별도로 지속되는 프로젝트 사실 컨텍스트를 보여줄 수 있게 정리했어요.
-3. **런타임 경계 문서화** — 독립 실행 에이전트 런타임의 아이디어는 차용하더라도, 플러그인 안에 두 번째 런타임은 넣지 않는다고 명시했어요.
-
-## 0.5.1 변경사항
-
-이번 릴리스에 세 가지가 바뀌었어요.
-
-1. **SubagentStart 훅** — 서브에이전트가 생성될 때 리뷰 세션 컨텍스트를 주입하는 라이프사이클 훅(`hooks/subagent-start.mjs`)이 추가됐어요. `hooks.json`의 `SubagentStart` 이벤트에 등록돼 있어요.
-2. **에이전트 모델 승격** — 이브이(Eevee, 리서처)가 haiku에서 sonnet으로, 폴리곤(Porygon, 팩트체커)이 haiku에서 sonnet으로 올라갔어요. 리서치 품질과 검증 정확도를 높이기 위한 변경이에요.
-3. **MMBridge 전면 통합 (Phase 1-3)** — 10개 MMBridge 커맨드가 PDCA 전 페이즈에 걸쳐 통합됐어요: research, review, security, debate, gate, followup, resume, diff, memory, handoff. 아래 MMBridge 통합 섹션에서 자세히 다뤄요.
-
-## 0.5.0 변경사항
-
-두 가지가 추가됐어요.
-
-1. **Soul 시스템** — 10번째 스킬(`/scc:soul`)이 사용자의 정체성 프로필을 구축하고 유지해요. 목소리, 톤 규칙, 안티패턴 정보가 write 스킬과 tone-guardian 리뷰어에 주입돼요.
-2. **Playwright MCP** — 선택적 브라우저 자동화 서버가 `.claude-plugin/plugin.json`에 추가됐어요. `WebFetch`가 JavaScript 기반 동적 URL에서 실패하면 리서처 에이전트가 `browser_navigate` + `browser_snapshot`(접근성 트리 추출)으로 대체해요. 서버가 설치돼 있지 않으면 조용히 건너뛰어요.
-
-## 0.4.0 변경사항
-
-다섯 가지가 추가됐어요.
-
-1. **MCP 상태 서버** — 6개 도구를 제공하는 stdio MCP 서버(`mcp/pdca-state-server.mjs`)가 PDCA 상태를 MCP 클라이언트에 노출해요. 도구: `get`, `start`, `transition`, `check_gate`, `end`, `update_stuck`.
-2. **Critic 스키마 + 점수 기반 합의** — 리뷰어가 구조화된 JSON(0.0-1.0 점수, 심각도 태그 소견)을 출력해요. 합의 게이트가 투표 수 기반에서 점수 기반으로 바뀌었어요: 평균 0.7 이상 + Critical 소견 없음 = APPROVED.
-3. **라이프사이클 훅** — 훅이 3개에서 6개로 늘어났어요(0.5.1에서 8개): SessionStart, UserPromptSubmit, SubagentStop, Stop, PreCompact, PostCompact. 컴팩션 훅이 컨텍스트 압축 시 PDCA 상태를 보존해요.
-4. **StuckDetector** — Plan Churn, Check Avoidance, Scope Creep 같은 안티패턴을 페이즈 전환마다 감지해요. 사이클이 헛바퀴 도는 걸 사전에 막아줘요.
-5. **Worktree 격리** — Do 페이즈가 격리된 `git worktree`에서 실행돼요. APPROVED 판정이면 머지하고, MUST FIX면 버려요. 불완전한 작업이 메인 브랜치를 오염시키지 않아요.
+1.3.0 이전은 [CHANGELOG.md](../CHANGELOG.md)에 있습니다. 여러 릴리스 동안 여기 복사본을 함께 두었는데, 그 복사본이 원본과 어긋났습니다.
 
 </details>

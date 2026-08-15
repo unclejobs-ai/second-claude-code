@@ -41,8 +41,14 @@ Start a new Claude Code session. You should see this in the context injection:
 
 ```
 # Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work — 15 skills plus the tool-only viewer, unblock, and standard-check:
+
+PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)
 ```
+
+Once a project has standards recorded, an **활성 기준** list appears under that header, showing up to
+12 active standards with their review conditions. The banner does not enumerate commands — that
+listing was removed, because naming every command on every session start spends context to tell the
+model things it can already see.
 
 If it does not appear, run `claude plugin list` to confirm the plugin is installed.
 
@@ -115,6 +121,7 @@ Both English and Korean prompts work. The system has roughly 50 Korean trigger p
 | `loop` | Benchmarks and evolves prompt assets through optimization iterations | Systematically improving prompt quality | "Loop this prompt suite against the benchmark until score > 85" |
 | `evolve` | Evolves recurring-failure prompt assets against maintainer-authored checks | Maintaining the plugin's own prompt quality | "List recurring failures and evolve the weakest asset" |
 | `unblock` | Fetches hostile or blocked URLs through adaptive zero-key fallback phases | Research source cannot be fetched normally | "Unblock this Cloudflare-protected article" |
+| `standard-check` | Runs the project's recorded standards against one artifact and reports every violation | Before shipping work a standard governs | "Check this draft against our standards" |
 
 ---
 
