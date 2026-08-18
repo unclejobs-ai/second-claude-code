@@ -42,6 +42,7 @@ jobs:
       - name: Verify agent frontmatter
         run: |
           for f in agents/*.md; do
+            [ "$(basename "$f")" = "README.md" ] && continue
             head -1 "$f" | grep -q '^---' || {
               echo "MISSING frontmatter: $f"
               exit 1
