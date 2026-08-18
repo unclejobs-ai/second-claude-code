@@ -7,7 +7,7 @@
 4. **CTA** (45-60s): Ask for a specific next action
 
 ## Length
-- Roughly 150-240 words for a 60-second script
+- Minimum 1800 chars of spoken script plus visual cues (PDCA Do floor for a 60-90s / 12-scene script). Target 2200-2800.
 - Keep the hook to 1-2 sentences
 - Make transitions between stages obvious
 

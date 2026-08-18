@@ -1,5 +1,13 @@
 # Review: Detailed Protocols
 
+## Diversity and false consensus
+
+The vote hook does not fail these cases. The orchestrator must, for `content`, `strategy`, and `full`:
+
+- require at least 2 reviewers and 2 distinct models
+- require 1 external model when that runtime exists
+- treat unanimous APPROVED + average `> 0.9` + zero findings as a rubber stamp: run an adversarial pass or name 3 weak points before shipping. Do not treat the hook's `APPROVED` as a pass.
+
 ## Verdict Definitions
 
 The consensus gate applies two conditions in order: score-based gate first, vote-count gate second.
@@ -26,7 +34,7 @@ Applied only when score-based condition is met (no Critical findings, score `>= 
 | `code` | 3 | 2 | `ceil(0.67 * 3) = 2` |
 | `security` | 3 | 2 | `ceil(0.67 * 3) = 2` |
 | `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
-| `full` | 5 | 4 | `ceil(0.67 * 5) = 4` |
+| `full` | 5 | 3 | `round(0.67 * 5) = 3` |
 
 Reviewer composition by preset:
 
@@ -97,7 +105,7 @@ The external review counts as **1 additional voter**, increasing the denominator
 | `code` | 2/3 pass | 2/4 pass |
 | `security` | 2/3 pass | 2/4 pass |
 | `quick` | 2/2 pass | 2/3 pass |
-| `full` | 4/5 pass | 4/6 pass |
+| `full` | 3/5 pass | 4/6 pass |
 
 ### Score Handling
 

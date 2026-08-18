@@ -12,7 +12,7 @@
 
 ### 3. Too little substance
 **Symptom**: A newsletter or article stops before the core argument is developed
-**Fix**: Enforce format minimums: newsletter 2000, article 3000, report 4000, shorts 300.
+**Fix**: Enforce format minimums: newsletter 10000, article 4000, report 5000 chars. Do not pad.
 
 ### 4. Missing CTA
 **Symptom**: The conclusion ends without a next action

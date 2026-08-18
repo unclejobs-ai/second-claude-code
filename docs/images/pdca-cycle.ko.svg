@@ -42,7 +42,7 @@
   <rect x="170" y="174" width="3" height="58" rx="1.5" fill="#3fb950"/>
   <text x="186" y="194" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
   <text x="214" y="194" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서치를 바탕으로 초안을 쓴다</text>
-  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">한 명이 리서치 결과만으로 전체 초안 작성</text>
+  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">포맷 길이 바닥을 넘긴 초안만 통과</text>
 
   <!-- Gate 2 -->
   <line x1="390" y1="232" x2="390" y2="250" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
@@ -52,7 +52,7 @@
   <rect x="170" y="254" width="440" height="58" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="170" y="254" width="3" height="58" rx="1.5" fill="#d29922"/>
   <text x="186" y="274" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
-  <text x="242" y="274" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명이 동시에 초안을 뜯는다</text>
+  <text x="242" y="274" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리뷰어가 초안을 뜯는다</text>
   <text x="186" y="294" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">논리 &#xB7; 팩트 &#xB7; 톤 &#xB7; 구조 &#xB7; 약점</text>
 
   <!-- Done branch (right) -->

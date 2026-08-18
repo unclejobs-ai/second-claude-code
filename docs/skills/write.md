@@ -20,7 +20,7 @@ Write an expert article about the future of AI agents, approximately 800 words
 **Process:**
 1. Research phase triggers automatically -- 5 web searches covering market data, enterprise adoption, challenges, case studies, and multi-agent architecture.
 2. Writer (opus) drafts in `article` format with `expert` voice: authoritative, evidence-led, domain vocabulary.
-3. Length negotiation activates: article format minimum is 3,000 words, user requested ~800. The skill informs the user and offers alternatives.
+3. Length negotiation activates: article format minimum is 4,000 chars, user requested ~800. The skill informs the user and offers alternatives.
 4. Review auto-triggers with the `content` preset (deep-reviewer + devil-advocate + tone-guardian).
 5. Editor (opus) addresses all Critical and Major review findings.
 
@@ -52,10 +52,10 @@ Write an expert article about the future of AI agents, approximately 800 words
 
 | Format | Minimum Length | Key Requirement |
 |--------|--------------|-----------------|
-| `newsletter` | 2,000 words | 6-stage arc, 2+ research data points |
-| `article` | 3,000 words | Evidence-led structure |
-| `report` | 4,000 words | Numbered recommendations |
-| `shorts` | ~300 words | Mandatory CTA |
+| `newsletter` | 10,000 chars | 6-stage arc, 2+ research data points |
+| `article` | 4,000 chars | Evidence-led structure |
+| `report` | 5,000 chars | Numbered recommendations |
+| `shorts` | ~1,800 chars | Mandatory CTA |
 | `social` | Platform-optimized | Short post |
 | `card-news` | Slide-by-slide | Visual direction per slide |
 

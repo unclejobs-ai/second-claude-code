@@ -11,7 +11,7 @@
   <rect width="960" height="460" rx="12" fill="#0d1117"/>
 
   <!-- Header -->
-  <text x="480" y="38" text-anchor="middle" fill="#e6edf3" font-size="24" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">제2의 클로드</text>
+  <text x="480" y="38" text-anchor="middle" fill="#e6edf3" font-size="24" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">PDCA 루프</text>
   <text x="480" y="60" text-anchor="middle" fill="#8b949e" font-size="13" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">한 줄이면 조사부터 검증까지.</text>
 
   <!-- Divider -->

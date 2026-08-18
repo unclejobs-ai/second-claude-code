@@ -394,32 +394,68 @@ test("numeric contracts stay aligned across docs", () => {
   const researchGotchas = read("skills/research/gotchas.md");
 
   for (const expected of [
-    "newsletter 2000",
-    "article 3000",
-    "report 4000",
+    "newsletter 10000",
+    "article 4000",
+    "report 5000",
   ]) {
     const [type, count] = expected.split(" ");
     assert.match(
       writeSkill,
-      new RegExp(`${type}[\\s\\S]*${count}`, "i"),
-      `write skill should require ${count} words for ${type}`
+      new RegExp(`${type}[^\\n]*${count}[^\\n]*chars`, "i"),
+      `write skill should require ${count} chars for ${type}`
     );
     assert.match(
       writerAgent,
-      new RegExp(`${type}[\\s\\S]*${count}`, "i"),
-      `writer agent should require ${count} words for ${type}`
+      new RegExp(`${type}[^\\n]*${count}`, "i"),
+      `writer agent should require ${count} chars for ${type}`
     );
     assert.match(
       writeGotchas,
       new RegExp(`${type} ${count}`, "i"),
-      `write gotchas should require ${count} words for ${type}`
+      `write gotchas should require ${count} chars for ${type}`
     );
   }
 
+  const articleFormat = read("skills/write/references/formats/article.md");
+  const reportFormat = read("skills/write/references/formats/report.md");
+  const shortsFormat = read("skills/write/references/formats/shorts.md");
+  const writeGuide = read("docs/skills/write.md");
+
+  assert.match(
+    articleFormat,
+    /4000 chars/i,
+    "article format spec should require 4000 chars"
+  );
+  assert.match(
+    reportFormat,
+    /5000 chars/i,
+    "report format spec should require 5000 chars"
+  );
+  assert.match(
+    shortsFormat,
+    /1800 chars/i,
+    "shorts format spec should require 1800 chars"
+  );
+  assert.match(
+    writerAgent,
+    /shorts[\s\S]*1800/i,
+    "writer agent should require 1800 chars for shorts"
+  );
+  assert.match(
+    writeSkill,
+    /shorts[\s\S]*1800/i,
+    "write skill should require 1800 chars for shorts"
+  );
+  assert.match(
+    writeGuide,
+    /10,000 chars[\s\S]*4,000 chars[\s\S]*5,000 chars[\s\S]*1,800 chars/i,
+    "public write guide should use the Do-phase char floors"
+  );
+
   assert.match(
     newsletterTemplate,
-    /at least 2000 words/i,
-    "newsletter template checklist should require 2000 words"
+    /at least 10000 chars/i,
+    "newsletter template checklist should require 10000 chars"
   );
   assert.match(
     captureSkill,
@@ -609,13 +645,25 @@ test("roster diagrams show the tier distribution the agents actually declare", (
   // review-flow.svg and agent-roster.svg have each drifted from agents/ at least once. A diagram
   // that is merely out of date still reads as authoritative, so the counts are pinned here.
   const expected = {};
+  const jobNames = [];
   for (const file of readdirSync(path.join(root, "agents")).filter((f) => f.endsWith(".md"))) {
-    const model = read(path.join("agents", file)).match(/^model:\s*(.+)$/m)?.[1]?.trim();
+    const body = read(path.join("agents", file));
+    const model = body.match(/^model:\s*(.+)$/m)?.[1]?.trim();
+    const name = body.match(/^name:\s*(.+)$/m)?.[1]?.trim();
     if (model) expected[model] = (expected[model] ?? 0) + 1;
+    if (name) jobNames.push(name);
   }
 
   for (const svg of ["docs/images/agent-roster.svg", "docs/images/agent-roster.ko.svg"]) {
     const body = read(svg);
+
+    for (const name of jobNames) {
+      assert.match(
+        body,
+        new RegExp(`>${name}<`),
+        `${svg} must label the dispatch name ${name}`
+      );
+    }
 
     // Per-agent labels: one `>tier<` per row.
     const perAgent = {};

@@ -1,6 +1,6 @@
 # Second Claude Code
 
-Claude Code plugin (v3.0.0). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v3.0.1). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 `viewer`, `unblock`, and `standard-check` ship as commands with no skill: they execute and make no judgment, so they take no slot in the skill list. `skills/unblock/` still holds the fetch engine.
 

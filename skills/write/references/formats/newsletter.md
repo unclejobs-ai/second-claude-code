@@ -9,7 +9,7 @@
 6. **Conclusion**: One-line summary plus a concrete CTA
 
 ## Length
-- Minimum 2000 words / recommended 3000-4000 words
+- Minimum 10000 chars of body (PDCA Do floor). Target 12000-15000.
 - Keep the intro tight
 - Yes + But + Therefore should carry most of the draft
 - Keep the conclusion concise

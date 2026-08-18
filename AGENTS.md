@@ -1,6 +1,6 @@
 # Second Claude Code — Agent Instructions
 
-Claude Code plugin (v3.0.0). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v3.0.1). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 ## Project Structure
 

@@ -5,6 +5,16 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-08-18
+
+### Changed
+
+- Writer, formats, template, guides, and tests match the PDCA Do floors: newsletter 10000, article 4000, report 5000, shorts 1800 chars of body.
+- Unanimous zero-finding reviews are a rubber stamp: the orchestrator must run an adversarial pass. The vote hook still emits APPROVED (`full` remains 3/5).
+- Session banner and cover drop Knowledge Work OS / Pokemon dispatch. Diagrams name jobs.
+- Host note lives in `agents/README.md`: Claude Code 2.1.232+ may fork subagents; SCC still gates files.
+- CI skips `agents/README.md` and `skills/unblock/` (engine, no SKILL.md since 3.0.0).
+
 ## [3.0.0] - 2026-08-15
 
 Decisions stop dying with the session. A settled fork becomes a record in your

@@ -71,5 +71,5 @@ Rules:
 - [ ] But section has at least 2 data points from research
 - [ ] Therefore offers a genuinely new insight
 - [ ] CTA is specific and actionable
-- [ ] Total word count is at least 2000 words
+- [ ] Total body character count is at least 10000 chars
 - [ ] Voice matches the selected tone guide
