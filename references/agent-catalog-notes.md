@@ -1,28 +1,28 @@
 # Agent Catalog — Future Extension Notes
 
-Current second-claude ships with 17 Pokemon-themed agents. This document catalogs additional agent roles observed in the oh-my-claudecode ecosystem that users may want to add for specialized workflows.
+17 job-labeled agents. Filenames may stay Pokemon. Dispatch uses frontmatter `name`. See `agents/README.md`.
 
 ## Current Agents (17)
 
-| Agent | Pokemon | Model | Role |
+| Agent | File | Model | Role |
 |-------|---------|-------|------|
-| researcher | Eevee | sonnet | Web search, source gathering |
-| analyst | Alakazam | sonnet | Data extraction, pattern recognition |
-| strategist | Mewtwo | sonnet | Framework application |
-| writer | Smeargle | opus | Content production |
-| editor | Ditto | opus | Content refinement |
-| deep-reviewer | Xatu | opus | Logic, structure, completeness review |
-| devil-advocate | Absol | sonnet | Weak points, blind spots |
-| fact-checker | Porygon | sonnet | Claims, numbers, source verification |
-| tone-guardian | Jigglypuff | sonnet | Voice and audience fit |
-| structure-analyst | Unown | sonnet | Organization and readability |
-| pipeline-orchestrator | Arceus | sonnet | Pipeline orchestration |
-| pipeline-step-executor | Machamp | sonnet | Single pipeline step execution |
-| skill-searcher | Noctowl | haiku | External source search |
-| skill-inspector | Magnezone | sonnet | Skill candidate inspection |
-| skill-evaluator | Deoxys | sonnet | Skill candidate scoring |
-| knowledge-connector | Abra | haiku | Knowledge linking |
-| soul-keeper | Pikachu | opus | Persistent user identity synthesis |
+| researcher | eevee | sonnet | Web search, source gathering |
+| analyst | alakazam | sonnet | Data extraction, pattern recognition |
+| strategist | mewtwo | sonnet | Framework application |
+| writer | smeargle | opus | Content production |
+| editor | ditto | opus | Content refinement |
+| deep-reviewer | xatu | opus | Logic, structure, completeness review |
+| devil-advocate | absol | sonnet | Weak points, blind spots |
+| fact-checker | porygon | sonnet | Claims, numbers, source verification |
+| tone-guardian | jigglypuff | sonnet | Voice and audience fit |
+| structure-analyst | unown | sonnet | Organization and readability |
+| pipeline-orchestrator | arceus | sonnet | Pipeline orchestration |
+| pipeline-step-executor | machamp | sonnet | Single pipeline step execution |
+| skill-searcher | noctowl | haiku | External source search |
+| skill-inspector | magnezone | sonnet | Skill candidate inspection |
+| skill-evaluator | deoxys | sonnet | Skill candidate scoring |
+| knowledge-connector | abra | haiku | Knowledge linking |
+| soul-keeper | pikachu | opus | Persistent user identity synthesis |
 
 ## Potential Extensions
 
@@ -62,9 +62,9 @@ These roles are documented as reference for users who want to customize their ag
 
 ## How to Add an Agent
 
-1. Create `agents/{pokemon-name}.md` with YAML frontmatter (`description`, `model`, `color`). Use Pokemon names for filenames (e.g., `eevee.md` not `researcher.md`).
-2. Write a system prompt in the body following the guidance schema.
-3. Reference the agent in the relevant SKILL.md's `Subagents` section.
+1. Create `agents/{job-or-label}.md` with YAML frontmatter. `name` must be the job (`researcher`, not `eevee`). Filename may stay a label.
+2. Write a system prompt that starts with the Role contract in `agents/README.md`.
+3. Reference the job `name` in the relevant SKILL.md `Subagents` section. Never tell an orchestrator to dispatch the filename.
 4. Update `config.example.json` if the agent needs configuration.
 
 See `references/guidance-schema.md` for the full authoring guide.

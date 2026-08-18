@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Stop Hook — Second Claude Knowledge Work OS
+ * Stop Hook — SCC PDCA loop
  *
  * Synchronous quality gate that fires when Claude attempts to end the session.
  *

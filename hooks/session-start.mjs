@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * SessionStart Hook — Second Claude Knowledge Work OS
+ * SessionStart Hook — SCC PDCA loop
  *
  * Injects core context on session startup:
  * - 18-command overview + routing rules
@@ -161,9 +161,9 @@ function main() {
   const lines = [];
   const capabilities = getCapabilities();
 
-  lines.push("# Second Claude Code — Knowledge Work OS");
+  lines.push("# Second Claude Code — PDCA loop");
   lines.push("");
-  lines.push("PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)");
+  lines.push("Control loop on Claude Code, not a second agent OS. Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor). Dispatch jobs, not Pokemon filenames.");
   lines.push("");
   lines.push("18 commands for all knowledge work:");
   lines.push("");

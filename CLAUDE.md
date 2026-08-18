@@ -1,14 +1,14 @@
 # Second Claude Code
 
-Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v2.2.0). PDCA control loop for knowledge work — 18 skills, 17 job-labeled agents, 8 hooks, 31 MCP tools. Not a second agent OS.
 
 ## Key Conventions
 
 - **Language**: Skills, hooks, MCP server are JavaScript ESM (.mjs). No TypeScript.
 - **Public loop command**: `/scc:loop`
-- **Agent naming**: Pokemon-themed (Arceus=orchestrator, Pikachu=soul, Eevee=researcher, etc.)
+- **Agent naming**: frontmatter `name` is the job. Filename may stay Pokemon. Never dispatch by filename.
 - **Bilingual docs**: EN (.md) + KO (.ko.md) maintained independently, not translated
-- **PDCA phases**: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Ditto)
+- **PDCA phases**: Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor)
 - **Cycle memory**: Phase artifacts and insights persist across sessions in `.data/cycles/`
 - **Domain-aware PDCA**: `pdca_start_run` accepts `domain` (code|content|analysis|pipeline) for stage-specific contracts
 

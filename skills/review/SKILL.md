@@ -125,6 +125,19 @@ Every reviewer MUST structure their output according to `references/critic-schem
 
 Unstructured prose output is not accepted. Each reviewer emits the `## Critic Output` block defined in `references/critic-schema.md`.
 
+## Reviewer Diversity and False Consensus
+
+Same-session reviewers on the same model are not independent. For `content`, `strategy`, and `full` presets:
+
+- at least 2 reviewers
+- at least 2 distinct models
+- at least 1 external model (Kimi, Codex, Qwen, Gemini, or Droid) when that runtime is available
+- diversity score `(distinct models / reviewers) >= 0.6`
+
+Zero findings from every reviewer is a rubber stamp, not a pass. Log "false consensus" and run one more adversarial pass on an unused external model. If that pass also returns APPROVED with no findings, ship. If it returns MINOR/NEEDS/MUST, re-open Check with the new findings.
+
+If no external runtime is available, the orchestrator must read the artifact and name 3 weak points itself before APPROVED is legal. Silence is not consensus.
+
 ## Consensus Gate
 
 **Score-based consensus** (primary gate):
@@ -135,7 +148,7 @@ Unstructured prose output is not accepted. Each reviewer emits the `## Critic Ou
 - 3-reviewer presets (`content`, `strategy`, `code`): pass with 2/3 approvals
 - 4-reviewer preset (`academic`): pass with 3/4 approvals
 - 2-reviewer preset (`quick`): pass only with 2/2 unanimous approval
-- 5-reviewer preset (`full`): pass with 3/5 approvals
+- 5-reviewer preset (`full`): pass with 4/5 approvals (`ceil(0.67 * 5)`)
 
 **Final verdicts**: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
 - `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)

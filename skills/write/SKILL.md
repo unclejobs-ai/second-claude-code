@@ -13,7 +13,7 @@ effort: high
 - "I'll skip the research step, I know enough about this topic" → STOP, because writing without sources falls back to training knowledge silently — warn the user or provide `--input`.
 - "The review found issues but they're minor, ship it" → STOP, because Critical and Major findings must be addressed before output — review is mandatory, not advisory.
 - "I'll figure out the format as I go" → STOP, because the format spec file must be loaded before drafting — writing without it produces structure drift.
-- "This is only 800 words but it covers everything" → STOP, because format minimums (newsletter 2000, article 3000, report 4000) are hard rules — negotiate length with the user, never silently truncate.
+- "This is only 800 words but it covers everything" → STOP, because format minimums (newsletter 10000, article 4000, report 5000 chars of body) are hard rules — negotiate length with the user, never silently truncate.
 - "The voice doesn't matter for this piece" → STOP, because tone inconsistency is the top reader-trust killer — load the voice guide and verify the voice checklist before finalizing.
 
 # Write
@@ -77,17 +77,19 @@ Before finalizing, verify:
 
 ## Format Rules
 
-- `newsletter`: 6-stage arc, minimum 2000 words, at least 2 research data points
-- `article`: minimum 3000 words
-- `report`: minimum 4000 words with numbered recommendations
-- `shorts`: around 300 words with a mandatory CTA
-- `social`: platform-optimized short post
-- `card-news`: slide-by-slide narrative with visual direction
+Body-only UTF-8 character counts. Same floors as `skills/pdca/references/do-phase.md`. Below the floor is a gate failure, not a style note.
+
+- `newsletter`: 6-stage arc, minimum 10000 chars, at least 2 research data points
+- `article`: minimum 4000 chars (threads-class Korean long-form). English long-form may use 3000 words if the user asked for English.
+- `report`: minimum 5000 chars with numbered recommendations
+- `shorts`: around 1800 chars with a mandatory CTA
+- `social`: 280-700 chars (both ends fail)
+- `card-news`: 8-10 cards, count not chars
 
 ## Length Negotiation
 
 When user-specified length conflicts with format minimums:
-1. Inform the user: "Article format minimum is 3000 words, you requested ~800."
+1. Inform the user: "Article format minimum is 4000 chars, you requested ~800."
 2. Offer alternatives: switch to `shorts` or `social` format, OR keep `article` at full length.
 3. If user insists on short article, respect user intent but note the override in output metadata.
 

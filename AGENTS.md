@@ -1,13 +1,13 @@
 # Second Claude Code — Agent Instructions
 
-Claude Code plugin (v2.1.0). PDCA-native knowledge work system — 18 skills, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v2.2.0). PDCA control loop for knowledge work — 18 skills, 17 job-labeled agents, 8 hooks, 31 MCP tools on the pdca-state server. Not a second agent OS.
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
 skills/                     — 18 skill directories (deep-interview, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate, investigate, viewer, unblock)
-agents/                     — 17 agent definitions (.md files, Pokemon-themed)
+agents/                     — 17 job-labeled agents (filename may stay Pokemon; dispatch by `name`)
 hooks/                      — 8 lifecycle hooks (session-start, prompt-detect, subagent-start/stop, session-end, compaction, stop-failure)
   hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
 mcp/pdca-state-server.mjs   — MCP server (31 tools: PDCA state, cycle memory, soul, project memory, daemon, session recall, orchestrator)
@@ -22,9 +22,10 @@ docs/                       — Architecture docs (EN/KO bilingual)
 
 - **Language**: Skills, hooks, MCP server are JavaScript ESM (.mjs). No TypeScript.
 - **Public loop command**: `/scc:loop`
-- **Agent naming**: Pokemon-themed (Arceus=orchestrator, Pikachu=soul, Eevee=researcher, etc.)
+- **Agent naming**: frontmatter `name` is the job (`researcher`, `writer`). Filename may stay Pokemon. Never dispatch by filename.
 - **Bilingual docs**: EN (.md) + KO (.ko.md) maintained independently, not translated
-- **PDCA phases**: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Ditto)
+- **PDCA phases**: Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor)
+- **Session model**: same-host Claude subagents. No session fork. Envelopes go to files.
 
 ## Verification
 

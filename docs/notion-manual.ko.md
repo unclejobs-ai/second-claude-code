@@ -43,8 +43,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 
 ```
-# Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+# Second Claude Code — PDCA loop
+Control loop on Claude Code, not a second agent OS.
 ```
 
 안 보이면 `claude plugin list`로 플러그인이 제대로 설치됐는지 확인하세요.

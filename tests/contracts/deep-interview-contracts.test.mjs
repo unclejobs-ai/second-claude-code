@@ -38,7 +38,7 @@ test("deep interview public surfaces are registered as the eighteenth command an
 
   const manifest = JSON.parse(read(".claude-plugin/plugin.json"));
   assert.match(manifest.description, /18 skills/);
-  assert.match(manifest.description, /17 Pokemon agents/);
+  assert.match(manifest.description, /job-labeled agents/);
 });
 
 test("deep interview command, skill, and docs expose a self-serve pending-approval path", () => {

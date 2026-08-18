@@ -40,8 +40,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 Start a new Claude Code session. You should see this in the context injection:
 
 ```
-# Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+# Second Claude Code — PDCA loop
+Control loop on Claude Code, not a second agent OS.
 ```
 
 If it does not appear, run `claude plugin list` to confirm the plugin is installed.
@@ -54,7 +54,7 @@ If it does not appear, run `claude plugin list` to confirm the plugin is install
 
 **Prompt:** `Research the current state of the AI education market. Include market size, major players, and growth projections. Write it as a structured report.`
 
-The system crawls 20+ sources, synthesizes a research brief, drafts a 3,000+ word report, and runs it through 5 reviewers before delivering the final output. Research, writing, and review happen in one flow — no separate sessions.
+Plan gathers sources, Do writes to the format floor, Check runs the preset reviewers. A report must clear 5,000 chars of body. Zero-finding reviews fail.
 
 ### Competitor SWOT Analysis
 
@@ -66,7 +66,7 @@ The `analyze` skill selects from 15 built-in strategic frameworks (SWOT, Porter'
 
 **Prompt:** `Write a newsletter about "3 ways non-developers can use AI agents." Target audience: working professionals interested in AI.`
 
-Research, drafting, and review happen automatically. The output is 2,000+ words in newsletter format (hook, 3-4 sections, actionable closing).
+Research, drafting, and review happen automatically. The newsletter floor is 10,000 chars of body.
 
 ### Quality Review of an Existing Draft
 

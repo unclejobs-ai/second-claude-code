@@ -1,22 +1,26 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-2.1.0-blue)
+![version](https://img.shields.io/badge/version-2.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
-# Second Claude Code — Work OS for Knowledge Work
+# Second Claude Code — PDCA loop for knowledge work
 
-You type one prompt. Researchers crawl 20+ sources. An analyst finds patterns. A writer drafts 3,000 words — and before you even see it, five reviewers are already tearing the draft apart. One checks the logic. Another attacks the weak points. A third fact-checks every number.
+A control loop that sits **on** Claude Code. Not a second agent OS. Not a session runtime.
 
-**One prompt. Full cycle. No duct tape between plugins.**
+You type one prompt. Research runs. A draft is written. Reviewers attack it. Failures go back to the phase that caused them. That loop is the product.
 
-This isn't a coding assistant. It's a work OS — it runs the full knowledge-work cycle autonomously: **Plan → Do → Check → Act.** Research, analysis, writing, and quality assurance in a single automated loop.
+It does **not** fork sessions, collect per-agent trajectories, or swap Claude for Codex or DeepSeek Harness. Those jobs belong to a harness (Ouroboros, DSH). This plugin judges **artifacts**.
 
-[![Second Claude Code — Knowledge Work OS](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
+Pokemon names are **job labels**. `Agent(subagent_type: "eevee")` fails. Skills dispatch roles (`researcher`, `writer`, `deep-reviewer`). See [agents/README.md](agents/README.md).
+
+[![Second Claude Code — PDCA loop](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
 <sub>Image created with [SceneSteller](https://www.scenesteller.com/studio/share/G2vdkxkjpj)</sub>
 
 ![One prompt to finished output](docs/images/hero.svg)
+
+![PDCA still](docs/images/hero-still.jpg)
 
 [Docs](docs/architecture.md) · [한국어 문서](docs/architecture.ko.md) · [User Manual](docs/notion-manual.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [Skill Guides](docs/skills/) · [GitHub Issues](https://github.com/unclejobs-ai/second-claude-code/issues) · [한국어 README](README.ko.md)
 
@@ -40,6 +44,19 @@ flowchart TB
 ```
 
 Second Claude Code is the control loop.
+
+### What this is / is not
+
+| It is | It is not |
+|---|---|
+| Plan → Do → Check → Act around a file | An agent runtime with its own session log |
+| Same-host Claude subagents, results in files | Session fork / Trajectory (that is DSH) |
+| Length floors and false-consensus checks | A second Ouroboros |
+| `unblock` when a URL is gated | A scraper product |
+
+Reviewers share the host conversation. They return an envelope. They do not share a live whiteboard. If every reviewer says APPROVED with zero findings, that is a rubber stamp — not a pass.
+
+Hard floors (body only): newsletter **10000** chars, threads/article **4000**, report **5000**. Below the floor the Do gate fails. Do not pad.
 
 ---
 
@@ -77,78 +94,13 @@ flowchart LR
 
 ---
 
-## What's New in v1.5.2
+## Now (2026-08-18)
 
-**Deep Interview + Code Engineering Lane — clearer requirements before safer execution.** v1.5.2 adds the 18th public command, `/scc:deep-interview`, and tightens `domain=code` PDCA work with stricter planning, validation, cleanup, and handoff contracts.
+v2.2.0. 18 skills. Body floors: newsletter 10000 / article 4000 / report 5000 chars. Zero-finding reviews fail.
 
-- **Deep Interview** — Socratic requirements discovery with Round 0 topology confirmation, per-component ambiguity scoring, ontology convergence, Korean/session-language preservation, and approval-gated handoff into ralplan/ultragoal/team.
-- **Executable code plans** — Plan now requires acceptance criteria, rollback path, complexity, and human approval status for risky work.
-- **Worker-validator split** — Check requires validator/reviewer proof instead of trusting the implementer's self-report.
-- **Stage reports for long work** — non-trivial Do phases record branch/worktree isolation, stage progress, verification, and next action.
-- **Cleanup before handoff** — Act requires clean-ai-slop/simplification, relevant verification, measured performance claims when applicable, and issue/PR/local handoff state.
-- **Public docs aligned** — README, architecture docs, Deep Interview guides, PDCA skill guides, stage contracts, and contract tests now describe the same 18-skill surface.
+Claude Code **2.1.232+** forks subagents by default (`subagent_type: "fork"` keeps the parent prefix cache). SCC does not implement that fork. Host isolation got better; we still judge files, not session logs. Cross-session `SendMessage` is a host feature — do not treat PDCA cycle memory as a substitute.
 
-See `docs/RELEASE-v1.5.2.md` for the release notes and validation.
-
-> **Previously in v1.5.0...**
-
-## What's New in v1.5.0
-
-**`unblock` skill — zero-key adaptive fetch chain.** The 16th skill closes the gap where blocked URLs (4xx, captcha, WAF, JS-heavy SPAs) silently degraded research output. Eevee researcher and the auto-router now invoke a 9-phase escalation pipeline before giving up.
-
-```
-Phase 0a → 0b → 0c → 0d → 1 → 2 → 3 → 4 → 5 → 6
-public APIs → Jina → yt-dlp → keyword → curl variants →
-TLS rotation → LightPanda → Playwright → free archives → optional paid
-```
-
-- **11 public-API routes** — Reddit, HN, arXiv, Bluesky, GitHub, NPM, Stack Exchange, Wikipedia, Mastodon (any host), Lemmy (any host), oEmbed fallback
-- **TLS multi-rotation Phase 2** — chrome131 → safari17_0 → firefox133 with cookie carry between attempts
-- **Hidden API discovery Phase 4** — Playwright network intercept surfaces internal JSON endpoints when the rendered HTML fails validation
-- **Free archive cluster Phase 5** — Wayback + archive.today + AMP raced in parallel; RSS/Atom discovery; OG-tag rescue
-- **Operational hardening** — SSRF guard rejects RFC1918/loopback/cloud-metadata hosts; `schema_version` + `idempotency_key` envelope; stagnation detection short-circuits to archive after 3 same-reason failures
-- **397 tests** (394 pass, 0 fail, 3 skipped)
-
-See `docs/RELEASE-v1.5.0.md` for full release notes and verification.
-
-> **Previously in v1.4.0...**
-
-## What's New in v1.4.0
-
-**Cross-Plugin Orchestrator** — Second Claude Code discovers and commands whatever Claude Code plugins you already have. Purely additive: with none installed, the built-in equivalents run instead.
-
-You type "코드 리뷰해줘." The prompt-detect hook spots the intent. The orchestrator scans your plugin ecosystem in real-time and finds `coderabbit` installed. Instead of running its own review, it auto-dispatches: `Skill: coderabbit:code-review`. You type "커밋해줘" — it finds `commit-commands` and routes `/commit-commands:commit`. A direct plugin request works too: "posthog event analysis" routes to `Skill: posthog:exploring-autocapture-events` when that plugin is installed.
-
-No manual plugin wiring. No configuration files. The orchestrator discovers plugins at runtime, maps each one to the appropriate PDCA phase (Plan/Do/Check/Act), and generates the exact Skill tool invocation string. Install a plugin → it appears. Uninstall → it disappears.
-
-One thing is fixed rather than discovered: which plugin each lifecycle intent *prefers*. `INTENT_PROFILES` pins review to `coderabbit`, act to `commit-commands`, design to `frontend-design`, and memory/research to `claude-mem`. Install a different review plugin and it is discovered and scored normally — it just does not inherit that preference boost until someone edits the table.
-
-```mermaid
-graph LR
-    U[User Prompt] --> PD[prompt-detect hook]
-    PD --> P[PDCA Router]
-    P --> |check phase| OC[Orchestrator]
-    OC --> |scan| PL{Plugin Ecosystem}
-    PL --> CR[coderabbit<br/>code-review]
-    PL --> CC[commit-commands<br/>commit]
-    PL --> FD[frontend-design<br/>design]
-    PL --> CX[codex<br/>review]
-    PL --> AT[agent-teams<br/>team-review]
-    OC --> |dispatch| SK[Skill: plugin:skill]
-    SK --> |execute| RS[Result]
-```
-
-- **4 new MCP tools** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
-- **Runtime plugin discovery** — scans `~/.claude/plugins/` at session start, builds capability map from filesystem (no config)
-- **Dynamic dispatch guide** — `prompt-detect` injects a live plugin routing table and exact `Skill:` / slash-command invocation strings
-- **PDCA phase auto-routing** — plan → `claude-mem:knowledge-agent`, do → `frontend-design:frontend-design`, check → `coderabbit:code-review`, act → `/commit-commands:commit`
-- **Direct plugin match routing** — strong natural-language matches to installed plugin skills/commands dispatch externally before self-processing
-- **Soul feedback binding** — visual progress gauges, git shipping metrics (`soul_retro`), synthesis readiness, retro trend detection
-- **367 tests** (366 pass, 0 fail, 1 skipped) — verified against 14 real plugins / 67 skills / 3 MCP servers
-
-See `docs/RELEASE-v1.4.0.md` for the full release notes and validation summary.
-
-Prior versions: see [CHANGELOG.md](CHANGELOG.md) or per-version release notes in `docs/`.
+History: [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -163,8 +115,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 **2. Verify** — start a new session and look for this in the context injection:
 
 ```
-# Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+# Second Claude Code — PDCA loop
+Control loop on Claude Code, not a second agent OS.
 ```
 
 Nothing? Run `claude plugin list` to check.
@@ -629,29 +581,27 @@ I use Full PDCA for anything external-facing. For internal notes, `write` alone 
 
 ## Agent Roster
 
-17 agents across 3 model tiers. Model distribution: 4 opus / 11 sonnet / 2 haiku.
+17 jobs. 4 opus / 11 sonnet / 2 haiku. Dispatch the `name`, not the filename. See [agents/README.md](agents/README.md).
 
-Each agent is named after a Pokemon whose trait maps to its role — memorable names make the system debuggable when you're reading logs.
-
-| Phase | Agent | Role | Model |
+| Phase | Job | File | Model |
 |---|---|---|---|
-| **Plan** | Eevee | Researcher — web search, data collection | sonnet |
-| | Noctowl | Search specialist | haiku |
-| | Alakazam | Analyst — pattern recognition, synthesis | sonnet |
-| | Mewtwo | Strategist — framework analysis | sonnet |
-| **Do** | Smeargle | Writer — long-form content | opus |
-| | Arceus | Master — general-purpose execution | sonnet |
-| **Check** | Xatu | Deep reviewer — logic, structure | opus |
-| | Absol | Devil's advocate — attacks weak points | sonnet |
-| | Porygon | Fact checker — numbers, sources | sonnet |
-| | Jigglypuff | Tone guardian — voice, audience | sonnet |
-| | Unown | Structure analyst — readability | sonnet |
-| **Act** | Ditto | Editor — content refinement | opus |
-| **Infra** | Machamp | Pipeline step executor | sonnet |
-| | Magnezone | Skill candidate inspector | sonnet |
-| | Deoxys | Skill candidate scorer | sonnet |
-| | Abra | Knowledge connector | haiku |
-| | Pikachu | Soul keeper — user behavior synthesis | opus |
+| **Plan** | researcher | eevee | sonnet |
+| | skill-searcher | noctowl | haiku |
+| | analyst | alakazam | sonnet |
+| | strategist | mewtwo | sonnet |
+| **Do** | writer | smeargle | opus |
+| | pipeline-orchestrator | arceus | sonnet |
+| **Check** | deep-reviewer | xatu | opus |
+| | devil-advocate | absol | sonnet |
+| | fact-checker | porygon | sonnet |
+| | tone-guardian | jigglypuff | sonnet |
+| | structure-analyst | unown | sonnet |
+| **Act** | editor | ditto | opus |
+| **Infra** | pipeline-step-executor | machamp | sonnet |
+| | skill-inspector | magnezone | sonnet |
+| | skill-evaluator | deoxys | sonnet |
+| | knowledge-connector | abra | haiku |
+| | soul-keeper | pikachu | opus |
 
 ![Agent Roster](docs/images/agent-roster.svg)
 

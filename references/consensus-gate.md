@@ -1,5 +1,16 @@
 # Review: Detailed Protocols
 
+## Diversity and false consensus
+
+`content`, `strategy`, and `full` presets fail the gate when:
+
+- `distinct_models_count < 2`
+- `external_model_count < 1` and an external runtime exists
+- `diversity_score < 0.6` with more than 2 reviewers
+- every reviewer returned APPROVED, average score `> 0.9`, and `critical_count + warning_count == 0`
+
+The last case is false consensus. Dispatch one unused external model in adversarial mode, or have the orchestrator name 3 weak points. Do not treat unanimous silence as a pass.
+
 ## Verdict Definitions
 
 The consensus gate applies two conditions in order: score-based gate first, vote-count gate second.

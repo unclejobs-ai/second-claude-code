@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Compaction Hook — Second Claude Knowledge Work OS
+ * Compaction Hook — SCC PDCA loop
  *
  * Handles both PreCompact and PostCompact events to preserve PDCA state
  * across Claude Code's automatic context compression.

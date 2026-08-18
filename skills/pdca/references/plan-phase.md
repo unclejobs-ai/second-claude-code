@@ -48,8 +48,9 @@ If `mmbridge memory search` returns no results or fails, proceed normally. This 
 ## Execution Steps
 
 1. **Question Protocol**: Check scope clarity → ask or skip (see `references/question-protocol.md`)
-2. **Dispatch research**: Run `/scc:research --depth {selected}` (Eevee)
+2. **Dispatch research**: Run `/scc:research --depth {selected}` (researcher)
    - For `--depth deep`: consider dispatching 2 research angles in parallel
+   - Gated/empty URLs go through `/scc:unblock`, not a curl retry loop
 3. **Verify Research Brief**: Confirm structured brief exists with sources
 4. **Dispatch analyze**: Run `/scc:analyze --skip-challenge` (Alakazam + Mewtwo)
    - Pass Research Brief as input context

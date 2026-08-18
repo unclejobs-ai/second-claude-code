@@ -5,6 +5,17 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-08-18
+
+### Changed
+
+- **Honest layer.** README and agent docs now say this is a PDCA control loop on Claude Code, not a second agent OS and not a session/Trajectory runtime.
+- **Jobs, not mascots.** Dispatch is by frontmatter `name`. Pokemon filenames stay as labels. `agents/README.md` is the roster.
+- **Length floors aligned.** Writer, formats, template, and tests now match the PDCA Do table: newsletter 10000, article 4000, report 5000 chars of body.
+- **False consensus is a gate.** Unanimous APPROVED with zero findings is a rubber stamp. Review skill and consensus-gate require an adversarial pass or three named weak points.
+- **unblock on the content factory path.** Newsletter research and threads WebFetch fallback call the unblock CLI instead of retrying curl.
+- **Docs pass (2026-08-18).** Cut README release walls. Floors, roster, and diagrams now agree. Host note: Claude Code 2.1.232+ forks subagents by default; SCC still gates files. `full` review vote is 4/5 to match `consensus-gate.md`. `tone-guardian` / `structure-analyst` roster dots are sonnet, not haiku.
+
 ## [2.1.0] - 2026-07-25
 
 ### Added

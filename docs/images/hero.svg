@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" fill="none" role="img" aria-labelledby="h-title h-desc">
-  <title id="h-title">Second Claude Code — One prompt to finished output</title>
-  <desc id="h-desc">Type one prompt: the system gathers sources, writes a draft, reviews with 5 agents, and auto-fixes. Or pick any skill individually.</desc>
+  <title id="h-title">Second Claude Code — PDCA loop</title>
+  <desc id="h-desc">Plan, write, review, route back. A control loop on Claude Code, not a second agent OS.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -12,7 +12,7 @@
 
   <!-- Header -->
   <text x="480" y="38" text-anchor="middle" fill="#e6edf3" font-size="24" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Second Claude Code</text>
-  <text x="480" y="60" text-anchor="middle" fill="#8b949e" font-size="13" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">One prompt. Researched, reviewed, ready.</text>
+  <text x="480" y="60" text-anchor="middle" fill="#8b949e" font-size="13" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">PDCA on Claude Code. Files in, files out.</text>
 
   <!-- Divider -->
   <line x1="40" y1="78" x2="920" y2="78" stroke="#30363d" stroke-width="0.5"/>
@@ -32,7 +32,7 @@
   <rect x="122" y="184" width="3" height="86" rx="1.5" fill="#58a6ff"/>
   <text x="138" y="204" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
   <text x="138" y="230" fill="#e6edf3" font-size="20" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Gather</text>
-  <text x="138" y="252" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">20+ sources crawled</text>
+  <text x="138" y="252" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Sources ≥ 5, brief floor</text>
 
   <!-- Arrow → -->
   <line x1="286" y1="227" x2="302" y2="227" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
@@ -52,7 +52,7 @@
   <rect x="490" y="184" width="3" height="86" rx="1.5" fill="#d29922"/>
   <text x="506" y="204" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
   <text x="506" y="230" fill="#e6edf3" font-size="20" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Review</text>
-  <text x="506" y="252" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">5 reviewers in parallel</text>
+  <text x="506" y="252" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Preset reviewers + no stamp</text>
 
   <!-- Arrow → -->
   <line x1="654" y1="227" x2="670" y2="227" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
@@ -91,7 +91,7 @@
 
   <!-- Skill pills — Row 2 -->
   <rect x="294" y="398" width="84" height="28" rx="14" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <text x="336" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">collect</text>
+  <text x="336" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">unblock</text>
 
   <rect x="390" y="398" width="84" height="28" rx="14" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <text x="432" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">workflow</text>
@@ -100,5 +100,5 @@
   <text x="528" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">discover</text>
 
   <rect x="582" y="398" width="84" height="28" rx="14" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
-  <text x="624" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">pdca</text>
+  <text x="624" y="417" text-anchor="middle" fill="#8b949e" font-size="10" font-family="SF Mono, Consolas, monospace">interview</text>
 </svg>

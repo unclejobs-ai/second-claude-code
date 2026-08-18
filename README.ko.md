@@ -1,22 +1,26 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-2.1.0-blue)
+![version](https://img.shields.io/badge/version-2.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
-# Second Claude Code — 제2의 클로드
+# Second Claude Code — 지식 작업용 PDCA 루프
 
-"AI 에이전트 알아보고 보고서 써줘."
+Claude Code **위의** 제어 루프다. 두 번째 에이전트 OS가 아니다. 세션 런타임도 아니다.
 
-이 한 줄을 치면 이브이가 웹을 뒤져요. 후딘이 패턴을 잡아요. 루브도가 3,000자를 쓰는데 — 저한테 오기도 전에 리뷰어 다섯 마리가 이미 초안을 뜯고 있어요. 네이티오가 논리를 보고, 앱솔이 약점을 치고, 폴리곤이 숫자를 검증해요.
+한 줄을 치면 조사가 돌고, 초안이 나오고, 리뷰어가 뜯는다. 실패는 원인 난 페이즈로 돌아간다. 그 루프가 이 플러그인의 일이다.
 
-무슨 일이 일어난 걸까요? **한 줄 입력. 전체 사이클. 플러그인 세 개 붙여놓고 기도하는 게 아니에요.**
+세션을 포크하거나, 에이전트별 trajectory를 모으거나, Claude를 Codex·DSH로 갈아끼우지 않는다. 그건 하네스(우로보로스, DSH) 층이다. 여기는 **결과물**을 판정한다.
 
-[![Second Claude Code — 제2의 클로드](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
+포켓몬 이름은 **직무 라벨**이다. `Agent(subagent_type: "eevee")`는 실패한다. 스킬이 역할(`researcher`, `writer`, `deep-reviewer`)을 부른다. [agents/README.md](agents/README.md).
+
+[![Second Claude Code — PDCA 루프](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
 <sub>[SceneSteller](https://www.scenesteller.com/studio/share/G2vdkxkjpj)로 제작</sub>
 
 ![한 줄로 완성까지](docs/images/hero.ko.svg)
+
+![PDCA still](docs/images/hero-still.jpg)
 
 [아키텍처](docs/architecture.ko.md) · [Architecture](docs/architecture.md) · [사용 매뉴얼](docs/notion-manual.ko.md) · [User Manual](docs/notion-manual.md) · [스킬 가이드](docs/skills/) · [GitHub Issues](https://github.com/unclejobs-ai/second-claude-code/issues) · [English README](README.md)
 
@@ -40,6 +44,19 @@ flowchart TB
 ```
 
 Second Claude Code는 제어 루프입니다.
+
+### 하는 일 / 안 하는 일
+
+| 한다 | 안 한다 |
+|---|---|
+| 파일 하나를 Plan → Do → Check → Act | 자체 세션 로그를 가진 에이전트 런타임 |
+| 같은 호스트 세션의 서브에이전트, 결과는 파일 | 세션 포크 / Trajectory (그건 DSH) |
+| 길이 바닥과 거짓 합의 검사 | 두 번째 우로보로스 |
+| URL이 막히면 `unblock` | 스크래퍼 제품 |
+
+리뷰어는 호스트 대화를 공유한다. 결과 봉투만 남긴다. 칠판을 같이 쓰지 않는다. 전원 APPROVED·지적 0건은 거수기다. 통과가 아니다.
+
+본문 바닥: 뉴스레터 **10000자**, 스레드/아티클 **4000자**, 리포트 **5000자**. 미달이면 Do 게이트 실패. 물타기 금지.
 
 ---
 
@@ -77,131 +94,13 @@ flowchart LR
 
 ---
 
-## v1.5.2에서 달라진 점
+## 지금 (2026-08-18)
 
-**Deep Interview + 코드 엔지니어링 레인** — 실행 전에 요구사항을 더 선명하게 만들고, 실행 중에는 더 엄격하게 검증합니다. v1.5.2는 18번째 공개 명령어 `/scc:deep-interview`를 추가하고, `domain=code` PDCA 작업에 계획·검증·정리·핸드오프 계약을 강화합니다.
+v2.2.0. 18개 스킬. 본문 바닥: 뉴스레터 10000 / 아티클 4000 / 리포트 5000자. 지적 0건 리뷰는 실패.
 
-- **Deep Interview** — Round 0 topology 확인, 컴포넌트별 모호성 점수, ontology 수렴 추적, 한국어/세션 언어 보존, ralplan/ultragoal/team 승인 게이트 핸드오프를 갖춘 소크라테스식 요구사항 인터뷰입니다.
-- **실행 가능한 코드 Plan** — 수용 기준, 롤백 경로, 복잡도, 위험 작업 승인 상태를 Plan 계약에 포함합니다.
-- **worker-validator 분리** — Check는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구합니다.
-- **stage report** — 장기 또는 다단계 Do 작업은 브랜치/워크트리 격리, 단계 진행, 검증 결과, 다음 결정을 남깁니다.
-- **핸드오프 전 정리** — Act는 clean-ai-slop, 단순화, 관련 검증, 성능 주장 시 baseline/after 측정, issue/PR/local handoff state를 마무리 조건으로 둡니다.
-- **공개 문서 정렬** — README, 아키텍처 문서, Deep Interview 가이드, PDCA 스킬 가이드, stage contract, 계약 테스트가 같은 18-skill surface를 설명합니다.
+Claude Code **2.1.232+** 는 서브에이전트를 기본 포크한다. SCC가 포크를 구현한 게 아니다. 호스트가 방을 나눌 수 있고, 우리는 여전히 파일을 판정한다.
 
-릴리스 노트와 검증 요약은 `docs/RELEASE-v1.5.2.ko.md` 참고.
-
-> **이전 v1.5.0에서는...**
-
-## v1.5.0에서 달라진 점
-
-**`unblock` 스킬** — WebFetch가 막히는 URL(4xx, captcha, WAF, JS-heavy SPA)을 포기하기 전에 9-phase zero-key fetch chain으로 우회합니다.
-
-- **16번째 스킬** — `/scc:unblock`이 추가돼 research fallback과 auto-router에 연결됐어요.
-- **9-phase escalation** — public API, Jina, yt-dlp, curl variants, TLS rotation, LightPanda, Playwright, free archive cluster, optional paid provider 순서로 시도합니다.
-- **운영 하드닝** — SSRF guard, `schema_version`, `idempotency_key`, stagnation detection, decisions audit log가 들어갔습니다.
-- **검증 기준선** — v1.5.0 기준 `UNBLOCK_SKIP_NETWORK_TESTS=1 npm test`에서 397개 테스트, 394개 통과, 3개 스킵.
-
-전체 릴리스 노트는 `docs/RELEASE-v1.5.0.ko.md` 참고.
-
-> **이전 v1.4.0에서는...**
-
-## v1.4.0에서 달라진 점
-
-**크로스-플러그인 오케스트레이터** — 이미 깔려 있는 Claude Code 플러그인을 실시간으로 찾아내고 지휘합니다. 순수하게 더하는 기능이라, 하나도 없으면 내장 기능이 대신 돕니다.
-
-"코드 리뷰해줘"라고 입력하면? Prompt-detect 훅이 의도를 포착합니다. 오케스트레이터가 실시간으로 플러그인 생태계를 스캔하고 `coderabbit`이 설치된 걸 감지합니다. 자체 리뷰를 돌리는 대신 자동 디스패치: `Skill: coderabbit:code-review`. "커밋해줘" → `commit-commands` 발견 → `/commit-commands:commit` 즉시 라우팅. "posthog event analysis"처럼 특정 플러그인 의도가 강하면 설치된 PostHog 스킬 `Skill: posthog:exploring-autocapture-events`가 먼저 잡힙니다.
-
-수동 플러그인 연결 없음. 설정 파일 없음. 오케스트레이터가 런타임에 플러그인을 탐지하고, 각각을 적절한 PDCA 페이즈(Plan/Do/Check/Act)에 매핑하고, 정확한 Skill 도구 호출 문자열을 생성합니다. 플러그인 설치 → 자동 등장. 삭제 → 자동 사라짐.
-
-다만 탐지가 아니라 고정된 게 하나 있습니다. 어떤 플러그인을 **선호**하는지입니다. `INTENT_PROFILES`가 리뷰는 `coderabbit`, act는 `commit-commands`, 디자인은 `frontend-design`, 메모리·리서치는 `claude-mem`으로 박아 뒀습니다. 다른 리뷰 플러그인을 깔면 탐지되고 점수도 정상으로 매겨지지만, 그 표를 고치기 전까지는 선호 가산점을 받지 못합니다.
-
-```mermaid
-graph LR
-    U[사용자 입력] --> PD[prompt-detect 훅]
-    PD --> P[PDCA 라우터]
-    P --> |check 페이즈| OC[오케스트레이터]
-    OC --> |스캔| PL{플러그인 생태계}
-    PL --> CR[coderabbit<br/>code-review]
-    PL --> CC[commit-commands<br/>commit]
-    PL --> FD[frontend-design<br/>design]
-    PL --> CX[codex<br/>review]
-    PL --> AT[agent-teams<br/>team-review]
-    OC --> |디스패치| SK[Skill: 플러그인-스킬]
-    SK --> |실행| RS[결과]
-```
-
-- **MCP 도구 4종 신규** — `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`
-- **런타임 플러그인 탐지** — 세션 시작 시 `~/.claude/plugins/` 스캔, 파일시스템에서 capability map 자동 구축 (설정 불필요)
-- **동적 디스패치 가이드** — `prompt-detect`가 실시간 플러그인 라우팅 테이블과 정확한 `Skill:` / 슬래시 커맨드 호출 문자열을 주입
-- **PDCA 페이즈 자동 라우팅** — plan → `claude-mem:knowledge-agent`, do → `frontend-design:frontend-design`, check → `coderabbit:code-review`, act → `/commit-commands:commit`
-- **직접 플러그인 매칭 라우팅** — 설치된 플러그인 스킬/커맨드와 강하게 맞는 자연어 프롬프트는 자체 처리보다 외부 capability를 먼저 호출
-- **소울 피드백 바인딩** — 시각적 진행 게이지, git shipping 메트릭(`soul_retro`), synthesis 준비도, retro 트렌드 감지
-- **367개 테스트** (366개 통과, 0개 실패, 1개 스킵) — 실제 14개 플러그인 / 67개 스킬 / 3개 MCP 서버로 검증 완료
-
-전체 릴리스 노트와 검증 요약은 `docs/RELEASE-v1.4.0.ko.md` 참고.
-
-> **이전 v1.3.0에서는...**
-
-**PDCA 하드 게이트** — 길이 floor, 리뷰어 다양성, 보정된 5+ 룰. v1.1.0과 v1.2.0은 Artifact Viewer UI를 PDCA의 기존 soft gate 위에 얹었어요. v1.3.0은 그 게이트 자체의 구조적 구멍을 9개 구체 강화로 막았고, 전부 실제 generic 토픽 사이클에서 end-to-end 검증했습니다.
-
-- **PDCA가 메인 오케스트레이터, sub-skill은 빌딩 블록** — 아키텍처 명확화. `/threads`, `/newsletter`, `/academy-shorts`, `/card-news`는 PDCA의 **Do 페이즈 안에서 디스패치**돼요 (각자의 내부 페이즈가 Do 안에서 돌아감). PDCA를 대체하는 게 아닙니다. PDCA의 Check는 sub-skill 내부 리뷰가 끝난 뒤에도 외부 시각으로 한 번 더 돌아가요
-- **도메인 자동 라우팅 (greedy)** — Do 페이즈가 사용자 프롬프트를 도메인 트리거 키워드와 매칭해서 가장 specialized한 sub-skill을 디스패치해요. "스레드" → `/threads`, "뉴스레터" → `/newsletter`, "쇼츠" → `/academy-shorts`, "카드뉴스" → `/card-news`, 그 외 → `/scc:write`
-- **포맷별 길이 floor** — Do 게이트가 아티팩트가 포맷 최소치 미달이면 통과 안 시켜요. 스레드 아티클 ≥ 4,000자. 뉴스레터 ≥ 10,000자. 전략 리포트 ≥ 5,000자. Floor 미달 = sub-skill이 구체 scope expansion 지시와 함께 다시 디스패치, vague한 "더 길게 써" 금지
-- **Plan brief floor** — Source 최소를 3 → 5로 올렸고, 새 minimum 추가: 사실 8개, named-source 인용 1개, 비교표 1개, 알려진 빈틈 1개, 미디어 1개, 본문 3,000자. Thin Plan → thin Do 실패 체인 차단
-- **리뷰어 모델 다양성 룰 (false consensus 감지 포함)** — Check 페이즈가 content/strategy/full preset에 distinct 모델 2개 이상 + 외부 모델(Codex, Kimi, Qwen, Gemini, Droid) 1개 이상을 강제. Diversity score ≥ 0.6. 모든 리뷰어가 평균 0.9 초과 + critical 0개로 APPROVED를 반환하면 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼서 Goodhart 스타일 "다들 괜찮대" 거짓 신호를 잡아요
-- **5+ 룰 (보정된 AND 로직)** — Patch vs full rewrite 트리거. (a) any P0 finding OR (b) `p0+p1 ≥ 5` AND finding이 ≥ 3개 카테고리에 걸침일 때 발동. 초기 OR 로직이 surgical 4-finding patch set에서 over-trigger한 걸 실제 검증에서 발견하고 즉시 보정. 새 로직 6/6 routing 정확도 vs 이전 OR 3/6
-- **새 284줄 `domain-pipeline-integration.md`** — Sub-skill 입출력 계약, 실패 처리(4가지 모드), 인접 페이즈와의 통합 지점 표준화
-- **포켓몬 역할 라벨 명확화** — Eevee/Smeargle/Xatu 등은 conceptual role이지 직접 `Agent` 도구 dispatch target이 아닙니다. 실제 subagent dispatch는 `/scc:research`, `/scc:write`, `/scc:review`, `/scc:refine` 안에서 일어나요. 이전 실패 모드(포켓몬 이름이 dispatch 안 돼서 오케스트레이터가 셀프 처리로 fallback)가 이제 구조적으로 불가능
-- **확장된 페이즈 출력 스키마** — `PlanOutput`, `DoOutput`, `CheckOutput` 모두 측정 가능한 검증 필드를 갖게 됐어요 (`meets_length_floor`, `diversity_score`, `false_consensus_check_passed` 등). PDCA가 sub-skill self-report를 신뢰하지 않고 독립 검증
-
-**검증 (2026-04-07)**: generic 토픽으로 실제 PDCA 사이클 돌렸을 때 7,981자 Plan brief (floor 3,000), 6,962자 Do 아티클 (floor 4,000), 12개 출처 인용 (floor 5), Codex 포함 2 리뷰어 (diversity score 1.0), pre-v1.3.0 baseline에서는 놓쳤을 4개 P1 findings 발견. 전체 검증 리포트는 `docs/RELEASE-v1.3.0.ko.md` 참고.
-
-<details>
-<summary><strong>v1.2.0에서 달라진 점</strong></summary>
-
-- **Dashboard 아티팩트** — KPI 카드, 차트, 마크다운을 조합한 grid layout(`2x2`, `3x1`, `1x2`) 아티팩트 타입
-- **KPI 카드 컴포넌트** — 큰 숫자 + 변화율 지표, 색상 구분(초록/빨강/회색), 추세 화살표
-- **Grid layout 시스템** — 아티팩트를 single-column 스택이 아닌 반응형 grid에 배치
-- **페이즈 프리뷰 카드** — 타임라인 뷰에서 각 페이즈의 아티팩트 썸네일 요약
-- **차트 + 마크다운 동시 표시** — 탭 전환 없이 나란히 렌더링
-- **`ui/src` 전체 소스 코드** — Vite + React + TypeScript 프로젝트로 pre-built 번들 교체, 13 컴포넌트 × 4 디렉토리, Shiki lazy loading (번들 1MB → 262KB)
-
-</details>
-
-<details>
-<summary><strong>v1.1.0에서 달라진 점</strong></summary>
-
-- **Artifact Viewer** — PDCA 파이프라인 결과물을 로컬 웹 UI로. 마크다운, 레이더/바/파이 차트(Nivo), 플로우 다이어그램(SVG), 코드 하이라이팅(Shiki) 4가지 타입. WebSocket 실시간 연결
-- **Viewer 스킬** — `/scc:viewer`로 뷰어 시작, 30분 비활동 시 자동 종료
-- **반응형 레이아웃** — 데스크톱(768px+) 좌우 스플릿 패널, 모바일(<768px) 드래그 바텀 시트
-- **Zero-dependency 서버** — Node.js HTTP + WebSocket with SPA fallback, RFC 6455 frame encoding, path traversal prevention
-
-</details>
-
-<details>
-<summary><strong>v1.0.0에서 달라진 점</strong></summary>
-
-- **PDCA 사이클 메모리** — 사이클이 끝나도 기억이 남아요. `.data/cycles/`에 페이즈별 마크다운, 이벤트 로그, 메트릭이 구조화돼서 저장돼요
-- **MCP 도구 3개 추가** — `pdca_get_cycle_history`, `pdca_save_insight`, `pdca_get_insights`가 들어와서 전체 **24개** 도구 표면이 됐어요
-- **4개 도메인 전체에 스테이지 계약** — `config/stage-contracts.json`이 4개 도메인 × 4개 페이즈 전부에 I/O 계약, DoD, 롤백 대상을 정의해요
-- **테스트 323개** — `322`개 통과, `1`개 스킵, 실패 `0`개
-- **사이클 메모리 하드닝** — 경로 순회 방지, 깨진 JSON 복구, critical-only gotcha 트리거
-
-</details>
-
-<details>
-<summary><strong>v0.9.0에서 달라진 점</strong></summary>
-
-- **테스트 기준선 정리** — 현재 검증 기준은 총 `323`개, `322`개 통과, `1`개 스킵, 실패 `0`개예요
-- **도메인 기반 PDCA 시작** — `pdca_start_run`이 이제 `domain` 파라미터(`code`, `content`, `analysis`, `pipeline`)를 받아요. 첫 페이즈부터 도메인별 전문화된 스테이지 계약을 강제할 수 있어요
-- **공개 스킬 전반 가드레일 강화** — 모든 스킬에 Iron Laws + Red Flags가 들어갔고, `hooks/lib/fact-checker.mjs`가 숫자 주장 검증까지 맡아요
-- **품질 게이트가 더 정확해졌어요** — `config/stage-contracts.json` 기반의 도메인별 계약(code vs content), `Math.round` 기반 2/3 합의 보정, score + vote 듀얼 게이트, 프리셋별 threshold가 실제 전환 로직에 반영돼요
-- **PDCA 결정이 3갈래가 됐어요** — `pdca_transition`이 이제 `PROCEED`, `REFINE`, `PIVOT`를 구분하고, refine/pivot 최대 횟수로 무한루프를 막아요
-- **세션 끝나면 시각화까지 남아요** — 터미널 ANSI 요약 박스가 뜨고, `.data/reports/`에 Mermaid + Chart.js 기반 다크 테마 HTML 리포트가 자동 생성돼요
-- **루프와 리뷰 러너가 더 단단해졌어요** — File Mutation Queue, MAD confidence scoring, cost/time budget 제한, iterative compaction으로 레이스와 장기 세션 손실을 줄였어요
-- **MMBridge와 관측성도 강화됐어요** — optional `mmbridge` MCP 등록, Adapter Protocol(`Cli`, `Stub`, `Recording`), MetaClaw PRM effectiveness tracker가 추가됐어요
-
-</details>
+이력은 [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
@@ -224,8 +123,8 @@ claude plugin add github:unclejobs-ai/second-claude-code
 새 세션을 열어보세요. 화면 상단에 이런 텍스트가 보이면 정상이에요:
 
 ```
-# Second Claude Code — Knowledge Work OS
-18 commands for all knowledge work:
+# Second Claude Code — PDCA loop
+Control loop on Claude Code, not a second agent OS.
 ```
 
 이 텍스트가 안 보이면 `claude plugin list`를 실행해서 목록에 `scc`가 있는지 확인해주세요. 목록에 없으면 1단계를 다시 진행하면 돼요.
@@ -248,10 +147,10 @@ Research AI agent frameworks and write a report
 
 프롬프트를 입력하면 다음 순서로 진행돼요:
 
-1. 리서치 에이전트(이브이, 부엉)가 소스를 수집해요
-2. 분석 에이전트(후딘)가 패턴을 정리해요
-3. 글쓰기 에이전트(루브도)가 초안을 써요
-4. 리뷰어 5마리가 초안을 검토해요
+1. researcher가 소스를 수집해요. 막히면 unblock
+2. analyst가 패턴을 정리해요
+3. writer가 초안을 써요. 길이 바닥 미달이면 게이트 실패
+4. 프리셋 리뷰어가 초안을 검토해요. 지적 0건은 거수기
 5. 최종본이 나와요
 
 진행 중에 `[Plan]`, `[Do]`, `[Check]`, `[Act]` 같은 페이즈 표시가 보이면 정상이에요. 전체 과정은 주제 난이도에 따라 2~5분 정도 걸려요.
@@ -573,7 +472,7 @@ AI로 글 쓰고, 리서치하고, 분석해요. 꽤 잘 돼요. 저도 몇 달�
 
 문제는 이거예요. 각 도구가 따로 놀아요. 리서치가 글쓰기를 모르고, 글쓰기가 리뷰를 몰라요. 그 사이를 잇는 건 전부 제 손이에요. 콘텐츠 하나에 컨텍스트 스위칭 다섯 번.
 
-Second Claude Code는 그걸 고쳐요. 도구 모음이 아니라 제2의 클로드예요. 혼자 알아서 단계를 밟고, 실수를 스스로 잡고, 리뷰 안 거친 건 내보내지 않아요.
+Second Claude Code는 그걸 고쳐요. 도구 모음이 아니라 Claude Code 위의 PDCA 루프예요. 혼자 알아서 단계를 밟고, 실수를 스스로 잡고, 리뷰 안 거친 건 내보내지 않아요.
 
 ---
 
@@ -737,29 +636,29 @@ AI 에이전트 시장을 조사하고, 주요 플레이어 비교와 트렌드 
 
 ---
 
-## 에이전트 로스터 — 3개 모델 티어에 걸친 17마리
+## 에이전트 로스터
 
-모델 분포: 4 opus / 11 sonnet / 2 haiku
+직무 17개. 4 opus / 11 sonnet / 2 haiku. 파일명이 아니라 `name`으로 부른다. [agents/README.md](agents/README.md).
 
-| 페이즈 | 포켓몬 | 역할 | 모델 |
+| 페이즈 | 직무 | 파일 | 모델 |
 |---|---|---|---|
-| **Plan** | 이브이 (Eevee) | 리서처 — 웹 검색, 데이터 수집 | sonnet |
-| | 부엉 (Noctowl) | 검색 전문 | haiku |
-| | 후딘 (Alakazam) | 애널리스트 — 패턴 인식, 합성 | sonnet |
-| | 뮤츠 (Mewtwo) | 전략가 — 프레임워크 분석 | sonnet |
-| **Do** | 루브도 (Smeargle) | 라이터 — 장문 콘텐츠 | opus |
-| | 아르세우스 (Arceus) | 마스터 — 범용 실행 | sonnet |
-| **Check** | 네이티오 (Xatu) | 딥리뷰어 — 논리, 구조 | opus |
-| | 앱솔 (Absol) | 데빌어드보킷 — 약점 공격 | sonnet |
-| | 폴리곤 (Porygon) | 팩트체커 — 숫자, 출처 | sonnet |
-| | 푸린 (Jigglypuff) | 톤가디언 — 어조, 독자 | sonnet |
-| | 안농 (Unown) | 구조분석가 — 가독성 | sonnet |
-| **Act** | 메타몽 (Ditto) | 에디터 — 콘텐츠 정제 | opus |
-| **인프라** | 괴력몬 (Machamp) | 스텝 실행기 | sonnet |
-| | 자포코일 (Magnezone) | 인스펙터 — 스킬 후보 검사 | sonnet |
-| | 테오키스 (Deoxys) | 평가자 — 스킬 점수 산정 | sonnet |
-| | 캐이시 (Abra) | 커넥터 — 지식 연결 | haiku |
-| | 피카츄 (Pikachu) | 소울 키퍼 — 사용자 행동 합성 | opus |
+| **Plan** | researcher | eevee | sonnet |
+| | skill-searcher | noctowl | haiku |
+| | analyst | alakazam | sonnet |
+| | strategist | mewtwo | sonnet |
+| **Do** | writer | smeargle | opus |
+| | pipeline-orchestrator | arceus | sonnet |
+| **Check** | deep-reviewer | xatu | opus |
+| | devil-advocate | absol | sonnet |
+| | fact-checker | porygon | sonnet |
+| | tone-guardian | jigglypuff | sonnet |
+| | structure-analyst | unown | sonnet |
+| **Act** | editor | ditto | opus |
+| **인프라** | pipeline-step-executor | machamp | sonnet |
+| | skill-inspector | magnezone | sonnet |
+| | skill-evaluator | deoxys | sonnet |
+| | knowledge-connector | abra | haiku |
+| | soul-keeper | pikachu | opus |
 
 ![Agent Roster](docs/images/agent-roster.ko.svg)
 

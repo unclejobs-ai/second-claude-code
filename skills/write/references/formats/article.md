@@ -9,7 +9,8 @@
 6. **Conclusion**: Summary, outlook, and CTA
 
 ## Length
-- Minimum 3000 words / recommended 5000-8000 words
+- Minimum 4000 chars of body (PDCA Do floor). Target 5000-7000.
+- English long-form may use 3000 words when the user asked for English.
 - Each section should carry meaningful substance rather than filler
 
 ## Required Elements

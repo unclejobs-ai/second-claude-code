@@ -12,6 +12,8 @@ Second Claude Code is intentionally a Claude Code plugin, not a standalone agent
 
 This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the Claude Code execution model.
 
+As of Claude Code **2.1.232** (2026-08-14), host subagent forking is on by default. A `subagent_type: "fork"` child inherits the parent prefix cache. SCC does not own that fork and does not collect a Trajectory. Reviewers still return envelopes; PDCA still gates files. Cross-session `SendMessage` is a host tool — cycle memory is not a messaging bus.
+
 ---
 
 Second Claude Code is structured as a PDCA-native knowledge-work system.
@@ -72,7 +74,7 @@ second-claude/
 │   └── unblock/                  # Zero-key adaptive 9-phase fetch chain (anti-WAF, captcha, SPA)
 │       ├── engine/               # CLI + chain + 10 probes + orchestrator
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
-├── agents/                       # 17 specialized subagents (Pokemon-themed)
+├── agents/                       # 17 job-labeled subagents (filename may stay Pokemon)
 ├── commands/                     # 18 slash command wrappers
 ├── hooks/                        # Auto-routing + context injection (8 hooks)
 │   ├── hooks.json                # Hook configuration
@@ -100,7 +102,7 @@ second-claude/
 |-----------|------|
 | `skills/` | Each skill has a `SKILL.md` (short, context-efficient) plus a `references/` subdirectory for deep documentation. Progressive disclosure in action. |
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
-| `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
+| `agents/` | 17 job-labeled subagent definitions across 3 model tiers. Dispatch by `name`, not filename. See `agents/README.md`. |
 | `commands/` | Thin wrappers that route `/scc:*` invocations to the matching skill. |
 | `hooks/` | 8 lifecycle hooks across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |

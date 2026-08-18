@@ -377,32 +377,32 @@ test("numeric contracts stay aligned across docs", () => {
   const researchGotchas = read("skills/research/gotchas.md");
 
   for (const expected of [
-    "newsletter 2000",
-    "article 3000",
-    "report 4000",
+    "newsletter 10000",
+    "article 4000",
+    "report 5000",
   ]) {
     const [type, count] = expected.split(" ");
     assert.match(
       writeSkill,
       new RegExp(`${type}[\\s\\S]*${count}`, "i"),
-      `write skill should require ${count} words for ${type}`
+      `write skill should require ${count} chars for ${type}`
     );
     assert.match(
       writerAgent,
       new RegExp(`${type}[\\s\\S]*${count}`, "i"),
-      `writer agent should require ${count} words for ${type}`
+      `writer agent should require ${count} chars for ${type}`
     );
     assert.match(
       writeGotchas,
       new RegExp(`${type} ${count}`, "i"),
-      `write gotchas should require ${count} words for ${type}`
+      `write gotchas should require ${count} chars for ${type}`
     );
   }
 
   assert.match(
     newsletterTemplate,
-    /at least 2000 words/i,
-    "newsletter template checklist should require 2000 words"
+    /at least 10000 chars/i,
+    "newsletter template checklist should require 10000 chars"
   );
   assert.match(
     captureSkill,
