@@ -1,7 +1,7 @@
 {
   "name": "scc",
   "description": "PDCA-native Knowledge Work OS with Cross-Plugin Orchestrator — 15 skills, 18 commands, 17 Pokemon agents, 31 MCP tools. Settles a fork into a decision standard your project keeps, checks artifacts against those standards, and bars whoever helped make something from passing it. Artifact Viewer, cycle memory, code engineering lane, and a zero-key adaptive fetch chain for hostile URLs.",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "author": {
     "name": "Unclejobs",
     "email": "parkeungje@gmail.com"

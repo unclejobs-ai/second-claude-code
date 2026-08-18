@@ -43,9 +43,9 @@ claude plugin add github:unclejobs-ai/second-claude-code
 Claude Code를 새 세션으로 열면 이 메시지가 보여야 해요:
 
 ```
-# Second Claude Code — Knowledge Work OS
+# Second Claude Code — PDCA loop
 
-PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)
+Control loop on Claude Code, not a second agent OS. Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor). Dispatch jobs, not filenames.
 ```
 
 프로젝트에 기준 문서가 쌓이면 그 아래에 **활성 기준** 목록이 붙어요. 활성 기준을 최대 12개까지, 재검토 조건과 함께 보여줘요. 배너는 명령을 나열하지 않아요. 매 세션 시작마다 명령 목록을 읊는 건, 모델이 이미 볼 수 있는 걸 알려주려고 컨텍스트를 쓰는 일이라 없앴어요.
@@ -67,7 +67,7 @@ PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon
 시장 규모, 주요 플레이어, 성장 전망을 포함해줘.
 ```
 
-**결과**: 20개 이상 소스를 크롤링한 리서치 브리프 + 3,000자 이상 구조화된 보고서 + 리뷰어 5명의 검증 리포트가 나와요.
+**결과**: 20개 이상 소스를 크롤링한 리서치 브리프 + 5,000자 이상 구조화된 보고서 + 리뷰어 5명의 검증 리포트가 나와요.
 
 **기존 대비**: ChatGPT로 하면 리서치 따로, 글쓰기 따로, 검증은 직접. 최소 3~4번의 프롬프트와 복사-붙여넣기가 필요했어요. 여기선 프롬프트 1번이에요.
 
@@ -101,7 +101,7 @@ PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon
 뉴스레터를 작성해줘. 타겟은 AI에 관심 있는 직장인이야.
 ```
 
-**결과**: 자동으로 주제를 리서치하고, 뉴스레터 포맷(Hook, 3~4개 섹션, 실행 가능한 마무리)에 맞춰 2,000자 이상 초안이 나와요. 리뷰어가 논리, 톤, 팩트를 검증한 뒤 넘겨줘요.
+**결과**: 자동으로 주제를 리서치하고, 뉴스레터 포맷(Hook, 3~4개 섹션, 실행 가능한 마무리)에 맞춰 10,000자 이상 초안이 나와요. 리뷰어가 논리, 톤, 팩트를 검증한 뒤 넘겨줘요.
 
 **기존 대비**: 리서치 30분 + 초안 작성 1시간 + 퇴고 30분. 2시간짜리 작업이 프롬프트 1번으로 됩니다.
 
@@ -240,7 +240,7 @@ PDCA는 Plan(계획) → Do(실행) → Check(검증) → Act(개선)의 줄임�
 
 [Do — 실행]
   루브도(Smeargle)가 글쓰기를 담당해요.
-  리서치 결과를 바탕으로 3,000자 이상 보고서 초안을 작성해요.
+  리서치 결과를 바탕으로 5,000자 이상 보고서 초안을 작성해요.
   → 게이트: 초안이 바로 사용자에게 가지 않고, 리뷰로 넘어가요.
 
 [Check — 검증]
@@ -296,7 +296,7 @@ Second Claude Code 플러그인 자체는 무료(MIT 라이선스)예요. 다만
 
 ### 한 번에 긴 글도 써지나요?
 
-네. 3,000자 이상 장문 콘텐츠를 기본으로 지원해요. 보고서는 4,000자 이상, 아티클은 3,000자 이상이 기본 목표 분량이에요. `write` 스킬 내부에 opus 모델 기반 전문 라이터(루브도)가 장문 작성을 담당해요.
+네. 장문 콘텐츠를 기본으로 지원해요. 보고서는 5,000자 이상, 아티클은 4,000자 이상, 뉴스레터는 10,000자 이상이 기본 목표 분량이에요. `write` 스킬 내부에 opus 모델 기반 전문 라이터(루브도)가 장문 작성을 담당해요.
 
 ### 리뷰어가 왜 포켓몬 이름이에요?
 
@@ -325,4 +325,4 @@ Second Claude Code 플러그인 자체는 무료(MIT 라이선스)예요. 다만
 
 ---
 
-*버전 3.0.0 | MIT 라이선스*
+*버전 3.0.1 | MIT 라이선스*

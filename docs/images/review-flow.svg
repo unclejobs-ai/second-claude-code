@@ -28,35 +28,35 @@
   <!-- Xatu — opus (red accent bar) -->
   <rect x="168" y="44" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="44" width="3" height="48" rx="1.5" fill="#f85149"/>
-  <text x="182" y="64" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Xatu</text>
+  <text x="182" y="64" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">deep-reviewer</text>
   <text x="222" y="64" fill="#f85149" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">opus</text>
   <text x="182" y="80" fill="#8b949e" font-size="9.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Deep Reviewer — logic, structure, completeness</text>
 
   <!-- Absol — sonnet (blue accent bar) -->
   <rect x="168" y="104" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="104" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="124" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Absol</text>
+  <text x="182" y="124" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">devil-advocate</text>
   <text x="228" y="124" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="140" fill="#8b949e" font-size="9.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Devil's Advocate — weaknesses, blind spots</text>
 
   <!-- Porygon — sonnet (blue accent bar) -->
   <rect x="168" y="164" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="164" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="184" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Porygon</text>
+  <text x="182" y="184" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">fact-checker</text>
   <text x="252" y="184" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="200" fill="#8b949e" font-size="9.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Fact Checker — claims, numbers, sources</text>
 
   <!-- Jigglypuff — sonnet (blue accent bar) -->
   <rect x="168" y="224" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="224" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="244" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Jigglypuff</text>
+  <text x="182" y="244" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">tone-guardian</text>
   <text x="268" y="244" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="260" fill="#8b949e" font-size="9.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Tone Guardian — voice, audience fit</text>
 
   <!-- Unown — sonnet (blue accent bar) -->
   <rect x="168" y="284" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="284" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="304" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Unown</text>
+  <text x="182" y="304" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">structure-analyst</text>
   <text x="236" y="304" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="320" fill="#8b949e" font-size="9.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Structure Analyst — organization, readability</text>
 
@@ -69,11 +69,11 @@
 
   <!-- ===== CONSENSUS GATE ===== -->
   <rect x="504" y="152" width="108" height="88" rx="6" fill="#161b22" stroke="#d29922" stroke-width="0.5"/>
-  <text x="558" y="178" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">MAJORITY</text>
-  <text x="558" y="192" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">VOTE</text>
+  <text x="558" y="178" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">SCORE</text>
+  <text x="558" y="192" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">+ VOTE</text>
   <line x1="520" y1="202" x2="596" y2="202" stroke="#30363d" stroke-width="0.5"/>
-  <text x="558" y="218" text-anchor="middle" fill="#8b949e" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Majority pass = approved</text>
-  <text x="558" y="232" text-anchor="middle" fill="#484f58" font-size="8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">4 of 5 for full review</text>
+  <text x="558" y="218" text-anchor="middle" fill="#8b949e" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">avg ≥ 0.7, no Critical</text>
+  <text x="558" y="232" text-anchor="middle" fill="#484f58" font-size="8" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">0 findings = stamp, fail</text>
 
   <!-- Gate → Verdicts lines -->
   <line x1="612" y1="172" x2="672" y2="98" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>

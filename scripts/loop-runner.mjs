@@ -663,12 +663,12 @@ function bundledSuiteScore(suiteName, caseId, candidateDir) {
           /## Workflow/,
           /## Options/,
           /## Output/,
-          /newsletter[\s\S]*2000/i,
-          /article[\s\S]*3000/i,
+          /newsletter[\s\S]*10000/i,
+          /article[\s\S]*4000/i,
         ]),
       "newsletter-template-contract": () =>
         scoreChecks(join(candidateDir, "templates", "newsletter.md"), [
-          /2000 words/i,
+          /10000 chars/i,
           /This is the core of the newsletter/i,
           /action/i,
         ]),

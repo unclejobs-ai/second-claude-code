@@ -40,9 +40,9 @@ claude plugin add github:unclejobs-ai/second-claude-code
 Start a new Claude Code session. You should see this in the context injection:
 
 ```
-# Second Claude Code — Knowledge Work OS
+# Second Claude Code — PDCA loop
 
-PDCA loop: Plan (Eevee+Alakazam) → Do (Smeargle) → Check (Xatu+Absol+Porygon+Jigglypuff+Unown) → Act (Action Router → Ditto)
+Control loop on Claude Code, not a second agent OS. Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor). Dispatch jobs, not filenames.
 ```
 
 Once a project has standards recorded, an **활성 기준** list appears under that header, showing up to
@@ -60,7 +60,7 @@ If it does not appear, run `claude plugin list` to confirm the plugin is install
 
 **Prompt:** `Research the current state of the AI education market. Include market size, major players, and growth projections. Write it as a structured report.`
 
-The system crawls 20+ sources, synthesizes a research brief, drafts a 3,000+ word report, and runs it through 5 reviewers before delivering the final output. Research, writing, and review happen in one flow — no separate sessions.
+The system crawls 20+ sources, synthesizes a research brief, drafts a 5,000+ character report, and runs it through 5 reviewers before delivering the final output. Research, writing, and review happen in one flow — no separate sessions.
 
 ### Competitor SWOT Analysis
 
@@ -72,7 +72,7 @@ The `analyze` skill selects from 15 built-in strategic frameworks (SWOT, Porter'
 
 **Prompt:** `Write a newsletter about "3 ways non-developers can use AI agents." Target audience: working professionals interested in AI.`
 
-Research, drafting, and review happen automatically. The output is 2,000+ words in newsletter format (hook, 3-4 sections, actionable closing).
+Research, drafting, and review happen automatically. The output is 10,000+ characters in newsletter format (hook, 3-4 sections, actionable closing).
 
 ### Quality Review of an Existing Draft
 
@@ -205,7 +205,7 @@ Generally, no. Watch for context window usage: many active plugins with large co
 
 ### Can it write long-form content?
 
-Yes. The `write` skill targets 3,000+ words for articles, 4,000+ words for reports, and 2,000+ words for newsletters. Long-form writing uses Smeargle, the dedicated writer agent running on the Opus model tier.
+Yes. The `write` skill targets 4,000+ characters for articles, 5,000+ for reports, and 10,000+ for newsletters. Long-form writing uses Smeargle, the dedicated writer agent running on the Opus model tier.
 
 ---
 
@@ -218,4 +218,4 @@ Yes. The `write` skill targets 3,000+ words for articles, 4,000+ words for repor
 
 ---
 
-*Version 3.0.0 | MIT License*
+*Version 3.0.1 | MIT License*

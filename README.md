@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-3.0.0-blue)
+![version](https://img.shields.io/badge/version-3.0.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code
@@ -11,7 +11,7 @@ You type one line. Researchers crawl 20+ sources. An analyst finds the patterns.
 
 The point isn't that it writes. It's that **it won't hand you the first draft.**
 
-[![Second Claude Code — Knowledge Work OS](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
+[![Second Claude Code — PDCA loop](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
 <sub>Image created with [SceneSteller](https://www.scenesteller.com/studio/share/G2vdkxkjpj)</sub>
 
 ![One prompt to finished output](docs/images/hero.svg)

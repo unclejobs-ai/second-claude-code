@@ -13,7 +13,7 @@
   <!-- ===== DISPATCH / 디스패치 ===== -->
   <rect x="20" y="160" width="108" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <text x="74" y="192" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">초안이</text>
-  <text x="74" y="210" text-anchor="middle" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명에게</text>
+  <text x="74" y="210" text-anchor="middle" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리뷰어에게</text>
   <text x="74" y="224" text-anchor="middle" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">넘어간다</text>
 
   <!-- Dispatch → Reviewers lines -->
@@ -28,35 +28,35 @@
   <!-- 네이티오 — opus (red accent bar) -->
   <rect x="168" y="44" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="44" width="3" height="48" rx="1.5" fill="#f85149"/>
-  <text x="182" y="64" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">네이티오</text>
+  <text x="182" y="64" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">deep-reviewer</text>
   <text x="252" y="64" fill="#f85149" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">opus</text>
   <text x="182" y="80" fill="#8b949e" font-size="9.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">심층 리뷰어 — 논리, 구조, 완성도</text>
 
   <!-- 앱솔 — sonnet (blue accent bar) -->
   <rect x="168" y="104" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="104" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="124" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">앱솔</text>
+  <text x="182" y="124" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">devil-advocate</text>
   <text x="226" y="124" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="140" fill="#8b949e" font-size="9.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">악마의 변호인 — 약점, 맹점</text>
 
   <!-- 폴리곤 — sonnet (blue accent bar) -->
   <rect x="168" y="164" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="164" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="184" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">폴리곤</text>
+  <text x="182" y="184" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">fact-checker</text>
   <text x="246" y="184" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="200" fill="#8b949e" font-size="9.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">팩트 체커 — 주장, 수치, 출처</text>
 
   <!-- 푸린 — sonnet (blue accent bar) -->
   <rect x="168" y="224" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="224" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="244" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">푸린</text>
+  <text x="182" y="244" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">tone-guardian</text>
   <text x="226" y="244" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="260" fill="#8b949e" font-size="9.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">톤 가디언 — 목소리, 독자 적합성</text>
 
   <!-- 안농 — sonnet (blue accent bar) -->
   <rect x="168" y="284" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="168" y="284" width="3" height="48" rx="1.5" fill="#58a6ff"/>
-  <text x="182" y="304" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">안농</text>
+  <text x="182" y="304" fill="#e6edf3" font-size="12" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">structure-analyst</text>
   <text x="226" y="304" fill="#58a6ff" font-size="8.5" font-weight="600" font-family="SF Mono, Consolas, monospace">sonnet</text>
   <text x="182" y="320" fill="#8b949e" font-size="9.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">구조 분석가 — 구성, 가독성</text>
 
@@ -69,10 +69,11 @@
 
   <!-- ===== MAJORITY VOTE / 다수결 ===== -->
   <rect x="504" y="152" width="108" height="88" rx="6" fill="#161b22" stroke="#d29922" stroke-width="0.5"/>
-  <text x="558" y="182" text-anchor="middle" fill="#d29922" font-size="10" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다수결</text>
+  <text x="558" y="178" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">SCORE</text>
+  <text x="558" y="192" text-anchor="middle" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">+ VOTE</text>
   <line x1="520" y1="202" x2="596" y2="202" stroke="#30363d" stroke-width="0.5"/>
-  <text x="558" y="218" text-anchor="middle" fill="#8b949e" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">과반 통과 = 승인</text>
-  <text x="558" y="232" text-anchor="middle" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">전체 리뷰: 5명 중 4명</text>
+  <text x="558" y="218" text-anchor="middle" fill="#8b949e" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">평균 ≥ 0.7, Critical 0</text>
+  <text x="558" y="232" text-anchor="middle" fill="#484f58" font-size="8" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">지적 0건 = 거수기</text>
 
   <!-- Gate → Verdicts lines -->
   <line x1="612" y1="172" x2="672" y2="98" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>

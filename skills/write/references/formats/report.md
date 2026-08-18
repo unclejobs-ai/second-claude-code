@@ -10,7 +10,7 @@
 7. **Appendix**: Raw data and references
 
 ## Length
-- Minimum 4000 words / recommended 6000-10000 words
+- Minimum 5000 chars of body (PDCA Do floor). Target 6000-9000.
 - Keep the executive summary concise and high signal
 
 ## Required Elements
