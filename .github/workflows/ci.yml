@@ -55,6 +55,7 @@ jobs:
       - name: Verify skill docs
         run: |
           for d in skills/*/; do
+            [ "$(basename "$d")" = "unblock" ] && continue
             [ -f "${d}SKILL.md" ] || {
               echo "MISSING SKILL.md: $d"
               exit 1

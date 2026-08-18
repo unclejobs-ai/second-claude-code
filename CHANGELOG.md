@@ -13,6 +13,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 - Unanimous zero-finding reviews are a rubber stamp: the orchestrator must run an adversarial pass. The vote hook still emits APPROVED (`full` remains 3/5).
 - Session banner and cover drop Knowledge Work OS / Pokemon dispatch. Diagrams name jobs.
 - Host note lives in `agents/README.md`: Claude Code 2.1.232+ may fork subagents; SCC still gates files.
+- CI skips `agents/README.md` and `skills/unblock/` (engine, no SKILL.md since 3.0.0).
 
 ## [3.0.0] - 2026-08-15
 
