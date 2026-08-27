@@ -5,12 +5,17 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "build:core": "tsc -p packages/core/tsconfig.json",
     "build:mcp": "node scripts/build-mcp.mjs",
-    "test": "node --test 'tests/**/*.test.mjs'"
+    "test": "node --test 'tests/**/*.test.mjs' 'packages/core/test/**/*.test.mjs'",
+    "test:core": "npm run verify:core-dist && node --test 'packages/core/test/**/*.test.mjs'",
+    "release:core": "node scripts/release-core.mjs",
+    "verify:core-dist": "node scripts/verify-core-dist.mjs"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
-    "esbuild": "0.28.2"
+    "esbuild": "0.28.2",
+    "typescript": "^7.0.2"
   },
   "license": "MIT",
   "engines": {

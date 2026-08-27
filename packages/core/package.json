@@ -1,0 +1,29 @@
+{
+  "name": "@second-claude/core",
+  "version": "4.0.0",
+  "description": "Host-neutral quality contracts and policy decisions for Second Claude integrations",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./fixtures/quality-contract.json": "./fixtures/quality-contract.json"
+  },
+  "files": [
+    "dist",
+    "fixtures",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test 'test/**/*.test.mjs'"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,240 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "valid-standard-run",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard",
+          "profile": "standard",
+          "currentStage": "promote",
+          "currentPhase": "act",
+          "score": 0.92,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic", "promote"]
+        },
+        "evidence": [
+          {
+            "kind": "artifact",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        ]
+      },
+      "expected": []
+    },
+    {
+      "id": "missing-acceptance-criteria",
+      "operation": "validatePlan",
+      "input": {
+        "nodes": [
+          {
+            "id": "build",
+            "acceptanceCriteria": [],
+            "dependencies": [],
+            "fileOwnership": ["src/build.ts"]
+          }
+        ]
+      },
+      "expected": ["MISSING_ACCEPTANCE_CRITERIA"]
+    },
+    {
+      "id": "self-review",
+      "operation": "validateEvidence",
+      "input": {
+        "evidence": [
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "reviewerId": "worker-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "reviewRequired": true
+        }
+      },
+      "expected": ["SELF_REVIEW"]
+    },
+    {
+      "id": "stale-artifact-verdict",
+      "operation": "validateEvidence",
+      "input": {
+        "evidence": [
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-old",
+            "producerId": "worker-1",
+            "reviewerId": "reviewer-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "reviewRequired": true
+        }
+      },
+      "expected": ["STALE_EVIDENCE"]
+    },
+    {
+      "id": "refine",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "implementation", "severity": "medium", "correctable": true, "direction": "tighten" }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "refine"
+    },
+    {
+      "id": "pivot",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "plan", "severity": "high", "correctable": false }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "pivot"
+    },
+    {
+      "id": "reviewer-independence-unavailable",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [],
+        "evidence": [],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": false,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "unproven"
+    },
+    {
+      "id": "refine-cap",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "implementation", "severity": "medium", "correctable": true, "direction": "tighten" }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 3,
+        "pivotCount": 0
+      },
+      "expected": "block"
+    },
+    {
+      "id": "pivot-cap",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "acceptance", "severity": "high", "correctable": false }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 2
+      },
+      "expected": "block"
+    },
+    {
+      "id": "missing-promote",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard",
+          "profile": "standard",
+          "currentStage": "critic",
+          "currentPhase": "check",
+          "score": 0.9,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic"]
+        },
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" }
+        ]
+      },
+      "expected": ["MISSING_PROMOTE_STAGE"]
+    },
+    {
+      "id": "invalid-creator-evaluator-benchmark-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "agent-1",
+          "isolatedBranch": "",
+          "isolatedWorktree": "",
+          "changedAssets": ["benchmarks/held-out.json", "evaluators/agent-1.md"],
+          "evaluatorId": "agent-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "approved"
+        },
+        "context": {
+          "evaluatorAssets": ["evaluators/agent-1.md"],
+          "policyAssets": [],
+          "benchmarkAssets": ["benchmarks/held-out.json"]
+        }
+      },
+      "expected": [
+        "CREATOR_EVALUATOR_CONFLICT",
+        "MISSING_ISOLATED_BRANCH",
+        "MISSING_ISOLATED_WORKTREE",
+        "EVALUATOR_ASSET_MODIFIED",
+        "BENCHMARK_ASSET_MODIFIED",
+        "HUMAN_APPROVAL_PREGRANTED"
+      ]
+    }
+  ]
+}
