@@ -137,6 +137,7 @@ export type ValidationIssueCode =
   | "OVERLAPPING_FILE_OWNERSHIP"
   | "MISSING_ARTIFACT_HASH"
   | "MISSING_PRODUCER_ID"
+  | "EVIDENCE_PRODUCER_MISMATCH"
   | "MISSING_REVIEWER_ID"
   | "FAILED_EVIDENCE"
   | "SELF_REVIEW"
@@ -152,6 +153,8 @@ export type ValidationIssueCode =
   | "MISSING_ISOLATED_BRANCH"
   | "MISSING_ISOLATED_WORKTREE"
   | "MISSING_ISOLATION_ATTESTATION"
+  | "INVALID_ISOLATION_ATTESTATION"
+  | "STALE_ISOLATION_ATTESTATION"
   | "ISOLATION_ATTESTATION_MISMATCH"
   | "ISOLATION_ATTESTOR_CONFLICT"
   | "ISOLATED_BRANCH_NOT_FOUND"
@@ -181,6 +184,14 @@ function validationResult(issues: readonly ValidationIssue[]): ValidationResult 
 
 function isBlank(value: string | undefined): boolean {
   return value === undefined || value.trim().length === 0;
+}
+
+function parseCanonicalUtcTimestamp(value: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
+    return null;
+  }
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) && new Date(timestamp).toISOString() === value ? timestamp : null;
 }
 
 function reaches(
@@ -331,6 +342,11 @@ export function validateEvidence(
     }
     if (isBlank(entry.producerId)) {
       issues.push({ code: "MISSING_PRODUCER_ID", message: "Evidence needs a producer identity." });
+    } else if (entry.producerId !== context.producerId) {
+      issues.push({
+        code: "EVIDENCE_PRODUCER_MISMATCH",
+        message: "Evidence is attributed to a producer other than the current artifact producer."
+      });
     }
     if (entry.result === "fail" || entry.result === false) {
       issues.push({ code: "FAILED_EVIDENCE", message: "Failed evidence cannot prove the current artifact." });
@@ -495,6 +511,8 @@ export interface EvolutionValidationContext {
   readonly evaluatorAssets: readonly string[];
   readonly policyAssets: readonly string[];
   readonly benchmarkAssets: readonly string[];
+  readonly evaluationTimestamp: string;
+  readonly maxAttestationAgeMs: number;
   readonly isolation?: EvolutionIsolationAttestation;
 }
 
@@ -523,54 +541,84 @@ export function validateEvolutionProposal(
       message: "Evolution requires host-resolved branch and worktree isolation evidence."
     });
   } else {
-    const bindingMismatch = isolation.candidateId !== proposal.candidateId
-      || isolation.candidateBranch !== proposal.isolatedBranch
-      || isolation.candidateWorktree !== proposal.isolatedWorktree;
-    if (bindingMismatch) {
+    const attestationTimestamp = parseCanonicalUtcTimestamp(isolation.timestamp);
+    const evaluationTimestamp = parseCanonicalUtcTimestamp(context.evaluationTimestamp);
+    const identityFields = [
+      isolation.candidateId,
+      isolation.candidateBranch,
+      isolation.candidateWorktree,
+      isolation.baseBranch,
+      isolation.baseWorktree,
+      isolation.hostCurrentBranch,
+      isolation.hostCurrentWorktree,
+      isolation.attestorId
+    ];
+    const invalidAttestation = identityFields.some((identity) => isBlank(identity))
+      || attestationTimestamp === null
+      || evaluationTimestamp === null
+      || !Number.isFinite(context.maxAttestationAgeMs)
+      || context.maxAttestationAgeMs < 0
+      || (attestationTimestamp !== null && evaluationTimestamp !== null && attestationTimestamp > evaluationTimestamp);
+    if (invalidAttestation) {
       issues.push({
-        code: "ISOLATION_ATTESTATION_MISMATCH",
-        message: "Isolation evidence is not bound to this candidate branch and worktree."
+        code: "INVALID_ISOLATION_ATTESTATION",
+        message: "Isolation evidence needs complete identities, valid timestamps, and a nonnegative maximum age."
       });
     } else {
-      if (!isolation.branchExists) {
+      if (evaluationTimestamp! - attestationTimestamp! > context.maxAttestationAgeMs) {
         issues.push({
-          code: "ISOLATED_BRANCH_NOT_FOUND",
-          message: `The attested candidate branch does not exist: ${proposal.isolatedBranch}.`
+          code: "STALE_ISOLATION_ATTESTATION",
+          message: "Isolation evidence is older than the host-supplied maximum age."
         });
       }
-      if (!isolation.worktreeExists) {
+      const bindingMismatch = isolation.candidateId !== proposal.candidateId
+        || isolation.candidateBranch !== proposal.isolatedBranch
+        || isolation.candidateWorktree !== proposal.isolatedWorktree;
+      if (bindingMismatch) {
         issues.push({
-          code: "ISOLATED_WORKTREE_NOT_FOUND",
-          message: `The attested candidate worktree does not exist: ${proposal.isolatedWorktree}.`
+          code: "ISOLATION_ATTESTATION_MISMATCH",
+          message: "Isolation evidence is not bound to this candidate branch and worktree."
         });
-      }
-      if (
-        proposal.isolatedBranch === isolation.baseBranch
-        || proposal.isolatedBranch === isolation.hostCurrentBranch
-      ) {
-        issues.push({
-          code: "BRANCH_NOT_ISOLATED",
-          message: "The candidate branch matches the base or host current branch."
-        });
-      }
-      if (
-        proposal.isolatedWorktree === isolation.baseWorktree
-        || proposal.isolatedWorktree === isolation.hostCurrentWorktree
-      ) {
-        issues.push({
-          code: "WORKTREE_NOT_ISOLATED",
-          message: "The candidate worktree matches the base or host current worktree."
-        });
-      }
-      if (
-        isBlank(isolation.attestorId)
-        || isolation.attestorId === proposal.creatorId
-        || isolation.attestorId === proposal.evaluatorId
-      ) {
-        issues.push({
-          code: "ISOLATION_ATTESTOR_CONFLICT",
-          message: "Isolation evidence must come from a host resolver independent of creator and evaluator."
-        });
+      } else {
+        if (!isolation.branchExists) {
+          issues.push({
+            code: "ISOLATED_BRANCH_NOT_FOUND",
+            message: `The attested candidate branch does not exist: ${proposal.isolatedBranch}.`
+          });
+        }
+        if (!isolation.worktreeExists) {
+          issues.push({
+            code: "ISOLATED_WORKTREE_NOT_FOUND",
+            message: `The attested candidate worktree does not exist: ${proposal.isolatedWorktree}.`
+          });
+        }
+        if (
+          proposal.isolatedBranch === isolation.baseBranch
+          || proposal.isolatedBranch === isolation.hostCurrentBranch
+        ) {
+          issues.push({
+            code: "BRANCH_NOT_ISOLATED",
+            message: "The candidate branch matches the base or host current branch."
+          });
+        }
+        if (
+          proposal.isolatedWorktree === isolation.baseWorktree
+          || proposal.isolatedWorktree === isolation.hostCurrentWorktree
+        ) {
+          issues.push({
+            code: "WORKTREE_NOT_ISOLATED",
+            message: "The candidate worktree matches the base or host current worktree."
+          });
+        }
+        if (
+          isolation.attestorId === proposal.creatorId
+          || isolation.attestorId === proposal.evaluatorId
+        ) {
+          issues.push({
+            code: "ISOLATION_ATTESTOR_CONFLICT",
+            message: "Isolation evidence must come from a host resolver independent of creator and evaluator."
+          });
+        }
       }
     }
   }

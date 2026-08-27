@@ -4,6 +4,7 @@ import {
   validateEvolutionProposal,
   validateRunCompletion,
   type EvolutionProposal,
+  type EvolutionValidationContext,
   type GateEvidence,
   type HarnessStage,
   type PdcaPhase,
@@ -78,10 +79,12 @@ validateRunCompletion(run, evidence, {
   producerId: "worker-1",
   independentReviewerAvailable: true
 });
-validateEvolutionProposal(proposal, {
+const evolutionContext: EvolutionValidationContext = {
   evaluatorAssets: [],
   policyAssets: [],
   benchmarkAssets: [],
+  evaluationTimestamp: "2026-08-28T00:05:00.000Z",
+  maxAttestationAgeMs: 600_000,
   isolation: {
     candidateId: "candidate-1",
     candidateBranch: "evolve/candidate-1",
@@ -95,7 +98,8 @@ validateEvolutionProposal(proposal, {
     attestorId: "host-resolver",
     timestamp: "2026-08-28T00:00:00.000Z"
   }
-});
+};
+validateEvolutionProposal(proposal, evolutionContext);
 
 // @ts-expect-error reviewer evidence must identify its reviewer
 const reviewerWithoutIdentity: GateEvidence = {

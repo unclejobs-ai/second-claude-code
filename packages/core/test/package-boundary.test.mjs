@@ -6,6 +6,8 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 
+import { assertSafePackedManifest, readPackedManifest } from "../../../scripts/core-release-policy.mjs";
+
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const packageRoot = path.join(repositoryRoot, "packages", "core");
 
@@ -28,13 +30,27 @@ test("packed package catches root or fixture exports disappearing from consumer 
       "fixtures/quality-contract.json",
       "package.json"
     ]);
+    const packedManifest = await readPackedManifest(path.join(temporaryRoot, metadata.filename));
+    assert.equal(packedManifest.name, "@second-claude/core");
+    assert.doesNotThrow(() => assertSafePackedManifest(packedManifest));
+    for (const lifecycle of ["preinstall", "install", "postinstall", "prepare", "prepack"]) {
+      assert.equal(packedManifest.scripts?.[lifecycle], undefined, lifecycle);
+    }
+    for (const field of [
+      "dependencies",
+      "optionalDependencies",
+      "peerDependencies",
+      "bundledDependencies",
+      "bundleDependencies"
+    ]) {
+      assert.equal(packedManifest[field], undefined, field);
+    }
 
     const consumerRoot = path.join(temporaryRoot, "consumer");
     await mkdir(consumerRoot);
     await writeFile(path.join(consumerRoot, "package.json"), JSON.stringify({ type: "module", private: true }));
     const installed = run("npm", [
       "install",
-      "--ignore-scripts",
       "--offline",
       "--no-audit",
       "--no-fund",
@@ -48,7 +64,7 @@ test("packed package catches root or fixture exports disappearing from consumer 
       "const core = await import('@second-claude/core'); const fixture = await import('@second-claude/core/fixtures/quality-contract.json', { with: { type: 'json' } }); process.stdout.write(`${core.classifyQualityProfile({ complexity: 'simple', risk: 'low', creatorIntent: true })}:${fixture.default.cases.length}`);"
     ], consumerRoot);
     assert.equal(imported.status, 0, imported.stderr);
-    assert.equal(imported.stdout, "creator:13");
+    assert.equal(imported.stdout, "creator:15");
     await assert.rejects(access(path.join(consumerRoot, "node_modules", "typescript")), { code: "ENOENT" });
   } finally {
     await rm(temporaryRoot, { recursive: true });

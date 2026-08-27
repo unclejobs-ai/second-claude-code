@@ -14,6 +14,6 @@ import {
 
 The shared cross-host fixture is exported at `@second-claude/core/fixtures/quality-contract.json`.
 
-Completion validation takes a host-supplied current artifact hash, producer identity, and reviewer-availability context. Non-minimal profiles cannot complete without current, passing, independent reviewer evidence and completed `critic` and `promote` stages.
+Completion validation takes a host-supplied current artifact hash, producer identity, and reviewer-availability context. Every artifact and reviewer evidence item must be attributed to that producer. Non-minimal profiles cannot complete without current, passing, independent reviewer evidence and completed `critic` and `promote` stages.
 
-Evolution validation remains host-neutral: the host resolves branch/worktree existence and identity, then passes an `EvolutionIsolationAttestation`. Core binds that attestation to the proposal and rejects missing, mismatched, nonexistent, base/current, or creator/evaluator-supplied isolation evidence without reading the filesystem.
+Evolution validation remains host-neutral: the host resolves canonical branch/worktree existence and identity, then passes an `EvolutionIsolationAttestation`, an explicit evaluation timestamp, and a maximum attestation age. Timestamps use canonical UTC ISO 8601 with milliseconds (`YYYY-MM-DDTHH:mm:ss.sssZ`), and proof remains fresh through the inclusive maximum-age boundary. Core binds that proof exactly to the candidate, branch, and worktree and rejects incomplete, future, stale, mismatched, nonexistent, base/current, or creator/evaluator-supplied isolation evidence without reading the filesystem or consulting a clock.

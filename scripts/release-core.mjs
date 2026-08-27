@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { assertSafePackedManifest, readPackedManifest } from "./core-release-policy.mjs";
 
 const repositoryRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const packageRoot = path.join(repositoryRoot, "packages", "core");
@@ -23,12 +24,14 @@ function run(command, args) {
 }
 
 run(process.execPath, [path.join(repositoryRoot, "scripts", "verify-core-dist.mjs")]);
+assertSafePackedManifest(JSON.parse(await readFile(path.join(packageRoot, "package.json"), "utf8")));
 await mkdir(releaseDirectory, { recursive: true });
 await Promise.all([
   rm(tarballPath, { force: true }),
   rm(checksumPath, { force: true })
 ]);
 run("npm", ["pack", packageRoot, "--pack-destination", releaseDirectory]);
+assertSafePackedManifest(await readPackedManifest(tarballPath));
 
 const checksum = createHash("sha256").update(await readFile(tarballPath)).digest("hex");
 await writeFile(checksumPath, `${checksum}  ${tarballName}\n`, "utf8");

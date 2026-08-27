@@ -84,6 +84,18 @@ function validIsolation(overrides = {}) {
   };
 }
 
+function evolutionContext(overrides = {}) {
+  return {
+    evaluatorAssets: [],
+    policyAssets: [],
+    benchmarkAssets: [],
+    evaluationTimestamp: "2026-08-28T00:05:00.000Z",
+    maxAttestationAgeMs: 600_000,
+    isolation: validIsolation(),
+    ...overrides
+  };
+}
+
 test("fixed mappings catch a PDCA phase routed to the wrong harness stage", async () => {
   const {
     HARNESS_STAGE_ORDER,
@@ -394,6 +406,28 @@ test("run completion catches failed or stale evidence being accepted", async () 
   );
 });
 
+test("run completion catches artifact or reviewer evidence attributed to another producer", async () => {
+  const { validateRunCompletion } = await corePromise;
+  const [artifact, reviewer] = currentEvidence();
+
+  assert.deepEqual(
+    validateRunCompletion(
+      completedRun(),
+      [{ ...artifact, producerId: "worker-other" }, reviewer],
+      completionContext()
+    ).issues.map((issue) => issue.code),
+    ["EVIDENCE_PRODUCER_MISMATCH"]
+  );
+  assert.deepEqual(
+    validateRunCompletion(
+      completedRun(),
+      [artifact, { ...reviewer, producerId: "worker-other" }],
+      completionContext()
+    ).issues.map((issue) => issue.code),
+    ["EVIDENCE_PRODUCER_MISMATCH"]
+  );
+});
+
 test("run completion catches standard evidence without an independent reviewer", async () => {
   const { validateRunCompletion } = await corePromise;
   const artifactOnly = [currentEvidence()[0]];
@@ -480,12 +514,12 @@ test("evolution validation catches creator/evaluator and protected benchmark con
     validationEvidence: currentEvidence(),
     humanApproval: "approved"
   };
-  const result = validateEvolutionProposal(proposal, {
+  const result = validateEvolutionProposal(proposal, evolutionContext({
     evaluatorAssets: ["evaluators/agent-1.md"],
     policyAssets: ["policy/gates.json"],
     benchmarkAssets: ["benchmarks/held-out.json"],
     isolation: undefined
-  });
+  }));
 
   assert.deepEqual(result.issues.map((issue) => issue.code), [
     "CREATOR_EVALUATOR_CONFLICT",
@@ -514,11 +548,7 @@ test("evolution validation catches nonblank branch and worktree claims without a
     validationEvidence: currentEvidence(),
     humanApproval: "pending"
   };
-  const result = validateEvolutionProposal(proposal, {
-    evaluatorAssets: [],
-    policyAssets: [],
-    benchmarkAssets: []
-  });
+  const result = validateEvolutionProposal(proposal, evolutionContext({ isolation: undefined }));
 
   assert.deepEqual(result.issues.map((issue) => issue.code), ["MISSING_ISOLATION_ATTESTATION"]);
 });
@@ -538,12 +568,9 @@ test("evolution validation catches attested branch and worktree identities that 
     validationEvidence: currentEvidence(),
     humanApproval: "pending"
   };
-  const result = validateEvolutionProposal(proposal, {
-    evaluatorAssets: [],
-    policyAssets: [],
-    benchmarkAssets: [],
+  const result = validateEvolutionProposal(proposal, evolutionContext({
     isolation: validIsolation({ branchExists: false, worktreeExists: false })
-  });
+  }));
 
   assert.deepEqual(result.issues.map((issue) => issue.code), [
     "ISOLATED_BRANCH_NOT_FOUND",
@@ -570,12 +597,9 @@ test("evolution validation catches candidate isolation equal to the base or curr
       validationEvidence: currentEvidence(),
       humanApproval: "pending"
     };
-    const result = validateEvolutionProposal(proposal, {
-      evaluatorAssets: [],
-      policyAssets: [],
-      benchmarkAssets: [],
+    const result = validateEvolutionProposal(proposal, evolutionContext({
       isolation: validIsolation({ candidateBranch: branch, candidateWorktree: worktree })
-    });
+    }));
 
     assert.deepEqual(result.issues.map((issue) => issue.code), [
       "BRANCH_NOT_ISOLATED",
@@ -599,15 +623,12 @@ test("evolution validation catches an attestation bound to a different candidate
     validationEvidence: currentEvidence(),
     humanApproval: "pending"
   };
-  const result = validateEvolutionProposal(proposal, {
-    evaluatorAssets: [],
-    policyAssets: [],
-    benchmarkAssets: [],
+  const result = validateEvolutionProposal(proposal, evolutionContext({
     isolation: validIsolation({
       candidateBranch: "evolve/candidate-other",
       candidateWorktree: "/worktrees/candidate-other"
     })
-  });
+  }));
 
   assert.deepEqual(result.issues.map((issue) => issue.code), ["ISOLATION_ATTESTATION_MISMATCH"]);
 });
@@ -629,14 +650,90 @@ test("evolution validation catches creator or evaluator supplied isolation attes
   };
 
   for (const attestorId of ["creator-1", "evaluator-1"]) {
-    const result = validateEvolutionProposal(proposal, {
-      evaluatorAssets: [],
-      policyAssets: [],
-      benchmarkAssets: [],
+    const result = validateEvolutionProposal(proposal, evolutionContext({
       isolation: validIsolation({ attestorId })
-    });
+    }));
     assert.deepEqual(result.issues.map((issue) => issue.code), ["ISOLATION_ATTESTOR_CONFLICT"]);
   }
+});
+
+test("evolution validation catches blank host isolation identities", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+  for (const field of [
+    "candidateId",
+    "candidateBranch",
+    "candidateWorktree",
+    "baseBranch",
+    "baseWorktree",
+    "hostCurrentBranch",
+    "hostCurrentWorktree",
+    "attestorId",
+    "timestamp"
+  ]) {
+    const result = validateEvolutionProposal(proposal, evolutionContext({
+      isolation: validIsolation({ [field]: " " })
+    }));
+    assert.deepEqual(
+      result.issues.map((issue) => issue.code),
+      ["INVALID_ISOLATION_ATTESTATION"],
+      field
+    );
+  }
+});
+
+test("evolution validation catches stale isolation attestations at an explicit evaluation time", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+  const stale = validateEvolutionProposal(proposal, evolutionContext({
+    evaluationTimestamp: "2026-08-28T00:10:00.001Z"
+  }));
+  const boundary = validateEvolutionProposal(proposal, evolutionContext({
+    evaluationTimestamp: "2026-08-28T00:10:00.000Z"
+  }));
+  const invalidClock = validateEvolutionProposal(proposal, evolutionContext({
+    evaluationTimestamp: "not-a-timestamp"
+  }));
+  const noncanonicalClock = validateEvolutionProposal(proposal, evolutionContext({
+    isolation: validIsolation({ timestamp: "August 28, 2026 00:00:00 GMT" })
+  }));
+  const future = validateEvolutionProposal(proposal, evolutionContext({
+    evaluationTimestamp: "2026-08-27T23:59:59.999Z"
+  }));
+  const invalidMaxAge = validateEvolutionProposal(proposal, evolutionContext({
+    maxAttestationAgeMs: -1
+  }));
+
+  assert.deepEqual(stale.issues.map((issue) => issue.code), ["STALE_ISOLATION_ATTESTATION"]);
+  assert.equal(boundary.valid, true);
+  assert.deepEqual(invalidClock.issues.map((issue) => issue.code), ["INVALID_ISOLATION_ATTESTATION"]);
+  assert.deepEqual(noncanonicalClock.issues.map((issue) => issue.code), ["INVALID_ISOLATION_ATTESTATION"]);
+  assert.deepEqual(future.issues.map((issue) => issue.code), ["INVALID_ISOLATION_ATTESTATION"]);
+  assert.deepEqual(invalidMaxAge.issues.map((issue) => issue.code), ["INVALID_ISOLATION_ATTESTATION"]);
 });
 
 test("the shared fixture catches every documented cross-host contract regression", async () => {
@@ -660,6 +757,8 @@ test("the shared fixture catches every documented cross-host contract regression
       "missing-promote",
       "nonexistent-evolution-isolation",
       "current-evolution-isolation",
+      "blank-evolution-isolation-attestation",
+      "stale-evolution-isolation-attestation",
       "invalid-creator-evaluator-benchmark-isolation"
     ]
   );

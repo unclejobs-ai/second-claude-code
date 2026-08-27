@@ -244,6 +244,8 @@
           "evaluatorAssets": [],
           "policyAssets": [],
           "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
           "isolation": {
             "candidateId": "candidate-1",
             "candidateBranch": "evolve/candidate-1",
@@ -282,6 +284,8 @@
           "evaluatorAssets": [],
           "policyAssets": [],
           "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
           "isolation": {
             "candidateId": "candidate-1",
             "candidateBranch": "review/task-2",
@@ -298,6 +302,86 @@
         }
       },
       "expected": ["BRANCH_NOT_ISOLATED", "WORKTREE_NOT_ISOLATED"]
+    },
+    {
+      "id": "blank-evolution-isolation-attestation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "",
+            "baseWorktree": "",
+            "hostCurrentBranch": "",
+            "hostCurrentWorktree": "",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": ""
+          }
+        }
+      },
+      "expected": ["INVALID_ISOLATION_ATTESTATION"]
+    },
+    {
+      "id": "stale-evolution-isolation-attestation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:10:00.001Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["STALE_ISOLATION_ATTESTATION"]
     },
     {
       "id": "invalid-creator-evaluator-benchmark-isolation",
@@ -319,7 +403,9 @@
         "context": {
           "evaluatorAssets": ["evaluators/agent-1.md"],
           "policyAssets": [],
-          "benchmarkAssets": ["benchmarks/held-out.json"]
+          "benchmarkAssets": ["benchmarks/held-out.json"],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000
         }
       },
       "expected": [
