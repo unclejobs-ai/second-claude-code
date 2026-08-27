@@ -4,6 +4,8 @@ description: "Use when collecting URLs, notes, files, or excerpts into structure
 effort: low
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **Collected knowledge must always be classified.**
@@ -28,7 +30,7 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 ## Workflow
 
-0. **Check existing knowledge**: search `${CLAUDE_PLUGIN_DATA}/knowledge/` for items with overlapping tags or titles before creating a new entry. If a duplicate exists, update it instead of creating a new one.
+0. **Check existing knowledge**: search `<plugin-data>/knowledge/` for items with overlapping tags or titles before creating a new entry. If a duplicate exists, update it instead of creating a new one.
 1. Detect source type: URL, raw text, file path, or search request. **Fetch here, not later** — the `analyst` agent has no web tools, so a URL must be resolved to text before dispatch (use `/scc:unblock` if the page is gated).
 2. **Dispatch the `analyst` subagent** (extract + reduce): Extract the useful content, strip boilerplate, produce exactly 3 key points and a short summary. This MUST run as a separate subagent, not inline.
 3. **Dispatch the `knowledge-connector` subagent** (find shared concept): Using only the stored knowledge base (not the analyst's output framing), find a specific shared concept connecting the new item to existing knowledge. This MUST run as a separate subagent to prevent bias from the analyst's framing.
@@ -56,9 +58,9 @@ Collect a source, reduce it, connect it to existing knowledge, and store it in a
 
 ## Storage
 
-> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+> **Data directory**: Resolve `<plugin-data>` through the runtime path contract. Before writing state files, verify the directory exists with `mkdir -p`.
 
-- Path: `${CLAUDE_PLUGIN_DATA}/knowledge/{para-category}/{slug}.json`
+- Path: `<plugin-data>/knowledge/{para-category}/{slug}.json`
 - Required fields: `title`, `source`, `source_type`, `collected_at`, `category`, `tags`, `summary`, `key_points`, `connections`
 - `key_points` must contain exactly 3 items
 
@@ -82,7 +84,7 @@ If no specific connection exists, set `connections` to an empty array. Never for
 
 Trigger: pass `--search "query"` instead of a source to retrieve rather than save.
 Invocation: `/scc:collect --search "query"`
-What it does: scans all stored JSON under `${CLAUDE_PLUGIN_DATA}/knowledge/`, ranks results by tag overlap and title similarity, and returns the top matches with their summary and PARA category.
+What it does: scans all stored JSON under `<plugin-data>/knowledge/`, ranks results by tag overlap and title similarity, and returns the top matches with their summary and PARA category.
 See `references/para-method.md` for full ranking weights.
 
 ## Gotchas

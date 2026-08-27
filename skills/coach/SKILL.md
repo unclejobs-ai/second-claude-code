@@ -6,10 +6,12 @@ effort: high
 
 # Coach
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 Before anything else, confirm a standard can be written here:
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" status --json
+node "<plugin-root>/scripts/coach-runner.mjs" status --json
 ```
 
 Exit 1 with the plugin-install-path error means the resolved project root sits inside the plugin install, and no standard can be recorded in this location. Say that plainly and stop. Do not draft around it, and do not put the record somewhere else.
@@ -30,7 +32,7 @@ If yes, this is a fork, and it gets settled on the record before anything is dra
 2. **Name the fork.** One line: what is being chosen between, in the user's own terms.
 3. **Put every defensible direction on the table**, each with the evidence that makes it defensible. Include the one you would have picked alone. Include "do not do the thing that was asked" whenever the evidence supports it — a rejected premise is a direction to offer, not a call to make alone.
 4. **The user picks.** One question, the directions as its options.
-5. **Record the choice** before drafting: `node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-fork --file <fork.json>` writes `.scc/standards/<id>/STANDARD.md` — the chosen direction, the rejected ones and why they lost, and `review_when`, the condition that would reopen it.
+5. **Record the choice** before drafting: `node "<plugin-root>/scripts/coach-runner.mjs" record-fork --file <fork.json>` writes `.scc/standards/<id>/STANDARD.md` — the chosen direction, the rejected ones and why they lost, and `review_when`, the condition that would reopen it.
 6. **Then produce the artifact**, from the standard — and run `scripts/standard-check.mjs` against it. A standard whose checks were never run against the work it governs did not govern anything.
 
 ## Runtime

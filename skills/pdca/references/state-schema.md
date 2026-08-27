@@ -5,7 +5,7 @@ description: "PDCA run state schema — full JSON definition, field reference, M
 
 # PDCA State Schema
 
-State is persisted to `${CLAUDE_PLUGIN_DATA}/state/pdca-active.json`.
+State is persisted to `<plugin-data>/state/pdca-active.json`.
 
 > **Single-active-run constraint**: Only one PDCA run may be active at a time per data directory. `pdca-active.json` is a single file — concurrent runs collide. If a stale `pdca-active.json` is detected at startup (different `run_id`), notify the user before overwriting.
 

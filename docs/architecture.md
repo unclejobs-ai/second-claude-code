@@ -1,6 +1,6 @@
 **English** | [한국어](architecture.ko.md)
 
-# Architecture — SCC 3.0.2
+# Architecture — SCC 3.0.3
 
 ## Runtime Boundary
 
@@ -733,4 +733,4 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 ---
 
 Release history and migration notes live in [CHANGELOG.md](../CHANGELOG.md). This architecture guide
-describes the SCC 3.0.2 runtime rather than copying historical release notes.
+describes the SCC 3.0.3 runtime rather than copying historical release notes.

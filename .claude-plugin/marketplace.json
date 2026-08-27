@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "PDCA workflow toolkit for Claude Code: 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 31 MCP tools. Includes decision standards, independent review gates, artifact history, and advisory cross-plugin discovery.",
-    "version": "3.0.2"
+    "version": "3.0.3"
   },
   "plugins": [
     {
       "name": "scc",
       "source": "./",
       "description": "PDCA workflow toolkit for Claude Code: 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 31 MCP tools. Includes decision standards, independent review gates, artifact history, and advisory cross-plugin discovery.",
-      "version": "3.0.2",
+      "version": "3.0.3",
       "author": {
         "name": "unclejobs-ai"
       },

@@ -16,11 +16,11 @@
 ## Recovery commands
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" status --json
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" resume --json
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" answer --answer "The topology looks right" --json
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" record-fork --file <path> --json
-node "${CLAUDE_PLUGIN_ROOT}/scripts/coach-runner.mjs" finalize --json
+node "<plugin-root>/scripts/coach-runner.mjs" status --json
+node "<plugin-root>/scripts/coach-runner.mjs" resume --json
+node "<plugin-root>/scripts/coach-runner.mjs" answer --answer "The topology looks right" --json
+node "<plugin-root>/scripts/coach-runner.mjs" record-fork --file <path> --json
+node "<plugin-root>/scripts/coach-runner.mjs" finalize --json
 ```
 
 Use `clear` only when intentionally discarding the active coach state.

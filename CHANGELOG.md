@@ -5,6 +5,14 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.3] - 2026-08-28
+
+### Fixed
+
+- Codex installs now use a native plugin manifest and a relative `pdca-state` MCP entry point. This avoids passing Claude's unresolved `${CLAUDE_PLUGIN_ROOT}` placeholder to Node, which closed the MCP connection during initialization.
+- Codex-exposed skills now resolve host-neutral plugin and data paths before script or state operations instead of assuming Claude-only environment variables.
+- Playwright and MMBridge remain optional in Codex and are disabled by default, preventing fresh installs from starting `npx` integrations unexpectedly.
+
 ## [3.0.2] - 2026-08-27
 
 ### Fixed

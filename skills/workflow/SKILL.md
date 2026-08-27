@@ -4,6 +4,8 @@ description: "Use when chaining multiple /scc commands into a reusable workflow"
 effort: medium
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **Validate the manual workflow before automating.**
@@ -82,17 +84,17 @@ Run a named preset with `/scc:workflow run <preset>`:
 
 ## Definition
 
-Store workflow definitions at `${CLAUDE_PLUGIN_DATA}/workflows/{name}.json`. See `references/workflow-definition.md` for step fields, data flow, and a full worked example.
+Store workflow definitions at `<plugin-data>/workflows/{name}.json`. See `references/workflow-definition.md` for step fields, data flow, and a full worked example.
 
 ## State
 
-> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+> **Data directory**: Resolve `<plugin-data>` through the runtime path contract. Before writing state files, verify the directory exists with `mkdir -p`.
 
-- Active state: `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`
-- Run log: `${CLAUDE_PLUGIN_DATA}/workflows/{name}-run.json`
-- Daemon jobs: `${CLAUDE_PLUGIN_DATA}/daemon/jobs.json`
-- Background runs: `${CLAUDE_PLUGIN_DATA}/daemon/runs/*.json`
-- Session recall index: `${CLAUDE_PLUGIN_DATA}/daemon/recall/index.jsonl`
+- Active state: `<plugin-data>/state/workflow-active.json`
+- Run log: `<plugin-data>/workflows/{name}-run.json`
+- Daemon jobs: `<plugin-data>/daemon/jobs.json`
+- Background runs: `<plugin-data>/daemon/runs/*.json`
+- Session recall index: `<plugin-data>/daemon/recall/index.jsonl`
 
 See `references/workflow-definition.md` for the canonical state schema.
 

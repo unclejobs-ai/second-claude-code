@@ -1,11 +1,11 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-3.0.2-blue)
+![version](https://img.shields.io/badge/version-3.0.3-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code
 
-Second Claude Code is a Claude Code plugin for research, writing, analysis, review, and revision.
+Second Claude Code is a Claude Code plugin with Codex support for research, writing, analysis, review, and revision.
 It provides **15 skills** and **3 tool-only commands**. Use one skill directly, or explicitly
 choose `/scc:pdca` when you want the Plan → Do → Check → Act cycle with phase gates.
 
@@ -42,6 +42,23 @@ claude plugin update scc
 Restart Claude Code after an update. Version 3 uses the `scc` command namespace, so commands look
 like `/scc:write` and `/scc:review`.
 
+For Codex, install from the same marketplace:
+
+```bash
+codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
+codex plugin add scc@scc
+```
+
+Restart Codex after installing or refreshing the marketplace. Codex uses the native manifest and
+plugin-relative MCP paths; it does not require `CLAUDE_PLUGIN_ROOT`.
+
+To update an existing Codex installation:
+
+```bash
+codex plugin marketplace upgrade scc
+codex plugin add scc@scc
+```
+
 If you are migrating from a pre-v3 installation, remove the old cached plugin and install the new
 name. If the old entry is present, run:
 
@@ -63,8 +80,14 @@ export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
 The `pdca-state` MCP server is shipped as a self-contained bundle. A fresh install does not need
 `npm install`, a startup dependency download, or a local `node_modules` directory for that server.
 Playwright and MMBridge are separate optional MCP integrations and may have their own setup.
+Codex keeps both disabled by default; enable either one explicitly in the Codex MCP settings when
+you need it.
 
 ## Choose an entry point
+
+The `/scc:*` commands below are Claude Code entry points. In Codex, request the matching installed
+skill by name or describe the task in natural language; Codex exposes the 15 skills but does not
+mirror every Claude slash command.
 
 | You want to… | Use |
 |---|---|
@@ -251,4 +274,4 @@ All fields are optional. Place the file where your project or plugin configurati
 
 Issues and pull requests are welcome. Built by [Unclejobs](https://github.com/unclejobs-ai).
 
-*Version 3.0.2 | MIT License*
+*Version 3.0.3 | MIT License*

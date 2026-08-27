@@ -1,11 +1,11 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-3.0.2-blue)
+![version](https://img.shields.io/badge/version-3.0.3-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code — 제2의 클로드
 
-Second Claude Code는 리서치, 글쓰기, 분석, 리뷰, 수정을 돕는 Claude Code 플러그인입니다.
+Second Claude Code는 리서치, 글쓰기, 분석, 리뷰, 수정을 돕는 Codex 호환 Claude Code 플러그인입니다.
 **15개 스킬**과 **도구 전용 명령 3개**를 제공합니다. 스킬 하나를 직접 사용하거나,
 단계별 게이트가 필요한 경우 `/scc:pdca`를 명시적으로 선택해 Plan → Do → Check → Act를
 실행할 수 있습니다.
@@ -43,6 +43,23 @@ claude plugin update scc
 업데이트 후 Claude Code를 다시 시작하세요. 버전 3의 명령 네임스페이스는 `scc`이므로
 명령은 `/scc:write`, `/scc:review`처럼 사용합니다.
 
+Codex에서는 같은 마켓플레이스에서 설치합니다.
+
+```bash
+codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
+codex plugin add scc@scc
+```
+
+설치하거나 마켓플레이스를 새로 고친 뒤 Codex를 다시 시작하세요. Codex는 전용 매니페스트와
+플러그인 상대경로 MCP 설정을 사용하므로 `CLAUDE_PLUGIN_ROOT`가 필요하지 않습니다.
+
+기존 Codex 설치를 업데이트할 때는 다음을 실행합니다.
+
+```bash
+codex plugin marketplace upgrade scc
+codex plugin add scc@scc
+```
+
 v3 이전 설치에서 마이그레이션한다면 이전 캐시 플러그인을 제거한 뒤 새 이름으로 설치하세요.
 이전 항목이 목록에 있다면 다음을 실행합니다.
 
@@ -64,8 +81,14 @@ export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
 `pdca-state` MCP 서버는 자체 포함 번들로 함께 제공됩니다. 이 서버를 처음 설치할 때
 `npm install`, 시작 시 의존성 다운로드, 로컬 `node_modules` 디렉터리가 필요하지 않습니다.
 Playwright와 MMBridge는 별도의 선택적 MCP 연동이며 각각 추가 설정이 필요할 수 있습니다.
+Codex에서는 두 연동이 기본적으로 비활성화됩니다. 필요할 때 Codex MCP 설정에서 해당 연동을
+명시적으로 활성화하세요.
 
 ## 진입점 고르기
+
+아래 `/scc:*` 명령은 Claude Code용 진입점입니다. Codex에서는 설치된 스킬 이름을 지정하거나
+작업을 자연어로 설명하세요. Codex는 15개 스킬을 노출하지만 Claude 슬래시 명령 전체를 동일하게
+제공하지는 않습니다.
 
 | 하고 싶은 일 | 사용 |
 |---|---|
@@ -251,4 +274,4 @@ claude agents
 
 이슈와 풀 리퀘스트를 환영합니다. [Unclejobs](https://github.com/unclejobs-ai)가 만들었습니다.
 
-*버전 3.0.2 | MIT 라이선스*
+*버전 3.0.3 | MIT 라이선스*

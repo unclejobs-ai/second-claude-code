@@ -248,4 +248,4 @@ credentials, and usage policies. Multiple reviewers or deeper research can use m
 - [Architecture](architecture.md) — runtime boundaries and state model
 - [Changelog](../CHANGELOG.md) — release and migration notes
 
-*Version 3.0.2 | MIT License*
+*Version 3.0.3 | MIT License*

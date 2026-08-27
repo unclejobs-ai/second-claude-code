@@ -1,11 +1,13 @@
 # Second Claude Code — Agent Instructions
 
-Claude Code plugin (v3.0.2). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 9 hook events, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin with Codex support (v3.0.3). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 9 hook events, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 ## Project Structure
 
 ```
 .claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
+.codex-plugin/plugin.json  — Codex-native plugin manifest (skills, MCP config)
+.mcp.json                  — Codex MCP server configuration with plugin-relative paths
 skills/                     — 15 skill directories (coach, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate) plus skills/unblock/ which holds the fetch engine but ships no SKILL.md
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
 hooks/                      — 8 hook files across 9 events (session-start, prompt-detect, subagent-start/stop, review-result, session-end, compaction serves PreCompact+PostCompact, stop-failure)

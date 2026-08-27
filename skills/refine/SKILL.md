@@ -4,6 +4,8 @@ description: "Use when iteratively improving a draft until it meets a review tar
 effort: medium
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **A fix without a review is not a fix.**
@@ -43,7 +45,7 @@ Run review-fix cycles until a draft meets a target score or verdict, with resuma
    - **Before reverting a git-tracked file**: run `git diff --name-only <file>`. If the file shows uncommitted user changes that are NOT from this refine iteration (i.e., changes that predate `baseline_hash`), **warn the user and abort the revert** unless they explicitly confirm. Never silently overwrite uncommitted work.
    - **Path validation**: confirm the file path resolves within the project root — reject any path containing `../` traversal or resolving outside the working directory.
    - For git-tracked files with no external uncommitted changes: use `git checkout -- <file>`.
-   - For non-git files (e.g., in `${CLAUDE_PLUGIN_DATA}`): restore from `baseline_content` in `refine-active.json`.
+   - For non-git files (e.g., in `<plugin-data>`): restore from `baseline_content` in `refine-active.json`.
 5. Stop when the target is met, `--max` is reached, or the verdict **plateaus** (same verdict for 2 consecutive iterations with no severity reduction). When `--dod` is active, the target is only considered met when **all DoD criteria pass** AND the score/verdict target is satisfied.
 6. **Completion gate**: Before declaring done, run `/scc:review` with `--preset quick` (a parameter passed to `/scc:review`, not a refine option) one final time (with DoD checklist if active). Only exit on `APPROVED` or `MINOR FIXES` **and all DoD criteria PASS**. If it returns `MUST FIX` or `NEEDS IMPROVEMENT`, or any DoD criterion is FAIL, continue refining.
 
@@ -62,9 +64,9 @@ When called from a pipeline with `input_from`, the first file is the draft (`--f
 
 ## State
 
-> **Data directory**: `${CLAUDE_PLUGIN_DATA}` is set by the plugin system. If unavailable, fall back to `.data/` relative to the plugin root. Before writing state files, verify the directory exists with `mkdir -p`.
+> **Data directory**: Resolve `<plugin-data>` through the runtime path contract. Before writing state files, verify the directory exists with `mkdir -p`.
 
-Save active state to `${CLAUDE_PLUGIN_DATA}/state/refine-active.json` with:
+Save active state to `<plugin-data>/state/refine-active.json` with:
 
 ```json
 {"goal":"...","file":"...","current_iteration":2,"max":3,"verdicts":["NEEDS IMPROVEMENT","APPROVED"],"scores":[],"baseline_hash":"...","baseline_content":null,"is_git_tracked":true,"feedback_log":[],"dod_criteria":["no factual errors","every section has examples"],"dod_results":[[true,false],[true,true]]}

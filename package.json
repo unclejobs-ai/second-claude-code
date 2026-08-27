@@ -1,6 +1,6 @@
 {
   "name": "scc",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "PDCA workflow skills, lifecycle hooks, and MCP tools for Claude Code",
   "type": "module",
   "private": true,

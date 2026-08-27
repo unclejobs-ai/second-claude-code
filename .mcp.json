@@ -1,0 +1,29 @@
+{
+  "mcpServers": {
+    "pdca-state": {
+      "command": "node",
+      "args": [
+        "./mcp/pdca-state-server.bundle.mjs"
+      ],
+      "cwd": "."
+    },
+    "playwright": {
+      "command": "npx",
+      "args": [
+        "@playwright/mcp@0.0.79",
+        "--headless",
+        "--isolated"
+      ],
+      "cwd": ".",
+      "enabled": false
+    },
+    "mmbridge": {
+      "command": "npx",
+      "args": [
+        "@mmbridge/mcp@0.7.3"
+      ],
+      "cwd": ".",
+      "enabled": false
+    }
+  }
+}

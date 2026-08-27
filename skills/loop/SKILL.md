@@ -5,6 +5,8 @@ effort: high
 disable-model-invocation: true
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **A loop without a benchmark is meaningless.**
@@ -54,7 +56,7 @@ Run a Karpathy-style optimization loop over the plugin's own prompt assets.
 
 ## State
 
-- Active state: `${CLAUDE_PLUGIN_DATA}/state/loop-active.json`
+- Active state: `<plugin-data>/state/loop-active.json`
 - Artifacts: `.captures/loop-<run_id>/`
 - Bundled suites: `benchmarks/loop/*.json`
 

@@ -248,4 +248,4 @@ artifact.md`의 결과는 `PASS`, `FAIL`, `UNPROVEN`, `UNCHECKED` 중 하나이�
 - [아키텍처](architecture.ko.md) — 런타임 경계와 상태 모델
 - [변경 이력](../CHANGELOG.md) — 릴리스와 마이그레이션 기록
 
-*버전 3.0.2 | MIT 라이선스*
+*버전 3.0.3 | MIT 라이선스*

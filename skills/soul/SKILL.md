@@ -4,6 +4,8 @@ description: "Use when observing user patterns and synthesizing a persistent ide
 effort: high
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **Observation is not judgment. Record patterns only.**
@@ -121,7 +123,7 @@ the observation a second time.
 
 ## Storage
 
-Under `CLAUDE_PLUGIN_DATA` when set, otherwise `<plugin>/.data`. The hooks, the MCP handlers, and
+Under the resolved `<plugin-data>` path. The hooks, the MCP handlers, and
 this skill must all use the same layout — they did not, and that is what made half the pipeline
 invisible to the other half.
 
@@ -132,7 +134,7 @@ invisible to the other half.
 | `soul/soul-active.json` | hooks | Session and observation counters, `proposal_due` flag |
 | `soul/archive/` | this skill (`reset`) | Archived profiles |
 
-Set `CLAUDE_PLUGIN_DATA` to keep this outside the plugin directory. Without it the store sits in the
+Resolve `<plugin-data>` to a durable location to keep this outside the plugin directory. Otherwise the store sits in the
 plugin install and does not survive a reinstall.
 
 ## Subagents

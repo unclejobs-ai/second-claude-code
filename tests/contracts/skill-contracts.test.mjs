@@ -6,6 +6,30 @@ import { resolveReviewAggregationConfig } from "../../hooks/lib/review-config.mj
 
 const root = process.cwd();
 
+test("Codex-exposed skills use the host-neutral runtime path contract", () => {
+  const runtimeContract = path.join(root, "skills", "runtime-paths.md");
+  assert.equal(existsSync(runtimeContract), true, "skills/runtime-paths.md must define portable paths");
+
+  for (const skillDir of readdirSync(path.join(root, "skills"), { withFileTypes: true })) {
+    if (!skillDir.isDirectory()) continue;
+    const skillPath = path.join(root, "skills", skillDir.name, "SKILL.md");
+    if (!existsSync(skillPath)) continue;
+    const contents = readFileSync(skillPath, "utf8");
+    assert.doesNotMatch(
+      contents,
+      /CLAUDE_PLUGIN_(?:ROOT|DATA)/,
+      `${skillDir.name} exposes a Claude-only runtime path to Codex`
+    );
+    if (/<plugin-(?:root|data)>/.test(contents)) {
+      assert.match(
+        contents,
+        /\.\.\/runtime-paths\.md/,
+        `${skillDir.name} must load the host-neutral runtime path contract`
+      );
+    }
+  }
+});
+
 function read(relPath) {
   return readFileSync(path.join(root, relPath), "utf8");
 }

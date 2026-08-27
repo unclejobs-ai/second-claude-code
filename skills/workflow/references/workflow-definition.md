@@ -135,7 +135,7 @@ Note: The `write` step passes `--skip-research` and `--skip-review` because rese
 
 ## State Schema
 
-Active workflow state is saved at `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`:
+Active workflow state is saved at `<plugin-data>/state/workflow-active.json`:
 
 ```json
 {

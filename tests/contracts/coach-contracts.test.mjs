@@ -66,11 +66,13 @@ test("every shipped manifest agrees with the skill count on disk and with each o
   ).length;
 
   const plugin = JSON.parse(read(".claude-plugin/plugin.json"));
+  const codexPlugin = JSON.parse(read(".codex-plugin/plugin.json"));
   const marketplace = JSON.parse(read(".claude-plugin/marketplace.json"));
   const pkg = JSON.parse(read("package.json"));
 
   const descriptions = [
     plugin.description,
+    codexPlugin.description,
     marketplace.metadata?.description,
     ...(marketplace.plugins || []).map((entry) => entry.description),
   ].filter(Boolean);
@@ -81,6 +83,7 @@ test("every shipped manifest agrees with the skill count on disk and with each o
 
   const versions = [
     plugin.version,
+    codexPlugin.version,
     pkg.version,
     marketplace.metadata?.version,
     ...(marketplace.plugins || []).map((entry) => entry.version),
@@ -202,13 +205,13 @@ test("the coach skill keys on divergence, states a recipe, and stays short", () 
   assert.ok(checkAt < forkTestAt, "the precondition check should come before any judgement");
   assert.match(body, /plugin-install-path error/, "SKILL.md should name the failure the check catches");
 
-  // The precondition is read and run from a user project directory, never from the plugin's own
-  // checkout — a bare relative path resolves against the caller's cwd and only "worked" before by
-  // accident, the exact bug this phase closed (see C3, whole-branch review, 2026-08-10).
+  // The precondition is read and run from a user project directory. The host-neutral placeholder
+  // resolves through the current skill location in Codex or the host variable in Claude Code; a
+  // bare relative path would still resolve against the caller's cwd.
   assert.match(
     body,
-    /node "\$\{CLAUDE_PLUGIN_ROOT\}\/scripts\/coach-runner\.mjs" status --json/,
-    "the precondition check should resolve the runner via CLAUDE_PLUGIN_ROOT, not a path relative to the caller's cwd"
+    /node "<plugin-root>\/scripts\/coach-runner\.mjs" status --json/,
+    "the precondition check should resolve the runner through the host-neutral plugin root"
   );
 
   // Sixteen of this plugin's eighteen skills answer a discipline failure that did not occur here,

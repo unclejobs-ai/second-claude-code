@@ -108,3 +108,52 @@ test("a fresh packaged plugin initializes without running a package manager", {
     rmSync(pluginRoot, { recursive: true, force: true });
   }
 });
+
+test("the Codex-native plugin entry initializes without Claude path interpolation", () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  const manifestPath = join(repoRoot, ".codex-plugin", "plugin.json");
+
+  assert.equal(
+    existsSync(manifestPath),
+    true,
+    "release must include a native Codex plugin manifest"
+  );
+
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  const mcpConfigPath = join(repoRoot, manifest.mcpServers);
+  const mcpConfig = JSON.parse(readFileSync(mcpConfigPath, "utf8"));
+  const pdcaState = mcpConfig.mcpServers["pdca-state"];
+  assert.equal(
+    mcpConfig.mcpServers.playwright.enabled,
+    false,
+    "Codex must not start the optional Playwright integration by default"
+  );
+  assert.equal(
+    mcpConfig.mcpServers.mmbridge.enabled,
+    false,
+    "Codex must not start the optional MMBridge integration by default"
+  );
+  const initialize = JSON.stringify({
+    jsonrpc: "2.0",
+    id: 1,
+    method: "initialize",
+    params: {
+      protocolVersion: "2025-06-18",
+      capabilities: {},
+      clientInfo: { name: "scc-codex-startup-test", version: "1.0.0" },
+    },
+  }) + "\n";
+
+  const result = spawnSync(pdcaState.command, pdcaState.args, {
+    cwd: join(repoRoot, pdcaState.cwd),
+    env: process.env,
+    input: initialize,
+    encoding: "utf8",
+    timeout: 3_000,
+  });
+
+  assert.equal(result.signal, null, `Codex MCP startup timed out: ${result.stderr}`);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /\"id\":1/);
+  assert.match(result.stdout, /\"serverInfo\"/);
+});

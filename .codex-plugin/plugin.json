@@ -1,0 +1,25 @@
+{
+  "name": "scc",
+  "version": "3.0.3",
+  "description": "PDCA workflow toolkit for Claude Code and Codex: 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 31 MCP tools. Includes decision standards, independent review gates, artifact history, and advisory cross-plugin discovery.",
+  "author": {
+    "name": "Unclejobs",
+    "email": "parkeungje@gmail.com"
+  },
+  "homepage": "https://github.com/unclejobs-ai/second-claude-code",
+  "repository": "https://github.com/unclejobs-ai/second-claude-code",
+  "license": "MIT",
+  "keywords": [
+    "knowledge-work",
+    "pdca",
+    "research",
+    "writing",
+    "strategy",
+    "review",
+    "workflow",
+    "second-brain",
+    "automation"
+  ],
+  "mcpServers": "./.mcp.json",
+  "skills": "./skills/"
+}

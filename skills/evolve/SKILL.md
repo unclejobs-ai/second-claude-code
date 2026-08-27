@@ -5,6 +5,8 @@ effort: high
 disable-model-invocation: true
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **Every evolve check is hand-authored by the maintainer — never by the optimized model class — and it scores structural conformance of the prompt asset, not runtime behavior. The maintainer's merge review of `winner.diff` is the final behavioral gate.**
@@ -62,7 +64,7 @@ A check requiring **new** content the asset lacks (a missing heading, an added s
 
 ## State
 
-- Provenance ledger: `${CLAUDE_PLUGIN_DATA}/evolve/failures.jsonl` (local-only)
+- Provenance ledger: `<plugin-data>/evolve/failures.jsonl` (local-only)
 - Asset attribution map: `config/evolve-asset-map.json`
 - Generated suites: `benchmarks/loop/evolve-*.json`
 - Run artifacts: `.captures/loop-<run_id>/` (owned by the loop engine)

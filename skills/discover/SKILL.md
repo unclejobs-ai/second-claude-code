@@ -4,6 +4,8 @@ description: "Use when the current skills cannot handle a task and new skills ar
 effort: low
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before file or script operations.
+
 ## Iron Law
 
 > **Check existing tools before installing new ones.**
@@ -78,7 +80,7 @@ Each criterion is scored 1-5. The weighted sum produces a final score (1.0-5.0).
 
 ## Output Format
 
-Return a ranked list AND save results to `${CLAUDE_PLUGIN_DATA}/discovers/{query-slug}.json`:
+Return a ranked list AND save results to `<plugin-data>/discovers/{query-slug}.json`:
 ```json
 {
   "query": "...",

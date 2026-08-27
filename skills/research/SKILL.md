@@ -4,6 +4,8 @@ description: "Use when researching a topic through iterative web exploration and
 effort: high
 ---
 
+[Resolve runtime paths](../runtime-paths.md) before operations.
+
 ## Iron Law
 
 > **No guessing. If there is no data, collect it first.**
@@ -55,7 +57,7 @@ At Step 3, parse the mmbridge JSON output file as supplemental source material. 
 
 0. Auto-load `references/research-methodology.md` and `references/jina-guide.md`.
 1. Dispatch **researcher** (sonnet): run depth-appropriate Jina Search calls with varied query phrasings. If `$JINA_API_KEY` is unavailable, fall back to WebSearch + WebFetch. If mmbridge is available at medium or deep depth, dispatch it in parallel.
-2. Validate sources: reject login walls, blocked pages, empty content. For blocked URLs, run the unblock chain (`node "${CLAUDE_PLUGIN_ROOT}/skills/unblock/engine/cli.mjs" "<URL>" --json`); read the trace before any retry.
+2. Validate sources: reject login walls, blocked pages, empty content. For blocked URLs, run the unblock chain (`node "<plugin-root>/skills/unblock/engine/cli.mjs" "<URL>" --json`); read the trace before any retry.
 3. Dispatch **analyst** (sonnet): merge internal and mmbridge findings, identify gaps, and apply conflict-resolution rules from `references/research-methodology.md`.
 4. Optional second round: only when depth allows and the analyst found critical gaps.
 5. Dispatch **writer** (sonnet): synthesize the final brief with conflict annotations.
