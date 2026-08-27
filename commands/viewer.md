@@ -7,7 +7,7 @@ Open the artifact viewer. This is a tool, not a skill: it starts a server and wr
 
 ## Context
 - Current git status: !`git status --short`
-- Current PDCA state: !`cat .data/state/pdca-active.json 2>/dev/null || echo "No active PDCA state"`
+- Current PDCA state: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state/pdca-active.json" 2>/dev/null || echo "No active PDCA state"`
 
 ## Arguments
 - Optional: `--session-dir <dir>` to point at a PDCA session directory
@@ -24,8 +24,8 @@ bash "${CLAUDE_PLUGIN_ROOT}/ui/scripts/start-server.sh" \
   --dist-dir "${CLAUDE_PLUGIN_ROOT}/ui/dist"
 ```
 
-Run the first command every time. PDCA writes `.data/state` and `.data/cycles/`, not the layout the
-server reads — `viewer-session.mjs` is what projects one into the other. Skipping it serves the
+Run the first command every time. PDCA writes `${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state` and
+`${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/cycles/`, not the layout the server reads — `viewer-session.mjs` is what projects one into the other. Skipping it serves the
 previous run, or a blank page on the first run.
 
 With `--export`, run this instead and return the written file path, then offer to publish it as an Artifact:

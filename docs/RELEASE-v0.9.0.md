@@ -1,5 +1,7 @@
 # Second Claude Code — v0.9.0 Release Notes
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 > **Released**: 2026-03-29
 > **Commits**: 18 (v0.5.8 → v0.9.0)
 > **Changes**: 65 files, +6,932 / -164 lines

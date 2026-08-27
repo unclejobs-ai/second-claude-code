@@ -1,6 +1,8 @@
-# Pipeline Definition Reference
+# Workflow Definition Reference
 
-Detailed specification for defining and managing pipeline definitions, step fields, data flow, state schema, and worked examples.
+Compatibility overview for the canonical workflow specification in
+`skills/workflow/references/workflow-definition.md`. Templates in `templates/*.json` must follow
+that contract.
 
 ---
 
@@ -11,11 +13,14 @@ Each step declares:
 | Field | Required | Description |
 |-------|----------|-------------|
 | `skill` | yes | The skill to invoke (e.g., `/scc:research`) |
-| `args` | yes | Arguments string. Supports `{{variable}}` placeholders. |
+| `args` | no | Arguments string. Supports `{{variable}}` placeholders. |
 | `output` | yes | Output file path. Supports `{{variable}}` placeholders. |
-| `input_from` | no | File path(s) from a previous step's `output`. String for single input, array for multiple inputs. Supports `{{variable}}` placeholders. |
-| `on_fail` | no | `abort` (default), `skip`, or `retry` |
+| `input_from` | no | Earlier step's exact `output` path. String for one input, array for several; resolved placeholders must match the producer's resolved output. |
+| `on_fail` | no | `abort` (default), `retry` (up to two retries), or `continue` |
 | `parallel` | no | `true` to run concurrently with adjacent parallel-marked steps (if no `input_from` dependency) |
+
+`input_from` is a file path, not a step name. Only paths declared by an earlier step may be used;
+external starting files belong in `args` (for example, `--file "{{input_file}}"`).
 
 ## Data Flow
 
@@ -69,13 +74,13 @@ Runtime flags override defaults. Defaults override empty.
   "steps": [
     {
       "skill": "/scc:research",
-      "args": "\"{{topic}}\" --depth deep --sources web,news,academic --lang {{lang}}",
+      "args": "\"{{topic}}\" --depth deep --sources web --lang {{lang}}",
       "output": "{{output_dir}}/{{run_id}}-research.md",
       "on_fail": "abort"
     },
     {
       "skill": "/scc:analyze",
-      "args": "--framework {{framework}} --with-research --depth deep --lang {{lang}}",
+      "args": "--framework {{framework}} --with-research --depth thorough --lang {{lang}}",
       "input_from": "{{output_dir}}/{{run_id}}-research.md",
       "output": "{{output_dir}}/{{run_id}}-analysis.md",
       "on_fail": "abort"
@@ -93,26 +98,24 @@ Runtime flags override defaults. Defaults override empty.
 
 ## Preset Details
 
-**autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and loop incorporates feedback. Best for polished deliverables.
+**autopilot**: The default end-to-end workflow. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and refine incorporates feedback. Best for polished deliverables.
 
-**quick-draft**: Skips analysis and review. Research feeds directly into write with `--skip-research` disabled so the write step uses the research output as context. Best for time-sensitive first drafts that will be manually refined.
+**quick-draft**: Skips analysis and the explicit review step. Research feeds directly into write with `--skip-research` enabled so write does not repeat upstream research. Best for time-sensitive first drafts that will be manually refined.
 
-**quality-gate**: Takes an existing file as input (`--var input=path/to/file.md`), runs review, then loop to fix issues. Best for polishing existing content without re-researching.
+**quality-gate**: Takes an existing file as input (`--var input_file=path/to/file.md`), runs review, then refine to fix issues. Best for polishing existing content without re-researching.
 
 ## State Schema
 
-- Active state: `${CLAUDE_PLUGIN_DATA}/state/pipeline-active.json`
-- Run log: `${CLAUDE_PLUGIN_DATA}/pipelines/{name}-run.json`
+- Active state: `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`
+- Run log: `${CLAUDE_PLUGIN_DATA}/workflows/{name}-run.json`
 
 Canonical active keys:
 
 ```json
 {
-  "name": "market-scan",
+  "workflow_name": "market-scan",
   "run_id": "market-scan-20260320T143000",
   "current_step": 2,
-  "total_steps": 3,
-  "status": "running",
   "resolved_vars": {
     "topic": "edge computing market 2026",
     "framework": "porter",
@@ -120,6 +123,11 @@ Canonical active keys:
     "date": "2026-03-20",
     "run_id": "market-scan-20260320T143000",
     "output_dir": "."
-  }
+  },
+  "steps": [
+    { "name": "research", "status": "done", "output": "./research.md" },
+    { "name": "analyze", "status": "running", "output": null },
+    { "name": "write", "status": "pending", "output": null }
+  ]
 }
 ```

@@ -83,7 +83,7 @@ mmbridge security uses CWE classification. Map to internal severities per `refer
 
 mmbridge security counts as 1 additional voter (same as `--external` for other presets):
 - Without mmbridge: 2/3 pass (3 internal reviewers)
-- With mmbridge: 2/4 pass (3 internal + 1 mmbridge)
+- With mmbridge: 3/4 pass (3 internal + 1 mmbridge; `Math.round(0.67 * 4)`)
 
 ## Academic Preset
 
@@ -112,7 +112,7 @@ The `academic` preset activates academic-focused review for research papers, the
 
 Uses 4 reviewers (same gate logic as other presets):
 - 3/4 pass (4 internal reviewers)
-- With `--external`: 3/5 pass (4 internal + 1 external)
+- With `--external`: 4/5 pass (4 internal + 1 external; `Math.round(0.75 * 5)`)
 
 ## Critic Output Format
 
@@ -143,7 +143,9 @@ Same-session reviewers on the same model are not independent. For `content`, `st
 - 3-reviewer presets (`content`, `strategy`, `code`): pass with 2/3 approvals
 - 4-reviewer preset (`academic`): pass with 3/4 approvals
 - 2-reviewer preset (`quick`): pass only with 2/2 unanimous approval
-- 5-reviewer preset (`full`): pass with 3/5 approvals (`round(0.67 * 5)`). The hook uses `Math.round`, not `ceil`.
+- 5-reviewer preset (`full`): pass with 3/5 approvals (`Math.round(0.67 * 5)`). The hook uses `Math.round`, not `ceil`.
+- With `--external`, the external result is one additional voter and the hook recomputes the requirement over
+  the larger total: 3/4 for 3-reviewer presets, 4/5 for `academic`, 3/3 for `quick`, and 4/6 for `full`.
 
 **Final verdicts**: `APPROVED`, `MINOR FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`
 - `NEEDS IMPROVEMENT` = threshold not met but no Critical findings (substantive rework needed)
@@ -270,7 +272,8 @@ When mmbridge is not found, check for standalone CLIs (`kimi`, `codex`, `gemini`
 
 1. Parse the mmbridge JSON output file for findings with severity markers.
 2. Map severities per `references/mmbridge-integration.md` § Severity Mapping.
-3. Add the external review as 1 voter. A 3-reviewer preset becomes 4 voters with `--external`.
+3. Add the external review as 1 voter. A 3-reviewer preset becomes 4 voters with `--external`, so its
+   requirement becomes 3/4 under the default `Math.round(0.67 * total_voters)` gate.
 4. Deduplicate against internal findings per `references/consensus-gate.md`.
 
 ## Gotchas

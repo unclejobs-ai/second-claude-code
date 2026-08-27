@@ -1,3 +1,5 @@
+[한국어](translate.ko.md)
+
 # Translate
 
 > Use when translating content between English and Korean while preserving formatting, voice, and technical accuracy.
@@ -19,22 +21,22 @@ Translate this into Korean, natural style, preserve the formatting:
 ## Quick Start
 
 Install the plugin, then run its first skill. The agent auto-detects
-your project type and loads the right hook chain before each checkpoint.
+your project instructions and applies the relevant checkpoint rules.
 ```
 
 **Process:**
 1. Language detection -- source identified as English; the request names the target ("into Korean"), so no clarifying question is needed. Style and format map to `--style natural --format preserve`.
 2. Soul check -- `.data/soul/SOUL.md` exists and its `## Tone Rules` section calls for short, declarative sentences and minimal nested honorifics. This constrains the `natural`-style draft on top of the language default.
-3. Glossary load -- `references/glossary.md` maps "plugin" → 플러그인, "agent" → 에이전트, "hook" → 훅, "checkpoint" → 체크포인트. Mapped terms are used verbatim rather than any alternate phrasing.
-4. Draft -- Smeargle (writer, opus) produces the Korean draft: natural-mode restructuring, the soul tone constraint, and the four glossary terms applied, with the `##` heading kept as a heading.
-5. QA -- Ditto (editor, opus) checks accuracy and confirms the heading and paragraph shape survived (`--format preserve`). One Major finding: "hook chain" was rendered with a synonym instead of the glossary term 훅 in one clause.
-6. Fix -- the Major finding is corrected before saving; no Minor findings remained.
+3. Glossary load -- `references/glossary.md` maps terms such as "plugin" → 플러그인, "agent" → 에이전트, and "checkpoint" → 체크포인트. Mapped terms are used consistently.
+4. Draft -- Smeargle (writer, opus) produces the Korean draft with natural-mode restructuring and the `##` heading kept as a heading.
+5. QA -- Ditto (editor, opus) checks accuracy, glossary use, and paragraph shape under `--format preserve`.
+6. Fix -- Critical and Major findings are corrected before saving; Minor findings may remain.
 7. Auto-save -- written to `.captures/translate-en-to-ko-quick-start-2026-07-12.md`.
 
 **Output excerpt:**
 > ## 빠른 시작
 >
-> 플러그인을 설치하고 첫 스킬을 실행하세요. 에이전트가 프로젝트 유형을 자동으로 감지해 각 체크포인트 전에 알맞은 훅 체인을 불러옵니다.
+> 플러그인을 설치하고 첫 스킬을 실행하세요. 에이전트가 프로젝트 지침을 읽고 각 체크포인트에 맞는 규칙을 적용합니다.
 
 ## Options
 

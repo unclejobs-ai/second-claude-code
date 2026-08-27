@@ -1,5 +1,9 @@
 # Hermes Operator Skillpack
 
+> **Inactive integration**: Hermes is not part of the active Second Claude Code runtime. The
+> skillpack and examples below are reference-only until a Hermes operator explicitly installs and
+> runs them.
+
 These files are **external operator assets** for Hermes users.
 
 They are not wired into the Second Claude Code runtime. They exist so a Hermes

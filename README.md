@@ -1,411 +1,254 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-3.0.1-blue)
+![version](https://img.shields.io/badge/version-3.0.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code
 
-**A Claude Code plugin that runs the whole knowledge-work cycle — research, draft, review, revise — from a single prompt.**
+Second Claude Code is a Claude Code plugin for research, writing, analysis, review, and revision.
+It provides **15 skills** and **3 tool-only commands**. Use one skill directly, or explicitly
+choose `/scc:pdca` when you want the Plan → Do → Check → Act cycle with phase gates.
 
-You type one line. Researchers crawl 20+ sources. An analyst finds the patterns. A writer drafts 3,000 words — and before you ever see it, five reviewers are already tearing the draft apart. One checks the logic, one attacks the weakest claim, one verifies every number.
-
-The point isn't that it writes. It's that **it won't hand you the first draft.**
+It does not auto-dispatch a skill from every prompt. Claude Code's normal skill/command flow can
+select a matching skill from its description; use a slash command when you need a predictable entry
+point.
 
 [![Second Claude Code — PDCA loop](docs/images/thumbnail.png)](https://www.scenesteller.com/studio/share/G2vdkxkjpj)
-<sub>Image created with [SceneSteller](https://www.scenesteller.com/studio/share/G2vdkxkjpj)</sub>
 
-![One prompt to finished output](docs/images/hero.svg)
-
-[Architecture](docs/architecture.md) · [User Manual](docs/notion-manual.md) · [Skill Guides](docs/skills/) · [Changelog](CHANGELOG.md) · [Issues](https://github.com/unclejobs-ai/second-claude-code/issues)
-
----
+**Start here:** [User manual](docs/notion-manual.md) · [Skill index](docs/skills/) ·
+[Command and document index](docs/README.md) · [Architecture](docs/architecture.md)
 
 ## Install
+
+Run the supported marketplace flow:
 
 ```bash
 claude plugin marketplace add unclejobs-ai/second-claude-code
 claude plugin install scc
 ```
 
-Start a session and just talk. No slash commands to memorize — the router reads intent, in English or Korean.
+Start a new Claude Code session after installing. Check the installation with:
 
-```
-Research the current state of AI agent frameworks and write a report
-AI 에이전트 알아보고 보고서 써줘
+```bash
+claude plugin list
 ```
 
-Set `CLAUDE_PLUGIN_DATA` to a path outside the plugin directory before you start. Runtime state — PDCA runs, cycle memory, and your `SOUL.md` profile — is written under the plugin install without it, and a reinstall wipes that directory.
+To update an existing v3 installation:
+
+```bash
+claude plugin update scc
+```
+
+Restart Claude Code after an update. Version 3 uses the `scc` command namespace, so commands look
+like `/scc:write` and `/scc:review`.
+
+If you are migrating from a pre-v3 installation, remove the old cached plugin and install the new
+name. If the old entry is present, run:
+
+```bash
+claude plugin uninstall second-claude-code
+claude plugin install scc
+```
+
+If `second-claude-code` is not listed, leave it uninstalled and run the normal `scc` install.
+Reopen the session before using the new namespace.
+
+Runtime data defaults to `.data/` in the plugin directory. Set `CLAUDE_PLUGIN_DATA` to a durable
+path if you want runs, cycle memory, soul data, and preferences to survive plugin replacement:
 
 ```bash
 export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
 ```
 
-Decisions are unaffected: standards live in your project under `.scc/`, which is where they belong.
+The `pdca-state` MCP server is shipped as a self-contained bundle. A fresh install does not need
+`npm install`, a startup dependency download, or a local `node_modules` directory for that server.
+Playwright and MMBridge are separate optional MCP integrations and may have their own setup.
 
-Nothing happening? `claude plugin list` to confirm the install.
+## Choose an entry point
 
----
-
-## Why
-
-- **Decisions outlive the session.** When a question has two defensible answers, it asks instead of guessing, then writes the answer to your project as a standard — the direction you picked, the ones you rejected, and why each lost. The next session reads it before it starts.
-- **It refuses its own output.** Three to five reviewers with different lenses attack every draft. A review that returns zero findings is treated as a rubber stamp, not a pass.
-- **Failures route by cause.** Thin research goes back to Plan. Botched execution goes back to Do. A rough edge goes to Refine. Not everything is "try again."
-- **Gates are checks, not vibes.** Plan can't reach Do without 5 distinct sources and an approved plan. Each gate names what's missing.
-- **It learns your voice.** `SOUL.md` holds your tone rules and anti-patterns, and the tone reviewer enforces those — not a generic style guide.
-- **Every run leaves a record.** Which gates fired, what each reviewer caught, every re-entry and why. Exportable as one shareable page.
-- **Nothing else required.** No API key, no second plugin, no service. Everything above runs on this plugin alone.
-
----
-
-## The Loop
-
-Every prompt runs through Plan → Do → Check → Act, with hard gates between phases.
-
-```
-"Research AI agents and write a report"
-
-[Plan]  Crawl 20+ sources, find patterns, synthesize a brief
-        ↓ gate: 5 distinct sources + an approved plan
-[Do]    Write a full draft grounded in that research
-        ↓ gate: complete artifact, findings integrated
-[Check] 3–5 reviewers run in parallel, each on a different dimension
-        ↓ gate: score + vote thresholds; any Critical blocks
-[Act]   Action Router reads the failure and picks where to go back to
-```
-
-The Action Router is the part that matters. When review finds a problem it classifies the root cause and re-enters the phase that caused it — a research gap goes back to research, not to a generic retry. That's why the second pass is dramatically better than the first, and why runs converge instead of looping.
-
-![PDCA Cycle](docs/images/pdca-cycle.svg)
-
----
-
-## Standards — the part that survives the session
-
-You settle something on Tuesday. On Thursday a fresh session proposes the option you already rejected, because nothing on disk says you rejected it.
-
-`/scc:coach` asks when a request has more than one defensible direction — the test is whether another competent agent reading the same evidence could land somewhere else, not whether this one feels unsure. You pick. It writes the answer into **your project**, not into a chat log:
-
-```
-.scc/standards/voice-two-track/STANDARD.md
-```
-
-The record carries the direction you chose, every option that lost and why, what would reopen the question, and any checks it can be verified with. Sessions read it at startup. Retiring one keeps the file and flips it to `superseded`, because the rejected options are the part that stops the same argument from happening a third time.
-
-Then the standards check the work:
-
-```bash
-/scc:standard-check drafts/launch-post.md
-```
-
-```
-FAIL no-hype / regex-absent — the target contains "단순히", which /단순히/ forbids
-UNPROVEN no-hype — adversarial, needs an independent reviewer: does this read without overstatement?
-  record answers against target_sha256 d0281896…
-```
-
-Checks are data, not code — five fixed checkers with structured arguments, and a standard carrying a `run:` field is rejected outright rather than executed, because standards travel through repositories. Questions no regex can settle stay `UNPROVEN` until a reviewer answers them, and the answer is bound to the exact bytes they read: edit the draft and it goes back to unproven. The tool that grades the work never records the passing grade.
-
----
-
-## Skills
-
-15 skills, each deep enough that you never have to pick between eighty. Say what you want; the router handles the rest. Slash commands (`/scc:write`, `/scc:review`, …) are there when you want to be precise.
-
-**The whole cycle**
-
-| Skill | What it does |
+| You want to… | Use |
 |---|---|
-| `pdca` | Research → write → review → route back, until it passes |
+| Research a topic and save a brief | `/scc:research` |
+| Write an article, report, newsletter, or other supported format | `/scc:write` |
+| Review an existing artifact | `/scc:review` |
+| Revise from review findings | `/scc:refine` |
+| Run all four PDCA phases | `/scc:pdca` |
+| Use a judgment-free utility | `/scc:viewer`, `/scc:unblock`, or `/scc:standard-check` |
 
-**Plan — gather**
+Natural-language requests are fine when Claude Code's normal skill flow selects the entry point.
+For direct use, include the command explicitly:
 
-| Skill | What it does |
-|---|---|
-| `coach` | Puts a fork with more than one defensible direction to you, then records the answer as a standard |
-| `research` | 20+ sources crawled, patterns synthesized, brief delivered |
-| `collect` | Save a URL or note; it lands PARA-classified, not in a pile |
-| `discover` | Finds and installs the skill you don't have yet |
-
-**Do — produce**
-
-| Skill | What it does |
-|---|---|
-| `write` | Article, report, newsletter — research-backed and review-verified |
-| `analyze` | 15 strategy frameworks (SWOT, Porter, RICE…) applied properly, not name-dropped |
-| `workflow` | Chain skills into a pipeline you can rerun with one argument changed |
-| `batch` | Splits a large task into independent units and runs them at once |
-
-**Check — verify**
-
-| Skill | What it does |
-|---|---|
-| `review` | 3–5 reviewers, different lenses, consensus vote |
-
-**Act — improve**
-
-| Skill | What it does |
-|---|---|
-| `refine` | Rewrites until reviewers pass; `--dod` lets you set the bar |
-| `translate` | EN↔KO that keeps your voice instead of flattening it |
-| `soul` | Learns your tone rules across sessions and enforces them on your drafts |
-
-**Tools** — slash commands with no judgment in them, so they take no slot in the skill list
-
-| Command | What it does |
-|---|---|
-| `/scc:viewer` | Opens a run as a shareable page: gates, verdicts, every re-entry |
-| `/scc:unblock` | Fetches what WebFetch can't — 9-phase escalation, zero API keys |
-| `/scc:standard-check` | Runs your recorded standards against an artifact and reports every violation |
-
-**Maintainer-only** — slash commands, never auto-routed
-
-| Skill | What it does |
-|---|---|
-| `loop` | Benchmarks prompt assets against a fixed suite, promotes the winner on an isolated branch |
-| `evolve` | Feeds repeated gate failures back into the asset that caused them |
-
-<details>
-<summary><strong>Maintainer loops in detail</strong></summary>
-
-`loop` runs a fixed benchmark suite against prompt assets (`skills/**/SKILL.md`, `commands/*.md`, `agents/*.md`, `templates/*.md`) and promotes the best candidate only inside an isolated `codex/loop-…` branch. State is resumable in `.data/state/loop-active.json`; the leaderboard, score history, and winner diff land in `.captures/loop-<run_id>/`.
-
-```bash
-/scc:loop list-suites
-/scc:loop run write-core --targets skills/write/SKILL.md --parallel 2 --max-generations 2
+```text
+/scc:research "AI agent frameworks" --depth medium
+/scc:write --format report --skip-research report-notes.md
+/scc:review proposal.md --preset content
+/scc:refine proposal.md --max 3
 ```
 
-`evolve` closes the ring on top of it. When the same gate keeps failing, it harvests those real failures, has the **maintainer** hand-author the structural check, then hands the asset to the unmodified `loop` engine. The optimizer never writes its own success criterion, and merging the winner stays a manual decision after reading `winner.diff`.
+`write` runs its own internal review by default. Use `--skip-review` when you deliberately want
+writing without that pass. `--skip-research` is appropriate when you have already supplied real
+source material. A direct skill invocation does not have to be wrapped in PDCA.
 
-```bash
-/scc:evolve list-failures
-/scc:evolve harvest <id> --assertion '/scc:'
-/scc:evolve run evolve-<id>
-```
+## Research depth
 
-Full design and its adversarial-review history: [evolve-ouroboros-spec.md](docs/proposals/evolve-ouroboros-spec.md).
+`research` uses Jina Search as its primary search path. If Jina is unavailable or a page cannot be
+read, it falls back through WebSearch/WebFetch and the unblock or Playwright paths when available.
+Credentials, rate limits, and optional integrations affect which path is available; no particular
+provider or result count is guaranteed beyond the selected depth contract.
 
-</details>
-
----
-
-## The Review System
-
-Every output passes a multi-agent review before it reaches you.
-
-| Reviewer | What it checks |
+| Depth | Search contract |
 |---|---|
-| **Xatu** — deep reviewer | Logic, completeness, argument flow |
-| **Absol** — devil's advocate | Finds the weakest point and attacks it |
-| **Porygon** — fact checker | Every number, claim, and source |
-| **Jigglypuff** — tone guardian | Voice consistency, audience fit |
-| **Unown** — structure analyst | Readability, organization, flow |
+| `shallow` | Exactly 3 Jina Search calls; no deep-read round |
+| `medium` | Exactly 5 Jina Search calls, plus up to 2 Jina Reader deep reads |
+| `deep` | 10+ Jina Search calls, unlimited Jina Reader deep reads, and bounded gap-fill rounds |
 
-Each returns a 0.0–1.0 score plus findings tagged **Critical**, **Warning**, or **Nitpick**. The gate is dual-track: the score says how good it is, the votes say how many reviewers agree it's ready. **Any Critical finding blocks, regardless of score.**
+When the legacy WebSearch/WebFetch engine is explicitly selected or Jina is unavailable, the
+equivalent search/read calls use that fallback engine. See the [research guide](docs/skills/research.md)
+for source validation and gap handling.
 
-![Review Flow](docs/images/review-flow.svg)
+## The 15 skills and 3 tool-only commands
 
-<details>
-<summary><strong>Review presets</strong></summary>
+The skills make judgments or produce work. The three tool-only commands execute a utility and do
+not occupy a skill slot.
+
+| Skill | Purpose |
+|---|---|
+| `coach` | Settle a choice between defensible directions and record it as a project standard |
+| `research` | Search, validate sources, identify gaps, and produce a research brief |
+| `analyze` | Apply one of 15 strategic frameworks |
+| `write` | Produce a format-specific, research-backed draft |
+| `review` | Run a selected 2–5 reviewer panel and consensus gate |
+| `refine` | Apply findings and iterate toward a target |
+| `collect` | Capture URLs, notes, or excerpts into PARA-organized knowledge |
+| `workflow` | Build and run reusable skill pipelines |
+| `discover` | Find and score candidate skills; installation needs explicit approval |
+| `pdca` | Orchestrate Plan → Do → Check → Act |
+| `translate` | Translate between English and Korean while preserving format and voice |
+| `batch` | Split homogeneous work into independent parallel units |
+| `soul` | Synthesize a persistent profile of user preferences and patterns |
+| `loop` | Optimize prompt assets against fixed suites (maintainer-only) |
+| `evolve` | Evolve recurring-failure assets against maintainer-authored checks (maintainer-only) |
+
+| Tool-only command | Purpose |
+|---|---|
+| `/scc:viewer` | Open or export a run's artifact and provenance |
+| `/scc:unblock` | Run the adaptive 9-phase fallback chain for blocked URLs |
+| `/scc:standard-check` | Apply recorded project standards to one artifact |
+
+The [skill guides](docs/skills/) contain command syntax, options, examples, and limitations. The
+maintainer-only `loop` and `evolve` entries are never auto-routed. The public `/scc:loop` command
+optimizes prompt assets against a fixed benchmark suite; it is a direct maintainer entry point.
+
+## Review presets
+
+Review panels contain 2–5 specialized reviewers. The preset controls both reviewer coverage and
+the vote threshold; a Critical finding blocks the result regardless of votes.
+
+The built-in thresholds are `quick` 2/2, the 3-reviewer presets 2/3, `academic` 3/4, and `full`
+3/5. These are consensus rules, not a promise that every review will finish or pass.
 
 | Preset | Reviewers | Best for |
 |---|---|---|
 | `content` | Deep + Advocate + Tone | Articles, blogs, newsletters |
 | `strategy` | Deep + Advocate + Facts | PRDs, SWOTs, strategy docs |
 | `code` | Deep + Facts + Structure | Code review |
-| `security` | Deep + Facts + Structure | Security audit (CWE, OWASP Top 10) |
-| `academic` | Deep + Facts + Structure | Papers, research outputs, citations |
-| `quick` | Advocate + Facts | Fast validation, under a minute |
-| `full` | all 5 | Final pre-publish pass |
+| `security` | Deep + Facts + Structure | Security audit |
+| `academic` | Deep + Facts + Structure + Advocate | Papers and research outputs |
+| `quick` | Advocate + Facts | A small review panel |
+| `full` | All 5 | Broadest built-in panel |
 
-`--external` adds cross-model review through MMBridge (Kimi, Qwen, Gemini, Codex) behind an adapter protocol, so tests keep a deterministic stubbed path. Real external runs need separate setup, and they send the draft to those providers — leave it off for anything confidential.
+Use a preset directly, for example `/scc:review draft.md --preset academic`. Review can be run
+alone, or omitted from a direct write with `--skip-review`; PDCA's independent Check phase remains
+separate when PDCA is selected.
 
-</details>
+## PDCA and its gates
 
----
-
-## Under the Hood
-
-<details>
-<summary><strong>Cycle memory — the 10th run is smarter than the 1st</strong></summary>
-
-Every phase transition writes its artifact to `.data/cycles/cycle-NNN/<phase>.md` and logs the decision to that cycle's `events.jsonl`. No manual saves.
-
-When a run starts it reads `.data/cycles/insights.json` first, so it begins with what earlier runs learned. Insights older than 30 days decay in rank, and a category that keeps producing critical findings gets written up as a gotcha proposal for the maintainer to promote into a checklist.
-
-```
-.data/cycles/
-├── cycle-001/
-│   ├── plan.md / do.md / check.md / act.md
-│   ├── metrics.json
-│   └── events.jsonl
-└── insights.json
-```
-
-</details>
-
-<details>
-<summary><strong>Domain-aware gates — code and prose aren't judged the same</strong></summary>
-
-`pdca_start_run(domain=…)` loads a different contract set from `config/stage-contracts.json`, defining entry criteria, exit criteria, and Definition of Done per phase.
-
-| Domain | Plan | Do | Check | Act |
-|---|---|---|---|---|
-| **code** | Executable plan + approval gate for risky work | Scoped branch/worktree, tests, stage report | Validator proof, not worker self-report | Cleanup, handoff, CI or local verification |
-| **content** | Research brief with sources | Full draft with citations | 5-reviewer consensus: logic, facts, tone | Editorial polish, publish-ready |
-| **analysis** | Data collection + framework choice | Structured analysis output | Methodology and numbers validated | Actionable recommendations |
-| **pipeline** | Spec + rollback plan | Implementation + dry run | Integration and load tests | Deployment checklist verified |
-
-The `code` domain runs the **Code Engineering Lane** — the same four phases, tightened around executable acceptance criteria, worker/validator separation, human approval for broad changes, and an explicit handoff state.
-
-`pdca_transition` returns one of three outcomes: **PROCEED**, **REFINE** (bounded improvement round), or **PIVOT** (wrong phase — re-enter elsewhere, with retry caps).
-
-</details>
-
-<details>
-<summary><strong>17 agents across 3 model tiers</strong></summary>
-
-Cost-optimized, not all opus: **4 opus / 11 sonnet / 2 haiku**. Each agent has a focused prompt and limited tools — the writer has no web search, the reviewers don't write. Pokemon names because "Xatu found a logic gap" is easier to track in a log than "reviewer-3 found issue."
-
-| Phase | Agent | Role | Model |
-|---|---|---|---|
-| **Plan** | Eevee | Researcher — web search, collection | sonnet |
-| | Noctowl | Search specialist | haiku |
-| | Alakazam | Analyst — pattern recognition | sonnet |
-| | Mewtwo | Strategist — framework analysis | sonnet |
-| **Do** | Smeargle | Writer — long-form | opus |
-| | Arceus | Master — general execution | sonnet |
-| **Check** | Xatu | Deep reviewer — logic, structure | opus |
-| | Absol | Devil's advocate | sonnet |
-| | Porygon | Fact checker | sonnet |
-| | Jigglypuff | Tone guardian | sonnet |
-| | Unown | Structure analyst | sonnet |
-| **Act** | Ditto | Editor — refinement | opus |
-| **Infra** | Machamp | Pipeline step executor | sonnet |
-| | Magnezone | Skill candidate inspector | sonnet |
-| | Deoxys | Skill candidate scorer | sonnet |
-| | Abra | Knowledge connector | haiku |
-| | Pikachu | Soul keeper — behavior synthesis | opus |
-
-![Agent Roster](docs/images/agent-roster.svg)
-
-</details>
-
-<details>
-<summary><strong>Session-end report — the cycle leaves a dashboard behind</strong></summary>
-
-When a cycle reaches Act, `session-end` prints a summary box to the terminal:
+PDCA is an explicit orchestration path, not a requirement for every request:
 
 ```text
-┌─── PDCA Cycle #2 ───┐
-│ Plan ✓  Do ✓  Check ⚠  Act ✓  │
-│ Time: 4m  Issues: 3  Score: 74 │
-└────────────────────────────────┘
+Plan  → research and analyze a brief
+Do    → produce the artifact from the approved plan
+Check → review with the selected 2–5 reviewer preset
+Act   → route gaps to Plan, Do, or Refine
 ```
 
-Check shows `✓`, `⚠`, or `✗` depending on the verdict; score is 0–100.
+The runtime-enforced gate subset is the source of truth for whether a phase may transition:
 
-It also writes a self-contained HTML dashboard to `.data/reports/cycle-N.html` (plus a `.mmd` flow diagram) with the phase timeline, every issue the reviewers raised, and the next action — and prints the path. Generated by `hooks/lib/report-generator.mjs`, so a finished run leaves a persistent artifact instead of terminal scrollback.
+| Transition | Runtime checks include |
+|---|---|
+| Plan → Do | Required plan fields, `sources_count >= 5`, and Plan Mode approval |
+| Do → Check | Artifact exists, required sections are complete, and plan findings are integrated |
+| Check → Act | At least 2 reviewers and a standard verdict value |
+| Act → next phase/exit | A valid decision and root-cause category, plus cycle limits |
 
-</details>
+Skill guidance is broader than this runtime subset. Research methodology, source quality, reviewer
+roles, format instructions, and writing style are instructions to the skill and its agents; they
+are not a prompt hook that dispatches work, and not every narrative condition is independently
+enforced by the state MCP server. Read the [PDCA guide](docs/skills/pdca.md) for the full contracts.
 
-<details>
-<summary><strong>Hooks and state — 8 lifecycle hooks, 31 MCP tools</strong></summary>
+For code work, the **Code Engineering Lane** adds stricter acceptance, isolation, validator evidence,
+and handoff guidance on top of these same gates. It is a specialization of PDCA, not a second
+runtime.
 
-Hooks fire automatically; you never call them. `SessionStart` initializes state, `UserPromptSubmit` runs the auto-router, `SubagentStart` injects review context into the agent, `SubagentStop` aggregates reviewer consensus, `Stop` saves output and cleans up, `StopFailure` blocks delivery when the Check gate fails, and `PreCompact`/`PostCompact` serialize and restore state so a compacted session resumes mid-cycle instead of restarting.
+## Standards that survive sessions
 
-The router checks compound intent first: "research and write" matches there and routes to `pdca` immediately — the cycle is the thing that adds review and correction. Only single-purpose prompts continue to skill scoring and external plugin dispatch.
+`/scc:coach` can record a settled choice in your project:
 
-A dedicated `pdca-state` MCP server (stdio) exposes **31 tools** across PDCA state, cycle memory, soul, project memory, daemon control, session recall, and plugin orchestration. Every transition, gate decision, review score, and action route is event-sourced, so run history is queryable and recurring failure patterns are visible.
+```text
+.scc/standards/<id>/STANDARD.md
+```
 
-Full tool reference: [docs/architecture.md](docs/architecture.md).
+The record keeps the chosen direction, rejected alternatives, reopening conditions, and checks.
+Sessions can read active standards later, and `/scc:standard-check artifact.md` reports whether one
+artifact meets them. Checks can return `PASS`, `FAIL`, `UNPROVEN`, or `UNCHECKED`; the checker does
+not invent a passing judgment for an adversarial check.
 
-</details>
+## State, integrations, and background work
 
-<details>
-<summary><strong>Cross-plugin dispatch — an accelerant, not a dependency</strong></summary>
+Lifecycle hooks restore state, report active-standard literal triggers, collect reviewer results,
+and save session summaries. They do not choose or invoke a skill from a user prompt. The bundled
+`pdca-state` server exposes 31 MCP tools for PDCA state, cycle memory, soul data, project memory,
+session recall, and advisory plugin orchestration.
 
-The orchestrator scans `~/.claude/plugins/` at session start and maps what it finds to PDCA phases. If you have `coderabbit` installed, "코드 리뷰해줘" dispatches there instead of running the built-in reviewers. `commit-commands` catches "커밋해줘." Install a plugin and it appears; uninstall it and it's gone. No config files.
+Cross-plugin discovery is advisory: orchestrator tools inspect installed capabilities and return a
+ranked plan. They do not execute an external skill or command. Invoke any suggested external
+capability explicitly and review its data boundary first.
 
-**With none installed, nothing degrades** — the orchestrator finds no match and the built-in reviewers, writer, and committer handle it.
-
-One thing is pinned rather than discovered: which plugin each intent *prefers*. `INTENT_PROFILES` ships with review → `coderabbit`, act → `commit-commands`, design → `frontend-design`, memory → `claude-mem`. Drop a `plugin-preferences.json` into `CLAUDE_PLUGIN_DATA` to override it, or an empty array to remove the pin.
-
-</details>
-
-<details>
-<summary><strong>Background runs — queued, never auto-executed</strong></summary>
-
-`daemon_start_background_run` returns the command that starts the work; it doesn't run anything itself.
+Background handoff returns a Claude Code command; it does not execute queued work itself:
 
 ```bash
 claude --bg "/scc:workflow run weekly-digest"
 claude agents
 ```
 
-That's deliberate. Claude Code already ships background agents, and reimplementing them in a plugin would mean worse lifecycle handling and no crash recovery. The stronger reason is consent: this plugin gates publishing, pushing, and sending mail behind approval *in the conversation*, and a background executor has no conversation in which to ask.
-
-</details>
-
----
-
 ## Configuration
 
-Works out of the box. One optional JSON file, and every field in it is optional.
+All fields are optional. Place the file where your project or plugin configuration expects it:
 
 ```jsonc
 {
   "defaults": {
-    "research_depth": "medium",     // "shallow" | "medium" | "deep"
+    "research_depth": "medium",     // shallow | medium | deep
     "write_voice": "peer-mentor",
     "review_preset": "content",     // content | strategy | code | security | academic | quick | full
     "refine_max_iterations": 3,
-    "publish_target": "file"        // "file" | "notion"
+    "publish_target": "file"        // file | notion
   },
   "quality_gate": {
     "consensus_threshold": 0.67,
-    "external_reviewers": []        // ["kimi", "qwen", "gemini", "codex"]
+    "external_reviewers": []
   }
 }
 ```
 
----
+## Further reading
 
-## Trade-offs
+- [User manual](docs/notion-manual.md) — step-by-step entry and examples
+- [Skill guides](docs/skills/) — one page per skill
+- [Command and document index](docs/README.md)
+- [Architecture](docs/architecture.md) — runtime boundaries and state model
+- [Changelog](CHANGELOG.md) · [Issues](https://github.com/unclejobs-ai/second-claude-code/issues)
 
-Every limitation here is a choice.
+Issues and pull requests are welcome. Built by [Unclejobs](https://github.com/unclejobs-ai).
 
-- **Auto-routing gets ~95% of prompts right.** For the rest, `/scc:*` commands give you full control.
-- **Cheap agents keep high-volume work affordable** — but with many plugins active, context gets tight. Disable what you don't use.
-- **Claude Code is the tested platform.** OpenClaw, Codex, and Gemini CLI work through SKILL.md / ACP, but are experimental.
-- **Subagent results arrive complete, not streamed.** Partial results would break the gate model.
-- **Review findings come back in English** regardless of input language. Korean output is planned.
-
-Disagree with one? [Open an issue](https://github.com/unclejobs-ai/second-claude-code/issues) — the reasoning changes with new evidence.
-
----
-
-<details>
-<summary><strong>15 strategy frameworks in <code>/scc:analyze</code></strong></summary>
-
-| Category | Frameworks |
-|---|---|
-| **Strategy** | ansoff, porter, pestle, north-star, value-prop |
-| **Planning** | prd, okr, lean-canvas, gtm, battlecard |
-| **Prioritization** | rice, pricing |
-| **Analysis** | swot, persona, journey-map |
-
-Auto-selected from your prompt, or name one directly:
-
-```bash
-/scc:analyze porter "cloud infrastructure market"
-/scc:analyze rice --input features.md
-```
-
-</details>
-
----
-
-Issues and pull requests welcome. Built by [Unclejobs](https://github.com/unclejobs-ai). MIT License.
-
-Release history: [CHANGELOG.md](CHANGELOG.md)
+*Version 3.0.2 | MIT License*

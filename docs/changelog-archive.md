@@ -1,5 +1,7 @@
 # Changelog Archive (v1.2.0 and older)
 
+> **Historical snapshot**: Entries below are archived history; current changes live in [CHANGELOG.md](../CHANGELOG.md).
+
 Moved from [CHANGELOG.md](../CHANGELOG.md) — see that file for v1.3.0+.
 
 ## [1.2.0] - 2026-04-06

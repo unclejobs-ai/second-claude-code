@@ -8,12 +8,14 @@
 
 import {
   existsSync,
-  readFileSync,
   writeFileSync,
   appendFileSync,
   renameSync,
   mkdirSync,
   readdirSync,
+  openSync,
+  readSync,
+  closeSync,
 } from "fs";
 import { join } from "path";
 
@@ -33,6 +35,81 @@ const CORRECTION_PATTERNS = [
   { regex: /formal|격식|존댓말/i, signal: "formality_signal", category: "style" },
 ];
 
+// Hook boundaries receive text from files, subprocesses, and Claude's stdin.
+// Keep those boundaries finite and remove terminal/control tricks before text
+// is embedded in a prompt or persisted for a later session.
+// Reviewer output itself is capped at 96 KiB. The surrounding JSON envelope,
+// escaped characters, and future hook fields need headroom, so stdin uses a
+// larger independent boundary and rejects overflow instead of returning a
+// truncated, unparsable JSON document.
+export const HOOK_INPUT_MAX_BYTES = 512 * 1024;
+export const MAX_EXTERNAL_CONTEXT_CHARS = 12 * 1024;
+const MAX_PROFILE_CHARS = 4 * 1024;
+const MAX_OBSERVATION_SCAN_BYTES = 512 * 1024;
+const MAX_OBSERVATION_FILES = 31;
+
+/**
+ * Read at most maxBytes from a file descriptor. This avoids loading an
+ * accidentally huge SOUL/observation file just to render a small hook hint.
+ */
+export function readTextFileLimited(filePath, maxBytes = HOOK_INPUT_MAX_BYTES) {
+  let fd;
+  try {
+    fd = openSync(filePath, "r");
+    const buffer = Buffer.alloc(Math.max(1, maxBytes));
+    let offset = 0;
+    while (offset < buffer.length) {
+      const count = readSync(fd, buffer, offset, buffer.length - offset, null);
+      if (count === 0) break;
+      offset += count;
+    }
+    return buffer.subarray(0, offset).toString("utf8");
+  } catch {
+    return null;
+  } finally {
+    if (fd !== undefined) {
+      try { closeSync(fd); } catch { /* non-fatal */ }
+    }
+  }
+}
+
+/** Read bounded UTF-8 stdin for hook event payloads. */
+export function readHookStdin(maxBytes = HOOK_INPUT_MAX_BYTES) {
+  const limit = Math.max(1, Math.floor(Number(maxBytes) || HOOK_INPUT_MAX_BYTES));
+  try {
+    const buffer = Buffer.alloc(limit + 1);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const count = readSync(0, buffer, offset, buffer.length - offset, null);
+      if (count === 0) break;
+      offset += count;
+    }
+    if (offset > limit) {
+      const error = new RangeError(`hook input exceeds ${limit} bytes`);
+      error.code = "SCC_HOOK_INPUT_TOO_LARGE";
+      throw error;
+    }
+    return buffer.subarray(0, offset).toString("utf8");
+  } catch (error) {
+    if (error?.code === "SCC_HOOK_INPUT_TOO_LARGE") throw error;
+    return "";
+  }
+}
+
+/**
+ * Remove ANSI/OSC escapes, bidi overrides, and non-printing control chars.
+ * Newlines and tabs are retained because hook context is line-oriented.
+ */
+export function sanitizeExternalText(value, maxLen = MAX_EXTERNAL_CONTEXT_CHARS) {
+  return String(value ?? "")
+    .replace(/\u001b\][^\u0007]*(?:\u0007|\u001b\\)/g, "")
+    .replace(/\u001b\[[0-?]*[ -/]*[@-~]/g, "")
+    .replace(/[\u202A-\u202E\u2066-\u2069\u200B\u200C\u200D\u2060]/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, "")
+    .replace(/\r\n?/g, "\n")
+    .slice(0, maxLen);
+}
+
 // ---------------------------------------------------------------------------
 // Public API
 // ---------------------------------------------------------------------------
@@ -46,6 +123,8 @@ const CORRECTION_PATTERNS = [
 export function detectSignals(text) {
   if (typeof text !== "string" || text.length === 0) return [];
 
+  text = sanitizeExternalText(text, MAX_EXTERNAL_CONTEXT_CHARS);
+
   /** @type {{ signal: string, category: string, confidence: number, raw_context: string }[]} */
   const results = [];
 
@@ -55,7 +134,10 @@ export function detectSignals(text) {
       // Extract up to ~80 chars of surrounding context
       const start = Math.max(0, match.index - 20);
       const end = Math.min(text.length, match.index + match[0].length + 40);
-      const raw_context = text.slice(start, end).replace(/[\n\r]+/g, " ").trim();
+      const raw_context = sanitizeExternalText(
+        text.slice(start, end).replace(/[\n\r]+/g, " ").trim(),
+        400
+      );
 
       results.push({
         signal: entry.signal,
@@ -89,6 +171,7 @@ export function appendObservation(dataDir, observation) {
   const record = JSON.stringify({
     ts: new Date().toISOString(),
     ...observation,
+    raw_context: sanitizeExternalText(observation?.raw_context, 400),
   });
 
   appendFileSync(filePath, record + "\n", "utf8");
@@ -105,7 +188,7 @@ export function readSoulState(dataDir) {
   const filePath = join(dataDir, "soul", "soul-active.json");
   if (!existsSync(filePath)) return null;
   try {
-    return JSON.parse(readFileSync(filePath, "utf8"));
+    return JSON.parse(readTextFileLimited(filePath));
   } catch {
     return null;
   }
@@ -136,7 +219,7 @@ export function readSoulProfile(dataDir) {
   const filePath = join(dataDir, "soul", "SOUL.md");
   if (!existsSync(filePath)) return null;
 
-  const raw = readFileSync(filePath, "utf8");
+  const raw = sanitizeExternalText(readTextFileLimited(filePath, MAX_PROFILE_CHARS) || "", MAX_PROFILE_CHARS);
 
   // Truncate to ~250 words while preserving whole words
   const words = raw.split(/\s+/);
@@ -159,7 +242,7 @@ export function updateSoulState(dataDir, updates) {
   /** @type {object} */
   let state;
   try {
-    state = JSON.parse(readFileSync(filePath, "utf8"));
+    state = JSON.parse(readTextFileLimited(filePath));
   } catch {
     return;
   }
@@ -193,10 +276,13 @@ export function readSoulReadiness(dataDir) {
 
   if (existsSync(obsDir)) {
     try {
-      const files = readdirSync(obsDir).filter((f) => f.endsWith(".jsonl"));
+      const files = readdirSync(obsDir)
+        .filter((f) => f.endsWith(".jsonl"))
+        .sort()
+        .slice(-MAX_OBSERVATION_FILES);
       for (const file of files) {
         try {
-          const content = readFileSync(join(obsDir, file), "utf8");
+          const content = readTextFileLimited(join(obsDir, file), MAX_OBSERVATION_SCAN_BYTES) || "";
           const lines = content.split("\n").filter((l) => l.trim().length > 0);
           totalObs += lines.length;
           for (const line of lines) {
@@ -218,7 +304,7 @@ export function readSoulReadiness(dataDir) {
   const activeFilePath = join(dataDir, "soul", "soul-active.json");
   if (existsSync(activeFilePath)) {
     try {
-      const state = JSON.parse(readFileSync(activeFilePath, "utf8"));
+      const state = JSON.parse(readTextFileLimited(activeFilePath));
       proposalDue = state.proposal_due === true;
       const mode = String(state.mode || "").toLowerCase();
       learningActive = mode === "learning" || mode === "hybrid";
@@ -256,17 +342,21 @@ export function readLatestRetro(dataDir) {
     const files = readdirSync(obsDir)
       .filter((f) => f.endsWith(".jsonl"))
       .sort()
-      .reverse(); // newest first
+      .reverse()
+      .slice(0, MAX_OBSERVATION_FILES); // newest first
     for (const file of files) {
       try {
-        const content = readFileSync(join(obsDir, file), "utf8");
+        const content = readTextFileLimited(join(obsDir, file), MAX_OBSERVATION_SCAN_BYTES) || "";
         const lines = content.split("\n").filter((l) => l.trim().length > 0);
         // Iterate in reverse so the last line (most recent) is checked first
         for (let i = lines.length - 1; i >= 0; i--) {
           try {
             const obj = JSON.parse(lines[i]);
             if (obj.signal_type === "shipping") {
-              return { ts: obj.ts || "", raw_text: obj.raw_text || "" };
+              return {
+                ts: sanitizeExternalText(obj.ts || "", 128),
+                raw_text: sanitizeExternalText(obj.raw_text || "", 4 * 1024),
+              };
             }
           } catch { /* skip malformed */ }
         }

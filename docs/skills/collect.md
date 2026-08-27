@@ -1,3 +1,5 @@
+[한국어](collect.ko.md)
+
 # Collect
 
 > Use when collecting URLs, notes, files, or excerpts into structured PARA knowledge.
@@ -32,7 +34,7 @@ https://sdk.vercel.ai/docs -- save this for later
 > **Key Points:**
 > 1. Provider abstraction layer -- a single unified API wraps multiple LLM providers, solving vendor lock-in at the SDK level.
 > 2. Dual-module architecture -- Core handles generation, UI provides framework-agnostic hooks, separating computation from presentation.
-> 3. Composable middleware system -- enables wrapping and customizing model behavior without modifying the core pipeline.
+> 3. Composable middleware system -- enables wrapping and customizing model behavior without modifying the core implementation.
 >
 > **Connection:** "Composable architecture with small surface area" -- linked to design-principles.md Principles #1 and #7.
 
@@ -89,4 +91,4 @@ graph TD
 | `research` | Archive findings from a research session |
 | `discover` | Save metadata about discovered skills |
 | `loop` | Collect the final approved draft |
-| `pipeline` | Can be a step that persists upstream output to the knowledge base |
+| `workflow` | Can persist an upstream file as a step in a saved workflow |

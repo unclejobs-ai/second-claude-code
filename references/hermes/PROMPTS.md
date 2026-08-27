@@ -1,5 +1,8 @@
 # Hermes Operator Prompts
 
+> **Inactive integration**: These prompts are reference-only. They do not activate Hermes or run
+> external coding agents from the Second Claude Code runtime.
+
 These are ready-to-use operator prompts for Hermes after the bundled skillpack
 has been installed.
 

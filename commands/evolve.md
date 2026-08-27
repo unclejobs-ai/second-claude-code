@@ -7,7 +7,7 @@ Invoke the `/scc:evolve` command to run the plugin's loaded `evolve` skill.
 
 ## Context
 - Eligible failures: !`node scripts/evolve-runner.mjs list-failures 2>/dev/null || echo '{"eligible":0,"failures":[]}'`
-- Active loop state: !`cat .data/state/loop-active.json 2>/dev/null || echo "No active loop"`
+- Active loop state: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state/loop-active.json" 2>/dev/null || echo "No active loop"`
 
 ## Subcommands
 - `list-failures [--min-recurrence N] [--asset PATH]`

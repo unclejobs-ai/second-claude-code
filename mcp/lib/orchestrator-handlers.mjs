@@ -6,7 +6,12 @@
  * phase routing.
  */
 
-import { discoverAllPlugins, getPluginCapabilities, getDispatchPlan } from "../../hooks/lib/plugin-discovery.mjs";
+import {
+  discoverAllPlugins,
+  getPluginCapabilities,
+  getDispatchPlan,
+  isValidPluginIdentifier,
+} from "../../hooks/lib/plugin-discovery.mjs";
 
 // ---------------------------------------------------------------------------
 // Tool handlers
@@ -43,7 +48,7 @@ export function handleOrchestratorListPlugins() {
  * @param {{ plugin: string }} input
  */
 export function handleOrchestratorGetPlugin({ plugin } = {}) {
-  if (typeof plugin !== "string" || plugin.trim() === "") {
+  if (typeof plugin !== "string" || plugin.trim() === "" || !isValidPluginIdentifier(plugin.trim())) {
     throw new Error("plugin name is required");
   }
 
@@ -85,6 +90,8 @@ export function handleOrchestratorHealth() {
   const withSkills = result.plugins.filter((p) => p.skills.length > 0);
   const withMcp = result.plugins.filter((p) => p.mcp_servers.length > 0);
   const withCommands = result.plugins.filter((p) => p.commands.length > 0);
+  const routable = result.plugins.filter((p) => p.skills.length > 0 || p.commands.length > 0);
+  const ready = routable.length > 0;
 
   return {
     total_plugins: result.total_plugins,
@@ -93,8 +100,12 @@ export function handleOrchestratorHealth() {
     plugins_with_commands: withCommands.length,
     external_skills_available: result.total_skills,
     external_mcp_available: result.total_mcp_servers,
-    ready: result.total_plugins > 0,
-    status: result.total_plugins > 0 ? "healthy" : "no_plugins_detected",
+    ready,
+    status: result.total_plugins === 0
+      ? "no_plugins_detected"
+      : ready
+        ? "healthy"
+        : "no_routable_plugins",
     plugin_names: result.plugins.map((p) => p.name),
   };
 }

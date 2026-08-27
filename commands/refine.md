@@ -6,7 +6,7 @@ argument-hint: '"raise this to 4.5/5" --max 3'
 Invoke the `/scc:refine` command for iterative improvement through the `refine` skill.
 
 ## Context
-- Active refine loop: !`cat .data/state/refine-active.json 2>/dev/null || echo "No active loop"`
+- Active refine loop: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state/refine-active.json" 2>/dev/null || echo "No active loop"`
 
 ## Arguments
 - First argument: improvement goal (quoted string)

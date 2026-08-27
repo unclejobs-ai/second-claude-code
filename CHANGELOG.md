@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.0.2] - 2026-08-27
+
+### Fixed
+
+- Cross-plugin discovery now honors disabled and project-local plugin scope, rejects install-path and symlink escapes, validates and bounds plugin metadata, avoids duplicate-name overwrites, reads callable agent names from bounded frontmatter, falls back past a broken newest install, and reloads preference changes without an MCP restart.
+- Orchestrator output is explicitly advisory. The stale `<skill-check>`, `[MANDATORY]`, auto-dispatch, and tool-first instructions are gone; no `orchestrator_*` call claims that it executed an external capability.
+- Hook input, project standards, and injected memory are bounded and stripped of terminal controls and bidi overrides. Oversized lifecycle payloads fail open with a diagnostic instead of being silently truncated or crashing the host; unreadable or oversized existing standards cannot be overwritten through a collision check. MMBridge and Soul text is marked as untrusted memory/preferences, and SessionStart's external probes use a one-second default timeout.
+- Compaction restores state once through `SessionStart(source=compact)` instead of emitting a non-portable `PostCompact.additionalContext` response.
+- Parallel review aggregation is isolated by documented session/prompt identity, rejects overlapping panels in one namespace, preserves reviewer independence across differing subagent IDs and quorum-short replacement panels, and keeps legacy unnamespaced callers compatible. Verdict fallback accepts standalone verdict lines rather than prose mentions such as `NOT APPROVED`. `SubagentStop` silently persists results; `PostToolUse(Agent)` injects the completed summary into the parent session. Stop-hook re-entry uses `stop_hook_active` and records bypass reasons.
+- The `pdca-state` MCP server ships as a self-contained bundle with generated third-party license notices. A fresh plugin install initializes without running `npm`, using the network, or relying on `node_modules`; CI requires both release artifacts to be tracked, rebuilds them, and rejects drift.
+- Stop-hook completion summaries treat invalid legacy run IDs and unreadable event logs as missing timing data instead of crashing the hook with exit code 1.
+- Stop-hook persistence and report failures now fail open with a diagnostic, while the intentional incomplete-Check quality gate continues to exit 2.
+- Active documentation now matches the implementation: 15 skills plus 3 tool-only commands, preset-dependent 2–5 reviewer panels, depth-controlled research, supported write formats, runtime-enforced gate subsets, and standards-only prompt detection.
+
+### Changed
+
+- CI runs the complete deterministic test suite on Node.js 20 and 22, skips three explicitly marked network probes, and recursively checks JavaScript syntax.
+- Updated `@modelcontextprotocol/sdk` to 1.30.x and the pinned Playwright MCP package to 0.0.79.
+
 ## [3.0.1] - 2026-08-18
 
 ### Changed

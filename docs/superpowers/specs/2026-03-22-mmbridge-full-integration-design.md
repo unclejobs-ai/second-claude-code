@@ -1,5 +1,7 @@
 # MMBridge Full Integration — Phase 1 Design
 
+> **Historical snapshot**: This design records a past proposal and is not a current implementation contract.
+
 **Date**: 2026-03-22
 **Scope**: research, security, gate (Phase 1 of 3)
 **Architecture**: mmbridge-first — auto-detect and use if installed, graceful fallback if not

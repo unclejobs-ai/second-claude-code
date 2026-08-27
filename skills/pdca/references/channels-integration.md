@@ -18,7 +18,7 @@ Action needed: no
 ```
 
 Attach the gate verdict reason when the transition was gated (e.g. gate passed with
-sources_count=4).
+sources_count=5).
 
 ### 2. Review Verdict
 

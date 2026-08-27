@@ -1,3 +1,5 @@
+[한국어](standard-check.ko.md)
+
 # Standard Check
 
 > Runs the standards recorded under `.scc/standards/` against one artifact. Exit 1 on any violation.

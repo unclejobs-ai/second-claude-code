@@ -10,7 +10,7 @@
 /scc:workflow create "weekly-report" --steps research,analyze,write
 ```
 
-**동작 방식:** 스킬이 3단계 순차 실행의 JSON 정의를 생성하고, 각 단계의 출력 선언과 `input_from` 참조의 호환성을 검증한 뒤 파이프라인을 저장합니다. `/scc:workflow run "weekly-report" --topic "edge computing"`을 실행하면 모든 `{{variable}}` 플레이스홀더를 먼저 해석한 후, 각 단계를 새로운 서브에이전트로 실행하며 데이터를 파일을 통해 전달합니다.
+**동작 방식:** 재사용 가능한 워크플로우 정의를 만들고 각 단계의 출력과 `input_from`을 검증합니다. 실행 전에 변수를 해석하고, 새 서브에이전트 사이에 파일로 데이터를 전달합니다. `/scc:workflow run "weekly-report" --topic "edge computing"`으로 저장된 워크플로우를 실행합니다.
 
 ## 실전 예시
 
@@ -24,7 +24,7 @@
 2. 변수 해석 -- `{{topic}}`은 `--topic` 플래그에서, `{{framework}}`과 `{{lang}}`은 `--var` 플래그에서 해석. `{{date}}`와 `{{run_id}}`는 자동 생성. 실행 시작 전 모든 `{{...}}` 토큰이 해석 완료되었는지 검증.
 3. 실행 -- 1단계(research)가 `market-scan-20260320T143000-research.md` 출력. 2단계(analyze)가 `input_from`으로 해당 파일을 읽어 `market-scan-20260320T143000-analysis.md` 출력. 3단계(write)가 분석 결과를 읽어 최종 리포트 출력.
 4. 실패 전략 -- 1-2단계는 `abort`(기초 단계, 없으면 진행 무의미). 3단계는 `retry`(업스트림 재실행 없이 재시도 가능).
-5. 상태 추적 -- 각 단계 완료 후 `pipeline-active.json`에 `resolved_vars` 포함 활성 상태 기록. 중단 시 `current_step`부터 동일한 변수 값으로 재개.
+5. 상태 추적 -- 각 단계 완료 후 `${CLAUDE_PLUGIN_DATA}/state/workflow-active.json`에 `resolved_vars` 포함 활성 상태를 기록합니다. 중단 시 같은 변수 값으로 `current_step`부터 재개합니다.
 
 **출력 예시:**
 ```json
@@ -62,7 +62,8 @@
 
 ## 백그라운드로 돌리기
 
-워크플로가 세션을 붙잡고 있을 필요는 없어요:
+워크플로가 세션을 붙잡고 있을 필요는 없습니다. `run`에 `--background`를
+사용하세요(CLI handoff는 `claude --bg`로 실행할 수 있습니다).
 
 ```bash
 claude --bg "/scc:workflow run weekly-digest"
@@ -75,11 +76,14 @@ claude agents        # 상태 확인
 
 | 명령 | 용도 |
 |------|------|
-| `create` | 새 파이프라인 정의 |
-| `run` | 저장된 파이프라인 실행 (`--topic`, `--output_dir`, 커스텀 `--var` 플래그 사용 가능) |
-| `list` | 저장된 파이프라인 목록 조회 |
-| `show` | 파이프라인 정의 상세 보기 (`--topic` 제공 시 변수 해석 결과 표시) |
-| `delete` | 파이프라인 삭제 |
+| `create` | 재사용 가능한 워크플로우 정의 |
+| `run` | 저장된 워크플로우 실행 (`--topic`, `--output_dir`, `--background`, `--var`) |
+| `schedule` | 워크플로우 반복 daemon 작업 저장 |
+| `runs` | 최근 백그라운드 실행 확인 |
+| `recall` | 워크플로우와 연결된 세션 recall 검색 |
+| `list` | 저장된 워크플로우와 프리셋 목록 |
+| `show` | 워크플로우 정의 상세 보기 (`--topic` 제공 시 변수 해석) |
+| `delete` | 워크플로우 삭제 |
 
 ## 변수
 
@@ -92,7 +96,7 @@ claude agents        # 상태 확인
 | `{{topic}}` | `--topic "X"` 실행 플래그 | 정의에 사용된 경우 **필수** |
 | `{{date}}` | 자동 생성 | 실행 시작 시점의 `YYYY-MM-DD` |
 | `{{output_dir}}` | `--output_dir "path"` 플래그 | 현재 작업 디렉토리 |
-| `{{run_id}}` | 자동 생성 | `{pipeline_name}-{timestamp}` |
+| `{{run_id}}` | 자동 생성 | `{workflow_name}-{timestamp}` |
 
 ### 커스텀 변수
 
@@ -106,7 +110,7 @@ claude agents        # 상태 확인
 
 ### 기본값 선언
 
-파이프라인 정의의 `"defaults"`에서 기본값을 선언할 수 있습니다:
+워크플로우 정의의 `"defaults"`에서 기본값을 선언할 수 있습니다:
 
 ```json
 {
@@ -182,7 +186,7 @@ graph TD
 
 - **"변수가 해석되지 않음" 오류** -- 파이프라인 정의의 `{{variable}}` 철자를 확인하세요. 변수 이름은 영숫자와 밑줄만 허용됩니다(`[a-zA-Z_][a-zA-Z0-9_]*`). `"defaults"`에 선언되어 있거나 `--topic`, `--output_dir`, `--var key=value`로 제공되는지 확인하세요.
 - **단계가 중간에 실패** -- 실패한 단계의 `on_fail` 전략을 확인하세요. `abort`(기본값)는 전체 파이프라인을 중단합니다. `skip`은 다음 단계로 넘어갑니다. `retry`는 실패한 단계를 재실행합니다. 중단된 파이프라인을 재개하려면 동일한 파이프라인을 다시 실행하세요 -- 오케스트레이터가 마지막 저장 상태부터 이어갑니다.
-- **파이프라인을 찾을 수 없음** -- `/scc:workflow list`로 파이프라인 이름을 확인하세요. 정의 파일은 `${CLAUDE_PLUGIN_DATA}/pipelines/{name}.json`에 저장됩니다.
+- **워크플로우를 찾을 수 없음** -- `/scc:workflow list`로 이름을 확인하세요. 정의 파일은 `${CLAUDE_PLUGIN_DATA}/workflows/{name}.json`에 저장됩니다.
 - **예상과 다른 출력 위치** -- `{{output_dir}}`이 설정되었는지 확인하세요. `--output_dir` 없이 실행하면 모든 출력은 현재 작업 디렉토리로 갑니다.
 
 ## 연동 스킬

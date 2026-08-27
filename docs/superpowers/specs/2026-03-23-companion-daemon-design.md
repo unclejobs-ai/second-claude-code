@@ -1,5 +1,7 @@
 # Second Codex Companion Daemon Design
 
+> **Historical snapshot**: This design records a past proposal and is not a current implementation contract.
+
 ## Goal
 
 Add a long-running companion process without changing the core plugin identity.

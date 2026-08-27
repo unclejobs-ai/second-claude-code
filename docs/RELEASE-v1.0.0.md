@@ -1,5 +1,7 @@
 # Release Notes — v1.0.0
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 **Date**: 2025-06-29
 
 v1.0.0 is the first major release of Second Claude Code. It introduces durable cycle memory, domain-aware PDCA contracts, and comprehensive MCP handler test coverage. Test count grew from 194 to 323.

@@ -1,6 +1,6 @@
 **English** | [한국어](architecture.ko.md)
 
-# Architecture
+# Architecture — SCC 3.0.2
 
 ## Runtime Boundary
 
@@ -13,6 +13,8 @@ Second Claude Code is intentionally a Claude Code plugin, not a standalone agent
 This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the Claude Code execution model.
 
 ---
+
+## PDCA Structure
 
 Second Claude Code is structured as a PDCA-native knowledge-work system.
 The product-facing phases are `Gather → Produce → Verify → Refine`, which map
@@ -29,8 +31,8 @@ directly to `Plan → Do → Check → Act`.
 | **Orchestrator** | **Full Cycle** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
 
-The `pdca` meta-skill orchestrates the full cycle with quality gates between each phase transition.
-It auto-detects which phase to enter from natural language and chains the appropriate skills.
+The `pdca` meta-skill can orchestrate a full cycle with quality gates between phase transitions.
+It is one explicit workflow option; individual skills and commands remain usable directly.
 
 *`analyze` spans both phases: in Plan it synthesizes research findings; in Do it can apply a different framework for the production artifact.
 
@@ -42,7 +44,7 @@ It auto-detects which phase to enter from natural language and chains the approp
 | `research` | Plan | Autonomous multi-round web research |
 | `analyze` | Plan / Do | 15 strategic frameworks |
 | `write` | Do | Long-form content production |
-| `review` | Check | Multi-perspective quality gate (up to 5 parallel reviewers) |
+| `review` | Check | Preset-dependent quality gate (2–5 parallel reviewers) |
 | `refine` | Act | Iterative improvement to a target |
 | `loop` | Optimization | Fixed-suite prompt asset optimization (maintainer-only) |
 | `evolve` | Maintenance | Evolves a recurring-failure asset against a maintainer-authored check (maintainer-only) |
@@ -91,7 +93,8 @@ Four invariants hold this together.
 
 **Nobody stamps their own work.** An `adversarial` check stays `UNPROVEN` until a reviewer's answer is on file, bound to the sha256 of the artifact they actually read — edit the artifact and the answers return to unproven. Verdicts are recorded through the coach runner, never through `standard-check`, so the tool that grades the work is not the tool that records passing grades. A standard with no checks reports `UNCHECKED`: visible, not verified, and never a pass.
 
-The runner refuses to write anywhere inside the plugin install. An earlier release resolved the project root from `import.meta.url` and filed user specifications into the plugin cache; `project-root.mjs` now rejects that path, symlinks and case variants included.
+The runner refuses to write anywhere inside the plugin install; `project-root.mjs` rejects that path,
+including symlinks and case variants, before user specifications are written.
 
 ### Code Engineering Lane
 
@@ -108,7 +111,7 @@ second-claude/
 │   ├── coach/                    # Fork settlement (topology, scoring, standards under .scc/)
 │   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
 │   │   └── references/           # Phase gates + action router + question protocol
-│   ├── research/                 # Autonomous deep research (WebFetch + Playwright fallback)
+│   ├── research/                 # Depth-controlled research with layered fallbacks
 │   │   └── references/           # research-methodology.md, playwright-guide.md
 │   ├── write/                    # Content production
 │   ├── analyze/                  # Strategic framework analysis (15 frameworks)
@@ -129,19 +132,26 @@ second-claude/
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17 specialized subagents (Pokemon-themed)
 ├── commands/                     # 18 slash commands — 15 skill wrappers + 3 tools
-├── hooks/                        # Auto-routing + context injection (7 files, 8 events)
+├── hooks/                        # Lifecycle hooks + context injection (8 files, 9 events)
 │   ├── hooks.json                # Hook configuration
-│   ├── session-start.mjs         # Session startup context (PDCA, soul, orchestrator, daemon)
-│   ├── prompt-detect.mjs         # Intent detection + dynamic plugin dispatch injection
+│   ├── session-start.mjs         # Session startup state/context restore and injection
+│   ├── prompt-detect.mjs         # Active-standard literal-trigger reporting
+│   ├── subagent-start.mjs        # Review-panel context and participation tracking
+│   ├── subagent-stop.mjs         # Persist reviewer result and consensus state
+│   ├── review-result.mjs         # Inject review state into parent after Agent returns
+│   ├── session-end.mjs           # Stop gate, handoff, and cleanup
+│   ├── stop-failure.mjs          # Crash-recovery snapshot
+│   ├── compaction.mjs            # Pre/PostCompact snapshot lifecycle
 │   └── lib/                      # Shared hook modules
-│       ├── plugin-discovery.mjs  # Runtime plugin scanner + dispatch guide generator [NEW 1.4.0]
+│       ├── plugin-discovery.mjs  # Runtime plugin capability discovery for advisory plans
 │       ├── soul-observer.mjs     # Soul signal detection + readiness/retro utilities
 │       ├── event-log.mjs         # PDCA event sourcing (append-only JSONL)
 │       └── ...                   # file-mutex-sync, project-memory, review-config, report-generator, companion-daemon, utils
 ├── mcp/
-│   ├── pdca-state-server.mjs     # 31-tool MCP server (27 core + 4 orchestrator [NEW 1.4.0])
+│   ├── pdca-state-server.bundle.mjs # Self-contained 31-tool server used at runtime
+│   ├── pdca-state-server.mjs     # Unbundled source used for development and tests
 │   └── lib/
-│       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers [NEW 1.4.0]
+│       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers
 │       ├── soul-handlers.mjs          # soul_* tool handlers (inc. retro, synthesis, readiness)
 │       ├── cycle-memory.mjs           # Cycle memory persistence (phase snapshots, insights, metrics)
 │       └── ...                        # pdca-handlers, memory-handlers, etc.
@@ -157,7 +167,7 @@ second-claude/
 | `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
 | `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
 | `commands/` | Thin wrappers that route `/scc:*` invocations to the matching skill. |
-| `hooks/` | 7 hook files registered across 8 events: auto-routing, subagent init/stop, session lifecycle, compaction, and quality gates. |
+| `hooks/` | 8 hook files registered across 9 events: standard-trigger reporting, review lifecycle and parent handoff, session lifecycle, compaction, and quality gates. |
 | `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
 
 ---
@@ -216,7 +226,9 @@ Each Pokemon is chosen because its characteristics match the agent's role.
 
 ## PDCA Agent Mapping
 
-The agents map to the PDCA quality cycle with the Action Router in Act phase:
+The roster maps jobs to the PDCA quality cycle. A review run selects a preset; the five
+review roles below are the available panel, not a promise that every run dispatches all of them.
+The Action Router operates in Act:
 
 ```mermaid
 flowchart TD
@@ -299,57 +311,53 @@ The maintainer-facing `loop` command adds a second optimization loop around the 
 
 ---
 
-## PDCA Phase Gates (v1.3.0 Hardened)
+## PDCA Phase Gates
 
-The `pdca` meta-skill enforces measurable, contract-based gates at each phase transition. As of v1.3.0, every gate requires specific numeric or boolean fields rather than soft "looks complete" judgments:
+The PDCA state MCP enforces the following transition subset. Format floors and reviewer quality
+checks are documented skill contracts, not all runtime requirements:
 
 ```
-Plan  ──[Gate: brief_char_count ≥ 3,000, sources ≥ 5, facts ≥ 8,
-              quotes ≥ 1, comparison_tables ≥ 1, media ≥ 1,
-              meets_brief_floor: true]──→ Do
-Do    ──[Gate: meets_length_floor: true (format-specific minimum),
-              meets_section_floor: true, references_count ≥ 3,
-              plan_findings_integrated: true, sections_complete: true]──→ Check
-Check ──[Gate: distinct_models ≥ 2, external_model_count ≥ 1,
-              diversity_score ≥ 0.6, false_consensus_check_passed: true,
-              verdict ∈ {APPROVED, MINOR FIXES, NEEDS IMPROVEMENT, MUST FIX}]──→ Act (or Exit if APPROVED)
-Act   ──[5+ Rule fires? → full rewrite | else Action Router classifies]──→ Plan / Do / Refine
-Refine ──[Gate: Target met? DoD all PASS?]──→ Exit (or present options)
+Plan  ──[brief + ≥5 sources + analysis + Plan approval]──→ Do
+Do    ──[artifact + complete + Plan integrated]──→ Check
+Check ──[verdict + ≥2 reviewers]──→ Act
+Act   ──[decision + root cause]──→ Plan / Do / Refine / Exit
+Refine ──[skill contract]──→ Exit (or present options)
 ```
 
-### Length Floors (Do Gate)
+### Length Floors (Do skill contract)
 
-The Do phase fails the gate when the artifact does not meet a format-specific length contract. Sub-skills are re-dispatched with explicit scope direction (which Plan finding to expand, what new sub-section to add) rather than vague "make it longer" instructions.
+The Do skill checks format-specific length contracts and can request a targeted rewrite. The PDCA
+state MCP transition currently checks artifact presence/completeness and Plan integration; it does
+not make every length floor a universal runtime gate.
 
 | Format | Min chars (body) | Target | Min sections | Sub-skill in Do |
 |--------|-----------------|--------|--------------|----------------|
-| Threads article (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 | `/threads` |
-| Korean tech newsletter | 10,000 | 12,000-15,000 | 6 topics | `/newsletter` |
+| Newsletter | 10,000 | format-specific | 6-stage arc | `/scc:write --format newsletter` |
 | Generic article | 4,000 | 5,000-7,000 | 5 H2 | `/scc:write` |
 | Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections | `/scc:write` |
 | SWOT/RICE/OKR doc | 3,000 | 4,000-5,000 | 4 quadrants | `/scc:analyze` |
-| Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes | `/academy-shorts` |
-| Card news (carousel) | 8-10 cards | 9-12 cards | hook + body + CTA | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | 7 sections | `/scc:write --format prd` |
+| Shorts script (60-90s) | 1,800 | format-specific | CTA | `/scc:write --format shorts` |
+| Card news (carousel) | slide-by-slide | format-specific | visual direction | `/scc:write --format card-news` |
 | Code review report | 2,500 | 3,500-5,000 | 5 dimensions | `/scc:review` |
 | Research brief | 3,000 | 4,000-6,000 | n/a | `/scc:research` |
-| Meeting notes | 2,000 | 2,500-3,500 | 5 sections | `/scc:write --format decision` |
 
 Full table and calibration principles in `skills/pdca/references/do-phase.md`.
 
 ### Domain Auto-Routing (Pre-Do Sub-Skill Selection)
 
-When PDCA enters the Do phase, the dispatcher matches the user prompt against trigger keywords and picks the most specialized sub-skill. Greedy matching is the rule: pick the most specialized sub-skill that fits, never the generic one when a specialized one exists.
+When PDCA enters the Do phase, it matches the requested artifact format against the supported write/analyze paths. Specialized external capabilities may be suggested separately, but are not invoked by the lifecycle hook.
 
 | Triggers | Sub-skill |
 |---------|-----------|
-| 스레드 / threads / @unclejobs.ai | `/threads` |
-| 뉴스레터 / newsletter | `/newsletter` |
-| 쇼츠 / shorts / 릴스 / Reels | `/academy-shorts` |
-| 카드뉴스 / card news / 캐러셀 | `/card-news` |
+| newsletter / 뉴스레터 | `/scc:write --format newsletter` |
+| article / 아티클 | `/scc:write --format article` |
+| report / 보고서 | `/scc:write --format report` |
+| shorts / 쇼츠 | `/scc:write --format shorts` |
+| social / 소셜 | `/scc:write --format social` |
+| card-news / 카드뉴스 | `/scc:write --format card-news` |
 | (no specialized match) | `/scc:write` (fallback) |
 
-Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md` (284 lines).
+Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md`.
 
 ### Reviewer Independence (Check Gate)
 
@@ -371,16 +379,11 @@ consensus is computed, so a name borrowed upstream once is not barred from every
 The standards side carries the same invariant: a fork file records `participants`, and
 `record-verdict` refuses a verdict from anyone on that list.
 
-### Reviewer Diversity (Check Gate)
+### Reviewer checks (Check skill contract)
 
-The Check phase enforces reviewer model diversity to prevent false consensus:
-
-- **Minimum 2 reviewers** (3 for `--depth deep`)
-- **Maximum 1 reviewer per model** — two reviewers on the same model produce correlated errors, not independent perspectives
-- **At least 1 external model** for `content`, `strategy`, `full` presets — Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, or Droid
-- **Diversity score ≥ 0.6** when more than 2 reviewers run — `distinct_models / total_reviewers`
-
-When all reviewers return APPROVED with average score > 0.9 and no critical findings, the cycle does NOT exit. Instead, an adversarial pass with an unused external model is automatically dispatched. Catches Goodhart-style "everyone said it's fine" failure modes.
+The review skill dispatches the selected 2–5 reviewer preset and may perform model-diversity or
+false-consensus checks. The PDCA state MCP transition itself requires only a verdict and at least
+two reported reviewers; external coverage and adversarial follow-up are optional/advisory.
 
 ### 5+ Rule (Patch vs Full Rewrite)
 
@@ -444,7 +447,7 @@ stateDiagram-v2
 
 Anything else raises `Illegal transition`. The `act → do` route exists because the Action Router classifies COMPLETENESS_GAP and FORMAT_VIOLATION as execution problems — without it, a third of the router's decisions would have nowhere to go.
 
-### Definition of Done — Refine Gate (0.5.6)
+### Definition of Done — Refine Gate
 
 The `refine` skill accepts an optional `--dod` flag: a semicolon-separated checklist of success criteria. When active:
 
@@ -464,28 +467,70 @@ Limits interactive dialogue to max 3 scope-clarifying questions:
 - Act→Plan return skips questions (research gap already identified)
 
 Phase gate checklists live in `skills/pdca/references/`.
-The `hooks/prompt-detect.mjs` auto-router has a PDCA compound layer that detects
-multi-phase intent (e.g., "알아보고 써줘") and routes to `/scc:pdca`
-before falling through to single-skill matching.
+The `hooks/prompt-detect.mjs` hook is deliberately narrow: it checks the prompt for
+literal trigger strings declared by active project standards and reports matching
+standards. It does not select or invoke a skill. PDCA selection remains part of the
+normal Claude Code skill/command flow.
 
 ---
 
 ## Lifecycle Hooks
 
-7 hook files registered across 8 events in `hooks/hooks.json` (`compaction.mjs` serves both PreCompact and PostCompact):
+8 hook files registered across 9 events in `hooks/hooks.json` (`compaction.mjs` serves both PreCompact and PostCompact):
 
 | Event | Hook file | Behavior |
 |-------|-----------|----------|
-| `SessionStart` | `session-start.mjs` | Session banner + PDCA state initialization |
-| `UserPromptSubmit` | `prompt-detect.mjs` | External plugin dispatch + PDCA compound + single-skill patterns |
-| `SubagentStart` | `subagent-start.mjs` | Review session context injection (added in 0.5.1) |
-| `SubagentStop` | `subagent-stop.mjs` | Reviewer consensus aggregation |
-| `Stop` | `session-end.mjs` | Session cleanup |
-| `StopFailure` | `stop-failure.mjs` | Check-phase quality gate enforcement (added in 0.5.1) |
+| `SessionStart` | `session-start.mjs` | Session banner plus available state/context restoration and injection |
+| `UserPromptSubmit` | `prompt-detect.mjs` | Active-standard literal-trigger reporting |
+| `SubagentStart` | `subagent-start.mjs` | Review session context injection |
+| `SubagentStop` | `subagent-stop.mjs` | Silently persist reviewer output and consensus state |
+| `PostToolUse` (`Agent`) | `review-result.mjs` | Inject the persisted review summary into the parent session |
+| `Stop` | `session-end.mjs` | Session-end quality gate, handoff, and cleanup |
+| `StopFailure` | `stop-failure.mjs` | Crash-recovery snapshot (does not enforce the Check gate) |
 | `PreCompact` | `compaction.mjs` | PDCA state snapshot before context compression |
-| `PostCompact` | `compaction.mjs` | PDCA state restoration after context compression |
+| `PostCompact` | `compaction.mjs` | Retains the snapshot for the following `SessionStart(source=compact)` |
 
-`PreCompact` and `PostCompact` share the same `compaction.mjs` file. It snapshots PDCA cycle state before context window compression and restores it after, preventing mid-cycle state loss.
+`PreCompact` and `PostCompact` share the same `compaction.mjs` file. It snapshots PDCA cycle state before
+context-window compression; the following `SessionStart(source=compact)` consumes that snapshot, preventing
+mid-cycle state loss.
+
+The hooks have deliberately separate responsibilities:
+
+- `SessionStart` restores active state, crash-recovery notices, standards, memory, and environment capabilities. A compact snapshot is consumed once when the host follows compaction with `source=compact`.
+- `UserPromptSubmit` (`prompt-detect`) reports matching literal triggers from active project standards. It does not choose, invoke, or install a skill.
+- `SubagentStart` records review-panel participation and injects role context. `SubagentStop` parses reviewer output and silently persists the preset's quorum state. When the `Agent` tool returns, `PostToolUse` injects that state into the parent session and removes a completed namespaced panel.
+- `Stop` is the normal session-end path. With an active PDCA run whose Check phase is incomplete, it writes the reason to stderr and exits **2**, which asks Claude Code to continue. A session-scoped guard and the host's `stop_hook_active` retry signal prevent an infinite denial loop. Once allowed, it writes `HANDOFF.md` and performs non-blocking summaries and cleanup.
+- `StopFailure` is crash recovery, not a quality gate. It copies active PDCA state to `.data/state/pdca-crash-recovery.json`, appends an error event when possible, and exits **0** even when recovery logging fails. The next `SessionStart` surfaces the snapshot.
+
+## MCP servers
+
+`.claude-plugin/plugin.json` registers three MCP servers:
+
+| Server | Transport | Required | Role |
+|--------|-----------|----------|------|
+| `pdca-state` | stdio | Yes | 31 tools for PDCA state, cycle memory, Soul, project memory, daemon/session recall, and plugin orchestration |
+| `playwright` | stdio | Optional | Chromium access for JavaScript-rendered pages |
+| `mmbridge` | stdio | Optional | External multi-model research and review integration |
+
+### Prebundled PDCA state server
+
+The manifest starts `mcp/pdca-state-server.bundle.mjs`, a checked-in, self-contained bundle containing
+the 31-tool `pdca-state` server and its runtime dependencies. This is important at cold start: a fresh
+plugin install does not need `npm install`, network access, or a `node_modules` directory before the core
+`pdca-state` MCP tools become available. `mcp/pdca-state-server.mjs` remains the readable source used by development and
+tests; `npm run build:mcp` regenerates the bundle, and CI fails if the generated artifact drifts.
+
+The server stores runtime data below `${CLAUDE_PLUGIN_DATA}` (falling back to the plugin's `.data/`)
+and serializes state mutations with file locks. The bundled server is an installation artifact, not a
+second runtime boundary.
+
+## Cross-plugin orchestration
+
+Cross-plugin support is an explicit, advisory MCP capability. `orchestrator_list_plugins`,
+`orchestrator_get_plugin`, `orchestrator_route`, and `orchestrator_health` inspect installed plugins and
+return inventory, health, or ranked route plans. They do not execute a returned Skill, slash command,
+MCP server, or external process. A caller may review a plan and explicitly invoke a capability; the
+`prompt-detect` hook never turns a plan into automatic execution.
 
 ---
 
@@ -498,30 +543,33 @@ team_name: pdca-{topic-slug}
 lead: Arceus (orchestrator, sonnet)
 phases:
   plan:
-    parallel_agents:
-      - Eevee (researcher): "angle-1 research"
-      - Eevee (researcher): "angle-2 research"  # deep depth only
+    agent:
+      role: Eevee (researcher)
+      task: "depth-controlled research"
+    optional_parallel:
+      - mmbridge research pass  # configured, medium/deep depth only
     sequential:
       - Alakazam + Mewtwo: analyze (merged research results)
   do:
     agent: Smeargle (writer, opus)
   check:
-    parallel_agents:  # review skill handles parallelism internally
-      - Xatu, Absol, Porygon, Jigglypuff, Unown
+    parallel_agents:  # selected by the review preset (2–5 reviewers)
+      - preset-selected reviewers
   act:
     agent: Ditto (editor, opus)  # loop internal editing
 ```
 
-- Plan phase dispatches 2 research angles in parallel when `--depth deep`
-- Check phase runs 5 reviewers in parallel (handled by review skill)
+- Plan phase follows the research depth contract; a configured MMBridge pass runs in parallel at medium/deep depth
+- Check phase runs the selected 2–5 reviewer preset (handled by the review skill)
 - File ownership: each agent writes to separate output files
 
 ---
 
 ## MMBridge Integration — Optional
 
-MMBridge CLI provides multi-model AI capabilities across multiple PDCA phases.
-When installed, it auto-enhances research, review, and phase gates.
+MMBridge CLI can provide multi-model AI capabilities at integration points selected by a skill or
+caller. A configured research run may use it as an additional pass; external review remains opt-in
+through `--external`, and phase-gate checks are advisory.
 **Entirely optional** — all skills work fully without MMBridge.
 
 For detection, invocation, and error handling rules, see `references/mmbridge-integration.md`.
@@ -554,7 +602,7 @@ For detection, invocation, and error handling rules, see `references/mmbridge-in
 
 ```
 Review Dispatch
-├── Internal (always)
+├── Internal — preset selects 2–5 roles
 │   ├── Xatu / deep-reviewer (opus)
 │   ├── Absol / devil-advocate (sonnet)
 │   ├── Porygon / fact-checker (sonnet)
@@ -579,14 +627,17 @@ Review Dispatch
 
 ```
 Research Dispatch
-├── Internal (always)
-│   └── researcher(sonnet) → WebSearch x5-10
+├── researcher (sonnet)
+│   ├── Jina Search when configured
+│   ├── WebSearch + WebFetch fallback
+│   ├── /scc:unblock for hostile or empty pages
+│   └── Playwright only when needed (max 3 navigations/round)
 │
-├── External (mmbridge detected, depth medium+)
-│   └── mmbridge research --type code-aware
+├── Optional MMBridge pass (configured, medium/deep depth)
+│   └── mmbridge research (dispatched by the research skill)
 │
 └── Analyst Merge
-    ├── Internal findings + mmbridge findings
+    ├── available internal findings + optional external findings
     ├── Gap analysis
     └── Writer synthesis → Research Brief
 ```
@@ -632,7 +683,7 @@ The cycle memory module (`mcp/lib/cycle-memory.mjs`) provides durable cross-cycl
 | `handleTransition` | `pdca_transition` | Auto-saves completed phase artifact to `cycle-NNN/{phase}.md` |
 | `handleEndRun` | `pdca_end_run` | Persists cycle metrics to `cycle-NNN/metrics.json` |
 
-### MCP Tools (3 new)
+### MCP Tools
 
 | Tool | Params | Returns |
 |------|--------|---------|
@@ -648,7 +699,10 @@ Insights use a 30-day linear time-decay for weight. When a critical insight repe
 
 ## Playwright MCP — Optional Browser Research
 
-The `playwright` MCP server is registered in `.claude-plugin/plugin.json` as an optional dependency. It provides a real Chromium browser to the researcher agent (Eevee) for URLs that `WebFetch` cannot read.
+The `playwright` MCP server is registered in `.claude-plugin/plugin.json` with `optional: true`. It provides
+a real Chromium browser to the researcher agent (Eevee) for URLs that `WebFetch` cannot read. A missing
+package or cache/network failure disables this fallback only; the prebundled `pdca-state` server and its
+core tools still start normally.
 
 **This is entirely optional** — the research skill works fully without Playwright installed.
 
@@ -678,118 +732,5 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 
 ---
 
-<details>
-<summary><strong>Release History</strong></summary>
-
-## What's New in 1.4.0
-
-**Cross-Plugin Orchestration** — Second Claude Code can now discover and command *every* Claude Code plugin you have installed. The orchestrator operates through three layers:
-
-### Layer 1: Runtime Plugin Discovery
-
-`hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json` at session start and inspects each plugin's filesystem:
-
-```
-Plugin filesystem          → Capability extraction
-─────────────────────────────────────────────────
-.claude-plugin/plugin.json → name, version, description, mcpServers
-skills/*/SKILL.md          → skill names + descriptions (frontmatter parsed)
-commands/*.md              → command names + descriptions
-agents/*.md                → agent names
-.mcp.json                  → alternative MCP server declarations
-```
-
-Discovery itself has no hardcoded registry: plugins appear and disappear as the user installs and uninstalls them, and the capability map is rebuilt every session. Preference is separate — `INTENT_PROFILES` pins a preferred plugin per lifecycle intent, overridable with `plugin-preferences.json` in `CLAUDE_PLUGIN_DATA`.
-
-### Layer 2: Intent Scoring and Dispatch Planning
-
-`getDispatchPlan()` converts a keyword or PDCA phase into an intent profile, scores every installed plugin skill/command, and returns ranked invocation instructions:
-
-| Input | Intent | Current top dispatch with the verified plugin set |
-|-------|--------|---------------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem:knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design:frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit:code-review` |
-| `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog:exploring-autocapture-events` |
-
-Preferred-plugin scoring keeps common lifecycle intents stable, while generic scoring still lets newly installed plugins win when their skill or command text strongly matches the prompt. Short keywords use word-boundary checks so `bug` does not accidentally match `debugging`.
-
-### Layer 3: Proactive Auto-Dispatch
-
-The orchestrator operates at three touchpoints:
-
-```
-User types "리뷰해줘"
-  ↓
-prompt-detect hook (UserPromptSubmit)
-  ├── Calls getDispatchPlan(keyword="리뷰해줘")
-  ├── Top dispatch: Skill: coderabbit:code-review
-  └── Injects [ORCHESTRATOR]: invoke that Skill before self-processing
-  ↓
-External plugin result returns
-  ↓
-Claude integrates result into the final answer
-```
-
-PDCA still uses the same dispatcher when a full cycle enters a phase:
-
-```
-PDCA enters Check phase
-  ├── orchestrator_route phase=check
-  ├── Discovers: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── Auto-dispatches top pick: "Skill: coderabbit:code-review"
-  ↓
-Result returned → PDCA proceeds to Act phase
-  ├── orchestrator_route phase=act
-  └── Auto-dispatches: "/commit-commands:commit"
-```
-
-### MCP Tools (orchestrator_*)
-
-| Tool | Purpose | Auto-Dispatch |
-|------|---------|---------------|
-| `orchestrator_list_plugins` | Full ecosystem inventory | No |
-| `orchestrator_get_plugin` | Single plugin deep inspection | No |
-| `orchestrator_route` | Keyword/phase → matching plugins | **Yes** — returns `Skill:` strings |
-| `orchestrator_health` | Ecosystem readiness check | No |
-
-### New Subsystems
-
-```
-hooks/lib/plugin-discovery.mjs       — Filesystem scanner + capability mapper + dispatch guide generator
-mcp/lib/orchestrator-handlers.mjs    — 4 MCP tool handler implementations
-```
-
-### What Changed in Session-Start
-
-The old passive "Plugin Orchestrator" list was replaced with an **Active Plugin Dispatch** section that pre-computes per-phase routing:
-
-```
-## Active Plugin Dispatch
-📋 plan → Skill: claude-mem:knowledge-agent
-🔨 do → Skill: frontend-design:frontend-design
-🔍 check → Skill: coderabbit:code-review
-🚀 act → /commit-commands:commit
-```
-
-### What Changed in prompt-detect
-
-The old 900-token hardcoded `<skill-check>` block was replaced with `generateDispatchGuide()` — a dynamically generated table built from live plugin discovery. In addition, prompt-detect now calls `getDispatchPlan()` for each substantive prompt. If the top external match is a known lifecycle intent or a strong generic plugin match, it injects an `[ORCHESTRATOR]` instruction that requires invoking that Skill/command before self-processing. When plugins change, both the guide and the immediate dispatch target change automatically.
-
----
-
-### Soul Feedback Binding (Phase 5)
-
-- `soul_retro` — collects git shipping metrics (commit counts, streak, peak hours, trend detection)
-- `soul_get_synthesis_context` — assembles the observation data the synthesis step needs
-- `soul_get_readiness` — reports whether the pool has crossed the synthesis threshold (30 observations or 10 sessions)
-- SessionStart injects the progress gauge, the retro summary, and the synthesis call to action
-
----
-
-## Earlier releases
-
-1.3.0 and before are recorded in [CHANGELOG.md](../CHANGELOG.md). They were duplicated here for several releases, and the copies drifted from the real one.
-
-</details>
+Release history and migration notes live in [CHANGELOG.md](../CHANGELOG.md). This architecture guide
+describes the SCC 3.0.2 runtime rather than copying historical release notes.

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Stop Hook — Second Claude Knowledge Work OS
+ * Stop Hook — Session Quality Gate
  *
  * Synchronous quality gate that fires when Claude attempts to end the session.
  *
@@ -23,6 +23,7 @@ import {
   unlinkSync,
   statSync,
   readFileSync,
+  appendFileSync,
 } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -38,12 +39,15 @@ import { readEvents } from "./lib/event-log.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { readState } from "../scripts/lib/coach-state.mjs";
 import { coachBlockReason } from "./lib/coach-block.mjs";
+import { readHookStdin, readTextFileLimited, sanitizeExternalText } from "./lib/soul-observer.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR =
   process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 const STATE_DIR = join(DATA_DIR, "state");
+let activeSessionId = process.env.CLAUDE_SESSION_ID || null;
+const STOP_BYPASS_LOG = join(STATE_DIR, "stop-hook-bypass.jsonl");
 
 // Sentinel file used as a stop-hook-active guard.
 // If this file exists and is recent, the hook has already fired once in this
@@ -51,9 +55,47 @@ const STATE_DIR = join(DATA_DIR, "state");
 // session so one session's retry-suppression can't unblock another's PDCA gate
 // (all sessions share the global .data dir).
 function guardFile() {
-  const sid = process.env.CLAUDE_SESSION_ID;
+  const sid = activeSessionId;
   const suffix = sid ? `-${String(sid).replace(/[^a-zA-Z0-9._-]/g, "")}` : "";
   return join(STATE_DIR, `.stop-hook-guard${suffix}`);
+}
+
+function readPayload() {
+  try {
+    const raw = readHookStdin();
+    if (!raw.trim()) return null;
+    return JSON.parse(raw);
+  } catch (error) {
+    if (error?.code === "SCC_HOOK_INPUT_TOO_LARGE") {
+      console.error(`[stop-hook] ${error.message}; event metadata ignored, state gate still applies`);
+      recordGateBypass("oversized Stop payload metadata ignored; active-state gate still evaluated", null);
+    }
+    return null;
+  }
+}
+
+function sessionIdFromPayload(payload) {
+  const value = payload?.session_id || payload?.sessionId || process.env.CLAUDE_SESSION_ID;
+  if (typeof value !== "string" || !value.trim()) return null;
+  return value.trim().replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 160) || null;
+}
+
+function recordGateBypass(reason, payload) {
+  try {
+    ensureDirUtil(STATE_DIR);
+    // Keep this diagnostic log bounded; it is not a second state database.
+    try {
+      if (statSync(STOP_BYPASS_LOG).size > 256 * 1024) unlinkSync(STOP_BYPASS_LOG);
+    } catch { /* file does not exist */ }
+    appendFileSync(STOP_BYPASS_LOG, JSON.stringify({
+      ts: new Date().toISOString(),
+      session_id: activeSessionId,
+      reason: sanitizeExternalText(reason, 240),
+      stop_hook_active: payload?.stop_hook_active === true,
+    }) + "\n", "utf8");
+  } catch {
+    // Diagnostics must never block a stop attempt.
+  }
 }
 
 // Sentinel is considered "recent" if written within the last 30 seconds.
@@ -113,8 +155,8 @@ function pdcaBlockReason(pdcaState) {
 
   if (checkDone || inActPhase) return null;
 
-  const topic = sanitize(pdcaState.topic || "current cycle");
-  const safePhase = sanitize(phase || "unknown");
+  const topic = sanitizeExternalText(pdcaState.topic || "current cycle", 400);
+  const safePhase = sanitizeExternalText(phase || "unknown", 100);
   return (
     `PDCA cycle "${topic}" is active — Check phase not yet completed. ` +
     `Run /scc:review before finishing the session. ` +
@@ -133,11 +175,11 @@ function collectActiveState() {
   const loopState = readJsonSafe(join(STATE_DIR, "loop-active.json"));
   if (loopState) {
     result.loop = {
-      run_id: sanitize(loopState.run_id),
-      suite: sanitize(loopState.suite || loopState.goal),
+      run_id: sanitizeExternalText(loopState.run_id, 160),
+      suite: sanitizeExternalText(loopState.suite || loopState.goal, 400),
       generation: Number(loopState.generation ?? loopState.current_iteration) || 0,
       max_generations: Number(loopState.max_generations ?? loopState.max) || 0,
-      status: sanitize(loopState.status),
+      status: sanitizeExternalText(loopState.status, 100),
       best_score: Number(loopState.best_score) || 0,
     };
   }
@@ -145,7 +187,7 @@ function collectActiveState() {
   const refineState = readJsonSafe(join(STATE_DIR, "refine-active.json"));
   if (refineState) {
     result.refine = {
-      goal: sanitize(refineState.goal),
+      goal: sanitizeExternalText(refineState.goal, 400),
       iteration: Number(refineState.current_iteration) || 0,
       max: Number(refineState.max) || 3,
       scores: Array.isArray(refineState.scores) ? refineState.scores : [],
@@ -157,23 +199,23 @@ function collectActiveState() {
     readJsonSafe(join(STATE_DIR, "pipeline-active.json"));
   if (pipelineState) {
     result.pipeline = {
-      name: sanitize(pipelineState.name),
+      name: sanitizeExternalText(pipelineState.name, 400),
       current_step: Number(pipelineState.current_step) || 0,
       total_steps: Number(pipelineState.total_steps) || 0,
-      status: sanitize(pipelineState.status),
+      status: sanitizeExternalText(pipelineState.status, 100),
     };
   }
 
   const pdcaState = readJsonSafe(join(STATE_DIR, "pdca-active.json"));
   if (pdcaState) {
     result.pdca = {
-      run_id: sanitize(pdcaState.run_id),
-      topic: sanitize(pdcaState.topic),
-      current_phase: sanitize(pdcaState.current_phase),
-      completed: Array.isArray(pdcaState.completed) ? pdcaState.completed : [],
+      run_id: sanitizeExternalText(pdcaState.run_id, 160),
+      topic: sanitizeExternalText(pdcaState.topic, 400),
+      current_phase: sanitizeExternalText(pdcaState.current_phase, 100),
+      completed: Array.isArray(pdcaState.completed) ? pdcaState.completed.slice(0, 16).map((p) => sanitizeExternalText(p, 100)) : [],
       cycle_count: Number(pdcaState.cycle_count) || 0,
       check_verdict: pdcaState.check_verdict
-        ? sanitize(String(pdcaState.check_verdict))
+        ? sanitizeExternalText(String(pdcaState.check_verdict), 200)
         : null,
       average_score:
         pdcaState.average_score === null || pdcaState.average_score === undefined
@@ -181,19 +223,23 @@ function collectActiveState() {
           : Number(pdcaState.average_score),
       warning_count: Number(pdcaState.warning_count) || 0,
       critical_findings: Array.isArray(pdcaState.critical_findings)
-        ? pdcaState.critical_findings
+        ? pdcaState.critical_findings.slice(0, 24).map((f) => sanitizeExternalText(f, 300))
         : [],
       top_improvements: Array.isArray(pdcaState.top_improvements)
-        ? pdcaState.top_improvements
+        ? pdcaState.top_improvements.slice(0, 24).map((f) => sanitizeExternalText(f, 300))
         : [],
       act_decision: pdcaState.act_decision
-        ? sanitize(String(pdcaState.act_decision))
+        ? sanitizeExternalText(String(pdcaState.act_decision), 300)
         : null,
       session_id: pdcaState.session_id
-        ? sanitize(String(pdcaState.session_id))
+        ? sanitizeExternalText(String(pdcaState.session_id), 160)
         : null,
       session_history: Array.isArray(pdcaState.session_history)
-        ? pdcaState.session_history
+        ? pdcaState.session_history.slice(-32).map((entry) => ({
+            session_id: sanitizeExternalText(entry?.session_id, 160),
+            phase_completed: sanitizeExternalText(entry?.phase_completed, 100),
+            timestamp: sanitizeExternalText(entry?.timestamp, 100),
+          }))
         : [],
     };
   }
@@ -202,7 +248,7 @@ function collectActiveState() {
 }
 
 function stripAnsi(value) {
-  return String(value || "").replace(/\u001b\[[0-9;]*m/g, "");
+  return sanitizeExternalText(value || "", 100 * 1024);
 }
 
 function colorize(text, color) {
@@ -224,7 +270,14 @@ function completedCycleNumber(pdca) {
 
 function computePdcaDurationMinutes(pdca) {
   if (!pdca?.run_id) return 0;
-  const events = readEvents(DATA_DIR, pdca.run_id);
+  let events;
+  try {
+    events = readEvents(DATA_DIR, pdca.run_id);
+  } catch {
+    // The summary is advisory. Corrupt legacy state or an unreadable event log
+    // must not turn a successful Stop hook into an uncaught exit-code-1 crash.
+    return 0;
+  }
   if (events.length === 0) return 0;
 
   const firstTs = new Date(events[0].ts).getTime();
@@ -629,7 +682,7 @@ function recordSessionRecall(state, handoffPath) {
   if (state.refine) tags.push("refine");
 
   appendRecallEntry(DATA_DIR, {
-    session_id: process.env.CLAUDE_SESSION_ID || null,
+    session_id: activeSessionId,
     topic: state.pdca?.topic || state.loop?.suite || state.refine?.goal || "",
     workflow_name: state.pipeline?.name || "",
     artifact_path: handoffPath,
@@ -643,12 +696,26 @@ function recordSessionRecall(state, handoffPath) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main() {
+  const payload = readPayload();
+  activeSessionId = sessionIdFromPayload(payload);
+
+  // Claude marks recursive Stop-hook invocations with stop_hook_active. This
+  // is the authoritative re-entry signal; honor it and leave an audit trail so
+  // a gate bypass is explainable rather than silently weakening the gate.
+  if (payload?.stop_hook_active === true) {
+    recordGateBypass("stop_hook_active=true (recursive Stop hook invocation)", payload);
+    process.stderr.write("[stop-hook] gate bypassed: stop_hook_active=true (recursive invocation)\n");
+  }
+
   // ── Stop-hook-active guard ─────────────────────────────────────────────────
   // If this hook has already fired within the last 30 seconds for this stop
   // attempt, allow through unconditionally. This prevents Claude from being
   // permanently blocked if it retries the Stop event after the user sees the
   // quality gate message.
-  if (guardIsActive()) {
+  if (payload?.stop_hook_active === true || guardIsActive()) {
+    if (payload?.stop_hook_active !== true) {
+      recordGateBypass("recent stop-hook guard (retry suppression)", payload);
+    }
     clearGuard();
     // Proceed to HANDOFF generation below without blocking.
   } else {
@@ -672,7 +739,7 @@ function main() {
   // ── PDCA session tracking (before HANDOFF generation) ────────────────────
   // Record the current session ID into pdca-active.json so the next session
   // can offer `claude --resume` for full context restoration.
-  const currentSessionId = process.env.CLAUDE_SESSION_ID || null;
+  const currentSessionId = activeSessionId;
   if (currentSessionId) {
     const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
     // Lock the read-modify-write: a concurrent session or MCP transition writes
@@ -792,7 +859,7 @@ function main() {
       const todayFile = join(DATA_DIR, "soul", "observations", `${today}.jsonl`);
       let todayCount = 0;
       if (existsSync(todayFile)) {
-        const lines = readFileSync(todayFile, "utf8")
+        const lines = (readTextFileLimited(todayFile, 512 * 1024) || "")
           .split("\n")
           .filter((l) => l.trim().length > 0);
         todayCount = lines.length;
@@ -816,4 +883,12 @@ function main() {
   }
 }
 
-main();
+try {
+  main();
+} catch (error) {
+  // Stop is a host lifecycle hook. Persistence/reporting failures must not
+  // strand the terminal with "Stop hook (failed)". The intentional quality
+  // gate above exits 2 directly and is therefore unaffected by this guard.
+  console.error(`[session-end] fail-open after unexpected error: ${error.message}`);
+  process.exit(0);
+}

@@ -1,6 +1,6 @@
 {
   "name": "autopilot",
-  "description": "End-to-end workflow: research → analyze → write → review → refine. Adopted from third-party Codex orchestration autopilot pattern.",
+  "description": "End-to-end workflow: research → analyze → write → review → refine.",
   "steps": [
     {
       "skill": "/scc:research",
@@ -10,14 +10,14 @@
     },
     {
       "skill": "/scc:analyze",
-      "args": "--framework prd --with-research",
+      "args": "--framework swot --with-research",
       "input_from": "research-brief.md",
       "output": "analysis.md",
       "on_fail": "abort"
     },
     {
       "skill": "/scc:write",
-      "args": "",
+      "args": "--format report --voice expert --skip-research --skip-review",
       "input_from": "analysis.md",
       "output": "draft.md",
       "on_fail": "abort"

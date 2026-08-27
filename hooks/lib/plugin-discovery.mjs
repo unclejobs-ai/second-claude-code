@@ -8,11 +8,16 @@
  */
 
 import {
+  closeSync,
   existsSync,
-  readFileSync,
+  openSync,
+  readSync,
   readdirSync,
+  realpathSync,
+  statSync,
 } from "fs";
-import { join } from "path";
+import { createHash } from "crypto";
+import { basename, dirname, isAbsolute, join, relative } from "path";
 import { homedir } from "os";
 
 // ---------------------------------------------------------------------------
@@ -27,6 +32,177 @@ function getPluginsRoot() {
 
 function getInstalledPluginsPath() {
   return join(getPluginsRoot(), "installed_plugins.json");
+}
+
+/**
+ * Claude Code stores plugin enablement in the settings file beside the
+ * plugins directory.  The test-only override keeps path validation and
+ * settings behaviour testable without touching a user's home directory.
+ */
+function getSettingsPath() {
+  return process.env.__SCC_TEST_SETTINGS_PATH || join(dirname(getPluginsRoot()), "settings.json");
+}
+
+// Plugin IDs in installed_plugins.json include the marketplace suffix (for
+// example, `reviewer@marketplace`).  Capability names are the stricter slug
+// form used in Skill and slash-command invocations.  Neither form permits
+// path separators, whitespace, control characters, or shell metacharacters.
+const IDENTIFIER_RE = /^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})$/;
+const PLUGIN_ID_RE = /^[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127})(?:@[A-Za-z0-9](?:[A-Za-z0-9._-]{0,127}))?$/;
+const CONTROL_CHAR_RE = /[\u0000-\u001f\u007f-\u009f]/;
+const MAX_METADATA_TEXT_LENGTH = 2048;
+const MAX_VERSION_TEXT_LENGTH = 128;
+const MAX_MANIFEST_FILE_BYTES = 1024 * 1024;
+const MAX_CAPABILITY_FILE_BYTES = 256 * 1024;
+const MAX_REGISTRY_FILE_BYTES = 1024 * 1024;
+const MAX_SKILL_DIRECTORY_ENTRIES = 256;
+const MAX_COMMAND_DIRECTORY_ENTRIES = 512;
+const MAX_AGENT_DIRECTORY_ENTRIES = 512;
+
+/**
+ * Read a small metadata file without ever loading more than its budget.
+ * statSync is an early rejection for sparse/huge files; the max+1 read also
+ * handles a file growing between stat and read.
+ */
+function readBoundedText(file, maxBytes) {
+  let fd;
+  try {
+    const stat = statSync(file);
+    if (!stat.isFile() || stat.size > maxBytes) return null;
+    fd = openSync(file, "r");
+    const buffer = Buffer.allocUnsafe(maxBytes + 1);
+    const bytesRead = readSync(fd, buffer, 0, maxBytes + 1, 0);
+    if (bytesRead > maxBytes) return null;
+    return buffer.subarray(0, bytesRead).toString("utf8");
+  } catch {
+    return null;
+  } finally {
+    if (fd !== undefined) {
+      try { closeSync(fd); } catch { /* non-fatal */ }
+    }
+  }
+}
+
+export function isValidPluginIdentifier(value) {
+  return typeof value === "string" && PLUGIN_ID_RE.test(value) && !CONTROL_CHAR_RE.test(value);
+}
+
+export function isValidCapabilityIdentifier(value) {
+  return typeof value === "string" && IDENTIFIER_RE.test(value) && !CONTROL_CHAR_RE.test(value);
+}
+
+function safeText(value, fallback = "", maxLength = MAX_METADATA_TEXT_LENGTH) {
+  if (typeof value !== "string" || CONTROL_CHAR_RE.test(value)) return fallback;
+  return value.length > maxLength ? value.slice(0, maxLength) : value;
+}
+
+function isWithin(root, candidate) {
+  const rel = relative(root, candidate);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+}
+
+/**
+ * Resolve an install path and require it to remain below one of Claude's
+ * plugin storage roots.  realpathSync closes the symlink escape hatch before
+ * the containment check.  Only existing directories are accepted.
+ */
+export function resolveSafePluginInstallPath(installPath, pluginsRoot = getPluginsRoot()) {
+  if (typeof installPath !== "string" || !installPath || CONTROL_CHAR_RE.test(installPath) || !isAbsolute(installPath)) {
+    return null;
+  }
+
+  let candidate;
+  try {
+    candidate = realpathSync(installPath);
+    if (!statSync(candidate).isDirectory()) return null;
+  } catch {
+    return null;
+  }
+
+  for (const root of [join(pluginsRoot, "cache"), join(pluginsRoot, "installed")]) {
+    try {
+      const realRoot = realpathSync(root);
+      if (isWithin(realRoot, candidate)) return candidate;
+    } catch {
+      // A missing storage root simply cannot authorize an install path.
+    }
+  }
+  return null;
+}
+
+function canonicalExistingPath(value) {
+  if (typeof value !== "string" || !value || CONTROL_CHAR_RE.test(value)) return null;
+  try {
+    return realpathSync(value);
+  } catch {
+    return null;
+  }
+}
+
+function localEntryMatchesProject(entry) {
+  if (entry.scope !== "local" && entry.scope !== "project") return true;
+  const projectPath = entry.projectPath ?? entry.project_path ?? entry.projectRoot ?? entry.project_root;
+  const currentProject = canonicalExistingPath(process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  const declaredProject = canonicalExistingPath(projectPath);
+  // Exact canonical equality is intentional: a sibling such as /repo-other
+  // must not pass a prefix check for /repo, and symlink aliases should pass.
+  return currentProject !== null && declaredProject !== null && currentProject === declaredProject;
+}
+
+function readSettingsFile(file) {
+  try {
+    const raw = readBoundedText(file, MAX_REGISTRY_FILE_BYTES);
+    if (raw === null) return { file, raw: "", enabledPlugins: null };
+    let parsed = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      // Invalid settings must not disable every plugin.
+    }
+    return { file, raw, enabledPlugins: parsed && typeof parsed === "object" ? parsed.enabledPlugins : null };
+  } catch {
+    return { file, raw: "", enabledPlugins: null };
+  }
+}
+
+function mergeEnabledPlugins(userEnabled, projectEnabled) {
+  if (Array.isArray(projectEnabled)) return projectEnabled;
+  if (projectEnabled && typeof projectEnabled === "object") {
+    return {
+      ...(userEnabled && typeof userEnabled === "object" && !Array.isArray(userEnabled) ? userEnabled : {}),
+      ...projectEnabled,
+    };
+  }
+  return userEnabled;
+}
+
+function readSettingsSnapshot() {
+  const userFile = getSettingsPath();
+  const projectRoot = canonicalExistingPath(process.env.CLAUDE_PROJECT_DIR || process.cwd());
+  const projectFile = process.env.__SCC_TEST_PROJECT_SETTINGS_PATH
+    || (projectRoot ? join(projectRoot, ".claude", "settings.json") : "");
+  const user = readSettingsFile(userFile);
+  const project = projectFile && projectFile !== userFile
+    ? readSettingsFile(projectFile)
+    : { file: projectFile, raw: "", enabledPlugins: null };
+  return {
+    file: `${user.file}\n${project.file}`,
+    raw: `${user.raw}\n${project.raw}`,
+    enabledPlugins: mergeEnabledPlugins(user.enabledPlugins, project.enabledPlugins),
+  };
+}
+
+function pluginIsEnabled(pluginId, manifestName, enabledPlugins) {
+  if (Array.isArray(enabledPlugins)) {
+    return enabledPlugins.some((value) => value === pluginId || value === manifestName);
+  }
+  if (!enabledPlugins || typeof enabledPlugins !== "object") return true;
+
+  // Settings normally use plugin IDs.  The manifest-name fallback supports
+  // hand-authored settings and remains exact (no substring matching).
+  const keys = [pluginId, manifestName];
+  const explicit = keys.find((key) => Object.prototype.hasOwnProperty.call(enabledPlugins, key));
+  return explicit === undefined || enabledPlugins[explicit] !== false;
 }
 
 const INTENT_PROFILES = {
@@ -110,34 +286,65 @@ function textHasKeyword(text, keyword) {
 // A JSON file at `${CLAUDE_PLUGIN_DATA}/plugin-preferences.json` overrides it per intent:
 //   { "review": ["my-reviewer"], "commit": [] }
 // An empty array drops the pin entirely and lets capabilities compete on their own merits.
+/** @type {{ file: string | null, key: string, overrides: object } | null} */
 let preferenceOverridesCache = null;
 
 function loadPreferenceOverrides() {
-  if (preferenceOverridesCache) return preferenceOverridesCache;
   const dataDir = process.env.CLAUDE_PLUGIN_DATA;
+  const file = dataDir ? join(dataDir, "plugin-preferences.json") : null;
+  if (!file) {
+    preferenceOverridesCache = { file: null, key: "none", overrides: {} };
+    return preferenceOverridesCache.overrides;
+  }
+
+  let raw;
+  let mtime = "missing";
+  try {
+    const stat = statSync(file);
+    if (!stat.isFile()) throw new Error("not a file");
+    raw = readBoundedText(file, MAX_CAPABILITY_FILE_BYTES);
+    if (raw === null) throw new Error("preference file exceeds read budget");
+    mtime = String(stat.mtimeMs);
+  } catch {
+    raw = "";
+  }
+
+  // mtime catches the usual edit case; the digest also catches replacements
+  // that preserve timestamps (common in tests and atomic file writers).
+  const digest = createHash("sha256").update(raw).digest("hex");
+  const key = `${mtime}:${digest}`;
+  if (preferenceOverridesCache?.file === file && preferenceOverridesCache.key === key) {
+    return preferenceOverridesCache.overrides;
+  }
+
   let overrides = {};
   try {
-    if (dataDir) {
-      const file = join(dataDir, "plugin-preferences.json");
-      if (existsSync(file)) {
-        const parsed = JSON.parse(readFileSync(file, "utf8"));
-        if (parsed && typeof parsed === "object") overrides = parsed;
-      }
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      overrides = Object.fromEntries(
+        Object.entries(parsed).filter(([intent, plugins]) =>
+          isValidCapabilityIdentifier(intent) && Array.isArray(plugins)
+        ).map(([intent, plugins]) => [
+          intent,
+          plugins.filter((plugin) => isValidPluginIdentifier(plugin) || isValidCapabilityIdentifier(plugin)),
+        ])
+      );
     }
   } catch {
     // A malformed override must not take routing down with it — fall back to the defaults.
   }
-  preferenceOverridesCache = overrides;
+  preferenceOverridesCache = { file, key, overrides };
   return overrides;
 }
 
 function makeIntent(name, profile) {
+  const overrides = loadPreferenceOverrides();
   return {
     name,
     search: profile.search || "",
     keywords: profile.keywords || [],
-    preferred_plugins: Array.isArray(loadPreferenceOverrides()[name])
-      ? loadPreferenceOverrides()[name]
+    preferred_plugins: Array.isArray(overrides[name])
+      ? overrides[name]
       : profile.preferred_plugins || [],
     preferred_skills: profile.preferred_skills || [],
     preferred_commands: profile.preferred_commands || [],
@@ -262,6 +469,56 @@ function parseFrontmatter(content) {
   };
 }
 
+function resolveContainedPath(root, candidate) {
+  if (typeof candidate !== "string" || !candidate || CONTROL_CHAR_RE.test(candidate)) return null;
+  try {
+    const resolved = realpathSync(isAbsolute(candidate) ? candidate : join(root, candidate));
+    return isWithin(root, resolved) ? resolved : null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveManifestPath(root, declaration) {
+  // Manifest paths are plugin-relative by contract. Reject absolute paths
+  // before resolution even when they happen to point inside the plugin.
+  if (typeof declaration !== "string" || !declaration || isAbsolute(declaration)) return null;
+  return resolveContainedPath(root, declaration);
+}
+
+function addDiscoveredSkill(pluginRoot, skillFile, fallbackName, skills, seenNames) {
+  const safeFile = resolveContainedPath(pluginRoot, skillFile);
+  if (!safeFile || basename(safeFile) !== "SKILL.md") return;
+  try {
+    const content = readBoundedText(safeFile, MAX_CAPABILITY_FILE_BYTES);
+    if (content === null) return;
+    const meta = parseFrontmatter(content);
+    const name = meta.name === undefined ? fallbackName : meta.name;
+    if (!isValidCapabilityIdentifier(name) || seenNames.has(name)) return;
+    seenNames.add(name);
+    skills.push({
+      name,
+      description: safeText(meta.description, name, MAX_METADATA_TEXT_LENGTH),
+    });
+  } catch {
+    // An unreadable declaration must not prevent discovery of other entries.
+  }
+}
+
+function addDeclaredSkill(pluginRoot, declaration, skills, seenNames) {
+  const declared = resolveManifestPath(pluginRoot, declaration);
+  if (!declared) return;
+  try {
+    if (statSync(declared).isDirectory()) {
+      addDiscoveredSkill(pluginRoot, join(declared, "SKILL.md"), basename(declared), skills, seenNames);
+    } else {
+      addDiscoveredSkill(pluginRoot, declared, basename(declared, ".md"), skills, seenNames);
+    }
+  } catch {
+    // Non-file declarations are ignored.
+  }
+}
+
 /**
  * Discover skills from a plugin's skills/ directory.
  * Each skill is `skills/<name>/SKILL.md` with YAML frontmatter.
@@ -269,25 +526,25 @@ function parseFrontmatter(content) {
  * @param {string} pluginRoot
  * @returns {{ name: string, description: string }[]}
  */
-function discoverSkills(pluginRoot) {
-  const skillsDir = join(pluginRoot, "skills");
-  if (!existsSync(skillsDir)) return [];
+function discoverSkills(pluginRoot, declaredPaths = []) {
 
   /** @type {{ name: string, description: string }[]} */
   const skills = [];
+  const seenNames = new Set();
+
+  // Official manifests may declare nested paths (for example
+  // ./skills/engineering/code-review). Resolve and contain each declaration
+  // before reading it so a symlink cannot escape the plugin install.
+  for (const declaration of declaredPaths.slice(0, 256)) {
+    addDeclaredSkill(pluginRoot, declaration, skills, seenNames);
+  }
+
+  const skillsDir = resolveContainedPath(pluginRoot, join(pluginRoot, "skills"));
+  if (!skillsDir) return skills;
   try {
-    for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
+    for (const entry of readdirSync(skillsDir, { withFileTypes: true }).slice(0, MAX_SKILL_DIRECTORY_ENTRIES)) {
       if (!entry.isDirectory()) continue;
-      const skillFile = join(skillsDir, entry.name, "SKILL.md");
-      if (!existsSync(skillFile)) continue;
-      try {
-        const content = readFileSync(skillFile, "utf8");
-        const meta = parseFrontmatter(content);
-        skills.push({
-          name: meta.name || entry.name,
-          description: meta.description || entry.name,
-        });
-      } catch { /* skip unreadable skill */ }
+      addDiscoveredSkill(pluginRoot, join(skillsDir, entry.name, "SKILL.md"), entry.name, skills, seenNames);
     }
   } catch { /* non-fatal */ }
   return skills;
@@ -300,23 +557,58 @@ function discoverSkills(pluginRoot) {
  * @param {string} pluginRoot
  * @returns {{ name: string, description: string }[]}
  */
-function discoverCommands(pluginRoot) {
-  const commandsDir = join(pluginRoot, "commands");
-  if (!existsSync(commandsDir)) return [];
+function addDiscoveredCommand(pluginRoot, commandFile, fallbackName, commands, seenNames) {
+  const safeFile = resolveContainedPath(pluginRoot, commandFile);
+  if (!safeFile || !safeFile.endsWith(".md")) return;
+  try {
+    const content = readBoundedText(safeFile, MAX_CAPABILITY_FILE_BYTES);
+    if (content === null) return;
+    const meta = parseFrontmatter(content);
+    const name = meta.name === undefined ? fallbackName : meta.name;
+    if (!isValidCapabilityIdentifier(name) || seenNames.has(name)) return;
+    seenNames.add(name);
+    commands.push({
+      name,
+      description: safeText(meta.description, name, MAX_METADATA_TEXT_LENGTH),
+    });
+  } catch {
+    // An unreadable declaration must not prevent discovery of other entries.
+  }
+}
+
+function addDeclaredCommand(pluginRoot, declaration, commands, seenNames) {
+  const declared = resolveManifestPath(pluginRoot, declaration);
+  if (!declared) return;
+  try {
+    if (statSync(declared).isDirectory()) {
+      for (const entry of readdirSync(declared, { withFileTypes: true }).slice(0, MAX_COMMAND_DIRECTORY_ENTRIES)) {
+        if (entry.isFile() && entry.name.endsWith(".md")) {
+          addDiscoveredCommand(pluginRoot, join(declared, entry.name), entry.name.slice(0, -3), commands, seenNames);
+        }
+      }
+    } else {
+      addDiscoveredCommand(pluginRoot, declared, basename(declared, ".md"), commands, seenNames);
+    }
+  } catch {
+    // Non-file declarations are ignored.
+  }
+}
+
+function discoverCommands(pluginRoot, declaredPaths = []) {
 
   /** @type {{ name: string, description: string }[]} */
   const commands = [];
+  const seenNames = new Set();
+  for (const declaration of declaredPaths.slice(0, 256)) {
+    addDeclaredCommand(pluginRoot, declaration, commands, seenNames);
+  }
+
+  const commandsDir = resolveContainedPath(pluginRoot, join(pluginRoot, "commands"));
+  if (!commandsDir) return commands;
   try {
-    for (const file of readdirSync(commandsDir)) {
+    for (const file of readdirSync(commandsDir).slice(0, MAX_COMMAND_DIRECTORY_ENTRIES)) {
       if (!file.endsWith(".md")) continue;
-      try {
-        const content = readFileSync(join(commandsDir, file), "utf8");
-        const meta = parseFrontmatter(content);
-        commands.push({
-          name: meta.name || file.replace(".md", ""),
-          description: meta.description || file.replace(".md", ""),
-        });
-      } catch { /* skip unreadable command */ }
+      addDiscoveredCommand(pluginRoot, join(commandsDir, file), file.slice(0, -3), commands, seenNames);
     }
   } catch { /* non-fatal */ }
   return commands;
@@ -336,9 +628,12 @@ function discoverMcpServers(pluginRoot) {
   const manifestPath = join(pluginRoot, ".claude-plugin", "plugin.json");
   if (existsSync(manifestPath)) {
     try {
-      const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
-      if (manifest.mcpServers && typeof manifest.mcpServers === "object") {
-        servers.push(...Object.keys(manifest.mcpServers));
+      const rawManifest = readBoundedText(manifestPath, MAX_MANIFEST_FILE_BYTES);
+      if (rawManifest !== null) {
+        const manifest = JSON.parse(rawManifest);
+        if (manifest.mcpServers && typeof manifest.mcpServers === "object") {
+          servers.push(...Object.keys(manifest.mcpServers).filter(isValidCapabilityIdentifier));
+        }
       }
     } catch { /* non-fatal */ }
   }
@@ -347,9 +642,11 @@ function discoverMcpServers(pluginRoot) {
   const mcpJsonPath = join(pluginRoot, ".mcp.json");
   if (existsSync(mcpJsonPath)) {
     try {
-      const mcpConfig = JSON.parse(readFileSync(mcpJsonPath, "utf8"));
+      const rawMcpConfig = readBoundedText(mcpJsonPath, MAX_MANIFEST_FILE_BYTES);
+      if (rawMcpConfig === null) return [...new Set(servers)];
+      const mcpConfig = JSON.parse(rawMcpConfig);
       if (mcpConfig.mcpServers && typeof mcpConfig.mcpServers === "object") {
-        servers.push(...Object.keys(mcpConfig.mcpServers));
+        servers.push(...Object.keys(mcpConfig.mcpServers).filter(isValidCapabilityIdentifier));
       }
     } catch { /* non-fatal */ }
   }
@@ -360,19 +657,35 @@ function discoverMcpServers(pluginRoot) {
 /**
  * Discover agent definitions from agents/*.md.
  *
+ * Agent filenames are human-facing labels (for example, Pokemon names), so
+ * the callable identity comes from bounded frontmatter `name` metadata. The
+ * filename fallback keeps legacy minimal fixtures usable when no metadata is
+ * present, while a supplied invalid name is always rejected.
+ *
  * @param {string} pluginRoot
- * @returns {string[]} agent names
+ * @param {string} manifestName
+ * @returns {{ name: string, invoke: string }[]} agent names and callable IDs
  */
-function discoverAgents(pluginRoot) {
-  const agentsDir = join(pluginRoot, "agents");
-  if (!existsSync(agentsDir)) return [];
+function discoverAgents(pluginRoot, manifestName) {
+  const agentsDir = resolveContainedPath(pluginRoot, join(pluginRoot, "agents"));
+  if (!agentsDir) return [];
 
-  /** @type {string[]} */
+  /** @type {{ name: string, invoke: string }[]} */
   const agents = [];
+  const seenNames = new Set();
   try {
-    for (const file of readdirSync(agentsDir)) {
+    for (const file of readdirSync(agentsDir).slice(0, MAX_AGENT_DIRECTORY_ENTRIES)) {
       if (!file.endsWith(".md")) continue;
-      agents.push(file.replace(".md", ""));
+      const safeFile = resolveContainedPath(pluginRoot, join(agentsDir, file));
+      if (!safeFile || !safeFile.endsWith(".md")) continue;
+      const content = readBoundedText(safeFile, MAX_CAPABILITY_FILE_BYTES);
+      if (content === null) continue;
+      const meta = parseFrontmatter(content);
+      const filenameName = file.slice(0, -3);
+      const name = meta.name === undefined ? filenameName : meta.name;
+      if (!isValidCapabilityIdentifier(name) || seenNames.has(name)) continue;
+      seenNames.add(name);
+      agents.push({ name, invoke: `${manifestName}:${name}` });
     }
   } catch { /* non-fatal */ }
   return agents;
@@ -388,21 +701,42 @@ function readManifest(pluginRoot) {
   const manifestPath = join(pluginRoot, ".claude-plugin", "plugin.json");
   if (!existsSync(manifestPath)) {
     const name = pluginRoot.split("/").pop() || "unknown";
-    return { name, version: "unknown", description: "" };
-  }
-  try {
-    const m = JSON.parse(readFileSync(manifestPath, "utf8"));
     return {
-      name: String(m.name || pluginRoot.split("/").pop()),
-      version: String(m.version || "unknown"),
-      description: String(m.description || ""),
-    };
-  } catch {
-    return {
-      name: pluginRoot.split("/").pop() || "unknown",
+      name: isValidCapabilityIdentifier(name) ? name : "unknown",
       version: "unknown",
       description: "",
+      skills: [],
+      commands: [],
     };
+  }
+  try {
+    const rawManifest = readBoundedText(manifestPath, MAX_MANIFEST_FILE_BYTES);
+    if (rawManifest === null) return null;
+    const m = JSON.parse(rawManifest);
+    // An explicitly supplied invalid name must not be silently converted into
+    // a routable identifier.  Callers skip the plugin when this returns null.
+    if (m && Object.prototype.hasOwnProperty.call(m, "name") && !isValidCapabilityIdentifier(m.name)) {
+      return null;
+    }
+    const name = m.name || pluginRoot.split("/").pop();
+    if (!isValidCapabilityIdentifier(name)) return null;
+    return {
+      name,
+      version: safeText(
+        typeof m.version === "string" ? m.version : String(m.version || "unknown"),
+        "unknown",
+        MAX_VERSION_TEXT_LENGTH
+      ),
+      description: safeText(
+        typeof m.description === "string" ? m.description : String(m.description || ""),
+        "",
+        MAX_METADATA_TEXT_LENGTH
+      ),
+      skills: Array.isArray(m.skills) ? m.skills.filter((entry) => typeof entry === "string").slice(0, 256) : [],
+      commands: Array.isArray(m.commands) ? m.commands.filter((entry) => typeof entry === "string").slice(0, 256) : [],
+    };
+  } catch {
+    return null;
   }
 }
 
@@ -431,16 +765,19 @@ export function discoverAllPlugins() {
   /** @type {object[]} */
   const plugins = [];
   const installedPluginsPath = getInstalledPluginsPath();
+  const settings = readSettingsSnapshot();
 
   let raw;
   try {
-    raw = readFileSync(installedPluginsPath, "utf8");
+    raw = readBoundedText(installedPluginsPath, MAX_REGISTRY_FILE_BYTES);
+    if (raw === null) throw new Error("installed plugin registry exceeds read budget");
   } catch {
     // Missing or unreadable installed_plugins.json → nothing to discover.
+    _discoverCache = null;
     return { ...EMPTY_DISCOVERY };
   }
 
-  const cacheKey = `${installedPluginsPath}\n${raw}`;
+  const cacheKey = `${installedPluginsPath}\n${raw}\n${settings.file}\n${settings.raw}`;
   if (_discoverCache && _discoverCache.key === cacheKey) {
     return _discoverCache.result;
   }
@@ -448,37 +785,67 @@ export function discoverAllPlugins() {
   /** @type {{ [pluginId: string]: object[] }} */
   let installed;
   try {
-    installed = JSON.parse(raw).plugins || {};
+    const parsed = JSON.parse(raw);
+    installed = parsed && typeof parsed === "object" && parsed.plugins && typeof parsed.plugins === "object"
+      ? parsed.plugins
+      : {};
   } catch {
+    _discoverCache = null;
     return { ...EMPTY_DISCOVERY };
   }
 
   let totalSkills = 0;
   let totalMcpServers = 0;
+  const seenNames = new Set();
 
   for (const [pluginId, entries] of Object.entries(installed)) {
-    if (!Array.isArray(entries) || entries.length === 0) continue;
+    if (!isValidPluginIdentifier(pluginId) || !Array.isArray(entries) || entries.length === 0) continue;
 
-    // Use the most recent install entry (copy before sorting — never mutate the
-    // parsed installed_plugins.json array in place).
-    const entry = [...entries].sort(
-      (a, b) => (b.lastUpdated || b.installedAt || "").localeCompare(a.lastUpdated || a.installedAt || "")
-    )[0];
+    // Scope/project applicability is evaluated before choosing the newest
+    // install. A newer local copy for another project must not hide an older
+    // user-scoped copy that is valid for this process.
+    const validEntries = entries.filter((entry) => entry && typeof entry === "object" && localEntryMatchesProject(entry));
+    if (validEntries.length === 0) continue;
 
-    const pluginRoot = entry.installPath;
-    if (!pluginRoot || !existsSync(pluginRoot)) continue;
+    // Try the most recent install first, but fall back to an older applicable
+    // entry when a stale registry points at a missing/unsafe path, malformed
+    // manifest, or disabled plugin. Never mutate the parsed registry array.
+    const sortedEntries = [...validEntries].sort(
+      (a, b) => String(b.lastUpdated || b.installedAt || "").localeCompare(String(a.lastUpdated || a.installedAt || ""))
+    );
 
-    const manifest = readManifest(pluginRoot);
-    const skills = discoverSkills(pluginRoot);
-    const commands = discoverCommands(pluginRoot);
+    /** @type {{ entry: object, pluginRoot: string, manifest: object } | null} */
+    let selected = null;
+    for (const candidate of sortedEntries) {
+      const pluginRoot = resolveSafePluginInstallPath(candidate.installPath);
+      if (!pluginRoot) continue;
+      const manifest = readManifest(pluginRoot);
+      if (!manifest || !pluginIsEnabled(pluginId, manifest.name, settings.enabledPlugins)) continue;
+
+      // Skip this package by both the installed ID and its manifest name.  A
+      // stale/mislabelled manifest must not make SCC route to itself.
+      if (pluginId.split("@")[0].toLowerCase() === "scc" || manifest.name.toLowerCase() === "scc") continue;
+      selected = { entry: candidate, pluginRoot, manifest };
+      break;
+    }
+    if (!selected) continue;
+
+    const { entry, pluginRoot, manifest } = selected;
+
+    // A capability map is keyed by manifest name.  Keep the first valid
+    // install deterministically and skip duplicates rather than overwriting a
+    // previously discovered plugin without notice.
+    if (seenNames.has(manifest.name)) continue;
+
+    const skills = discoverSkills(pluginRoot, manifest.skills);
+    const commands = discoverCommands(pluginRoot, manifest.commands);
     const mcpServers = discoverMcpServers(pluginRoot);
-    const agents = discoverAgents(pluginRoot);
-
-    // Skip self (scc itself)
-    if (manifest.name === "scc") continue;
+    const agents = discoverAgents(pluginRoot, manifest.name);
 
     // Skip empty plugins (no skills, no commands, no MCP, no agents)
     if (skills.length === 0 && commands.length === 0 && mcpServers.length === 0 && agents.length === 0) continue;
+
+    seenNames.add(manifest.name);
 
     totalSkills += skills.length;
     totalMcpServers += mcpServers.length;
@@ -489,7 +856,7 @@ export function discoverAllPlugins() {
       version: manifest.version,
       description: manifest.description,
       install_path: pluginRoot,
-      scope: entry.scope || "user",
+      scope: safeText(typeof entry.scope === "string" ? entry.scope : "user", "user"),
       skills,
       commands,
       mcp_servers: mcpServers,
@@ -657,15 +1024,17 @@ export function getDispatchPlan({ keyword, phase } = {}) {
     routes,
     dispatch,
     recommendation: top
-      ? `Found ${routes.length} plugin(s). Auto-dispatch top pick: ${top.invoke}. ${top.type === "skill" ? "Invoke the Skill tool with this exact name." : "Invoke this slash command."}`
+      ? `Found ${routes.length} plugin(s). Advisory candidate: ${top.invoke}; no external tool was executed; caller must explicitly choose/invoke this capability.`
       : `No matching plugins found for "${search}". Consider installing plugins with relevant skills.`,
   };
 }
 
 /**
- * Generate a dynamic <skill-check> dispatch guide for the prompt-detect hook.
- * Replaces the old hardcoded genericGuide. Groups external plugins by
- * task category and includes exact Skill tool invocation strings.
+ * Generate an advisory list of discovered route candidates.
+ *
+ * This function is retained for callers that imported the v3.0.1 export, but
+ * it is deliberately informational. The active prompt hook is standards-only
+ * and does not consume this output or execute external capabilities.
  *
  * @returns {string}
  */
@@ -674,8 +1043,7 @@ export function generateDispatchGuide() {
   if (all.total_plugins === 0) return "";
 
   const lines = [];
-  lines.push("<skill-check>");
-  lines.push("[MANDATORY] Active dispatch guide — external plugins detected at session start:");
+  lines.push("Active plugin route candidates (advisory only; no external tool was executed):");
   lines.push("");
 
   const phaseLabels = {
@@ -695,17 +1063,7 @@ export function generateDispatchGuide() {
     lines.push("");
   }
 
-  // Auto-dispatch rules
-  lines.push("## Auto-dispatch rules");
-  lines.push("When PDCA routing fires:");
-  lines.push("- **plan phase**: before planning from scratch, invoke the top research/memory plugin from PLAN list when available");
-  lines.push("- **check phase**: before writing your own review, MUST invoke Skill tool with top-matched plugin from CHECK list");
-  lines.push("- **act phase**: after completing work, invoke commit/dispatch plugin from ACT list");
-  lines.push("- **do phase**: for frontend/design tasks, prefer external design plugins over internal write skill");
-  lines.push("- **direct plugin match**: if a user prompt strongly matches an installed plugin skill/command, dispatch that external capability first");
-  lines.push("");
-  lines.push("Match found? → Invoke Skill tool FIRST, then respond.");
-  lines.push("</skill-check>");
+  lines.push("These candidates are informational; the caller must explicitly choose whether to use one.");
 
   return lines.join("\n");
 }

@@ -10,6 +10,7 @@ import { writeState } from "../../scripts/lib/coach-state.mjs";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "compaction.mjs");
+const sessionStartPath = path.join(root, "hooks", "session-start.mjs");
 const NOW = new Date("2026-08-10T00:00:00.000Z");
 
 function withProjectRoot(fn) {
@@ -24,16 +25,29 @@ function makeDataDir() {
 }
 
 function runPostCompact(projectRoot) {
-  return spawnSync(process.execPath, [hookPath], {
+  const dataDir = makeDataDir();
+  const post = spawnSync(process.execPath, [hookPath], {
     cwd: root,
     env: {
       ...process.env,
       CLAUDE_PROJECT_DIR: projectRoot,
-      CLAUDE_PLUGIN_DATA: makeDataDir(),
+      CLAUDE_PLUGIN_DATA: dataDir,
     },
     input: JSON.stringify({ event: "PostCompact" }),
     encoding: "utf8",
   });
+  const restored = spawnSync(process.execPath, [sessionStartPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PROJECT_DIR: projectRoot,
+      CLAUDE_PLUGIN_DATA: dataDir,
+      SECOND_CLAUDE_CAPABILITIES: '["node"]',
+    },
+    input: JSON.stringify({ source: "compact" }),
+    encoding: "utf8",
+  });
+  return { ...restored, post };
 }
 
 test("an active standard id survives compaction, a superseded one does not", () => {
@@ -52,9 +66,9 @@ test("an active standard id survives compaction, a superseded one does not", () 
 
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    const output = JSON.parse(result.stdout);
-    assert.match(output.additionalContext, /voice-two-track/);
-    assert.doesNotMatch(output.additionalContext, /old-approach/);
+    assert.equal(result.post.stdout, "");
+    assert.match(result.stdout, /voice-two-track/);
+    assert.doesNotMatch(result.stdout, /old-approach/);
   });
 });
 
@@ -64,9 +78,9 @@ test("an open coach interview survives compaction with its settled fork count", 
 
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    const output = JSON.parse(result.stdout);
-    assert.match(output.additionalContext, /coach/);
-    assert.match(output.additionalContext, /2 standard\(s\) settled/);
+    assert.equal(result.post.stdout, "");
+    assert.match(result.stdout, /coach/);
+    assert.match(result.stdout, /2 standard\(s\) recorded/);
   });
 });
 
@@ -76,7 +90,8 @@ test("a finalized (pending_approval) interview is not reported as open", () => {
 
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, "");
+    assert.match(result.stdout, /Second Claude Code/);
+    assert.equal(result.post.stdout, "");
   });
 });
 
@@ -84,7 +99,8 @@ test("a project with no .scc tree at all produces no output and does not throw",
   withProjectRoot((projectRoot) => {
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    assert.equal(result.stdout, "");
-    assert.equal(result.stderr, "");
+    assert.match(result.stdout, /Second Claude Code/);
+    assert.equal(result.post.stdout, "");
+    assert.equal(result.post.stderr, "");
   });
 });

@@ -23,35 +23,43 @@ On Act→Do return: review findings are passed as constraints to the write promp
 
 ## Sub-Skill Selection (PDCA Calls One of These Inside Do)
 
-PDCA's Do phase is **always** implemented by dispatching one sub-skill. The orchestrator picks the **most specialized** sub-skill that matches the artifact format. Specialized sub-skills (`/threads`, `/newsletter`, etc.) own their own internal multi-phase pipelines — those internal phases run **inside** PDCA's Do phase, gated by the sub-skill's own contracts. PDCA's Plan provides upstream context, and PDCA's Check + Act wrap the sub-skill's output for downstream validation.
+When a PDCA run reaches Do, it delegates production to one supported skill or an explicitly
+selected external capability. The built-in route uses `/scc:write` or `/scc:analyze`; an
+external plugin is optional and must be invoked explicitly. PDCA's Plan provides context,
+and Check + Act validate the returned output.
 
 | Detected format / intent | Sub-skill PDCA dispatches | Sub-skill mode | What runs inside |
 |--------------------------|--------------------------|----------------|------------------|
-| Threads article (@unclejobs.ai), 한국어 콘텐츠 from URL/MD | `/threads` | Full 8-phase pipeline | parse → research → draft → edit → cross-review → proofread → final QA → publish |
-| Korean tech newsletter | `/newsletter` | Full 7-phase pipeline | research → draft → edit → publish (Notion/Beehiiv) |
-| Shorts script (60-90s, 9:16, 릴스/Reels) | `/academy-shorts` | Full pipeline | research → script → editor → MMBridge review |
-| Card news (carousel, 캐러셀, 인스타 카드) | `/card-news` | Template render pipeline | template → render (Playwright) → preview |
-| Generic article / report / blog post / decision doc | `/scc:write --skip-research --skip-review` | Pure execution from Plan artifacts | Single-pass write using research brief and analysis |
+| Newsletter / 뉴스레터 | `/scc:write --format newsletter` | Format contract | Format-specific draft and character floor |
+| Article / 아티클 | `/scc:write --format article` | Format contract | Format-specific draft and character floor |
+| Report / 보고서 | `/scc:write --format report` | Format contract | Format-specific draft and character floor |
+| Shorts / 쇼츠 | `/scc:write --format shorts` | Format contract | Format-specific draft and character floor |
+| Social / 소셜 | `/scc:write --format social` | Format contract | Format-specific draft and character floor |
+| Card news / 카드뉴스 | `/scc:write --format card-news` | Format contract | Format-specific draft and character floor |
+| Generic article / report / blog post | `/scc:write --format article --skip-research --skip-review` | Pure execution from Plan artifacts | Single-pass write using research brief and analysis |
 | Different framework analysis (SWOT, Porter, OKR, RICE) | `/scc:analyze` | Framework execution | Apply named framework to Plan inputs |
 | Pre-defined multi-step workflow | `/scc:workflow` | Pipeline replay | Run a saved pipeline definition |
-| Code change / PR / refactor | `/scc:write --format code` then `/scc:review --preset code` | Two-step | Write code, then immediate review |
+| Code change / PR / refactor | Caller-selected implementation path, then `/scc:review --preset code` | Two-step | No built-in `write --format code`; an installed external coding capability is optional |
 
 ### Selection Algorithm (Run This At Do Phase Entry)
 
 1. Read the user's original prompt and the Plan output's `dod` field.
 2. Scan for **specialized format keywords** in this priority order:
-   - Threads keywords ("스레드", "threads", "@unclejobs.ai") → `/threads`
-   - Newsletter keywords ("뉴스레터", "newsletter", "주간 뉴스레터") → `/newsletter`
-   - Shorts keywords ("쇼츠", "shorts", "릴스", "Reels", "9:16", "60초", "academy shorts") → `/academy-shorts`
-   - Card news keywords ("카드뉴스", "card news", "인스타 카드", "캐러셀", "carousel") → `/card-news`
-   - Code keywords ("PR", "리팩터", "버그 수정", "implement", "refactor") → `/scc:write --format code`
+   - Newsletter keywords ("뉴스레터", "newsletter") → `/scc:write --format newsletter`
+   - Article keywords ("아티클", "article") → `/scc:write --format article`
+   - Report keywords ("보고서", "report") → `/scc:write --format report`
+   - Shorts keywords ("쇼츠", "shorts", "릴스", "Reels") → `/scc:write --format shorts`
+   - Social keywords ("소셜", "social") → `/scc:write --format social`
+   - Card news keywords ("카드뉴스", "card news", "캐러셀", "carousel") → `/scc:write --format card-news`
+   - Code keywords ("PR", "리팩터", "버그 수정", "implement", "refactor") → caller-selected implementation capability; then `/scc:review --preset code`
 3. If no specialized format matches, scan for **generic content type**:
-   - Long-form analysis/report → `/scc:write` with target length from "Length Floors by Format" table
+   - Long-form analysis/report → `/scc:write --format article` or `--format report` with target length from the format table
    - Strategic framework → `/scc:analyze`
    - Multi-step → `/scc:workflow`
 4. Default fallback: `/scc:write --skip-research --skip-review` with the format that best matches the Plan output's recommended scope.
 
-**Sub-skill matching is greedy**: pick the most specialized sub-skill that fits, never the generic one when a specialized one exists. A threads article must go through `/threads`, never `/scc:write`, because `/threads` has voice-guide enforcement, cross-review with external models, and a Notion publish step that `/scc:write` does not.
+Format matching selects the corresponding `/scc:write --format` contract. An external
+specialized plugin can be used only when it is installed and explicitly invoked.
 
 ### What Sub-Skills Return to PDCA
 
@@ -66,14 +74,17 @@ Every sub-skill returns the same DoOutput schema (see `references/phase-schemas.
 - `sections_complete`
 - `references_count`
 
-PDCA validates these fields at the Do→Check gate. **A sub-skill that returns an artifact below the format's length floor causes PDCA's Do gate to fail**, even if the sub-skill internally considered the artifact "complete". PDCA's contract supersedes the sub-skill's self-assessment because PDCA is the main orchestrator and the sub-skill is a building block.
+The phase skill uses these fields to assess the artifact. The state MCP's Do→Check transition
+currently enforces only artifact presence, completeness, and plan integration; format floors and
+section/reference thresholds remain skill-level contracts.
 
 ### Sub-Skill Failure Handling
 
 If the sub-skill itself fails (errors out, hangs, returns malformed output):
 
 1. **Log the failure** with sub-skill name + input + error
-2. **Try fallback sub-skill**: e.g., `/threads` failed → fall back to `/scc:write` with explicit threads format spec from `/threads/references/article-template.md`
+2. **Try a supported fallback**: use `/scc:write` with the requested format and preserve the
+   original constraints.
 3. **If fallback also fails**: surface to user with "Sub-skill {name} failed in Do phase. Manual intervention needed."
 
 PDCA never silently swallows sub-skill failures. The Do gate must produce a valid artifact or fail loudly.
@@ -108,13 +119,14 @@ This prevents producing content from nothing when `--phase do` is used directly,
 
 ## Gate Checklist (Do → Check)
 
-All items must pass before proceeding to Check:
+Use this skill-level checklist before proceeding to Check; the runtime transition enforces only the
+subset documented in the PDCA gate table.
 
 - [ ] **Artifact exists** — A file was created (not just console output)
 - [ ] **Artifact is complete** — All sections filled, no "[TODO]" or "[TBD]" placeholders
 - [ ] **Research integrated** — Plan phase findings are actually used, not ignored
 - [ ] **Format followed** — If a format spec exists, it was followed
-- [ ] **Length meets format floor** — See "Length Floors by Format" table below. Below floor → **gate fails, no exceptions**
+- [ ] **Length meets format floor** — See "Length Floors by Format" table below; report and correct below-floor output
 - [ ] **Voice consistent** — Tone matches the target audience
 - [ ] **Section count meets minimum** — See section count column in length table
 - [ ] **References section present** — At least 3 cited sources from Plan phase appear in artifact's references/footnotes
@@ -129,30 +141,30 @@ All items must pass before proceeding to Check:
 | Below length floor | Re-run writer with explicit instruction to expand to minimum, citing what scope is missing. Do NOT pad with filler. |
 | References missing | Inject Plan phase sources into artifact before re-checking |
 
-## Length Floors by Format (Hard Contracts, Not Suggestions)
+## Length Floors by Format (Skill Contracts)
 
-The Do phase artifact must meet a minimum length and structural threshold appropriate for its format. **Below the floor = gate fails. Re-run is mandatory, not optional.**
+The Do phase artifact should meet a minimum length and structural threshold appropriate for its
+format. Below-floor output should be reported and corrected under the selected skill contract.
 
-These floors are deliberately set high. PDCA exists to produce substantive, reader-rewarding output. Sparse outputs are a failure mode of every prior generation pipeline — PDCA's Do gate exists specifically to prevent them.
+These are skill-level format contracts. The PDCA state MCP enforces a smaller transition
+subset (artifact presence/completeness, plan integration, and related required fields); it
+does not make every prose floor a universal runtime guarantee.
 
 | Format | Min chars (body) | Target chars (body) | Min sections | Sub-skill PDCA dispatches in Do |
 |--------|-----------------|---------------------|--------------|-------------------------------|
-| Threads article (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 H2 or bold sections | `/threads` (its 8-phase pipeline runs inside Do) |
-| Korean tech newsletter | 10,000 | 12,000-15,000 | 6+ topics, intro + outro + CTA | `/newsletter` (its 7-phase pipeline runs inside Do) |
-| Generic article (long-form) | 4,000 | 5,000-7,000 | 5 H2 sections | `/scc:write` |
-| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections (situation, players, analysis, options, recommendation, risk) | `/scc:write` |
+| Generic article (long-form) | 4,000 | 5,000-7,000 | 5 H2 sections | `/scc:write --format article` |
+| Newsletter | 10,000 | 12,000-15,000 | 6+ topics, intro + outro + CTA | `/scc:write --format newsletter` |
+| Strategy/analysis report | 5,000 | 6,000-9,000 | 6 sections (situation, players, analysis, options, recommendation, risk) | `/scc:write --format report` |
 | SWOT / Porter / OKR / RICE doc | 3,000 | 4,000-5,000 | 4 quadrants/items, each with evidence + counterevidence + decision | `/scc:analyze` |
-| Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes (narration + visual cue + on-screen text per scene) | `/academy-shorts` |
-| Card news (carousel) | 8-10 cards (count, not chars) | 9-12 cards | hook + 6-8 body + CTA + source card | `/card-news` |
-| Social post (single tweet/thread post) | 280-700 chars (range, both ends fail gate) | 500-650 | 1 hook + 3-5 supporting lines | `/scc:write --format social` |
-| PRD (product requirements) | 4,000 | 5,000-7,000 | 7 sections (problem, target users, success metrics, scope, non-scope, risks, rollout plan) | `/scc:write --format prd` |
+| Shorts script (60-90s) | 1,800 | 2,200-2,800 | 12 scenes (narration + visual cue + on-screen text per scene) | `/scc:write --format shorts` |
+| Card news (carousel) | 8-10 cards (count, not chars) | 9-12 cards | hook + 6-8 body + CTA + source card | `/scc:write --format card-news` |
+| Social post (single tweet/thread post) | platform-optimized | — | short post | `/scc:write --format social` |
 | Code review report | 2,500 | 3,500-5,000 | 5 sections per file/PR (security, perf, architecture, tests, accessibility) | `/scc:review` |
 | Research brief (Plan output) | 3,000 | 4,000-6,000 | 8 facts with sources + 5+ links + comparison table + 1+ quotes + media list | `/scc:research` |
-| Meeting notes / decision doc | 2,000 | 2,500-3,500 | 5 sections (context, decision, rationale, alternatives, owner) | `/scc:write --format decision` |
 
 ### Interpreting the Floor
 
-- **Min chars (body only)**: count UTF-8 characters of the markdown body. Exclude frontmatter, references section, image alt text, code block language tags. **Below this number = gate fails immediately.**
+- **Min chars (body only)**: count UTF-8 characters of the markdown body. Exclude frontmatter, references section, image alt text, code block language tags. Below this number is a format-contract failure to report and correct.
 - **Target chars**: the range PDCA aims for. Hitting min but not target = passes gate but Check phase will flag "thin coverage" as a concern.
 - **Min sections**: count distinct H2 headings or bold-labeled section markers. Below the section count = the artifact is too thin structurally even if total chars meet the floor.
 - **range formats** (social posts, card news): both below AND above the range fail the gate. A social post over 700 chars belongs as an article, not a social post; a card news with 15 cards belongs as an article, not a carousel.
@@ -167,11 +179,12 @@ The floors are not arbitrary. They are calibrated against three benchmarks:
 
 3. **AI hedge prevention** — language models tend to under-write when given vague length guidance. Setting a numeric floor forces the writer to commit to substance instead of producing a polished-but-sparse skeleton. The target range tells the writer where the sweet spot is.
 
-### Why Length Floors Are Hard Contracts
+### Why Length Floors Matter
 
 Past failure mode: PDCA's Do phase produced artifacts in the 2,000-3,000 char range because the original DoOutput schema only required `word_count > 0`. Reviewers would approve them ("technically complete") and the user would receive sparse artifacts that failed to deliver real value. The user had to manually push back and ask for more content, which is exactly the burden PDCA exists to remove.
 
-The fix: shift the contract upstream. The Do gate now fails BEFORE the artifact reaches the reviewer if it doesn't meet the floor. A reviewer cannot rescue a fundamentally underfilled artifact — they can only suggest expansion, which the user then has to negotiate manually. By failing the gate at the Do output, PDCA forces the writer to expand before any review pass even runs.
+The format contract gives the writer a useful floor before review. The state MCP does not independently
+reject every below-floor artifact; the selected skill and Check review should surface and correct it.
 
 Length floors are calibrated to the minimum at which the format delivers reader value. **Below the floor, the artifact is structurally insufficient regardless of how polished the prose is.** Polish without substance is the most common failure mode — PDCA refuses to ship it.
 

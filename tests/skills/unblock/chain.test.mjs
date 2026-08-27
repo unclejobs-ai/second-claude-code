@@ -31,7 +31,8 @@ test("runChain returns ok shape with required fields when content is found", asy
   assert.ok(r.elapsed_ms >= 0);
 });
 
-test("runChain refuses Phase 6 without --allow-paid", async () => {
+test("runChain refuses Phase 6 without --allow-paid", async (t) => {
+  if (process.env.UNBLOCK_SKIP_NETWORK_TESTS === "1") return t.skip("network tests disabled");
   const r = await runChain("https://no-such-host-zzz-2026-zzzzzzzz.invalid/path", { maxPhase: 6, allowPaid: false });
   assert.equal(r.ok, false);
   const phase6 = r.trace?.find((t) => t.phase === 6);

@@ -1,5 +1,7 @@
 # Release Notes — v1.3.0
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 **Date**: 2026-04-07
 **Theme**: PDCA Hard Gates — length floors, reviewer diversity, and the calibrated 5+ Rule
 

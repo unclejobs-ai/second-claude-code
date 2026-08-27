@@ -6,7 +6,7 @@ effort: high
 
 ## Iron Law
 
-> **No skipping. Always proceed P→D→C→A in order.**
+> **When a PDCA run is selected, honor its phase gates and transition order.**
 
 ## Red Flags
 
@@ -28,24 +28,23 @@ Each phase gates into the next. No gate skipping.
 - Complex work requiring multiple skills in sequence
 - User says "알아보고 써줘", "research and write", or similar multi-phase requests
 
-## PDCA Is the Main Orchestrator. Sub-Skills Are Building Blocks.
+## PDCA Is an Optional Orchestration Path
 
-**PDCA always runs.** It is the top-level orchestrator for all knowledge work. The Plan→Do→Check→Act cycle wraps every task. Sub-skills (`/threads`, `/newsletter`, `/academy-shorts`, `/card-news`, `/scc:write`, `/scc:research`, `/scc:review`, `/scc:refine`) are **building blocks that PDCA calls inside its phases** — they are not replacements for PDCA, and they do not run on their own outside a PDCA cycle.
+Use PDCA for end-to-end or explicitly phased work. Individual skills and commands such as
+`/scc:research`, `/scc:write`, `/scc:review`, and `/scc:refine` also run directly; they are
+not required to be wrapped in PDCA.
 
 ```
-PDCA Cycle (always running)
+PDCA Cycle (when selected)
   ├─ Plan  → calls /scc:research (or domain research) + /scc:analyze
   ├─ Do    → calls the appropriate sub-skill based on output format
-  │           ├─ Threads content?      → /threads handles its own internal phases inside Do
-  │           ├─ Newsletter?           → /newsletter handles its own phases inside Do
-  │           ├─ Shorts script?        → /academy-shorts handles its own phases inside Do
-  │           ├─ Card news?            → /card-news handles its own phases inside Do
-  │           └─ Generic content?      → /scc:write
+  │           └─ Supported format?     → /scc:write --format <format>
   ├─ Check → calls /scc:review (always, regardless of which sub-skill ran in Do)
   └─ Act   → calls /scc:refine or routes back to Plan/Do via Action Router
 ```
 
-The key principle: **the user only invokes PDCA**. PDCA decides which sub-skill to dispatch in each phase. The sub-skill produces its phase output and returns control to PDCA, which then enforces the gate, runs Check, and routes Act findings.
+The key principle: PDCA owns transitions only for a PDCA run. It chooses a supported format
+and delegates production, then validates the resulting phase output.
 
 ### Code Engineering Lane
 
@@ -66,18 +65,18 @@ When PDCA enters the Do phase, it picks the most specialized sub-skill that matc
 
 | Output Format | Sub-Skill PDCA Dispatches | What That Sub-Skill Owns Internally |
 |---------------|--------------------------|-------------------------------------|
-| Threads article (@unclejobs.ai) | `/threads` | Its 8-phase pipeline (parse→research→draft→edit→cross-review→proofread→final QA→publish), voice-guide enforcement, Notion publishing |
-| Korean tech newsletter | `/newsletter` | Its 7-phase pipeline, Notion/Beehiiv publishing |
-| Shorts script (60-90s) | `/academy-shorts` | Research → script → editor pipeline with MMBridge review |
-| Card news (carousel) | `/card-news` | Card news template + Playwright render pipeline |
-| Generic article/report/blog/social | `/scc:write` | Pure execution from Plan artifacts |
+| `newsletter`, `article`, `shorts`, `report`, `social`, `card-news` | `/scc:write --format <format>` | Format-specific production contract |
+| Other specialized format supplied by an installed plugin | External plugin capability (optional) | Only when the caller explicitly invokes it |
+| Generic content | `/scc:write` | Pure execution from Plan artifacts |
 
 **Key trigger keywords for sub-skill selection** (PDCA scans the user's prompt and the Plan output's `dod` field):
 
-- "스레드", "threads", "@unclejobs.ai", URL 기반 한국어 콘텐츠 → `/threads` in Do
-- "뉴스레터", "newsletter", "주간 뉴스레터" → `/newsletter` in Do
-- "쇼츠", "shorts", "릴스", "Reels", "9:16", "60초 영상" → `/academy-shorts` in Do
-- "카드뉴스", "card news", "인스타 카드", "캐러셀" → `/card-news` in Do
+- "뉴스레터", "newsletter" → `/scc:write --format newsletter` in Do
+- "아티클", "article" → `/scc:write --format article` in Do
+- "쇼츠", "shorts", "릴스", "Reels" → `/scc:write --format shorts` in Do
+- "보고서", "report" → `/scc:write --format report` in Do
+- "소셜", "social" → `/scc:write --format social` in Do
+- "카드뉴스", "card news", "캐러셀" → `/scc:write --format card-news` in Do
 - Anything else → `/scc:write` in Do
 
 ### Why PDCA Wraps Sub-Skills (Doesn't Hand Off)
@@ -91,32 +90,35 @@ The Plan and Check phases add value that no sub-skill provides on its own:
 A sub-skill running on its own = single-shot generation with the sub-skill's internal checks only.
 PDCA wrapping a sub-skill = upstream Plan rigor + sub-skill's internal pipeline + downstream Check + Act loop. Strictly more validation.
 
-### When Sub-Skills Have Their Own Internal Phases
+### When an Optional External Capability Has Its Own Phases
 
-`/threads`, `/newsletter`, `/academy-shorts` each have multi-phase internal pipelines (e.g., `/threads` has 8 phases). When PDCA dispatches them in the Do phase, **all of those internal phases run inside the Do phase**. The sub-skill's internal phases are the implementation of "Do" for that format.
+An installed external plugin may expose a specialized capability with its own phases. If a
+caller explicitly invokes it, those phases are outside this plugin's built-in routing; PDCA
+can validate the returned artifact when it is used as Do input.
 
 For the full sub-skill dispatch protocol (input contract, output contract, failure handling, integration points), see `references/domain-pipeline-integration.md`.
 
-This means a full PDCA run on a threads article looks like:
+This means a full PDCA run on a newsletter looks like:
 
 ```
 PDCA Plan  →  /scc:research + /scc:analyze (gather sources, build framework)
-PDCA Do    →  /threads (which internally runs its own 8 phases including the
-              sub-skill's research, draft, edit, cross-review, proofread, final QA,
-              publish — all gated by /threads' own contracts)
-PDCA Check →  /scc:review (parallel reviewers, even though /threads already did
-              its own cross-review — PDCA's Check adds an outside perspective)
+PDCA Do    →  /scc:write --format newsletter (research/review can be skipped when
+              Plan and Check are owned by this PDCA run)
+PDCA Check →  /scc:review (parallel reviewers; this is the independent Check phase)
 PDCA Act   →  Action Router classifies any Check findings and routes to Plan,
               Do, or Refine
 ```
 
-PDCA's Check is **not redundant** with the sub-skill's internal review — they catch different things. The sub-skill's internal review checks for domain-specific issues (e.g., voice-guide violations). PDCA's Check looks at the result from outside the domain pipeline and catches the issues the domain pipeline cannot see itself.
+PDCA's Check is independent of any review a caller or optional external capability may have
+performed. It supplies the cycle's configured consensus verdict.
 
 ### Past Failure That Motivated This Architecture
 
-A user asked for a threads article. PDCA was invoked but the orchestrator interpreted PDCA's abstract phases as a license to self-process — it skipped both `/threads` (the right Do-phase sub-skill) and `/scc:review` (the Check phase). Result: a 3,000-character article with no cross-review, no fact-check, no second model perspective. When the work was redone with PDCA explicitly dispatching `/threads` in Do and `/scc:review` in Check, three P0 factual errors surfaced (a math inconsistency, a wrong feature description, an incorrect currency conversion). The lesson: PDCA's value comes from the wrapping (Plan + Check + Act around whatever the Do phase produces), and skipping that wrapping is what makes outputs short and weak. **Always run the full cycle. Always wrap. Never let the orchestrator self-process when a sub-skill exists.**
+The lesson: PDCA adds value when the user needs phase gates and routed correction. It is not a
+requirement for every direct skill invocation, and this plugin does not assume unavailable
+specialized commands.
 
-## Phase Detection (Only Runs After Domain Routing Returns "no match")
+## Phase Detection
 
 | Signal | Phase | Skills Chained |
 |--------|-------|---------------|
@@ -132,7 +134,7 @@ When full PDCA is detected, run all phases with gates between each.
 ## Architecture
 
 ```
-User Prompt → prompt-detect.mjs (Layer 1: compound → /scc:pdca)
+User Prompt → normal Claude Code skill/command selection
 
 PDCA Orchestrator
 │
@@ -140,7 +142,7 @@ PDCA Orchestrator
 │   ├── Question Protocol (max 3 Qs → unanswered = save assumptions)
 │   ├── Eevee (researcher): data collection
 │   └── Alakazam (analyst) + Mewtwo (strategist): structured analysis
-│       └── Gate: Brief + Analysis exist? Sources ≥3?
+│       └── Gate: Brief + Analysis exist? Runtime source-count gate (≥5)
 │
 ├── DO (pure execution)
 │   └── Smeargle (writer): /scc:write --skip-research --skip-review
@@ -169,14 +171,14 @@ Load the relevant checklist from `references/` at each transition. Gates are man
 
 | Gate | Reference | Permission | Key Failure Condition |
 |------|-----------|------------|----------------------|
-| Plan → Do | `references/plan-phase.md` | `plan` (read-only) | `sources_count < 3`, Plan Mode not approved, any PlanOutput field missing |
+| Plan → Do | `references/plan-phase.md` | `plan` (read-only) | runtime `sources_count < 5`, Plan Mode not approved, any required field missing |
 | Do → Check | `references/do-phase.md` | `acceptEdits` | `plan_findings_integrated: false`, `sections_complete: false`, artifact absent |
 | Check → Act | `references/check-phase.md` | `plan` (read-only) | Fewer than 2 reviewers, verdict not a standard value |
 | Act → Exit/Cycle | `references/act-phase.md` | `acceptEdits` | `decision` invalid, `root_cause_category` empty |
 
 **Permission pattern**: read-only (`plan`) → write (`acceptEdits`) → read-only → write. Switch at every phase boundary.
 
-**Check → Act routing**: `APPROVED` → EXIT | `MINOR FIXES` → Act light touch | `NEEDS IMPROVEMENT` → Act full refine | `MUST FIX` → Act critical-first.
+**Check → Act routing**: `APPROVED` → EXIT | `MINOR FIXES` → Act light touch | `NEEDS IMPROVEMENT` → Act full refine | `MUST FIX` → Act critical-first. Preset reviewer counts and optional quality checks remain defined by `/scc:review`; not every narrative contract is enforced by the state MCP runtime.
 
 **Cycle limit**: If `cycle_count >= max_cycles`, do NOT start another cycle. Notify: "max_cycles에 도달했습니다 — 현재 결과물로 종료합니다." Exit with best artifact.
 
@@ -226,7 +228,7 @@ MCP tools (when `pdca-state` server is available): `pdca_get_state`, `pdca_start
 
 ## Output
 
-At each gate: phase summary + gate verdict (pass/fail + reason) + next phase recommendation + "Continue to [next phase]?" prompt (unless full PDCA mode).
+At each gate: phase summary + gate verdict (pass/fail + reason) + next phase recommendation.
 
 At cycle end: full artifact chain, Action Router decisions, verdict progression, total phases + token cost estimate.
 

@@ -51,8 +51,11 @@ test("every skill has a command, and the tool-only commands have no skill", () =
   );
 
   const manifest = JSON.parse(read(".claude-plugin/plugin.json"));
+  const agentCount = readdirSync(path.join(root, "agents"))
+    .filter((name) => name.endsWith(".md") && name !== "README.md")
+    .length;
   assert.match(manifest.description, new RegExp(`${skills.length} skills`));
-  assert.match(manifest.description, /17 Pokemon agents/);
+  assert.match(manifest.description, new RegExp(`${agentCount} agents`));
 });
 
 // marketplace.json sat at "18 skills" through a release that shipped 15,

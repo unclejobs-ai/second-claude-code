@@ -1,5 +1,8 @@
 # Hermes Operations
 
+> **Inactive integration**: These are reference instructions for an explicitly configured Hermes
+> operator. They are not loaded or executed by the Second Claude Code plugin.
+
 This document is the operator playbook for running Hermes against this repository
 with the bundled skillpack.
 

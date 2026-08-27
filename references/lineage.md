@@ -22,7 +22,7 @@ Key sources that shaped second-claude's design and what was absorbed from each.
 ## Claude Octopus -- Multi-Agent Review
 
 **Source**: Consensus gate pattern, auto-routing between specialist agents
-**Absorbed**: The multi-perspective review system in `/scc:review` with independent parallel dispatch and 2/3 threshold. Auto-routing concept feeds the hook system that detects user intent and suggests skills.
+**Absorbed**: The multi-perspective review system in `/scc:review` with independent parallel dispatch and preset-specific thresholds. Cross-plugin routing survives as a caller-requested advisory plan; hooks do not invoke suggested skills.
 
 ## Pi / badlogic -- Minimalist Plugin Architecture
 

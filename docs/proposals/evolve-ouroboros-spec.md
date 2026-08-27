@@ -1,5 +1,7 @@
 # evolve — Spec (implementation-ready)
 
+> **Historical snapshot**: This proposal records a past design and is not a current implementation contract.
+
 > Status: **design proposal, pre-implementation.** Produced 2026-06-12 from a 3-source analysis (steipete/agent-scripts maintainer-orchestrator + github-project-triage, mattpocock/skills diagnose/triage) and an 11-agent grounded-design workflow with adversarial safety review. Awaiting maintainer decisions (§10) before build.
 
 ## Headline finding

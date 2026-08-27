@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 420" fill="none" role="img" aria-labelledby="rf-title rf-desc">
   <title id="rf-title">Multi-Perspective Review Flow</title>
-  <desc id="rf-desc">Five parallel reviewers feed into a majority vote that produces one of four verdicts.</desc>
+  <desc id="rf-desc">A selected preset sends a draft to two to five parallel reviewers; score and vote checks produce one of four verdicts.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -14,7 +14,7 @@
   <rect x="20" y="160" width="108" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <text x="74" y="192" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Your draft</text>
   <text x="74" y="210" text-anchor="middle" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">goes to</text>
-  <text x="74" y="224" text-anchor="middle" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">5 reviewers</text>
+  <text x="74" y="224" text-anchor="middle" fill="#484f58" font-size="8.5" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">2–5 reviewers</text>
 
   <!-- Dispatch → Reviewers lines -->
   <line x1="128" y1="176" x2="164" y2="68" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
@@ -23,7 +23,7 @@
   <line x1="128" y1="208" x2="164" y2="262" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
   <line x1="128" y1="216" x2="164" y2="326" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>
 
-  <!-- ===== 5 REVIEWERS ===== -->
+  <!-- ===== AVAILABLE REVIEW ROLES (PRESET SELECTS 2–5) ===== -->
 
   <!-- Xatu — opus (red accent bar) -->
   <rect x="168" y="44" width="272" height="48" rx="4" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>

@@ -6,8 +6,8 @@ argument-hint: '"learn" or "propose" or "show" or "init --template developer"'
 Invoke the `/scc:soul` command to build and maintain a user identity profile through the `soul` skill.
 
 ## Context
-- Current soul: !`cat .data/soul/SOUL.md 2>/dev/null | head -5 || echo "No soul synthesized yet"`
-- Observation count: !`wc -l < .data/soul/observations.jsonl 2>/dev/null || echo "0"` observations logged
+- Current soul: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/SOUL.md" 2>/dev/null | head -5 || echo "No soul synthesized yet"`
+- Observation count: !`wc -l < "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/observations.jsonl" 2>/dev/null || echo "0"` observations logged
 
 ## Subcommands
 - `init` — bootstrap a fresh observation log and SOUL.md stub

@@ -2,220 +2,250 @@
 
 # Second Claude Code — User Manual
 
-> A practical guide for getting started
+> A practical, human-first guide to choosing an entry point
 
----
+## 1. Start with the smallest useful entry point
 
-## 1. What Is Second Claude Code?
+Second Claude Code is a plugin for Claude Code. It provides 15 skills and 3 tool-only commands.
+Choose the one that matches the work:
 
-Second Claude Code is a plugin for Claude Code. It handles the full cycle of knowledge work — research, writing, analysis, review, and revision — from a single prompt.
-
-**TL;DR:** You type one request. The plugin breaks it into phases (research, write, review, improve), runs each phase with a specialized agent, and delivers a reviewed final output. No copy-paste between tools. No manual handoffs.
-
-| Without the plugin | With Second Claude Code |
+| Need | Entry point |
 |---|---|
-| Research in one window, copy output, open new chat for writing | One prompt handles research through review in one flow |
-| Write a draft, wait a day for feedback | 5 specialized reviewers return feedback in under a minute |
-| Find a SWOT template, fill each quadrant manually | "Run a SWOT analysis on X" — selects from 15 built-in frameworks |
-| Iterate with "fix this" / "also fix that" / "you forgot earlier feedback" | Set a quality target — the system iterates until it passes |
+| Gather and synthesize sources | `/scc:research` |
+| Produce an article, report, newsletter, or supported format | `/scc:write` |
+| Check an existing draft or code artifact | `/scc:review` |
+| Apply findings and iterate | `/scc:refine` |
+| Connect research, production, review, and revision with gates | `/scc:pdca` |
 
----
+Natural language can be handled by Claude Code's normal skill flow. SCC's prompt hook does not
+auto-dispatch a skill or command. Use the slash form when you want explicit control:
 
-## 2. Installation
+```text
+/scc:research "AI agent frameworks" --depth medium
+/scc:write --format report --skip-research notes.md
+/scc:review proposal.md --preset content
+/scc:refine proposal.md --max 3
+```
 
-### Prerequisites
+Direct skill use is valid; PDCA is optional. `write` reviews its draft internally by default. Add
+`--skip-review` to intentionally omit that pass, or `--skip-research` when real source material is
+already supplied. A PDCA Check, when selected, remains an independent review phase.
 
-Claude Code must already be installed. If you do not have it yet, follow the [Claude Code installation guide](https://docs.anthropic.com/en/docs/claude-code/overview).
+## 2. Install, update, or migrate
 
-### Install the Plugin
+### Prerequisite
 
-Open your terminal and run:
+Install [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview) first.
+
+### New installation
+
+In a terminal, add the marketplace and install the plugin by its current name:
 
 ```bash
-claude plugin add github:unclejobs-ai/second-claude-code
+claude plugin marketplace add unclejobs-ai/second-claude-code
+claude plugin install scc
 ```
 
-### Verify
+Open a new Claude Code session, then verify:
 
-Start a new Claude Code session. You should see this in the context injection:
-
-```
-# Second Claude Code — PDCA loop
-
-Control loop on Claude Code, not a second agent OS. Plan (researcher+analyst) → Do (writer) → Check (reviewers) → Act (editor). Dispatch jobs, not filenames.
+```bash
+claude plugin list
 ```
 
-Once a project has standards recorded, an **활성 기준** list appears under that header, showing up to
-12 active standards with their review conditions. The banner does not enumerate commands — that
-listing was removed, because naming every command on every session start spends context to tell the
-model things it can already see.
+### Updating v3
 
-If it does not appear, run `claude plugin list` to confirm the plugin is installed.
+```bash
+claude plugin update scc
+```
 
----
+Restart Claude Code after the update. Version 3 commands use the `scc` namespace, for example
+`/scc:write`.
 
-## 3. Use Cases
+### Migrating an older installation
 
-### Market Research Report
+The namespace and plugin cache key changed in v3. If the old entry appears in
+`claude plugin list`, remove it and install `scc`:
 
-**Prompt:** `Research the current state of the AI education market. Include market size, major players, and growth projections. Write it as a structured report.`
+```bash
+claude plugin uninstall second-claude-code
+claude plugin install scc
+```
 
-The system crawls 20+ sources, synthesizes a research brief, drafts a 5,000+ character report, and runs it through 5 reviewers before delivering the final output. Research, writing, and review happen in one flow — no separate sessions.
+If that old entry is absent, skip the uninstall step. Reopen Claude Code before invoking commands
+from the new namespace.
 
-### Competitor SWOT Analysis
+### Keep runtime data when replacing the plugin
 
-**Prompt:** `Run a SWOT comparison of Coursera, Udemy, and Skillshare. Include differentiation points for our service.`
+By default runtime data is under `.data/` in the plugin directory. Point `CLAUDE_PLUGIN_DATA` at a
+durable directory to keep cycle runs, memory, soul data, and preferences across replacement:
 
-The `analyze` skill selects from 15 built-in strategic frameworks (SWOT, Porter's Five Forces, RICE, PESTLE, and more). One prompt replaces finding a template and filling each quadrant manually.
+```bash
+export CLAUDE_PLUGIN_DATA="$HOME/.scc-data"
+```
 
-### Newsletter or Blog Post
+The `pdca-state` MCP server is shipped as a self-contained bundle. Fresh startup does not require
+`npm install`, downloading dependencies, or a local `node_modules` directory for that server.
+Playwright and MMBridge are optional MCP integrations with separate setup and availability.
 
-**Prompt:** `Write a newsletter about "3 ways non-developers can use AI agents." Target audience: working professionals interested in AI.`
+## 3. First tasks
 
-Research, drafting, and review happen automatically. The output is 10,000+ characters in newsletter format (hook, 3-4 sections, actionable closing).
+### Research a topic
 
-### Quality Review of an Existing Draft
+```text
+/scc:research "the current state of AI education" --depth medium
+```
 
-**Prompt:** `Review this proposal draft. Focus on logical gaps, missing evidence, and tone consistency. [paste draft or specify file path]`
+Research uses Jina Search as its primary path. The depth contract is:
 
-Five specialized reviewers run in parallel (see Section 6 for details). At least 2 out of 3 must pass. Any Critical-severity finding blocks the output. You get five perspectives in under a minute.
+| Depth | Contract |
+|---|---|
+| `shallow` | Exactly 3 Jina Search calls; no deep reads |
+| `medium` | Exactly 5 Jina Search calls; up to 2 Jina Reader deep reads |
+| `deep` | 10+ Jina Search calls; unlimited Jina Reader reads; bounded gap-fill rounds |
 
-### Iterative Refinement
+If Jina is unavailable, the skill can use WebSearch/WebFetch and then available unblock or
+Playwright fallbacks. Credentials and rate limits determine which path succeeds. See the
+[research guide](skills/research.md) for source validation and limitations.
 
-**Prompt:** `Refine this draft until it passes review. Maximum 3 iterations.`
+### Write from supplied material
 
-The `refine` skill reads the review feedback, applies fixes, and re-submits. If quality stops improving between iterations, it stops early.
+```text
+/scc:write --format report --skip-research research-brief.md
+```
 
-### Workflow Automation
+Supported formats and their content floors are defined in the [write guide](skills/write.md). The
+writer's internal review is on by default; use `--skip-review` only when the workflow deliberately
+owns review elsewhere.
 
-**One-time setup:** `Create a workflow called "weekly newsletter." Step 1: Research. Step 2: Write. Step 3: Review. Step 4: Refine.`
+### Review an existing artifact
 
-**Each week:** `Run the weekly newsletter workflow. This week's topic: "prompt engineering trends."`
+```text
+/scc:review proposal.md --preset strategy
+```
 
-Four prompts in a specific order, every week, replaced by one.
+Review runs a panel of 2–5 specialized reviewers. The preset controls the panel and vote rule;
+Critical findings block the result. Review can be used alone, without a PDCA run.
 
----
+### Refine from findings
 
-## 4. The 18 Skills
+```text
+/scc:refine proposal.md --max 3
+```
 
-You do not need to memorize skill names. Type your request in natural language and the auto-router selects the right skill. If you want explicit control, use slash commands like `/scc:write`.
+Refine applies review findings and stops at the target or configured limit. It does not promise a
+particular number of iterations or a particular completion time.
 
-Both English and Korean prompts work. The system has roughly 50 Korean trigger patterns and 77 English trigger patterns built in. You can mix languages freely.
+## 4. The 15 skills and 3 tool-only commands
 
-| Skill | What it does | When to use | Example prompt |
-|---|---|---|---|
-| `coach` | Puts every defensible direction to you, then records the choice as a standard under `.scc/standards/` | A request that could go more than one way | "Decide the voice direction before drafting this post" |
-| `research` | Crawls 20+ sources, finds patterns, produces a structured brief | Digging deep into a topic | "Research the current state of AI regulation in the EU" |
-| `analyze` | Applies strategic frameworks: SWOT, Porter, RICE, PESTLE, OKR, and more (15 built-in) | Structured strategic thinking | "Run a SWOT analysis on our product vs. competitors" |
-| `write` | Produces research-backed drafts with automatic review | Articles, reports, newsletters, social content | "Write a newsletter about remote work productivity tips" |
-| `review` | Runs 5 parallel reviewers with consensus voting | Checking a draft from multiple perspectives | "Review this proposal for logical gaps and tone" |
-| `refine` | Iterative revision loop — fixes issues and re-submits until reviewers approve | Improving a draft until it passes | "Refine this draft until it passes review. Max 3 iterations" |
-| `collect` | Captures URLs, notes, or excerpts into PARA-organized knowledge | Saving references for later use | "Save this link about transformer architectures" |
-| `workflow` | Chains multiple skills into a reusable pipeline | Automating recurring multi-step tasks | "Create a workflow: research, write, review, refine" |
-| `discover` | Searches the marketplace for new capabilities with safety scoring | Finding skills for tasks not covered | "Find a skill that helps with email marketing copy" |
-| `pdca` | Orchestrates the full Plan-Do-Check-Act cycle from one prompt | End-to-end knowledge work in one shot | "Research AI agents and write a comprehensive report" |
-| `translate` | EN-KO translation with style control (literal / natural / creative) | Translating content while preserving formatting | "Translate this article to Korean in a natural tone" |
-| `batch` | Decomposes large tasks into independent parallel units | Processing many similar items at once | "Batch-analyze these 10 competitor landing pages" |
-| `soul` | Observes your patterns and synthesizes a persistent identity profile | Adapting the system to your style over time | "Show my soul profile" or "Propose a soul evolution" |
-| `viewer` | Opens a local web UI to view PDCA pipeline outputs as artifacts | Inspecting results from a completed pipeline | "Open the artifact viewer" |
-| `loop` | Benchmarks and evolves prompt assets through optimization iterations | Systematically improving prompt quality | "Loop this prompt suite against the benchmark until score > 85" |
-| `evolve` | Evolves recurring-failure prompt assets against maintainer-authored checks | Maintaining the plugin's own prompt quality | "List recurring failures and evolve the weakest asset" |
-| `unblock` | Fetches hostile or blocked URLs through adaptive zero-key fallback phases | Research source cannot be fetched normally | "Unblock this Cloudflare-protected article" |
-| `standard-check` | Runs the project's recorded standards against one artifact and reports every violation | Before shipping work a standard governs | "Check this draft against our standards" |
+| Skill | Use it for |
+|---|---|
+| `coach` | Resolve a fork between defensible directions and record a project standard |
+| `research` | Multi-round, source-backed research and synthesis |
+| `analyze` | Applying one of 15 strategic frameworks |
+| `write` | Format-specific content production |
+| `review` | Multi-perspective review with consensus voting |
+| `refine` | Iterative revision toward a target |
+| `collect` | PARA-organized knowledge capture |
+| `workflow` | Reusable skill pipelines |
+| `discover` | Candidate skill discovery and scored recommendations |
+| `pdca` | Explicit Plan → Do → Check → Act orchestration |
+| `translate` | English ↔ Korean translation with format and voice preserved |
+| `batch` | Parallel decomposition of homogeneous work |
+| `soul` | Persistent preference and behavior profile synthesis |
+| `loop` | Fixed-suite prompt optimization (maintainer-only) |
+| `evolve` | Recurring-failure asset evolution (maintainer-only) |
 
----
+| Tool-only command | Use it for |
+|---|---|
+| `/scc:viewer` | Open or export run artifacts and provenance |
+| `/scc:unblock` | Try the adaptive 9-phase URL fallback chain |
+| `/scc:standard-check` | Check one artifact against recorded project standards |
 
-## 5. How PDCA Works
+Browse the [skill index](skills/) for each guide and the [document index](README.md) for related
+architecture and command references.
 
-PDCA stands for **Plan, Do, Check, Act**. It is a quality cycle borrowed from manufacturing. The idea is simple: plan what to do, do it, check if it is good enough, then act on the feedback. This plugin uses PDCA to connect its skills into one automated pipeline.
+## 5. Review presets
 
-![PDCA Cycle](images/pdca-cycle.svg)
+| Preset | Reviewers | Typical use |
+|---|---|---|
+| `content` | Deep + Advocate + Tone | Articles, blogs, newsletters |
+| `strategy` | Deep + Advocate + Facts | PRDs, SWOTs, strategy documents |
+| `code` | Deep + Facts + Structure | Code review |
+| `security` | Deep + Facts + Structure | Security audit |
+| `academic` | Deep + Facts + Structure + Advocate | Papers and research outputs |
+| `quick` | Advocate + Facts | A smaller panel |
+| `full` | All 5 | Broadest built-in panel |
 
-### A concrete example
+This is a 2–5 reviewer system. A preset is not a timing guarantee. `--external` is opt-in and may
+send the artifact to configured external providers; review the data boundary before using it.
 
-Say you type: **"Research AI agents and write a report."**
+Built-in vote thresholds are `quick` 2/2, the 3-reviewer presets 2/3, `academic` 3/4, and `full`
+3/5. A Critical finding blocks regardless of the vote.
 
-Here is what happens at each phase:
+## 6. How PDCA works
 
-**Plan** — Eevee (the adaptive researcher) crawls sources and finds patterns. Alakazam (the strategist) structures the research into a brief. The gate: a research brief must exist before writing starts.
+Choose `/scc:pdca` when one request needs all phases:
 
-**Do** — Smeargle (the writer) produces a full draft grounded in the research. The gate: the draft goes to review, not to you.
+```text
+Plan  → research and analyze a brief
+Do    → write from the approved plan
+Check → run the selected review preset
+Act   → route research, execution, or polish gaps
+```
 
-**Check** — Five specialized reviewers run in parallel (see Section 6). The gate: at least 2 out of 3 must pass. Any Critical finding blocks the output.
+The state runtime enforces a defined gate subset:
 
-**Act** — The Action Router reads the review feedback and decides what to do next:
-- Research gap found? Route back to **Plan** (more research needed).
-- Missing section? Route back to **Do** (more writing needed).
-- Polish issue? Route to **Refine**, then re-submit to **Check**.
-- Everything passed? Ditto (the adapter) formats and delivers the final output.
+| Transition | Runtime-enforced checks include |
+|---|---|
+| Plan → Do | Required fields, `sources_count >= 5`, Plan Mode approval |
+| Do → Check | Artifact exists, sections are complete, plan findings are integrated |
+| Check → Act | At least 2 reviewers and a standard verdict value |
+| Act → next phase/exit | Valid decision and root-cause category, within cycle limits |
 
-You receive the result only after it has been reviewed and, if needed, revised.
+Skill guidance is broader than the runtime subset. Research method, source quality, reviewer roles,
+format requirements, and style rules guide the relevant agents; they do not cause prompt-hook
+dispatch, and every narrative condition is not independently enforced by `pdca-state`. See the
+[PDCA skill guide](skills/pdca.md) for phase schemas and routing.
 
-### Why this matters
+## 7. Standards and session state
 
-The Action Router is what distinguishes PDCA from a simple retry loop. When review finds a problem, the router classifies the root cause and sends work back to the correct phase. A research gap goes back to research, not to a generic rewrite. That targeted re-routing is why the second pass produces meaningfully better output than the first.
+`/scc:coach` stores settled decisions in your project under:
 
----
+```text
+.scc/standards/<id>/STANDARD.md
+```
 
-## 6. The Reviewers (Pokemon Agents)
+The record keeps the chosen direction, rejected options, reopening conditions, and checks.
+`/scc:standard-check artifact.md` reports `PASS`, `FAIL`, `UNPROVEN`, or `UNCHECKED`; the checker
+does not certify its own adversarial result.
 
-![Agent Roster](images/agent-roster.svg)
+Lifecycle hooks restore state, report literal triggers from active standards, aggregate reviewer
+results, and save summaries. They do not select or invoke skills from a prompt. The bundled
+`pdca-state` server exposes 31 MCP tools for state, memory, soul data, recall, and advisory
+cross-plugin orchestration. Orchestrator results are advisory and never execute an external skill
+or command.
 
-When a draft enters the **Check** phase, five specialized reviewers evaluate it in parallel. Each reviewer is named after a Pokemon whose traits match its role:
+## 8. Further reading and FAQ
 
-| Reviewer | Code Name | Why this Pokemon | What it checks |
-|---|---|---|---|
-| Deep Reviewer | **Xatu** | Xatu sees past and future simultaneously — it catches structural flaws | Logic flow, argument completeness, structural coherence |
-| Devil's Advocate | **Absol** | Absol senses disasters before they happen — it finds weak spots | The weakest point in the draft, then attacks it |
-| Fact Checker | **Porygon** | Porygon is a digital-native Pokemon — built for data processing | Every number, claim, and cited source |
-| Tone Guardian | **Jigglypuff** | Jigglypuff's soothing voice requires perfect pitch — it catches tone shifts | Voice consistency and audience fit |
-| Structure Analyst | **Unown** | Unown exists as letter forms — it understands document structure deeply | Readability, organization, section flow |
+### Does this replace Claude Code?
 
-**Consensus rule:** At least 2 out of 3 reviewers must pass for the draft to be approved. If any reviewer flags a Critical-severity issue, the draft is blocked regardless of the vote count.
+No. Claude Code is required; this plugin adds skills, commands, hooks, and MCP tools on top of it.
 
-**Beyond the reviewers**, the full agent roster includes:
-- **Eevee** (Plan) — Adaptive researcher that evolves its approach based on what it finds
-- **Alakazam** (Plan) — Strategic structurer that organizes research into actionable briefs
-- **Smeargle** (Do) — Dedicated writer running on the Opus model tier for long-form content
-- **Ditto** (Act) — Universal adapter that formats and delivers the final output
+### Does it support Korean?
 
----
+Yes. Use Korean, English, or a mixture. Use `/scc:translate` when you need an explicit translation
+workflow.
 
-## 7. Frequently Asked Questions
+### Does it cost money?
 
-### What is Claude Code?
+The plugin is MIT-licensed. Claude Code and any external providers still follow their own pricing,
+credentials, and usage policies. Multiple reviewers or deeper research can use more tokens.
 
-Claude Code is a terminal-based AI tool made by Anthropic. It runs in your terminal and can read and write files on your machine. Second Claude Code is a plugin that runs on top of it — it does not work on its own.
+### Where are the detailed references?
 
-### Do I have to write prompts in English?
+- [README](../README.md) — overview and quick start
+- [Skill guides](skills/) — syntax and contracts for each skill
+- [Architecture](architecture.md) — runtime boundaries and state model
+- [Changelog](../CHANGELOG.md) — release and migration notes
 
-No. Both Korean and English are supported. You can use either language or mix them in the same conversation.
-
-### Does this cost money?
-
-The plugin itself is free and open source (MIT license). However, Claude Code API costs apply as usual. Because the plugin runs multiple sub-agents (researchers, writers, reviewers) per prompt, token usage is higher than a single-turn conversation.
-
-To reduce costs:
-- Set `review_preset` to `quick` (2 reviewers instead of 5)
-- Set `research_depth` to `shallow` for lighter research passes
-
-### Will this conflict with my other plugins?
-
-Generally, no. Watch for context window usage: many active plugins with large context injections can take up space. Deactivate plugins you are not using to free up room.
-
-### Can it write long-form content?
-
-Yes. The `write` skill targets 4,000+ characters for articles, 5,000+ for reports, and 10,000+ for newsletters. Long-form writing uses Smeargle, the dedicated writer agent running on the Opus model tier.
-
----
-
-## 8. Further Reading
-
-- **GitHub**: [github.com/unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)
-- **README (English)**: [README.md](https://github.com/unclejobs-ai/second-claude-code/blob/main/README.md)
-- **README (Korean)**: [README.ko.md](https://github.com/unclejobs-ai/second-claude-code/blob/main/README.ko.md)
-- **Questions**: Open an issue on GitHub or ask in the community.
-
----
-
-*Version 3.0.1 | MIT License*
+*Version 3.0.2 | MIT License*

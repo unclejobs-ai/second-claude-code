@@ -1,5 +1,7 @@
 # 릴리스 노트 - v1.5.0
 
+> **Historical snapshot (과거 스냅샷)**: 이 릴리스 노트는 당시 출시 상태를 기록하며 현재 동작과 다를 수 있습니다.
+
 [English](RELEASE-v1.5.0.md) | **한국어**
 
 v1.5.0은 **`unblock` 스킬**을 추가합니다. 9-phase zero-key 적응 fetch chain

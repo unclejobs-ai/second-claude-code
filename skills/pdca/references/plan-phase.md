@@ -90,7 +90,7 @@ All items must pass before proceeding to Do:
 - [ ] **Quotes captured** — At least 1 direct quote with named source for use in Do phase. Quoted speakers must include role + organization + date
 - [ ] **Gaps acknowledged** — Known unknowns are listed explicitly, not hidden. At least 1 acknowledged gap (no research is exhaustive)
 - [ ] **Conflicts noted** — If sources disagree, the disagreement is documented with both positions and the reason for the divergence
-- [ ] **Media inventory** — For content output formats (article/threads/newsletter/shorts), at least 1 referenceable image/screenshot/diagram is downloaded or its source URL is verified accessible
+- [ ] **Media inventory** — For content output formats (article/newsletter/shorts/social/card-news), at least 1 referenceable image/screenshot/diagram is downloaded or its source URL is verified accessible
 - [ ] **Analysis artifact exists** — Structured framework output from analyze skill
 - [ ] **Scope verified** — Question Protocol or user context confirms scope alignment
 
@@ -114,7 +114,7 @@ The Research Brief is the foundation for the Do phase. A thin brief produces a t
 
 | Brief Type | Min chars (body) | Target chars | Min facts | Min sources | Min quotes | Notes |
 |-----------|------------------|--------------|-----------|-------------|------------|-------|
-| Single-topic content brief (article, threads) | 3,000 | 4,000-6,000 | 8 | 5 | 1 | Must include 1 comparison table |
+| Single-topic content brief (article, social, card-news) | 3,000 | 4,000-6,000 | 8 | 5 | 1 | Must include 1 comparison table |
 | Multi-topic newsletter brief | 5,000 | 7,000-10,000 | 15 (3+/topic) | 8 | 2 | Must include topic-by-topic breakdown |
 | Strategy/analysis brief (SWOT, market scan) | 4,000 | 5,000-7,000 | 10 | 6 | 2 | Must include competing positions + counterevidence |
 | Code/technical brief (architecture, refactor) | 3,500 | 4,500-6,000 | 8 (incl. file/line refs) | 4 | 1 | Must include 1+ code snippets or architecture diagrams |
@@ -142,7 +142,8 @@ Beyond length floors, the brief must demonstrate:
 
 ## Gotchas
 
-- Plan analysis has no challenge round by default. For high-stakes topics (`--depth deep`), consider running `/scc:analyze --challenge` manually before approving the Plan→Do gate.
+- Challenge behavior is depth-driven: `standard` runs one challenge round and `thorough` runs two.
+  Use the supported `--skip-challenge` only when intentionally bypassing the default during Plan.
 
 ## Output to Next Phase
 
@@ -152,7 +153,7 @@ The orchestrator validates all fields before passing the gate.
 Pass to Do phase:
 - Path to Research Brief file (`.captures/research-*.md`) → `research_brief_path`
 - Path to Analysis artifact (`.captures/analyze-*.md`) → `analysis_path`
-- Count of distinct sources cited → `sources_count` (must be `>= 3`)
+- Count of distinct sources cited → `sources_count` (runtime gate requires `>= 5`)
 - Known unknowns → `gaps`
 - Saved assumptions from Question Protocol → `assumptions`
 - Definition of Done criteria extracted from scope → `dod`

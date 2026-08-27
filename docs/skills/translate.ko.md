@@ -20,23 +20,23 @@ Translate this into Korean, natural style, preserve the formatting:
 
 ## Quick Start
 
-Install the plugin, then run its first skill. The agent auto-detects
-your project type and loads the right hook chain before each checkpoint.
+Install the plugin, then run its first skill. The agent reads the project
+instructions and applies the relevant checkpoint rules.
 ```
 
 **진행 과정:**
 1. 언어 감지 -- 원문을 영어로 판단합니다. 요청에 목표 언어("한국어로")가 이미 나와 있어 따로 물어볼 필요가 없습니다. 문체와 형식은 각각 `--style natural`, `--format preserve`에 대응합니다.
 2. 소울 확인 -- `.data/soul/SOUL.md`가 있고, `## Tone Rules` 항목은 문장을 짧고 단정하게 쓰며 존대 표현을 중복하지 말라고 규정합니다. 이 규칙이 `natural` 문체 위에 추가 제약으로 더해집니다.
-3. 용어집 로드 -- `references/glossary.md`에서 plugin → 플러그인, agent → 에이전트, hook → 훅, checkpoint → 체크포인트 매핑을 확인합니다. 이렇게 정의된 용어는 다른 표현으로 바꾸지 않고 그대로 씁니다.
-4. 초안 작성 -- Smeargle(라이터, opus)가 한국어 초안을 만듭니다. natural 모드에 맞춰 문장을 재구성하고 소울 규칙과 용어집 네 개 용어를 반영하며, `##` 제목은 제목 그대로 유지합니다.
-5. 검수 -- Ditto(에디터, opus)가 정확성을 확인하고, 제목과 문단 구조가 그대로 남아 있는지(`--format preserve`) 점검합니다. "hook chain"이 한 곳에서 용어집 대신 다른 표현으로 옮겨진 Major 소견 1건이 나왔습니다.
-6. 수정 -- 저장 전에 해당 Major 소견을 반영합니다. Minor 소견은 없었습니다.
+3. 용어집 로드 -- `references/glossary.md`의 plugin → 플러그인, agent → 에이전트, checkpoint → 체크포인트 같은 매핑을 일관되게 사용합니다.
+4. 초안 작성 -- Smeargle(라이터, opus)가 문장을 자연스럽게 재구성하고 `##` 제목을 유지합니다.
+5. 검수 -- Ditto(에디터, opus)가 정확성, 용어집, `--format preserve`의 문단 구조를 확인합니다.
+6. 수정 -- Critical·Major 소견을 저장 전에 반영하고 Minor는 남길 수 있습니다.
 7. 자동 저장 -- `.captures/translate-en-to-ko-quick-start-2026-07-12.md`에 저장합니다.
 
 **출력 예시:**
 > ## 빠른 시작
 >
-> 플러그인을 설치하고 첫 스킬을 실행하세요. 에이전트가 프로젝트 유형을 자동으로 감지해 각 체크포인트 전에 알맞은 훅 체인을 불러옵니다.
+> 플러그인을 설치하고 첫 스킬을 실행하세요. 에이전트가 프로젝트 지침을 읽고 각 체크포인트에 맞는 규칙을 적용합니다.
 
 ## 옵션
 

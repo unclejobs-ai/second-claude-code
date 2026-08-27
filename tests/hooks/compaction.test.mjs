@@ -10,9 +10,19 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { compactionOwner, compactionSnapshotPath } from "../../hooks/lib/compaction-snapshot.mjs";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "compaction.mjs");
+const sessionStartPath = path.join(root, "hooks", "session-start.mjs");
+const TEST_SESSION_ID = "compaction-test-session";
+
+function snapshotPath(tempDir, sessionId = TEST_SESSION_ID) {
+  return compactionSnapshotPath(
+    tempDir,
+    compactionOwner({ session_id: sessionId, project_dir: root }, {})
+  );
+}
 
 function makeTempDataDir() {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-compaction-"));
@@ -34,6 +44,23 @@ function runHook(tempDir, rawInput) {
     env: {
       ...process.env,
       CLAUDE_PLUGIN_DATA: tempDir,
+      CLAUDE_PROJECT_DIR: root,
+      CLAUDE_SESSION_ID: TEST_SESSION_ID,
+    },
+    input: rawInput,
+    encoding: "utf8",
+  });
+}
+
+function runSessionStart(tempDir, rawInput) {
+  return spawnSync(process.execPath, [sessionStartPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: tempDir,
+      CLAUDE_PROJECT_DIR: root,
+      CLAUDE_SESSION_ID: TEST_SESSION_ID,
+      SECOND_CLAUDE_CAPABILITIES: '["node"]',
     },
     input: rawInput,
     encoding: "utf8",
@@ -50,7 +77,7 @@ test("compaction precompact exits quietly when there is no active state", () => 
 
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "");
-  assert.equal(existsSync(statePath(tempDir, "compaction-snapshot.json")), false);
+  assert.equal(existsSync(snapshotPath(tempDir)), false);
 });
 
 test("compaction precompact writes a sanitized snapshot for active PDCA, loop, and pipeline state", () => {
@@ -81,7 +108,7 @@ test("compaction precompact writes a sanitized snapshot for active PDCA, loop, a
   });
 
   const result = runHook(tempDir, JSON.stringify({ event: "PreCompact" }));
-  const snapshot = JSON.parse(readFileSync(statePath(tempDir, "compaction-snapshot.json"), "utf8"));
+  const snapshot = JSON.parse(readFileSync(snapshotPath(tempDir), "utf8"));
 
   assert.equal(result.status, 0);
   assert.match(result.stderr, /PDCA state preserved before compression/);
@@ -107,7 +134,14 @@ test("compaction postcompact exits quietly when no snapshot exists", () => {
 test("compaction postcompact restores snapshot context and deletes the snapshot file", () => {
   const tempDir = makeTempDataDir();
 
-  writeState(tempDir, "compaction-snapshot.json", {
+  writeState(tempDir, "pdca-active.json", {
+    topic: "Hermes adoption",
+    current_phase: "check",
+    completed: ["plan", "do"],
+  });
+
+  writeFileSync(snapshotPath(tempDir), JSON.stringify({
+    owner: compactionOwner({ session_id: TEST_SESSION_ID, project_dir: root }, {}),
     pdca: {
       topic: "Hermes adoption",
       current_phase: "check",
@@ -132,15 +166,17 @@ test("compaction postcompact restores snapshot context and deletes the snapshot 
       status: "running",
     },
     captured_at: "2026-03-28T00:00:00.000Z",
-  });
+  }));
 
-  const result = runHook(tempDir, JSON.stringify({ event: "PostCompact" }));
-  const output = parseStdout(result);
-  const context = output.additionalContext;
+  const post = runHook(tempDir, JSON.stringify({ event: "PostCompact" }));
+  assert.equal(post.stdout, "");
+  const result = runSessionStart(tempDir, JSON.stringify({ source: "compact" }));
+  const context = result.stdout;
 
+  assert.equal(post.status, 0);
   assert.equal(result.status, 0);
-  assert.equal(existsSync(statePath(tempDir, "compaction-snapshot.json")), false);
-  assert.match(context, /\[PDCA State Restored After Compression\]/);
+  assert.equal(existsSync(snapshotPath(tempDir)), false);
+  assert.match(context, /Restored State After Compression/);
   assert.match(context, /Topic: Hermes adoption/);
   assert.match(context, /Phase: check \(completed: plan → do\)/);
   assert.match(context, /Cycle: 2\/4/);
@@ -151,6 +187,8 @@ test("compaction postcompact restores snapshot context and deletes the snapshot 
   assert.match(context, /Loop scores so far: 0\.55 → 0\.71 → 0\.84/);
   assert.match(context, /Active pipeline: "weekly-digest" \(step 2\/6, status: running\)/);
   assert.match(context, /Resume: continue from the current phase/);
+  assert.equal((context.match(/Hermes adoption/g) || []).length, 1);
+  assert.doesNotMatch(context, /## Resumed State/);
 });
 
 test("compaction precompact snapshots workflow-active.json alongside other state", () => {
@@ -164,7 +202,7 @@ test("compaction precompact snapshots workflow-active.json alongside other state
   });
 
   const result = runHook(tempDir, JSON.stringify({ event: "PreCompact" }));
-  const snapshot = JSON.parse(readFileSync(statePath(tempDir, "compaction-snapshot.json"), "utf8"));
+  const snapshot = JSON.parse(readFileSync(snapshotPath(tempDir), "utf8"));
 
   assert.equal(result.status, 0);
   assert.ok(snapshot.workflow);
@@ -177,7 +215,8 @@ test("compaction precompact snapshots workflow-active.json alongside other state
 test("compaction postcompact restores workflow state from snapshot", () => {
   const tempDir = makeTempDataDir();
 
-  writeState(tempDir, "compaction-snapshot.json", {
+  writeFileSync(snapshotPath(tempDir), JSON.stringify({
+    owner: compactionOwner({ session_id: TEST_SESSION_ID, project_dir: root }, {}),
     workflow: {
       name: "content-pipeline",
       current_step: 2,
@@ -185,11 +224,12 @@ test("compaction postcompact restores workflow state from snapshot", () => {
       status: "running",
     },
     captured_at: "2026-03-28T00:00:00.000Z",
-  });
+  }));
 
-  const result = runHook(tempDir, JSON.stringify({ event: "PostCompact" }));
-  const output = parseStdout(result);
-  const context = output.additionalContext;
+  const post = runHook(tempDir, JSON.stringify({ event: "PostCompact" }));
+  assert.equal(post.stdout, "");
+  const result = runSessionStart(tempDir, JSON.stringify({ source: "compact" }));
+  const context = result.stdout;
 
   assert.equal(result.status, 0);
   assert.match(context, /Active workflow: "content-pipeline" \(step 2\/4, status: running\)/);
@@ -208,7 +248,7 @@ test("compaction ignores unknown hook events without writing a snapshot", () => 
 
   assert.equal(result.status, 0);
   assert.equal(result.stdout, "");
-  assert.equal(existsSync(statePath(tempDir, "compaction-snapshot.json")), false);
+  assert.equal(existsSync(snapshotPath(tempDir)), false);
 });
 
 test("compaction ignores malformed stdin payloads", () => {

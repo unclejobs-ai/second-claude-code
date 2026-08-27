@@ -6,7 +6,7 @@ argument-hint: --topic "10-part newsletter series" --skill write --parallel 3
 Invoke the `/scc:batch` command to decompose and execute a large task in parallel through the `batch` skill.
 
 ## Context
-- Active batch runs: !`ls .data/state/batch-*.json 2>/dev/null | wc -l | xargs echo "Active batch state files:"`
+- Active batch runs: !`ls "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}"/state/batch-*.json 2>/dev/null | wc -l | xargs echo "Active batch state files:"`
 - Recent batch outputs: !`ls .captures/batch-*/ 2>/dev/null | head -5`
 
 ## Arguments

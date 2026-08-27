@@ -1,3 +1,5 @@
+[English](standard-check.md) | **한국어**
+
 # 기준 검사 (Standard Check)
 
 > `.scc/standards/`에 기록된 기준을 산출물 하나에 대고 돌립니다. 위반이 하나라도 있으면 종료코드 1.

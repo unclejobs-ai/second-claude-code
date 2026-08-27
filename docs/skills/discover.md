@@ -1,3 +1,5 @@
+[한국어](discover.ko.md)
+
 # Discover
 
 > Use when the current skills cannot handle a task and new skills are needed.
@@ -8,7 +10,7 @@
 /scc:discover "terraform security audit"
 ```
 
-**What happens:** The skill scans local skills first for a match. If none is found, it searches up to 4 external sources (npx, npm, gh, web), scores each candidate on a weighted rubric (relevance, popularity, recency, dependencies, source trust), and presents ranked recommendations. Nothing is installed without explicit approval.
+**What happens:** The skill checks built-in tools and local skills first. Only when they cannot handle the request does it search configured external sources, inspect the top three candidates, score them, and present ranked recommendations. Nothing is installed without explicit approval.
 
 ## Real-World Example
 
@@ -18,30 +20,51 @@ Is there a skill for terraform security auditing?
 ```
 
 **Process:**
-1. Local scan -- checked 7 skills in `skills/` (review, analyze, research, write, refine, pipeline, collect). None covers terraform security auditing.
+1. Local scan -- checked the currently installed skills in `skills/` (including review, analyze, research, write, refine, discover, and workflow). None covers terraform security auditing.
 2. CLI availability -- confirmed `npx`, `npm`, and `gh` are all available.
-3. External search -- queried npm, GitHub (`gh search repos`), and web search. Found 5 candidates plus 3 MCP server mentions.
-4. Evaluation -- scored each candidate on the 5-criterion weighted rubric. Top result: a Terraform skill (4.85/5.0) with 1,350 stars, updated the previous day. Second: an official HashiCorp agent-skills collection (4.35/5.0).
-5. Recommendation -- presented ranked list with install commands. Awaited explicit approval before installing.
+3. External search -- queried the available registry, GitHub, npm, and web sources. Missing CLIs reduce coverage and are reported.
+4. Candidate inspection -- fetched and read the README/SKILL.md for the top three candidates; blocked inspection is recorded and penalized.
+5. Evaluation -- scored relevance, popularity, recency, dependencies, and source trust, then recorded the inspected release, commit, or marketplace revision in the recommendation notes.
+6. Recommendation -- presented the ranked list and waited for explicit approval. Installation did not start during discovery.
 
 **Output excerpt:**
 
-> | Rank | Candidate | Score | Install Command |
-> |------|-----------|-------|-----------------|
-> | 1 | `terraform-skill` | **4.85** | `claude install antonbabenko/terraform-skill@v1.3.0` |
-> | 2 | `agent-skills` | **4.35** | `claude install hashicorp/agent-skills@v2.1.0` |
-> | 3 | `devops-claude-skills` | **3.50** | `claude install ahmedasmar/devops-claude-skills@v0.8.2` |
-> | 4 | `claude-code-skills` | **3.40** | `claude install levnikolaevich/claude-code-skills@v1.0.1` |
-> | 5 | `security-scanner-plugin` | **2.35** | `claude install harish-garg/security-scanner-plugin@v0.3.0` |
+> | Rank | Candidate | Type | Score | Approval-gated path |
+> |------|-----------|------|-------|----------------------|
+> | 1 | `terraform-plugin` | Claude marketplace plugin | **4.85** | `claude plugin marketplace add acme/marketplace` then `claude plugin install terraform-plugin@acme` |
+> | 2 | `agent-skills` | Skills ecosystem | **4.35** | `npx --yes skills add vercel-labs/agent-skills --skill vercel-optimize --agent claude-code` |
+> | 3 | `devops-library` | npm/library dependency | **3.50** | Follow the upstream package's documented install command |
+
+The commands are examples of the supported path for each candidate type. The
+first two require explicit approval immediately before execution; the npm row
+is not a generic skill installer. If a marketplace is already configured,
+`marketplace add` is unnecessary. If a repository lacks the required manifest
+or `SKILL.md`, do not invent an install command—recommend a custom integration
+or show the upstream instructions for approval.
+
+## Candidate Types and Approval
+
+| Candidate type | Inspect before recommending | Install after approval |
+|----------------|-----------------------------|------------------------|
+| Claude marketplace plugin | Marketplace source, marketplace manifest, plugin manifest, plugin name | `claude plugin marketplace add <source>` if absent, then `claude plugin install <plugin>@<marketplace>` |
+| Skills ecosystem repository | `SKILL.md`, available skill names, target agent, resolved source revision | `npx --yes skills add <owner>/<repo> --skill <skill> --agent claude-code` |
+| npm/library dependency | Upstream docs proving it supplies a Claude skill | Use only the upstream command; `npm install` alone does not install a skill |
+| Unsupported repository | No supported manifest or installer | No invented command; propose custom integration |
+
+Discovery itself never runs these commands. Approval must name the candidate,
+source, target skill/plugin, and project versus global scope. Record the
+inspected release, commit, or marketplace revision; `plugin@marketplace` is the
+Claude CLI selector and is not a GitHub repository tag install shortcut.
 
 ## Search Sources
 
 | Source | Condition |
 |--------|-----------|
 | Local `skills/` | Always searched first |
-| `npx skills search` | When `npx` is available |
+| `npx --yes skills find "<query>"` | When `npx` is available |
 | `npm search --json` | When `npm` is available |
 | `gh search repos` | When `gh` is available |
+| Web search | Always available as the lowest-trust fallback |
 
 ## Evaluation Weights
 
@@ -59,7 +82,7 @@ Is there a skill for terraform security auditing?
 |-------|---------|
 | 4.0+ | Strong recommendation |
 | 3.0-3.9 | Viable with caveats |
-| <3.0 | Mention only if nothing else exists |
+| <3.0 | Do not recommend; suggest a custom pipeline instead |
 
 ## How It Works
 
@@ -73,7 +96,7 @@ graph TD
     F --> G[Rank and filter by threshold]
     G --> H[Present recommendations]
     H --> I{User approves?}
-    I -- Yes --> J[Install with pinned version]
+    I -- Yes --> J[Run the approved type-specific install path]
     I -- No --> K[Done, nothing installed]
 ```
 
@@ -81,22 +104,22 @@ graph TD
 
 - **Auto-installing without approval** -- Never auto-install. Always wait for explicit user approval.
 - **Inventing package names** -- Never invent package names. Only recommend packages confirmed to exist through search results.
-- **Floating version ranges** -- Pin exact versions on install. No floating ranges.
+- **Untracked revisions** -- Record the inspected release, commit, or marketplace revision; do not claim that an unsupported command suffix pins it.
 - **Ignoring stale dependencies** -- Flag heavy or stale packages in the recommendation notes.
 - **Missing CLIs** -- If marketplace CLIs are unavailable, degrade gracefully to local-scan-only mode.
-- **Metadata-only evaluation** -- Without reading each repo's full source, evaluation relies on metadata. Recommend the user inspect high-risk candidates before installing.
+- **Metadata-only evaluation** -- Full repositories are not audited. The top three are inspected, but the user should inspect high-risk candidates before installing.
 
 ## Troubleshooting
 
 - **No candidates found** -- Try a broader query with fewer specific terms. The skill searches npm, GitHub, and web sources, so generic terms like "terraform" may yield more results than "terraform security compliance audit for AWS GovCloud."
 - **All scores below 3.0** -- Scores below 3.0 indicate weak matches. Consider building a custom pipeline with existing skills instead of installing a low-quality external skill.
-- **Missing CLIs reduce search coverage** -- The skill uses `npx`, `npm`, and `gh` for external search. If any of these are unavailable, it degrades gracefully but searches fewer sources. Install the missing CLI tools for full coverage.
-- **Install command shows no version pin** -- The skill requires pinned versions on install (e.g., `claude install user/skill@v1.2.0`). If the output shows an unpinned command, add the version manually before running it.
+- **Missing CLIs reduce search coverage** -- The skill uses `npx skills find`, `npm`, and `gh` for external search. If any of these are unavailable, it degrades gracefully but searches fewer sources. Install the missing CLI tools for full coverage.
+- **Install path is unclear** -- Classify the candidate first. Use the marketplace two-step flow or `npx skills add` for a skills repository; never substitute a legacy Claude install shortcut.
 
 ## Works With
 
 | Skill | Relationship |
 |-------|-------------|
-| `pipeline` | A pipeline may reference a missing skill, triggering discover |
+| `workflow` | A saved workflow may reference a missing capability, prompting discover |
 | `collect` | Save metadata about discovered skills to the knowledge base |
 | `research` | Discover focuses on skill discovery; research handles general information gathering |

@@ -1,5 +1,7 @@
 # Release Notes - v1.4.0
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 [English](RELEASE-v1.4.0.md) | [한국어](RELEASE-v1.4.0.ko.md)
 
 v1.4.0 adds the Cross-Plugin Orchestrator. Second Claude Code now discovers installed Claude Code plugins at runtime, scores their skills and commands against the current prompt or PDCA phase, and injects exact dispatch instructions before internal fallback.

@@ -1,6 +1,6 @@
 # Second Claude Code
 
-Claude Code plugin (v3.0.1). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v3.0.2). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 9 hook events, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 `viewer`, `unblock`, and `standard-check` ship as commands with no skill: they execute and make no judgment, so they take no slot in the skill list. `skills/unblock/` still holds the fetch engine.
 
@@ -31,10 +31,16 @@ for d in skills/*/; do [ -f "${d}SKILL.md" ] || [ "$d" = "skills/unblock/" ] || 
 
 # Run full test suite
 npm test
+
+# Regenerate the checked-in, self-contained MCP artifact and license notices
+npm run build:mcp
+git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
 ```
 
 ## Do Not
 
-- Add TypeScript or build steps — this is a runtime plugin, no compilation
+- Add install-time compilation. Maintainers regenerate the checked-in MCP bundle
+  and third-party notices with `npm run build:mcp`; user installs must not build
+  or fetch runtime dependencies.
 - Modify agent model tiers without checking docs/architecture.md roster table
 - Edit hooks.json directly — it's the plugin hook registry, changes affect all users

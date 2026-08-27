@@ -1,5 +1,8 @@
 # mmbridge-quality
 
+> **Inactive integration**: This Hermes skill text is not wired into the active Second Claude Code
+> runtime. Use it only after a Hermes operator explicitly installs and configures the skill.
+
 Use this skill when Hermes should run structured quality commands through
 `mmbridge` after implementation work or before a delivery decision.
 

@@ -1,11 +1,13 @@
 # Design Principles
 
-Nine core principles that govern every decision in second-claude.
+Ten core principles that govern every decision in second-claude.
 
 ---
 
 ## 1. Few but Deep
-Nine skills (8 domain + 1 orchestrator), not eighty. Each skill internally orchestrates multiple subagents, search rounds, and review passes. The surface area stays small while the depth per skill stays high. Adding a new top-level skill requires justification that it cannot be composed from existing ones.
+The product exposes 15 skills plus 3 tool commands, not an unbounded collection. Each skill can
+coordinate focused work while remaining composable. Adding a new top-level skill requires
+justification that it cannot be composed from the existing surface.
 
 **Implication**: Resist the urge to add narrow single-purpose skills. Instead, add depth to an existing skill or compose a pipeline from the core set.
 
@@ -25,9 +27,12 @@ Every token in a prompt costs money and attention. Skill descriptions must be un
 **Implication**: Audit prompt sizes regularly. If a skill prompt exceeds 2000 tokens including injected context, refactor it.
 
 ## 5. Zero Dependency Core
-The core 8 workflows should run without installing external packages. Optional marketplace discovery may use external CLIs if they are already present, but the plugin must degrade gracefully when they are not. Installation remains `git clone` and nothing else for the core product.
+The built-in skills and tool commands should run without installing external packages. Optional
+marketplace discovery may use external CLIs if they are already present, but the plugin must degrade
+gracefully when they are not. Installing the plugin itself follows the host's documented plugin
+installer; the zero-dependency guarantee applies to runtime use, not to one particular install command.
 
-**Implication**: Core skills cannot require `npm install` or `pip install`. Optional integrations such as `/scc:discover` must clearly advertise capability gating and continue to provide local-scan-only behavior when external CLIs are unavailable.
+**Implication**: Core skills cannot require `npm install` or `pip install`. Optional integrations such as `/scc:discover` must clearly advertise capability gating, require explicit approval before installation, and continue to provide local-scan-only behavior when external CLIs are unavailable.
 
 ## 6. State in Files
 All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databases, no external services, no environment variables for state. File-based state is inspectable, versionable, and survives session restarts without configuration.
@@ -35,7 +40,9 @@ All persistent state lives in JSON files within `CLAUDE_PLUGIN_DATA`. No databas
 **Implication**: Use `$CLAUDE_PLUGIN_DATA/state.json` for plugin state. Use `$CLAUDE_PLUGIN_DATA/knowledge/` for knowledge base. Never rely on in-memory state across session boundaries.
 
 ## 7. Composable
-The 8 core skills are building blocks, not endpoints. `/scc:write` calls `/scc:research` internally. `/scc:refine` wraps any other skill in an iteration cycle. `/scc:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
+The built-in skills are building blocks, not endpoints. `/scc:write` runs research and review
+internally by default (both can be skipped). `/scc:refine` wraps another skill in an iteration
+cycle. `/scc:workflow` chains arbitrary skill sequences. Composition is the primary extension mechanism.
 
 **Implication**: Every skill must accept structured input and produce structured output. A skill that can only be invoked by a human prompt is incomplete -- it must also be callable by another skill.
 
@@ -52,9 +59,12 @@ These principles reinforce each other:
 
 ## 8. PDCA-Native
 
-Every output cycles through Verify (review) and Refine (refine) before shipping. The skills improve themselves through the same cycle they serve. The `pdca` meta-skill orchestrates the full Plan → Do → Check → Act cycle with quality gates between each phase transition.
+Outputs can use Verify (review) and Refine (refine) before shipping. The `pdca` skill can
+orchestrate the full Plan → Do → Check → Act cycle; runtime gates cover only the documented
+transition subset, while format and review checks remain skill contracts.
 
-**Implication**: Never declare work complete without a Check phase verdict. The cycle is the quality guarantee.
+**Implication**: For a PDCA run, record a Check verdict before exit. Direct skill invocations may
+use their own applicable contracts.
 
 ## 9. Action Router
 

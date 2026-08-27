@@ -1,5 +1,7 @@
 # Coach Phase 1 Implementation Plan
 
+> **Historical snapshot**: This plan records a past implementation proposal and is not a current execution contract.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** `deep-interview`를 `coach`로 바꾸고, 결정이 사용자 프로젝트에 기준 문서로 남아 세션을 넘어 살아 있게 만든다.

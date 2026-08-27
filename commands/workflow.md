@@ -6,7 +6,7 @@ argument-hint: run autopilot --topic "AI trends" --background
 Invoke the `/scc:workflow` command for workflow automation through the `workflow` skill.
 
 ## Context
-- Active workflow: !`cat .data/state/workflow-active.json 2>/dev/null || echo "No active workflow"`
+- Active workflow: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state/workflow-active.json" 2>/dev/null || echo "No active workflow"`
 - Daemon jobs: !`node daemon/companion-daemon.mjs list-jobs 2>/dev/null || echo '{"jobs":[]}'`
 
 ## Arguments

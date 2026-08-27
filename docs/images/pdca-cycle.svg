@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA Quality Cycle</title>
-  <desc id="pc-desc">Every output passes through Plan, Do, Check, Act with quality gates. Problems route back to the phase that caused them.</desc>
+  <desc id="pc-desc">A PDCA run moves through Plan, Do, Check, and Act with quality gates. Problems route back to the phase that caused them.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -20,7 +20,7 @@
   <rect width="780" height="540" rx="12" fill="#0d1117"/>
 
   <!-- Philosophy header -->
-  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Every output earns its way out.</text>
+  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">A PDCA run earns its way out.</text>
   <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Plan, Do, Check, Act &#x2014; with quality gates between phases.</text>
 
   <!-- Divider -->
@@ -42,7 +42,7 @@
   <rect x="170" y="174" width="3" height="58" rx="1.5" fill="#3fb950"/>
   <text x="186" y="194" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
   <text x="214" y="194" fill="#e6edf3" font-size="13" font-weight="600" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Write from what you found</text>
-  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Draft must clear the format length floor</text>
+  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Do-skill format floor applies here</text>
 
   <!-- Gate 2 -->
   <line x1="390" y1="232" x2="390" y2="250" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>

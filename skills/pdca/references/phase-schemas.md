@@ -43,7 +43,7 @@ Produced at the end of the Plan phase, passed to Do.
 | `sources_count` | number | yes | Must be `>= 5`; gate fails if `< 5` (raised from 3 to enforce source variety) |
 | `facts_count` | number | yes | Must be `>= 8`; discrete fact count with dates/numbers/names attached |
 | `quotes_count` | number | yes | Must be `>= 1`; quotes must have named speakers (no anonymous "experts say") |
-| `comparison_tables_count` | number | yes | Must be `>= 1` for content output briefs (article/threads/newsletter); may be `0` for code briefs |
+| `comparison_tables_count` | number | yes | Must be `>= 1` for content output briefs (article/newsletter/shorts/social/card-news); may be `0` for code briefs |
 | `media_inventory_count` | number | yes | Must be `>= 1` for content output formats; may be `0` for code/strategy briefs |
 | `meets_brief_floor` | boolean | yes | Must be `true`. Compare `brief_char_count` against the brief type's row in `plan-phase.md` Research Brief Length Floors table. `false` is a gate failure. |
 | `gaps` | string[] | yes | At least 1 acknowledged gap (no research is exhaustive — claiming zero gaps is itself a red flag) |
@@ -74,7 +74,7 @@ Produced at the end of the Do phase, passed to Check.
 ```json
 {
   "artifact_path": "string",
-  "format": "string (newsletter|article|threads|report|shorts|social|card-news|swot|prd)",
+  "format": "string (newsletter|article|report|shorts|social|card-news|swot|prd)",
   "char_count": "number (body only, excludes frontmatter and references)",
   "section_count": "number (H2 or bold-marked sections)",
   "meets_length_floor": "boolean",

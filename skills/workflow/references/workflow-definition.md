@@ -1,4 +1,17 @@
-# Workflow: Definition Schema & Examples
+# Workflow: Canonical Definition Schema & Examples
+
+This is the canonical workflow contract. A definition is a JSON object with required `name` and
+`steps`, plus optional `description` and `defaults`:
+
+| Key | Type | Required | Constraint |
+|-----|------|----------|------------|
+| `name` | string | yes | Stable workflow identifier |
+| `description` | string | no | Human-readable purpose |
+| `defaults` | object | no | Values for `{{variables}}`; runtime flags override them |
+| `steps` | object[] | yes | One to ten step objects, executed in order unless safely parallelized |
+
+Templates and the compatibility overview in `references/pipeline-definition.md` must use this
+schema. Unknown keys should be ignored only when the workflow runner explicitly documents them.
 
 ## Step Definition
 
@@ -11,17 +24,12 @@ Each step in a workflow definition is a JSON object with the following fields:
 | `input_from` | string \| string[] | no | The `output` **file path** of an earlier step. Pass an array to read several. |
 | `output` | string | yes | File path where this step writes its result |
 | `parallel` | boolean | no | If `true`, runs concurrently with adjacent parallel steps (default: `false`) |
-| `on_fail` | string | no | `"abort"` stops the pipeline, `"retry"` re-runs the step, `"continue"` moves on |
+| `on_fail` | string | no | `"abort"` (default), `"retry"` (up to two retries), or `"continue"` moves on |
 | `name` | string | no | Human-readable step name (auto-generated from skill if omitted) |
 
-> `input_from` takes a **file path, not a step name** — `tests/runtime/plugin-smoke.test.mjs`
-> validates every value against the set of `output` paths declared by earlier steps, and that check
-> is the only enforcement there is. This table previously described step names and an
-> `on_fail` vocabulary of `stop`/`skip`, neither of which any template or test ever used.
->
-> Because the comparison is literal, an `input_from` written with `{{variables}}` must resolve to
-> the *same string* as the producing step's `output`. Copy the producer's `output` verbatim rather
-> than rebuilding the path by hand.
+> `input_from` takes a **file path, not a step name**. Every value must equal an earlier step's
+> resolved `output` path; arrays are used when a step consumes multiple earlier outputs. When a
+> placeholder appears in both fields, resolve it once and compare the resulting strings exactly.
 
 ## Variable Resolution Order
 

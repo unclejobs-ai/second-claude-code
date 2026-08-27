@@ -1,6 +1,6 @@
 # Second Claude Code — Agent Instructions
 
-Claude Code plugin (v3.0.1). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 8 hooks, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
+Claude Code plugin (v3.0.2). PDCA-native knowledge work system — 15 skills, 18 commands, 17 agents, 9 hook events, 31 MCP tools on the pdca-state server (3 MCP servers total: pdca-state, playwright, mmbridge).
 
 ## Project Structure
 
@@ -8,9 +8,11 @@ Claude Code plugin (v3.0.1). PDCA-native knowledge work system — 15 skills, 18
 .claude-plugin/plugin.json — Plugin manifest (name, version, MCP servers)
 skills/                     — 15 skill directories (coach, pdca, research, write, analyze, review, refine, loop, evolve, collect, workflow, discover, batch, soul, translate) plus skills/unblock/ which holds the fetch engine but ships no SKILL.md
 agents/                     — 17 agent definitions (.md files, Pokemon-themed)
-hooks/                      — 7 hook files across 8 events (session-start, prompt-detect, subagent-start/stop, session-end, compaction serves PreCompact+PostCompact, stop-failure)
-  hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, Stop, PreCompact, PostCompact, StopFailure)
-mcp/pdca-state-server.mjs   — MCP server (31 tools: PDCA state, cycle memory, soul, project memory, daemon, session recall, orchestrator)
+hooks/                      — 8 hook files across 9 events (session-start, prompt-detect, subagent-start/stop, review-result, session-end, compaction serves PreCompact+PostCompact, stop-failure)
+  hooks.json                — Hook registry (SessionStart, UserPromptSubmit, SubagentStart, SubagentStop, PostToolUse, Stop, PreCompact, PostCompact, StopFailure)
+mcp/pdca-state-server.mjs   — Maintainer source for the pdca-state MCP server
+mcp/pdca-state-server.bundle.mjs — Checked-in runtime artifact executed by the plugin manifest (31 tools)
+scripts/build-mcp.mjs       — Maintainer-only bundle and third-party notice generator
 mcp/lib/cycle-memory.mjs    — Cycle memory persistence (phase snapshots, insights, metrics, self-evolution)
 commands/                   — Slash commands
 config/                     — Runtime configuration
@@ -40,10 +42,16 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 
 # Verify all skills have SKILL.md — skills/unblock/ is engine-only by design
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || [ "$d" = "skills/unblock/" ] || echo "MISSING SKILL.md: $d"; done
+
+# Regenerate and verify checked-in release artifacts
+npm run build:mcp
+git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
 ```
 
 ## Do Not
 
-- Add TypeScript or build steps — this is a runtime plugin, no compilation
+- Add install-time compilation. Maintainers regenerate the checked-in MCP bundle
+  and third-party notices with `npm run build:mcp`; user installs must not build
+  or fetch runtime dependencies.
 - Modify agent model tiers without checking docs/architecture.md roster table
 - Edit hooks.json directly — it's the plugin hook registry, changes affect all users

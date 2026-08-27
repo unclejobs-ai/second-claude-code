@@ -1,36 +1,42 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture - v1.5.0
+# Orchestrator Architecture — SCC 3.0.2
 
-Second Claude Code v1.4.x added a cross-plugin orchestrator. Its job is to discover installed Claude Code plugins at runtime, score them against the user's intent, and inject exact `Skill:` or slash-command dispatch instructions before Second Claude falls back to its own PDCA skills.
+SCC 3.0.2 can inspect installed Claude Code plugins, score capabilities against a requested intent,
+and return an advisory dispatch plan. The orchestrator does not execute external Skills or slash
+commands.
 
-v1.5.0 extends this with the `unblock` chain — a 9-phase zero-key fetch chain that the auto-router and Eevee researcher invoke when a URL returns 4xx, captcha, WAF, or empty SPA body. It ships as `/scc:unblock` with no skill of its own; see `skills/unblock/engine/` and `commands/unblock.md`, and the auto-router patterns in `hooks/prompt-detect.mjs`.
+The `unblock` chain is a separate access path. A caller may choose `/scc:unblock` when URL recovery
+is needed; prompt-detect does not invoke it or inject invocation instructions. See
+`skills/unblock/engine/` and `commands/unblock.md`.
 
 ## Dispatch Layers
 
 ```mermaid
 flowchart TB
     U[User prompt] --> L1{"Layer 1<br/>compound intent?"}
-    L1 -->|yes| PDCA[["Route to pdca — returns immediately"]]
-    L1 -->|no| L2["Layer 2 — score single-skill intent into bestMatch"]
+    L1 -->|yes| PDCA[["Caller may choose pdca"]]
+    L1 -->|no| L2["Caller requests a route plan"]
     L2 --> G[getDispatchPlan]
     G --> D[Runtime plugin discovery]
     D --> C[Capability map]
     C --> S["Intent scoring + preferred-plugin boost"]
-    S --> L3{"Layer 3<br/>external match strong enough?"}
-    L3 -->|yes| O[["ORCHESTRATOR instruction"]]
-    L3 -->|no| I[["Fall back to bestMatch"]]
+    S --> L3{"Layer 3<br/>caller decision"}
+    L3 -->|invoke explicitly if appropriate| O[["Optional external invocation"]]
+    L3 -->|otherwise| I[["Use local skill/command"]]
 
     style PDCA fill:#fff3bf,stroke:#f08c00
     style O fill:#d3f9d8,stroke:#2f9e44
     style I fill:#e7f5ff,stroke:#1971c2
 ```
 
-**A compound prompt never reaches the orchestrator.** Layer 1 matches phrases like "알아보고 써줘" or "research and write", routes to `pdca`, and returns at that point — the external plan is not even computed. External dispatch competes with the *single-skill* router, not with PDCA.
+The `prompt-detect` hook is not the orchestrator. It only reports active-standard literal triggers.
+Only an explicit MCP call such as `orchestrator_route` asks for a route plan; receiving that plan does
+not execute the suggested capability.
 
 1. **Runtime discovery** - `hooks/lib/plugin-discovery.mjs` scans `~/.claude/plugins/installed_plugins.json`, plugin `skills/`, `commands/`, `agents/`, and `.claude-plugin/plugin.json` files.
-2. **Intent scoring** - `getDispatchPlan()` normalizes a keyword or PDCA phase, scores plugin capabilities, applies preferred-plugin boosts, and returns ranked invocation instructions.
-3. **Prompt dispatch** - `hooks/prompt-detect.mjs` injects an `[ORCHESTRATOR]` block when the top external match is a lifecycle intent or a strong generic plugin match.
+2. **Intent scoring** - `getDispatchPlan()` normalizes a keyword or PDCA phase, scores plugin capabilities, applies preferred-plugin boosts, and returns a ranked advisory plan.
+3. **Caller-directed invocation** - Claude or another caller may explicitly invoke a returned Skill or command after considering the plan.
 
 **What is discovered vs. what is fixed.** Which plugins exist, and every skill/command/agent inside them, is read from disk at runtime — install one and it appears, remove one and it disappears. What is *not* dynamic is the preference table: `INTENT_PROFILES` in `plugin-discovery.mjs` hardcodes which plugin each lifecycle intent favours (review → `coderabbit`, act → `commit-commands`, design → `frontend-design`, memory/research → `claude-mem`). A newly installed review plugin is discovered and scorable, but it does not inherit the `+60` preferred-plugin boost by default.
 
@@ -56,25 +62,22 @@ Short keyword matches are guarded by word-boundary logic so small terms do not a
 
 ```mermaid
 flowchart LR
-    SS[SessionStart hook] --> PD[plugin-discovery.mjs]
-    PD --> MAP[Capability map]
-    MAP --> GUIDE[Active Plugin Dispatch]
-    GUIDE --> CTX[System reminder]
+    SS[SessionStart hook] --> STATE[Restore state/context]
+    STATE --> CTX[System reminder]
 ```
 
-At session start, the hook injects a compact "Active Plugin Dispatch" table. It is advisory context for the model and lists per-phase top picks by plugin name plus a capability count. It does **not** carry invocation strings — those are built per prompt by `buildDispatchInstructions()` and only appear in the `[ORCHESTRATOR]` block that Layer 3 injects.
+At session start, `session-start.mjs` restores and injects runtime state and context. It does not scan installed plugins or inject an "Active Plugin Dispatch" table. Plugin discovery occurs when an orchestrator tool is explicitly requested.
 
 ## Prompt-Level Dispatch
 
-For substantive prompts, `prompt-detect` calls `getDispatchPlan()`. If the top match should run externally, it injects an instruction shaped like:
+When a caller requests a route plan, `getDispatchPlan()` returns ranked capability names. The caller may use them to make an explicit invocation decision; `prompt-detect` does not inject an invocation instruction.
 
 ```text
-[ORCHESTRATOR]
-Invoke this installed plugin capability before self-processing:
+Advisory route plan (example):
 Skill: coderabbit:code-review
 ```
 
-The model must then call the external skill or command first and integrate the result. If no external route wins, the single-skill match scored back in Layer 2 is used instead. The PDCA compound router does not sit downstream of this decision — it ran earlier, and a compound prompt would already have returned.
+The returned name is not an execution result. Claude may call it explicitly when it is appropriate, or continue with a local skill/command. `orchestrator_*` MCP tools only provide inventory, inspection, planning, and health data.
 
 ## MCP Tool Surface - 31 Tools Total
 
@@ -89,18 +92,23 @@ The model must then call the external skill or command first and integrate the r
 
 The four `orchestrator_*` tools are the public MCP surface for plugin inventory, single-plugin inspection, route planning, and ecosystem health.
 
+The manifest also registers `playwright` as an optional MCP server (`optional: true`). Its package and
+cache are not part of core startup: if Playwright is unavailable, research records the gap and uses its
+fallback path while the prebundled `pdca-state` server remains available.
+
 ## File Architecture
 
 ```text
 second-claude/
 ├── hooks/
-│   ├── session-start.mjs              # Active Plugin Dispatch injection
-│   ├── prompt-detect.mjs              # prompt-level external dispatch
+│   ├── session-start.mjs              # state/context restoration and injection; no plugin scan
+│   ├── prompt-detect.mjs              # active-standard literal-trigger reporting
 │   └── lib/
 │       ├── plugin-discovery.mjs       # runtime scanner, scorer, dispatch planner
 │       └── soul-observer.mjs          # hook-side soul readiness helpers
 ├── mcp/
-│   ├── pdca-state-server.mjs          # 31 MCP tools
+│   ├── pdca-state-server.bundle.mjs    # prebundled 31-tool server used at runtime
+│   ├── pdca-state-server.mjs          # readable source for development/tests
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* tool implementations
 │       ├── soul-handlers.mjs
@@ -114,7 +122,7 @@ second-claude/
 
 ## Validation Coverage
 
-- `npm test`: 505 tests total, 504 passing, 1 skipped.
+- Test totals vary by checkout and run; verify them with `npm test` rather than relying on a fixed count.
 - `tests/hooks/prompt-detect-standards.test.mjs`: a prompt containing a standard's literal trigger surfaces that standard and its path. The keyword router this hook used to carry was removed — it names evidence and never instructs a skill invocation.
 - `tests/mcp/orchestrator-handlers.test.mjs`: plugin list/get/route/health handlers cover real discovered plugin data, preferred phase routing, generic plugin matches, and short-keyword boundary guards.
-- `tests/integration/skill-flow.test.mjs`: confirms the prompt router still preserves PDCA compound routing when no stronger external plugin route wins.
+- `tests/integration/skill-flow.test.mjs`: confirms normal skill-flow behavior alongside the standards-only prompt hook.

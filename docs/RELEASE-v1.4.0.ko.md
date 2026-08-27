@@ -1,5 +1,7 @@
 # 릴리스 노트 - v1.4.0
 
+> **Historical snapshot (과거 스냅샷)**: 이 릴리스 노트는 당시 출시 상태를 기록하며 현재 동작과 다를 수 있습니다.
+
 [English](RELEASE-v1.4.0.md) | **한국어**
 
 v1.4.0은 Cross-Plugin Orchestrator를 추가합니다. Second Claude Code가 설치된 Claude Code 플러그인을 런타임에 발견하고, 현재 프롬프트나 PDCA 페이즈와 스킬/커맨드를 점수화한 뒤, 내부 fallback 전에 정확한 디스패치 지시를 주입합니다.

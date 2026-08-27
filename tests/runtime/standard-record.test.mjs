@@ -5,6 +5,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import {
+  MAX_STANDARD_ENTRIES,
+  MAX_STANDARD_FILE_BYTES,
   renderStandard,
   writeStandard,
   listActiveStandards,
@@ -127,6 +129,56 @@ test("listActiveStandards returns an empty list when the tree is absent", () => 
   });
 });
 
+test("listActiveStandards bounds the sorted standard directory", () => {
+  withRoot((root) => {
+    for (let i = 0; i < MAX_STANDARD_ENTRIES + 8; i += 1) {
+      const id = `cap-${String(i).padStart(3, "0")}`;
+      writeStandard(root, { ...FORK, id, title: `기준 ${i}` }, { now: NOW });
+    }
+    const active = listActiveStandards(root);
+    assert.equal(active.length, MAX_STANDARD_ENTRIES);
+    assert.equal(active[0].id, "cap-000");
+    assert.equal(active.at(-1).id, `cap-${String(MAX_STANDARD_ENTRIES - 1).padStart(3, "0")}`);
+  });
+});
+
+test("listActiveStandards skips a STANDARD.md larger than the byte budget", () => {
+  withRoot((root) => {
+    writeStandard(root, FORK, { now: NOW });
+    const oversizedDir = join(root, ".scc", "standards", "oversized-record");
+    mkdirSync(oversizedDir, { recursive: true });
+    writeFileSync(
+      join(oversizedDir, "STANDARD.md"),
+      renderStandard({ ...FORK, id: "oversized-record", title: "너무 큰 기준", payload: "x".repeat(MAX_STANDARD_FILE_BYTES) }, { now: NOW }),
+      "utf8"
+    );
+    const active = listActiveStandards(root);
+    assert.ok(active.some((standard) => standard.id === FORK.id));
+    assert.ok(!active.some((standard) => standard.id === "oversized-record"));
+  });
+});
+
+test("listActiveStandards rejects invalid and mismatched entry ids", () => {
+  withRoot((root) => {
+    const standards = join(root, ".scc", "standards");
+    const malformedDir = join(standards, "malformed-entry");
+    const mismatchedDir = join(standards, "mismatched-entry");
+    mkdirSync(malformedDir, { recursive: true });
+    mkdirSync(mismatchedDir, { recursive: true });
+    writeFileSync(
+      join(malformedDir, "STANDARD.md"),
+      renderStandard({ ...FORK, id: "../escape", title: "경로 이탈" }, { now: NOW }),
+      "utf8"
+    );
+    writeFileSync(
+      join(mismatchedDir, "STANDARD.md"),
+      renderStandard({ ...FORK, id: "different-entry", title: "식별자 불일치" }, { now: NOW }),
+      "utf8"
+    );
+    assert.deepEqual(listActiveStandards(root), []);
+  });
+});
+
 test("supersedeStandard returns false for an unknown id", () => {
   withRoot((root) => {
     assert.equal(supersedeStandard(root, "nope"), false);
@@ -153,6 +205,28 @@ test("writeStandard rejects an id containing a newline", () => {
 test("writeStandard rejects an empty id", () => {
   withRoot((root) => {
     assert.throws(() => writeStandard(root, { ...FORK, id: "" }, { now: NOW }));
+  });
+});
+
+test("writeStandard never overwrites an oversized existing record", () => {
+  withRoot((root) => {
+    const path = join(root, ".scc", "standards", FORK.id, "STANDARD.md");
+    mkdirSync(join(root, ".scc", "standards", FORK.id), { recursive: true });
+    const before = "x".repeat(MAX_STANDARD_FILE_BYTES + 1);
+    writeFileSync(path, before, "utf8");
+    assert.throws(() => writeStandard(root, FORK, { now: NOW }));
+    assert.equal(readFileSync(path, "utf8"), before);
+  });
+});
+
+test("writeStandard never overwrites an existing record without a readable title", () => {
+  withRoot((root) => {
+    const path = join(root, ".scc", "standards", FORK.id, "STANDARD.md");
+    mkdirSync(join(root, ".scc", "standards", FORK.id), { recursive: true });
+    const before = ["---", `id: ${FORK.id}`, "status: active", "---", "", "body without a heading", ""].join("\n");
+    writeFileSync(path, before, "utf8");
+    assert.throws(() => writeStandard(root, FORK, { now: NOW }));
+    assert.equal(readFileSync(path, "utf8"), before);
   });
 });
 

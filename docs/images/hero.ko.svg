@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" fill="none" role="img" aria-labelledby="h-title h-desc">
   <title id="h-title">Second Claude Code — 한 줄로 완성까지</title>
-  <desc id="h-desc">프롬프트 하나로 소스 수집, 초안 작성, 5명 검증, 자동 수정까지. 개별 스킬도 따로 쓸 수 있다.</desc>
+  <desc id="h-desc">프롬프트 하나로 소스 수집, 초안 작성, 선택한 프리셋 검증, 원인별 개선까지. 개별 스킬도 따로 쓸 수 있다.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -32,7 +32,7 @@
   <rect x="122" y="184" width="3" height="86" rx="1.5" fill="#58a6ff"/>
   <text x="138" y="204" fill="#58a6ff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">PLAN</text>
   <text x="138" y="230" fill="#e6edf3" font-size="20" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집</text>
-  <text x="138" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">20개+ 소스 크롤링</text>
+  <text x="138" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">깊이에 따른 소스</text>
 
   <!-- Arrow → -->
   <line x1="286" y1="227" x2="302" y2="227" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
@@ -52,7 +52,7 @@
   <rect x="490" y="184" width="3" height="86" rx="1.5" fill="#d29922"/>
   <text x="506" y="204" fill="#d29922" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">CHECK</text>
   <text x="506" y="230" fill="#e6edf3" font-size="20" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">검증</text>
-  <text x="506" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">5명이 동시에 검토</text>
+  <text x="506" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">선택한 프리셋으로 검토</text>
 
   <!-- Arrow → -->
   <line x1="654" y1="227" x2="670" y2="227" stroke="#30363d" stroke-width="1" marker-end="url(#arr)"/>
@@ -62,7 +62,7 @@
   <rect x="674" y="184" width="3" height="86" rx="1.5" fill="#bc8cff"/>
   <text x="690" y="204" fill="#bc8cff" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">ACT</text>
   <text x="690" y="230" fill="#e6edf3" font-size="20" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">개선</text>
-  <text x="690" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">원인별 자동 수정</text>
+  <text x="690" y="252" fill="#8b949e" font-size="10" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">원인별 개선 경로</text>
 
   <!-- Result line -->
   <text x="480" y="292" text-anchor="middle" font-size="12" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif"><tspan fill="#3fb950" font-weight="600">&#x2713;</tspan><tspan fill="#8b949e">  조사 완료 &#xB7; 검증 완료 &#xB7; 바로 쓸 수 있다</tspan></text>

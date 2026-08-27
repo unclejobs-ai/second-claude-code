@@ -1,0 +1,44 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+
+const root = process.cwd();
+
+test("CI requires the bundled MCP artifact and notices to be tracked and drift-free", () => {
+  const workflow = readFileSync(path.join(root, ".github", "workflows", "ci.yml"), "utf8");
+  for (const artifact of ["mcp/pdca-state-server.bundle.mjs", "THIRD_PARTY_NOTICES.md"]) {
+    assert.match(workflow, new RegExp(`git ls-files --error-unmatch ${artifact.replaceAll(".", "\\.")}`));
+    assert.match(workflow, new RegExp(`git diff --exit-code --[^\\n]*${artifact.replaceAll(".", "\\.")}`));
+    assert.equal(existsSync(path.join(root, artifact)), true, `${artifact} must exist in the release tree`);
+  }
+});
+
+test("generated notices cover every dependency bundled into the MCP server", () => {
+  const noticesPath = path.join(root, "THIRD_PARTY_NOTICES.md");
+  assert.equal(existsSync(noticesPath), true);
+  const notices = readFileSync(noticesPath, "utf8");
+  const expectedPackages = [
+    "@modelcontextprotocol/sdk",
+    "ajv",
+    "ajv-formats",
+    "fast-deep-equal",
+    "fast-uri",
+    "json-schema-traverse",
+    "zod",
+    "zod-to-json-schema",
+  ];
+  for (const packageName of expectedPackages) {
+    assert.match(notices, new RegExp(`^## ${packageName.replace("/", "\\/")}@`, "m"));
+  }
+  assert.match(notices, /Permission is hereby granted, free of charge/);
+});
+
+test("generated release artifacts use normalized line endings without trailing whitespace", () => {
+  for (const artifact of ["mcp/pdca-state-server.bundle.mjs", "THIRD_PARTY_NOTICES.md"]) {
+    const contents = readFileSync(path.join(root, artifact), "utf8");
+    assert.doesNotMatch(contents, /\r/);
+    assert.doesNotMatch(contents, /[ \t]+$/m);
+    assert.equal(contents.endsWith("\n"), true, `${artifact} must end with a newline`);
+  }
+});

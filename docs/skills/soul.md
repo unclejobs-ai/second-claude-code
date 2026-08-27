@@ -1,6 +1,8 @@
+[한국어](soul.ko.md)
+
 # Soul
 
-> Use when observing user behavioral patterns across sessions and synthesizing a persistent, evidence-backed identity profile (SOUL.md).
+> Tool-only command: observe user patterns and synthesize a persistent, evidence-backed identity profile (SOUL.md). It records or serves state; it is not a reasoning skill.
 
 ## Quick Example
 

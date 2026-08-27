@@ -1,6 +1,6 @@
 [English](architecture.md) | **한국어**
 
-# 아키텍처
+# 아키텍처 — SCC 3.0.2
 
 ## 런타임 경계
 
@@ -29,7 +29,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 | **오케스트레이터** | **전체 사이클** | **`pdca`** |
 | **정체성** | **확장** | **`soul`** |
 
-`pdca` 메타스킬이 품질 게이트를 사이에 두고 전체 사이클을 조율해요. 자연어에서 진입할 페이즈를 자동 감지하고 적절한 스킬을 체이닝해요.
+`pdca` 메타스킬은 품질 게이트를 사이에 두고 전체 사이클을 조율할 수 있어요. 복합 작업에는 이 흐름을 쓰고, 개별 스킬과 명령은 직접 실행할 수 있어요.
 
 *`analyze`는 두 페이즈에 걸쳐요: Plan에서는 리서치 결과를 종합하고, Do에서는 다른 프레임워크를 적용해 프로덕션 아티팩트를 만들어요.
 
@@ -47,7 +47,7 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 | `research` | Plan | 자율적 다회차 웹 리서치 |
 | `analyze` | Plan / Do | 15개 전략 프레임워크 분석 |
 | `write` | Do | 장문 콘텐츠 제작 |
-| `review` | Check | 다관점 품질 게이트 (5명 병렬 리뷰) |
+| `review` | Check | 프리셋에 따른 품질 게이트 (2~5명 병렬 리뷰) |
 | `refine` | Act | 반복 개선 |
 | `loop` | 최적화 | 고정 스위트 기반 프롬프트 자산 최적화 |
 | `evolve` | 유지보수 | 반복 실패 자산을 메인테이너 작성 구조 체크로 진화 |
@@ -98,7 +98,8 @@ flowchart LR
 
 **자기 작업에 자기가 도장을 찍지 않습니다.** `adversarial` 검사는 리뷰어의 답이 파일에 남기 전까지 `UNPROVEN`이고, 그 답은 리뷰어가 실제로 읽은 산출물의 sha256에 묶입니다. 산출물을 고치면 답은 다시 unproven으로 돌아갑니다. 판정은 `standard-check`이 아니라 coach 러너로 받습니다. 채점하는 도구가 합격 도장까지 찍게 두지 않습니다. 검사가 없는 기준은 `UNCHECKED`입니다 — 보이지만 검증된 건 아니고, 통과로 세지 않습니다.
 
-러너는 플러그인 설치 경로 안에는 아무것도 쓰지 않습니다. 예전 릴리스가 `import.meta.url`로 프로젝트 루트를 잡아 사용자 스펙을 플러그인 캐시에 넣고 있었고, `project-root.mjs`가 지금은 그 경로를 거부합니다. 심링크와 대소문자 변형까지 포함해서요.
+러너는 플러그인 설치 경로 안에는 아무것도 쓰지 않습니다. `project-root.mjs`가 사용자 스펙을
+쓰기 전에 해당 경로를 거부하며, 심링크와 대소문자 변형도 포함합니다.
 
 ---
 
@@ -111,7 +112,7 @@ second-claude/
 │   ├── coach/                    # 갈림길 확정 (topology, scoring, .scc/ 아래 기준 문서)
 │   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
 │   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
-│   ├── research/                 # 자율적 심층 리서치 (WebFetch + Playwright 폴백)
+│   ├── research/                 # 깊이 조절형 리서치와 단계별 폴백
 │   │   └── references/           # research-methodology.md, playwright-guide.md
 │   ├── write/                    # 콘텐츠 제작
 │   ├── analyze/                  # 전략 프레임워크 분석 (15개 프레임워크)
@@ -132,19 +133,23 @@ second-claude/
 │       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
 ├── agents/                       # 17개 포켓몬 테마 서브에이전트
 ├── commands/                     # 18개 슬래시 커맨드 래퍼 (스킬 15 + 도구 전용 3)
-├── hooks/                        # 자동 라우팅 + 컨텍스트 주입 (파일 7개, 이벤트 8개)
+├── hooks/                        # 라이프사이클 훅 + 컨텍스트 주입 (파일 8개, 이벤트 9개)
 │   ├── hooks.json                # 훅 설정
-│   ├── prompt-detect.mjs         # 자연어 자동 라우터 (UserPromptSubmit)
-│   ├── session-start.mjs         # 세션 배너 + 상태 초기화 (SessionStart)
+│   ├── prompt-detect.mjs         # 활성 기준 literal trigger 보고 (UserPromptSubmit)
+│   ├── session-start.mjs         # 세션 상태·컨텍스트 복원/주입 (SessionStart)
 │   ├── subagent-start.mjs        # 리뷰 세션 컨텍스트 초기화 (SubagentStart)
 │   ├── subagent-stop.mjs         # 리뷰어 합의 집계 (SubagentStop)
-│   ├── stop-failure.mjs          # Check 페이즈 품질 게이트 (StopFailure)
+│   ├── review-result.mjs         # Agent 반환 뒤 부모 세션에 리뷰 결과 주입 (PostToolUse)
+│   ├── stop-failure.mjs          # 크래시 복구 스냅샷 (StopFailure)
 │   ├── session-end.mjs           # 세션 정리 (Stop)
 │   └── compaction.mjs            # PDCA 상태 스냅샷/복원 (PreCompact, PostCompact)
 ├── references/                   # 설계 원칙, 합의 게이트
 ├── templates/                    # 출력 템플릿
 ├── scripts/                      # coach-runner, standard-check, viewer-session, export-artifact, evolve-runner
-├── mcp/lib/cycle-memory.mjs      # 사이클 메모리 영속 (페이즈 스냅샷, 인사이트, 메트릭스)
+├── mcp/
+│   ├── pdca-state-server.bundle.mjs # 런타임에서 사용하는 자체 포함 31개 도구 서버
+│   ├── pdca-state-server.mjs      # 개발·테스트용 원본
+│   └── lib/cycle-memory.mjs       # 사이클 메모리 영속 (페이즈 스냅샷, 인사이트, 메트릭스)
 └── config/                       # 사용자 설정
 ```
 
@@ -154,7 +159,7 @@ second-claude/
 | `skills/pdca/` | 페이즈 게이트 체크리스트, 액션 라우터, 질문 프로토콜이 `references/`에 있는 메타스킬이에요. |
 | `agents/` | 3개 모델 티어에 걸친 17개 포켓몬 테마 서브에이전트 정의예요. 아래 에이전트 로스터를 참고하세요. |
 | `commands/` | `/scc:*` 호출을 해당 스킬로 연결하는 얇은 래퍼예요. |
-| `hooks/` | 훅 파일 7개가 8개 이벤트에 등록돼 있어요: 자동 라우팅, 서브에이전트 시작/종료, 세션 관리, 컴팩션, 품질 게이트. |
+| `hooks/` | 훅 파일 8개가 9개 이벤트에 등록돼 있어요: 기준 trigger 보고, 리뷰 수명주기와 부모 전달, 세션 관리, 컴팩션, 품질 게이트. |
 | `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 방법론. |
 
 ---
@@ -212,7 +217,9 @@ second-claude/
 
 ## PDCA 에이전트 매핑
 
-에이전트가 PDCA 품질 사이클에 어떻게 배치되는지, Act 페이즈의 액션 라우터가 어떻게 분기하는지 보여줘요.
+에이전트 로스터는 작업을 PDCA 품질 사이클에 배치해요. 리뷰는 프리셋에 따라 패널을
+선택하며, 아래 다섯 역할은 가능한 패널이지 모든 실행이 전부 호출된다는 뜻이 아니에요.
+Act 페이즈에는 액션 라우터가 있어요.
 
 ```mermaid
 flowchart TD
@@ -295,41 +302,35 @@ Viewer 커맨드는 얇은 래퍼입니다. 스킬이 zero-dependency Node 서�
 
 ---
 
-## PDCA 페이즈 게이트 (v1.3.0 강화)
+## PDCA 페이즈 게이트
 
-`pdca` 메타스킬은 페이즈 전환마다 측정 가능한 계약 기반 게이트를 적용해요. v1.3.0부터 모든 게이트가 "완성된 것 같음" 같은 soft 판단이 아니라 구체 numeric/boolean 필드를 요구합니다.
+PDCA 상태 MCP가 실제로 강제하는 전환 하위 집합은 다음과 같습니다. 포맷 floor와 리뷰 품질
+검사는 스킬 계약이며 모든 런타임 요구사항은 아닙니다.
 
 ```
-Plan  ──[게이트: brief_char_count ≥ 3,000, 출처 ≥ 5, 사실 ≥ 8,
-              인용 ≥ 1, 비교표 ≥ 1, 미디어 ≥ 1,
-              meets_brief_floor: true]──→ Do
-Do    ──[게이트: meets_length_floor: true (포맷별 최소치),
-              meets_section_floor: true, references_count ≥ 3,
-              plan_findings_integrated: true, sections_complete: true]──→ Check
-Check ──[게이트: distinct_models ≥ 2, external_model_count ≥ 1,
-              diversity_score ≥ 0.6, false_consensus_check_passed: true,
-              verdict ∈ {APPROVED, MINOR FIXES, NEEDS IMPROVEMENT, MUST FIX}]──→ Act (또는 APPROVED면 종료)
-Act   ──[5+ 룰 fire? → full rewrite | 아니면 액션 라우터 분류]──→ Plan / Do / Refine
-Refine ──[게이트: 목표 충족? DoD 전체 PASS?]──→ 종료 (또는 선택지 제시)
+Plan  ──[brief + 출처 ≥5개 + analysis + Plan 승인]──→ Do
+Do    ──[아티팩트 + 완료 + Plan 통합]──→ Check
+Check ──[판정 + 리뷰어 ≥2명]──→ Act
+Act   ──[결정 + 근본원인]──→ Plan / Do / Refine / 종료
+Refine ──[스킬 계약]──→ 종료 (또는 선택지 제시)
 ```
 
-### 길이 Floor (Do 게이트)
+### 길이 Floor (Do 스킬 계약)
 
-Do 페이즈가 아티팩트가 포맷별 길이 계약을 충족 못 하면 게이트 통과 안 돼요. Sub-skill이 구체 scope direction(어떤 Plan finding을 expand할지, 어떤 새 sub-section을 추가할지)과 함께 다시 디스패치됩니다. Vague한 "더 길게 써" 지시는 금지.
+Do 스킬이 포맷별 길이 계약을 확인하고 필요한 경우 구체적인 재작성을 요청합니다. PDCA 상태
+MCP 전환은 현재 아티팩트 존재·완료와 Plan 통합을 확인하며 모든 길이 floor를 런타임 게이트로
+강제하지는 않습니다.
 
 | 포맷 | 최소 글자 (본문) | 목표 | 최소 섹션 | Do에서 호출되는 sub-skill |
 |------|----------------|------|----------|------------------------|
-| 스레드 아티클 (@unclejobs.ai) | 4,000 | 5,000-7,000 | 6 | `/threads` |
-| 한국어 테크 뉴스레터 | 10,000 | 12,000-15,000 | 6 토픽 | `/newsletter` |
+| 뉴스레터 | 10,000 | 포맷별 | 6단계 아크 | `/scc:write --format newsletter` |
 | 일반 아티클 | 4,000 | 5,000-7,000 | 5 H2 | `/scc:write` |
 | 전략/분석 리포트 | 5,000 | 6,000-9,000 | 6 섹션 | `/scc:write` |
 | SWOT/RICE/OKR | 3,000 | 4,000-5,000 | 4 사분면 | `/scc:analyze` |
-| 쇼츠 대본 (60-90초) | 1,800 | 2,200-2,800 | 12 씬 | `/academy-shorts` |
-| 카드뉴스 (캐러셀) | 8-10 카드 | 9-12 카드 | hook + body + CTA | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | 7 섹션 | `/scc:write --format prd` |
+| 쇼츠 대본 (60-90초) | 1,800 | 포맷별 | CTA | `/scc:write --format shorts` |
+| 카드뉴스 (캐러셀) | 슬라이드 단위 | 포맷별 | 비주얼 방향 | `/scc:write --format card-news` |
 | 코드 리뷰 리포트 | 2,500 | 3,500-5,000 | 5 차원 | `/scc:review` |
 | 리서치 brief | 3,000 | 4,000-6,000 | n/a | `/scc:research` |
-| 미팅 노트 | 2,000 | 2,500-3,500 | 5 섹션 | `/scc:write --format decision` |
 
 전체 표와 보정 원칙은 `skills/pdca/references/do-phase.md`에.
 
@@ -339,13 +340,15 @@ PDCA가 Do 페이즈에 진입할 때 디스패처가 사용자 프롬프트를 
 
 | 트리거 | Sub-skill |
 |--------|-----------|
-| 스레드 / threads / @unclejobs.ai | `/threads` |
-| 뉴스레터 / newsletter | `/newsletter` |
-| 쇼츠 / shorts / 릴스 / Reels | `/academy-shorts` |
-| 카드뉴스 / card news / 캐러셀 | `/card-news` |
+| newsletter / 뉴스레터 | `/scc:write --format newsletter` |
+| article / 아티클 | `/scc:write --format article` |
+| report / 보고서 | `/scc:write --format report` |
+| shorts / 쇼츠 | `/scc:write --format shorts` |
+| social / 소셜 | `/scc:write --format social` |
+| card-news / 카드뉴스 | `/scc:write --format card-news` |
 | (specialized 매치 없음) | `/scc:write` (fallback) |
 
-Sub-skill 입출력 계약과 실패 처리는 `skills/pdca/references/domain-pipeline-integration.md` (284줄)에 정리.
+Sub-skill 입출력 계약과 실패 처리는 `skills/pdca/references/domain-pipeline-integration.md`에 정리.
 
 ### 리뷰어 독립성 (Check 게이트)
 
@@ -357,16 +360,11 @@ Sub-skill 입출력 계약과 실패 처리는 `skills/pdca/references/domain-pi
 
 기준 문서 쪽도 같은 불변식을 답니다. 갈림길 파일이 `participants`를 기록하고, `record-verdict`는 그 목록에 있는 사람의 판정을 거부합니다.
 
-### 리뷰어 다양성 (Check 게이트)
+### 리뷰어 검사 (Check 스킬 계약)
 
-Check 페이즈가 false consensus 방지를 위해 리뷰어 모델 다양성을 강제해요:
-
-- **최소 2 리뷰어** (`--depth deep`은 3)
-- **모델당 1 리뷰어 최대** — 같은 모델 2개는 correlated error 생산이지 independent perspective 아님
-- **최소 1 외부 모델** for `content`, `strategy`, `full` preset — Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, Droid
-- **Diversity score ≥ 0.6** when >2 리뷰어 — `distinct_models / total_reviewers`
-
-모든 리뷰어가 평균 점수 0.9 초과 + critical 0개로 APPROVED를 반환하면 사이클이 자동 종료되지 않아요. 대신 사용 안 한 외부 모델로 adversarial pass가 자동 디스패치돼요. Goodhart 스타일 "다들 괜찮대" 거짓 신호 감지.
+리뷰 스킬은 선택된 2~5명 프리셋을 실행하고 모델 다양성·false consensus 검사를 수행할 수
+있습니다. PDCA 상태 MCP 전환 자체는 판정과 리뷰어 2명 이상 보고만 요구하며, 외부 커버리지와
+adversarial 후속 검사는 선택적·자문적입니다.
 
 ### 5+ 룰 (Patch vs Full Rewrite)
 
@@ -430,7 +428,7 @@ stateDiagram-v2
 
 그 외는 전부 `Illegal transition`이에요. `act → do`가 있는 이유는 액션 라우터가 COMPLETENESS_GAP과 FORMAT_VIOLATION을 실행 문제로 분류하기 때문입니다 — 이 경로가 없으면 라우터 판정의 3분의 1이 갈 곳을 잃어요.
 
-### Definition of Done — Refine 게이트 (0.5.6)
+### Definition of Done — Refine 게이트
 
 `refine` 스킬에 `--dod` 플래그를 쓸 수 있어요. 세미콜론으로 구분된 성공 기준 체크리스트예요.
 
@@ -451,7 +449,7 @@ stateDiagram-v2
 - Act → Plan 복귀 시에는 질문을 건너뛰어요 (리서치 갭이 이미 식별된 상태)
 
 페이즈 게이트 체크리스트는 `skills/pdca/references/`에 있어요.
-`hooks/prompt-detect.mjs` 자동 라우터는 **PDCA 복합 레이어를 먼저 태웁니다.** 다중 페이즈 의도(예: "알아보고 써줘")를 감지하면 `/scc:pdca`로 보내고 거기서 반환해요 — 외부 플랜은 계산되지 않습니다. 단일 목적 프롬프트만 아래로 내려가 단일 스킬 매칭과 외부 capability 점수화를 거치고, 강한 외부 매칭이 있으면 `[ORCHESTRATOR]` 지시가 주입돼 내장 선택을 제칩니다.
+`hooks/prompt-detect.mjs`는 의도 라우터가 아니에요. 프롬프트에 활성 프로젝트 기준이 선언한 literal trigger가 나타날 때 해당 기준을 알려줄 뿐이며, 스킬을 선택하거나 호출하지 않습니다. PDCA 선택은 일반 Claude Code 스킬·명령 흐름에서 이뤄집니다.
 
 ---
 
@@ -464,29 +462,33 @@ team_name: pdca-{topic-slug}
 lead: 아르세우스 (오케스트레이터, sonnet)
 phases:
   plan:
-    parallel_agents:
-      - 이브이 (리서처): "각도-1 리서치"
-      - 이브이 (리서처): "각도-2 리서치"  # deep 깊이에서만
+    agent:
+      role: 이브이 (리서처)
+      task: "깊이 조절형 리서치"
+    optional_parallel:
+      - mmbridge research 패스  # 설정됨, medium/deep 깊이에서만
     sequential:
       - 후딘 + 뮤츠: 분석 (병합된 리서치 결과)
   do:
     agent: 루브도 (라이터, opus)
   check:
-    parallel_agents:  # review 스킬이 내부적으로 병렬 처리
-      - 네이티오, 앱솔, 폴리곤, 푸린, 안농
+    parallel_agents:  # review 스킬이 프리셋에 따라 2~5명 선택
+      - 프리셋이 선택한 리뷰어
   act:
     agent: 메타몽 (에디터, opus)  # 내부 편집 루프
 ```
 
-- Plan 페이즈는 `--depth deep`일 때 2개 리서치 각도를 병렬 디스패치해요
-- Check 페이즈는 5명의 리뷰어를 병렬 실행해요 (review 스킬이 처리)
+- Plan 페이즈는 리서치 깊이 계약을 따르며, MMBridge가 설정돼 있으면 medium/deep 깊이에서 병렬 패스를 실행해요
+- Check 페이즈는 프리셋이 선택한 2~5명의 리뷰어를 병렬 실행해요 (review 스킬이 처리)
 - 파일 소유권: 각 에이전트가 별도 출력 파일에 기록해요
 
 ---
 
 ## MMBridge 통합 — 선택 사항
 
-MMBridge CLI가 여러 PDCA 페이즈에 걸쳐 멀티모델 AI 기능을 제공해요. 설치돼 있으면 리서치, 리뷰, 페이즈 게이트를 자동으로 보강해요. **설치하지 않아도 모든 스킬이 정상 작동해요.**
+MMBridge CLI는 스킬이나 호출자가 선택한 통합 지점에서 멀티모델 AI 기능을 제공할 수 있어요. 설정된
+리서치 실행에서는 추가 패스로 사용할 수 있고, 외부 리뷰는 `--external`로 명시적으로 선택하며,
+페이즈 게이트 점검은 자문용이에요. **설치하지 않아도 모든 스킬이 정상 작동해요.**
 
 감지, 호출, 오류 처리 규칙은 `references/mmbridge-integration.md`에 있어요.
 
@@ -518,7 +520,7 @@ MMBridge CLI가 여러 PDCA 페이즈에 걸쳐 멀티모델 AI 기능을 제공
 
 ```
 리뷰 디스패치
-├── 내부 (항상 실행)
+├── 내부 — 프리셋이 2~5개 역할 선택
 │   ├── 네이티오 / deep-reviewer (opus)
 │   ├── 앱솔 / devil-advocate (sonnet)
 │   ├── 폴리곤 / fact-checker (sonnet)
@@ -543,14 +545,17 @@ MMBridge CLI가 여러 PDCA 페이즈에 걸쳐 멀티모델 AI 기능을 제공
 
 ```
 리서치 디스패치
-├── 내부 (항상 실행)
-│   └── 이브이(sonnet) → WebSearch x5-10
+├── 리서처 (이브이, sonnet)
+│   ├── 설정돼 있으면 Jina Search
+│   ├── WebSearch + WebFetch 폴백
+│   ├── 막히거나 빈 페이지에는 /scc:unblock
+│   └── 필요할 때만 Playwright (라운드당 최대 3회)
 │
-├── 외부 (mmbridge 감지됨, depth medium 이상)
-│   └── mmbridge research --type code-aware
+├── 선택적 MMBridge 패스 (설정됨, medium/deep 깊이)
+│   └── 리서치 스킬이 디스패치하는 mmbridge research
 │
 └── 애널리스트 병합
-    ├── 내부 결과 + mmbridge 결과
+    ├── 확보된 내부 결과 + 선택적 외부 결과
     ├── 갭 분석
     └── 라이터 종합 → 리서치 브리프
 ```
@@ -596,7 +601,7 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 | `handleTransition` | `pdca_transition` | 완료된 페이즈 아티팩트를 `cycle-NNN/{phase}.md`에 자동 저장 |
 | `handleEndRun` | `pdca_end_run` | 사이클 메트릭스를 `cycle-NNN/metrics.json`에 영속 |
 
-### MCP 도구 (v1.0.0에서 3개 추가)
+### MCP 도구
 
 | 도구 | 매개변수 | 반환값 |
 |------|---------|--------|
@@ -612,7 +617,10 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ## Playwright MCP — 선택적 브라우저 리서치
 
-`playwright` MCP 서버가 `.claude-plugin/plugin.json`에 선택적 의존성으로 등록돼 있어요. 리서처 에이전트(이브이)가 `WebFetch`로 읽을 수 없는 URL에 대해 실제 Chromium 브라우저를 쓸 수 있게 해줘요.
+`playwright` MCP 서버는 `.claude-plugin/plugin.json`에서 `optional: true`로 표시돼 있어요. 리서처
+에이전트(이브이)가 `WebFetch`로 읽을 수 없는 URL에 실제 Chromium 브라우저를 쓸 수 있게 해줘요.
+패키지가 없거나 캐시·네트워크 조회가 실패해도 이 폴백만 비활성화되고, 사전 번들된
+`pdca-state` 서버와 핵심 도구는 정상 시작해요.
 
 **설치하지 않아도 research 스킬은 정상 작동해요.**
 
@@ -644,141 +652,64 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ## 라이프사이클 훅
 
-훅 파일 7개가 8개 이벤트에 등록돼 있어요 (`compaction.mjs`가 PreCompact와 PostCompact 둘 다 맡습니다). `hooks/hooks.json`에서 설정해요.
+훅 파일 8개가 9개 이벤트에 등록돼 있어요 (`compaction.mjs`가 PreCompact와 PostCompact 둘 다 맡습니다). `hooks/hooks.json`에서 설정해요.
 
 | 이벤트 | 훅 파일 | 동작 |
 |--------|--------|------|
-| `SessionStart` | `session-start.mjs` | 세션 배너 표시 + PDCA 상태 초기화 |
-| `UserPromptSubmit` | `prompt-detect.mjs` | 외부 플러그인 디스패치 + PDCA 복합 의도 + 단일 스킬 라우팅 |
-| `SubagentStart` | `subagent-start.mjs` | 리뷰 세션 컨텍스트 주입 (0.5.1 추가) |
-| `SubagentStop` | `subagent-stop.mjs` | 리뷰어 합의 집계 |
-| `Stop` | `session-end.mjs` | 세션 정리 |
-| `StopFailure` | `stop-failure.mjs` | Check 페이즈 품질 게이트 (0.5.1 추가) |
+| `SessionStart` | `session-start.mjs` | 세션 배너 + 가능한 상태·컨텍스트 복원/주입 |
+| `UserPromptSubmit` | `prompt-detect.mjs` | 활성 기준 literal trigger 보고 |
+| `SubagentStart` | `subagent-start.mjs` | 리뷰 세션 컨텍스트 주입 |
+| `SubagentStop` | `subagent-stop.mjs` | 리뷰어 출력과 합의 상태를 조용히 저장 |
+| `PostToolUse` (`Agent`) | `review-result.mjs` | 저장된 리뷰 요약을 부모 세션에 주입 |
+| `Stop` | `session-end.mjs` | 세션 종료 품질 게이트·핸드오프·정리 |
+| `StopFailure` | `stop-failure.mjs` | 크래시 복구 스냅샷 (Check 게이트를 집행하지 않음) |
 | `PreCompact` | `compaction.mjs` | 컨텍스트 압축 전 PDCA 상태 스냅샷 |
-| `PostCompact` | `compaction.mjs` | 컨텍스트 압축 후 PDCA 상태 복원 |
+| `PostCompact` | `compaction.mjs` | 다음 `SessionStart(source=compact)`에서 복원하도록 스냅샷 유지 |
 
-`PreCompact`와 `PostCompact`는 같은 `compaction.mjs` 파일을 공유해요. 컨텍스트 윈도우가 압축될 때 PDCA 사이클 상태가 유실되지 않도록 스냅샷을 찍고 복원하는 역할이에요.
+`PreCompact`와 `PostCompact`는 같은 `compaction.mjs` 파일을 공유해요. 컨텍스트 윈도우가 압축되기
+전에 스냅샷을 만들고, 다음 `SessionStart(source=compact)`가 그 스냅샷을 소비해서 사이클 중간의
+상태 유실을 막아요.
+
+훅의 책임은 서로 분리돼 있어요.
+
+- `SessionStart`는 활성 상태, 크래시 복구 알림, 기준 문서, 메모리, 환경 capability를 복원·주입해요. 컴팩션 뒤 호스트가 보내는 `source=compact`에서 스냅샷을 한 번 소비해요.
+- `UserPromptSubmit`(`prompt-detect`)는 활성 프로젝트 기준의 literal trigger가 프롬프트에 있는지만 보고해요. 스킬을 선택하거나 호출·설치하지 않아요.
+- `SubagentStart`는 리뷰 패널 참여를 기록하고 역할 컨텍스트를 주입해요. `SubagentStop`은 리뷰어 출력에서 판정과 소견을 파싱해 프리셋 합의 상태를 조용히 저장해요. `Agent` 도구가 반환되면 `PostToolUse`가 그 상태를 부모 세션에 주입하고 완료된 세션별 패널을 정리해요.
+- `Stop`은 정상 세션 종료 경로예요. 활성 PDCA의 Check가 끝나지 않았으면 이유를 stderr에 쓰고 **exit 2**로 종료를 막아요. 세션별 guard와 호스트의 `stop_hook_active` 재시도 신호로 무한 차단을 막고, 허용된 뒤에는 `HANDOFF.md`를 쓰고 요약·정리를 수행해요.
+- `StopFailure`는 품질 게이트가 아니라 크래시 복구예요. 활성 PDCA 상태를 `.data/state/pdca-crash-recovery.json`에 복사하고 가능하면 오류 이벤트를 남긴 뒤, 복구 기록이 실패해도 항상 **exit 0**이에요. 다음 `SessionStart`가 스냅샷을 알려줘요.
 
 ---
 
 ## MCP 서버
 
-`.claude-plugin/plugin.json`에 두 개의 MCP 서버가 등록돼 있어요.
+`.claude-plugin/plugin.json`에 세 개의 MCP 서버가 등록돼 있어요.
 
 | 서버 | 유형 | 필수 여부 | 역할 |
 |------|------|----------|------|
 | `pdca-state` | stdio | 필수 | 31개 도구로 PDCA 상태, 사이클 메모리, Soul, 프로젝트 메모리, 데몬, 세션 리콜, 플러그인 오케스트레이션 관리 |
 | `playwright` | stdio | 선택 | Chromium 브라우저를 통한 JavaScript 렌더링 페이지 접근 |
+| `mmbridge` | stdio | 선택 | 외부 멀티모델 리서치·리뷰 통합 |
+
+### 사전 번들된 PDCA 상태 서버
+
+매니페스트는 런타임에 `mcp/pdca-state-server.bundle.mjs`를 시작해요. 31개 도구와 런타임
+의존성을 하나의 체크인된 파일에 담았기 때문에, 새로 설치한 플러그인이 핵심 `pdca-state` MCP
+도구를 쓰기 위해 `npm install`, 네트워크, `node_modules`를 먼저 필요로 하지 않아요. 읽기 쉬운
+`mcp/pdca-state-server.mjs`는 개발·테스트용 원본이고, `npm run build:mcp`가 번들을 재생성하며
+CI가 생성물의 변경 여부를 확인해요.
+
+서버의 런타임 데이터는 `${CLAUDE_PLUGIN_DATA}` 아래에 저장하고(없으면 플러그인의 `.data/`),
+상태 변경은 파일 잠금으로 직렬화해요. 번들은 별도 런타임이 아니라 설치 시 사용하는 산출물이에요.
+
+## 크로스-플러그인 오케스트레이션
+
+크로스-플러그인 지원은 명시적으로 요청하는 advisory MCP 기능이에요. `orchestrator_list_plugins`,
+`orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health`가 설치된 플러그인을 살펴
+인벤토리·상태·순위가 있는 route plan을 반환해요. 반환된 Skill, 슬래시 명령, MCP 서버, 외부
+프로세스를 실행하지 않아요. 호출자가 계획을 검토한 뒤 필요할 때 명시적으로 호출하고,
+`prompt-detect`는 계획을 자동 실행으로 바꾸지 않아요.
 
 ---
 
-<details>
-<summary><strong>릴리스 히스토리</strong></summary>
-
-## 1.4.0 변경사항 — 크로스-플러그인 오케스트레이션
-
-Second Claude Code가 이제 당신의 Claude Code에 설치된 **모든 플러그인을 실시간으로 찾아내고 명령**합니다. 세 개 레이어로 동작합니다.
-
-### 레이어 1: 런타임 플러그인 탐지
-
-`hooks/lib/plugin-discovery.mjs`가 세션 시작 시 `~/.claude/plugins/installed_plugins.json`을 스캔하고 각 플러그인의 파일시스템을 검사:
-
-```
-플러그인 파일시스템          → 추출되는 능력
-─────────────────────────────────────────────
-.claude-plugin/plugin.json  → 이름, 버전, 설명, mcpServers
-skills/*/SKILL.md           → 스킬명 + 설명 (frontmatter 파싱)
-commands/*.md               → 커맨드명 + 설명
-agents/*.md                 → 에이전트명
-.mcp.json                   → 대체 MCP 서버 선언
-```
-
-발견 자체에는 하드코딩 레지스트리가 없습니다. 플러그인 설치 → 자동 등장, 삭제 → 자동 사라짐, capability map은 매 세션 재구축. 선호는 별개입니다. `INTENT_PROFILES`가 생명주기 의도별로 선호 플러그인을 고정하며, `CLAUDE_PLUGIN_DATA`의 `plugin-preferences.json`으로 덮어쓸 수 있습니다.
-
-### 레이어 2: 의도 점수화와 디스패치 계획
-
-`getDispatchPlan()`은 키워드나 PDCA 페이즈를 intent profile로 바꾸고, 설치된 모든 플러그인의 스킬/커맨드를 점수화한 뒤 정렬된 호출 지시를 반환해요.
-
-| 입력 | 의도 | 현재 검증된 플러그인 세트의 1순위 디스패치 |
-|------|------|--------------------------------------------|
-| `phase=plan` | `plan` | `Skill: claude-mem:knowledge-agent` |
-| `phase=do` | `frontend-design` | `Skill: frontend-design:frontend-design` |
-| `phase=check` | `review` | `Skill: coderabbit:code-review` |
-| `phase=act` | `commit` | `/commit-commands:commit` |
-| `posthog event analysis` | `generic` | `Skill: posthog:exploring-autocapture-events` |
-
-자주 쓰는 생명주기 의도는 preferred-plugin 점수로 안정화하고, 일반 프롬프트도 설치된 플러그인 skill/command 텍스트와 강하게 맞으면 외부 capability가 이깁니다. 짧은 키워드는 단어 경계 기반으로만 매칭해서 `bug`가 `debugging` 안에 들어 있다는 이유로 잘못 라우팅되지 않게 했어요.
-
-### 레이어 3: 능동적 자동 디스패치
-
-```
-사용자: "코드 리뷰해줘"
-  ↓
-prompt-detect 훅 (UserPromptSubmit)
-  ├── getDispatchPlan(keyword="리뷰해줘") 호출
-  ├── 1순위 디스패치: Skill: coderabbit:code-review
-  └── [ORCHESTRATOR] 주입: 자체 처리 전 해당 Skill 호출
-  ↓
-외부 플러그인 결과 반환
-  ↓
-Claude가 결과를 최종 답변에 통합
-```
-
-전체 PDCA 사이클이 페이즈에 진입할 때도 같은 디스패처를 씁니다.
-
-```
-PDCA Check 페이즈 진입
-  ├── orchestrator_route phase=check
-  ├── 탐지 결과: coderabbit (code-review), codex (review), agent-teams (team-review)
-  └── 자동 디스패치: "Skill: coderabbit:code-review"
-  ↓
-결과 반환 → PDCA Act 페이즈로
-  ├── orchestrator_route phase=act
-  └── 자동 디스패치: "/commit-commands:commit"
-```
-
-### 신규 MCP 도구
-
-| 도구 | 목적 | 자동 디스패치 |
-|------|------|-------------|
-| `orchestrator_list_plugins` | 전체 생태계 인벤토리 | 아니오 |
-| `orchestrator_get_plugin` | 단일 플러그인 상세 | 아니오 |
-| `orchestrator_route` | 키워드/페이즈 → 매칭 플러그인 | **예** — `Skill:` 문자열 반환 |
-| `orchestrator_health` | 생태계 건전성 점검 | 아니오 |
-
-### 신규 서브시스템
-
-```
-hooks/lib/plugin-discovery.mjs       — 파일시스템 스캐너 + capability 매퍼 + 디스패치 가이드 생성기
-mcp/lib/orchestrator-handlers.mjs    — 4개 MCP 도구 핸들러 구현
-```
-
-### SessionStart 변경사항
-
-예전의 수동적인 "Plugin Orchestrator" 목록 대신 **Active Plugin Dispatch** 섹션이 들어갑니다. 설치된 플러그인 기준으로 페이즈별 1순위 디스패치를 미리 보여줘요.
-
-```
-📋 plan → Skill: claude-mem:knowledge-agent
-🔨 do → Skill: frontend-design:frontend-design
-🔍 check → Skill: coderabbit:code-review
-🚀 act → /commit-commands:commit
-```
-
-### prompt-detect 변경사항
-
-예전의 하드코딩된 `<skill-check>` 블록은 `generateDispatchGuide()`가 만든 실시간 라우팅 테이블로 바뀌었습니다. 추가로 prompt-detect는 실질적인 프롬프트마다 `getDispatchPlan()`을 호출합니다. 1순위 외부 매칭이 생명주기 의도이거나 강한 일반 플러그인 매칭이면, 자체 처리 전에 해당 Skill/command를 먼저 호출하라는 `[ORCHESTRATOR]` 지시를 주입합니다. 플러그인이 바뀌면 가이드와 즉시 디스패치 대상도 같이 바뀝니다.
-
-### 소울 피드백 바인딩 (Phase 5)
-
-- `soul_retro` — git shipping 메트릭 수집 (커밋 수, streak, peak hours, 트렌드 감지)
-- `soul_get_synthesis_context` — synthesis 단계용 관측 데이터 준비
-- `soul_get_readiness` — synthesis 임계값 도달 여부 확인 (관측 30건 또는 세션 10회)
-- 세션 시작 시 시각적 진행 게이지 + retro 요약 + synthesis CTA 주입
-
----
-
-## 이전 릴리스
-
-1.3.0 이전은 [CHANGELOG.md](../CHANGELOG.md)에 있습니다. 여러 릴리스 동안 여기 복사본을 함께 두었는데, 그 복사본이 원본과 어긋났습니다.
-
-</details>
+릴리스 기록과 마이그레이션 노트는 [CHANGELOG.md](../CHANGELOG.md)에 모아 두었습니다. 이 문서는
+과거 릴리스 내용을 복사하지 않고 SCC 3.0.2 런타임의 현재 구조를 설명합니다.

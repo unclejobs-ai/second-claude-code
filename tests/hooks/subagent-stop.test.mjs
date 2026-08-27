@@ -13,6 +13,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "subagent-stop.mjs");
+const bridgePath = path.join(root, "hooks", "review-result.mjs");
 
 function makeTempDataDir() {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-subagent-stop-"));
@@ -40,6 +41,18 @@ function runHook(tempDir, payload) {
       CLAUDE_PLUGIN_DATA: tempDir,
     },
     input: payload === undefined ? "" : JSON.stringify(payload),
+    encoding: "utf8",
+  });
+}
+
+function runBridge(tempDir, payload = { tool_name: "Agent" }) {
+  return spawnSync(process.execPath, [bridgePath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: tempDir,
+    },
+    input: JSON.stringify(payload),
     encoding: "utf8",
   });
 }
@@ -107,10 +120,11 @@ test("subagent stop records reviewer output and waits for remaining reviewers", 
   });
 
   const aggregation = readAggregation(tempDir);
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
   const reviewer = aggregation.reviewers[0];
 
   assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
   assert.equal(aggregation.reviewers.length, 1);
   assert.equal(reviewer.name, "fact-checker");
   assert.equal(reviewer.verdict, "APPROVED");
@@ -151,7 +165,7 @@ test("subagent stop records current Claude Code last_assistant_message payloads"
   });
 
   const aggregation = readAggregation(tempDir);
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
   const reviewer = aggregation.reviewers[0];
 
   assert.equal(result.status, 0);
@@ -161,6 +175,72 @@ test("subagent stop records current Claude Code last_assistant_message payloads"
   assert.equal(reviewer.warning_count, 1);
   assert.equal(reviewer.score, 0.91);
   assert.match(output.hookSpecificOutput.additionalContext, /Latest: fact-checker → APPROVED score=0\.91 \(1 Warning\)/);
+});
+
+test("subagent stop does not treat negated approval prose as an approval verdict", () => {
+  const tempDir = makeTempDataDir();
+  writeAggregation(tempDir, {
+    expected_reviewers: 1,
+    threshold: 1,
+    reviewers: [],
+  });
+
+  const result = runHook(tempDir, {
+    agent_type: "deep-reviewer",
+    last_assistant_message: "Reviewer: deep-reviewer\nThis is NOT APPROVED because evidence is missing.",
+  });
+
+  assert.equal(result.status, 0);
+  const reviewer = readAggregation(tempDir).reviewers[0];
+  assert.equal(reviewer.verdict, "UNKNOWN");
+  assert.equal(reviewer.is_pass, false);
+});
+
+test("subagent stop accepts reviewer payloads larger than 64 KiB", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    expected_reviewers: 3,
+    threshold: 0.67,
+    reviewers: [],
+  });
+
+  const result = runHook(tempDir, {
+    agent_type: "fact-checker",
+    last_assistant_message: [
+      "Reviewer: fact-checker",
+      "APPROVED",
+      "Score: 0.93",
+      "x".repeat(70 * 1024),
+    ].join("\n"),
+  });
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, "");
+  const aggregation = readAggregation(tempDir);
+  assert.equal(aggregation.reviewers.length, 1);
+  assert.equal(aggregation.reviewers[0].name, "fact-checker");
+  assert.equal(aggregation.reviewers[0].verdict, "APPROVED");
+});
+
+test("subagent stop reports oversized hook input without failing the hook", () => {
+  const tempDir = makeTempDataDir();
+
+  writeAggregation(tempDir, {
+    expected_reviewers: 3,
+    threshold: 0.67,
+    reviewers: [],
+  });
+  const before = readFileSync(aggregationPath(tempDir), "utf8");
+
+  const result = runHook(tempDir, {
+    agent_type: "fact-checker",
+    last_assistant_message: "x".repeat(600 * 1024),
+  });
+
+  assert.equal(result.status, 0);
+  assert.match(result.stderr, /hook input.*524288 bytes/i);
+  assert.equal(readFileSync(aggregationPath(tempDir), "utf8"), before);
 });
 
 test("subagent stop ignores non-reviewer output while aggregation is active", () => {
@@ -240,7 +320,7 @@ test("subagent stop computes APPROVED consensus with score gate when all reviewe
   });
 
   const aggregation = readAggregation(tempDir);
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
 
   assert.equal(aggregation.consensus.verdict, "APPROVED");
   assert.equal(aggregation.consensus.pass_count, 2);
@@ -285,7 +365,7 @@ test("subagent stop requires unanimous approval for quick two-reviewer runs", ()
   });
 
   const aggregation = readAggregation(tempDir);
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
 
   assert.equal(aggregation.threshold, 1);
   assert.equal(aggregation.consensus.verdict, "NEEDS IMPROVEMENT");
@@ -346,7 +426,7 @@ test("subagent stop forces MUST FIX when a critical finding appears in a review 
 
   const aggregation = readAggregation(tempDir);
   const reviewer = aggregation.reviewers.find((item) => item.name === "structure-analyst");
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
 
   assert.equal(reviewer.verdict, "MUST FIX");
   assert.equal(reviewer.critical_count, 1);
@@ -374,7 +454,7 @@ test("subagent stop downgrades low-score pass verdicts to NEEDS IMPROVEMENT", ()
   });
 
   const aggregation = readAggregation(tempDir);
-  const output = parseStdout(result);
+  const output = parseStdout(runBridge(tempDir));
 
   assert.equal(aggregation.reviewers[0].verdict, "NEEDS IMPROVEMENT");
   assert.equal(aggregation.reviewers[0].is_pass, false);
@@ -418,13 +498,15 @@ test("exclusion that leaves the panel short blocks instead of passing", () => {
 
   runHook(tempDir, reviewerPayload("devil-advocate", "APPROVED", "0.95"));
   const result = runHook(tempDir, reviewerPayload("fact-checker", "APPROVED", "0.95"));
+  const output = parseStdout(runBridge(tempDir));
 
   const consensus = readAggregation(tempDir).consensus;
   assert.equal(consensus.verdict, "BLOCKED — QUORUM SHORT");
   assert.match(consensus.reason, /devil-advocate helped produce this artifact/);
   assert.match(consensus.reason, /1 independent reviewer\(s\) reported, 2 required/);
-  assert.match(result.stdout, /BLOCKED — QUORUM SHORT/);
-  assert.doesNotMatch(result.stdout, /Proceed with the consensus verdict/);
+  assert.equal(result.stdout, "");
+  assert.match(output.hookSpecificOutput.additionalContext, /BLOCKED — QUORUM SHORT/);
+  assert.doesNotMatch(output.hookSpecificOutput.additionalContext, /Proceed with the consensus verdict/);
 });
 
 test("an untainted panel still reaches consensus and clears the participant list", () => {

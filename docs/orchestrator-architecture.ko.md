@@ -1,36 +1,42 @@
 [English](orchestrator-architecture.md) | **한국어**
 
-# 오케스트레이터 아키텍처 - v1.5.0
+# 오케스트레이터 아키텍처 — SCC 3.0.2
 
-Second Claude Code v1.4.x의 크로스-플러그인 오케스트레이터는 설치된 Claude Code 플러그인을 런타임에 발견하고, 사용자 의도와 점수화한 뒤, 자체 PDCA 스킬로 fallback하기 전에 정확한 `Skill:` 또는 슬래시 커맨드 호출 지시를 주입합니다.
+SCC 3.0.2의 크로스-플러그인 오케스트레이터는 설치된 플러그인 capability를 런타임에 발견하고
+사용자 의도와 점수화한 뒤, 호출자가 검토할 자문용 dispatch plan을 반환합니다.
+오케스트레이터나 MCP 도구가 외부 Skill 또는 슬래시 커맨드를 실행하지는 않습니다.
 
-v1.5.0에서는 `unblock` 체인이 추가되었습니다. 9-phase zero-key fetch chain으로, 자동 라우터와 Eevee 리서처가 URL이 4xx / 캡차 / WAF / 빈 SPA 본문을 반환할 때 자동 호출합니다. 자기 스킬 없이 `/scc:unblock` 명령으로만 나갑니다. `skills/unblock/engine/`, `commands/unblock.md`, 그리고 `hooks/prompt-detect.mjs`의 자동 라우터 패턴을 참고하세요.
+`unblock` 체인은 별도 접근 경로로 제공됩니다. URL 복구가 필요할 때 호출자가 `/scc:unblock`을
+선택할 수 있으며, prompt-detect가 이를 자동 호출하거나 invocation 지시를 주입하지 않습니다.
+구현은 `skills/unblock/engine/`과 `commands/unblock.md`를 참고하세요.
 
 ## 디스패치 레이어
 
 ```mermaid
 flowchart TB
     U[사용자 프롬프트] --> L1{"Layer 1<br/>복합 의도인가?"}
-    L1 -->|예| PDCA[["pdca로 라우팅 — 여기서 즉시 반환"]]
-    L1 -->|아니오| L2["Layer 2 — 단일 스킬 의도를 bestMatch로 점수화"]
+    L1 -->|예| PDCA[["호출자가 pdca를 선택할 수 있음"]]
+    L1 -->|아니오| L2["호출자가 라우트 계획을 요청"]
     L2 --> G[getDispatchPlan]
     G --> D[런타임 플러그인 발견]
     D --> C[Capability map]
     C --> S["의도 점수화 + preferred-plugin 보정"]
-    S --> L3{"Layer 3<br/>외부 매칭이 충분히 강한가?"}
-    L3 -->|예| O[["ORCHESTRATOR 지시"]]
-    L3 -->|아니오| I[["bestMatch로 폴백"]]
+    S --> L3{"Layer 3<br/>호출자 판단"]
+    L3 -->|적절하면 명시적으로 호출| O[["선택적 외부 호출"]]
+    L3 -->|그 외| I[["내장 스킬/커맨드 사용"]]
 
     style PDCA fill:#fff3bf,stroke:#f08c00
     style O fill:#d3f9d8,stroke:#2f9e44
     style I fill:#e7f5ff,stroke:#1971c2
 ```
 
-**복합 프롬프트는 오케스트레이터까지 가지 않습니다.** Layer 1이 "알아보고 써줘" 같은 표현을 잡으면 `pdca`로 보내고 그 자리에서 반환합니다 — 외부 플랜은 계산조차 되지 않습니다. 외부 디스패치가 겨루는 상대는 PDCA가 아니라 **단일 스킬 라우터**입니다.
+`prompt-detect` 훅은 오케스트레이터가 아닙니다. 활성 기준의 literal trigger만 보고합니다.
+`orchestrator_route` 같은 MCP 호출을 명시적으로 해야 route plan을 요청하며, 계획을 받는 것
+자체가 추천 capability를 실행하지는 않습니다.
 
 1. **런타임 발견** - `hooks/lib/plugin-discovery.mjs`가 `~/.claude/plugins/installed_plugins.json`, 각 플러그인의 `skills/`, `commands/`, `agents/`, `.claude-plugin/plugin.json`을 스캔합니다.
-2. **의도 점수화** - `getDispatchPlan()`이 키워드나 PDCA 페이즈를 정규화하고, 플러그인 capability를 점수화하고, preferred-plugin 보정을 적용한 뒤, 정렬된 호출 지시를 반환합니다.
-3. **프롬프트 디스패치** - `hooks/prompt-detect.mjs`가 lifecycle 의도나 강한 일반 플러그인 매칭을 발견하면 `[ORCHESTRATOR]` 블록을 주입합니다.
+2. **의도 점수화** - `getDispatchPlan()`이 키워드나 PDCA 페이즈를 정규화하고, 플러그인 capability를 점수화하고, preferred-plugin 보정을 적용한 뒤, 정렬된 자문 계획과 capability 후보를 반환합니다.
+3. **호출자 결정** - caller가 반환된 계획을 검토한 뒤 필요할 때만 외부 capability를 명시적으로 호출합니다.
 
 **탐지되는 것과 고정된 것.** 어떤 플러그인이 있고 그 안에 무슨 스킬·커맨드·에이전트가 들었는지는 런타임에 디스크에서 읽습니다. 반면 고정된 건 선호 표입니다. `plugin-discovery.mjs`의 `INTENT_PROFILES`가 lifecycle 의도별 선호 플러그인(리뷰→`coderabbit`, act→`commit-commands`, 디자인→`frontend-design`, 메모리·리서치→`claude-mem`)을 박아 뒀고, 새로 깐 리뷰 플러그인은 탐지·점수화는 되지만 `+60` 선호 가산점은 기본값으로는 못 받습니다.
 
@@ -56,25 +62,27 @@ flowchart TB
 
 ```mermaid
 flowchart LR
-    SS[SessionStart hook] --> PD[plugin-discovery.mjs]
-    PD --> MAP[Capability map]
-    MAP --> GUIDE[Active Plugin Dispatch]
-    GUIDE --> CTX[System reminder]
+    SS[SessionStart hook] --> STATE[상태·컨텍스트 복원]
+    STATE --> CTX[시스템 리마인더]
 ```
 
-세션 시작 시 훅은 "Active Plugin Dispatch" 표를 주입합니다. 이 표는 모델을 위한 안내 컨텍스트이며, 페이즈별 1순위 플러그인 이름과 capability 수를 담습니다. 호출 문자열은 **들어 있지 않습니다** — 그건 프롬프트마다 `buildDispatchInstructions()`가 만들어 Layer 3이 주입하는 `[ORCHESTRATOR]` 블록에만 나타납니다.
+세션 시작 시 훅은 런타임 상태와 컨텍스트를 복원·주입합니다. 설치 플러그인을 스캔하거나
+"Active Plugin Dispatch" 표를 주입하지 않습니다. 플러그인 탐색은 오케스트레이터 도구를
+명시적으로 요청할 때 수행됩니다.
 
 ## 프롬프트 레벨 디스패치
 
-실질적인 프롬프트마다 `prompt-detect`가 `getDispatchPlan()`을 호출합니다. 외부 capability가 1순위로 선택되면 다음 형태의 지시를 주입합니다.
+`prompt-detect`는 활성 기준의 literal trigger가 있는지만 알리고 외부 capability 계획이나 호출
+지시를 주입하지 않습니다. route plan이 필요하면 caller가 오케스트레이터 도구를 요청합니다.
 
 ```text
-[ORCHESTRATOR]
-Invoke this installed plugin capability before self-processing:
+Advisory route plan (example):
 Skill: coderabbit:code-review
 ```
 
-모델은 먼저 해당 외부 스킬 또는 커맨드를 호출하고 결과를 통합해야 합니다. 외부 라우트가 이기지 못하면 Layer 2에서 이미 매겨 둔 단일 스킬 매치를 씁니다. PDCA 복합 라우터는 이 판정 아래에 있지 않습니다 — 그건 앞서 실행됐고, 복합 프롬프트였다면 거기서 이미 반환됐습니다.
+위 이름은 실행 결과가 아니라 자문용 계획입니다. caller가 적절하다고 판단할 때만 명시적으로
+호출하고, 아니면 내장 스킬·커맨드를 사용합니다. `orchestrator_*` MCP는 인벤토리·검사·계획·
+상태 정보만 제공합니다.
 
 ## MCP 도구 표면 - 총 31개
 
@@ -89,18 +97,23 @@ Skill: coderabbit:code-review
 
 네 개의 `orchestrator_*` 도구는 플러그인 인벤토리, 단일 플러그인 조회, 라우트 계획, 생태계 상태 점검을 위한 공개 MCP 표면입니다.
 
+매니페스트는 `playwright`도 `optional: true`인 선택적 MCP 서버로 등록합니다. 이 패키지와 캐시는
+핵심 시작 경로에 포함되지 않으므로 Playwright를 사용할 수 없으면 리서치가 갭을 기록하고 폴백
+경로를 사용하며, 사전 번들된 `pdca-state` 서버는 계속 사용할 수 있습니다.
+
 ## 파일 구조
 
 ```text
 second-claude/
 ├── hooks/
-│   ├── session-start.mjs              # Active Plugin Dispatch 주입
-│   ├── prompt-detect.mjs              # 프롬프트 레벨 외부 디스패치
+│   ├── session-start.mjs              # 상태·컨텍스트 복원·주입; 플러그인 스캔 없음
+│   ├── prompt-detect.mjs              # 활성 기준 literal trigger 보고
 │   └── lib/
 │       ├── plugin-discovery.mjs       # 런타임 스캐너, 점수화, 디스패치 플래너
 │       └── soul-observer.mjs          # 훅용 soul readiness 헬퍼
 ├── mcp/
-│   ├── pdca-state-server.mjs          # MCP 도구 31개
+│   ├── pdca-state-server.bundle.mjs   # 런타임에서 쓰는 사전 번들 31개 도구 서버
+│   ├── pdca-state-server.mjs          # 개발·테스트용 읽기 쉬운 원본
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* 도구 구현
 │       ├── soul-handlers.mjs
@@ -114,7 +127,7 @@ second-claude/
 
 ## 검증 범위
 
-- `npm test`: 총 505개 테스트, 504개 통과, 1개 스킵.
+- 검증 수치는 실행 시점의 테스트 결과를 따르며 이 문서에 고정하지 않습니다.
 - `tests/hooks/prompt-detect-standards.test.mjs`: 활성 기준의 트리거 문자열이 프롬프트에 그대로 들어 있으면 그 기준과 파일 경로를 띄우는지 검증합니다. 이 훅이 들고 있던 키워드 라우터는 제거됐습니다. 근거만 제시하고 스킬 호출을 지시하지 않습니다.
 - `tests/mcp/orchestrator-handlers.test.mjs`: 실제 발견된 플러그인 데이터, preferred phase routing, 일반 플러그인 매칭, 짧은 키워드 경계 guard를 검증합니다.
-- `tests/integration/skill-flow.test.mjs`: 더 강한 외부 플러그인 라우트가 없을 때 기존 PDCA 복합 라우팅이 유지되는지 검증합니다.
+- `tests/integration/skill-flow.test.mjs`: 자연어 명령이 등록된 커맨드 문서와 대응 스킬로 해석되는 기본 흐름을 검증합니다.

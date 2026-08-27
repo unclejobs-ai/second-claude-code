@@ -1,16 +1,61 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  existsSync,
+  mkdirSync,
+  openSync,
+  readdirSync,
+  readSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import { randomUUID } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]{0,63}$/;
+// Standards are project-controlled files, but hooks read them on every
+// session/prompt boundary. Keep an unexpectedly large or numerous standards
+// tree from becoming an unbounded hook cost.
+export const MAX_STANDARD_ENTRIES = 64;
+export const MAX_STANDARD_FILE_BYTES = 128 * 1024;
+
+export function isValidStandardId(id) {
+  return typeof id === "string" && ID_PATTERN.test(id);
+}
 
 function assertValidId(id) {
-  if (typeof id !== "string" || !ID_PATTERN.test(id)) {
+  if (!isValidStandardId(id)) {
     throw new Error(
       `기준 id는 소문자·숫자·하이픈 1~64자여야 합니다: ${JSON.stringify(id)}`
     );
   }
   return id;
+}
+
+/**
+ * Read a STANDARD.md only when its complete content fits the byte budget.
+ * Reading one byte past the limit lets us distinguish an exactly-at-limit
+ * file from a truncated oversized file without ever loading the latter.
+ */
+function readStandardFile(path) {
+  let fd;
+  try {
+    fd = openSync(path, "r");
+    const buffer = Buffer.alloc(MAX_STANDARD_FILE_BYTES + 1);
+    let offset = 0;
+    while (offset < buffer.length) {
+      const count = readSync(fd, buffer, offset, buffer.length - offset, null);
+      if (count === 0) break;
+      offset += count;
+    }
+    if (offset > MAX_STANDARD_FILE_BYTES) return null;
+    return buffer.subarray(0, offset).toString("utf8");
+  } catch {
+    return null;
+  } finally {
+    if (fd !== undefined) {
+      try { closeSync(fd); } catch { /* non-fatal */ }
+    }
+  }
 }
 
 function standardsDir(root) {
@@ -76,22 +121,27 @@ ${
 }
 
 function existingTitleOf(path) {
-  if (!existsSync(path)) return null;
-  const match = readFileSync(path, "utf8").match(/^# (.+)$/m);
-  return match ? match[1].trim() : null;
+  if (!existsSync(path)) return { exists: false, title: null };
+  const body = readStandardFile(path);
+  if (body === null) return { exists: true, title: null };
+  const match = body.match(/^# (.+)$/m);
+  return { exists: true, title: match ? match[1].trim() : null };
 }
 
 export function writeStandard(root, fork, options = {}) {
   assertValidId(fork.id);
   const path = standardPath(root, fork.id);
-  const existingTitle = existingTitleOf(path);
+  const existing = existingTitleOf(path);
   // A colliding id would otherwise erase a different decision's rejected options,
   // which is the one thing this record exists to preserve. Same title means the
   // caller is updating a record it already owns; a different title means two
   // decisions were handed the same id and one of them is about to disappear.
-  if (existingTitle !== null && existingTitle !== fork.title) {
+  // An existing file whose title cannot be safely read is not evidence of
+  // ownership, so it is never silently replaced.
+  if (existing.exists && (existing.title === null || existing.title !== fork.title)) {
+    const existingTitle = existing.title === null ? "확인할 수 없는 기존 기준" : `기존 "${existing.title}"`;
     throw new Error(
-      `id "${fork.id}"는 이미 다른 기준에 쓰이고 있습니다: 기존 "${existingTitle}" / 새 "${fork.title}". id는 결정마다 서로 다르고 의미 있게 지어야 합니다.`
+      `id "${fork.id}"는 이미 다른 기준에 쓰이고 있습니다: ${existingTitle} / 새 "${fork.title}". id는 결정마다 서로 다르고 의미 있게 지어야 합니다.`
     );
   }
   mkdirSync(join(standardsDir(root), fork.id), { recursive: true });
@@ -133,23 +183,28 @@ export function listActiveStandards(root) {
   const dir = standardsDir(root);
   if (!existsSync(dir)) return [];
   const out = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    if (!entry.isDirectory()) continue;
+  const entries = readdirSync(dir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && isValidStandardId(entry.name))
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, MAX_STANDARD_ENTRIES);
+  for (const entry of entries) {
     const path = standardPath(root, entry.name);
     if (!existsSync(path)) continue;
-    let body;
-    try {
-      body = readFileSync(path, "utf8");
-    } catch {
+    const body = readStandardFile(path);
+    if (body === null) {
       // One unreadable record (STANDARD.md exists as a directory, a permission
-      // error, ...) must not silence every other standard on file.
+      // error, an oversized file, ...) must not silence every other standard.
       continue;
     }
     const frontmatter = frontmatterOf(body);
     if (readField(frontmatter, "status") !== "active") continue;
+    const id = readField(frontmatter, "id") || entry.name;
+    // The directory is the storage identity. A malformed or mismatched
+    // frontmatter id must not make a record appear under another identity.
+    if (!isValidStandardId(id) || id !== entry.name) continue;
     const title = body.match(/^# (.+)$/m);
     out.push({
-      id: readField(frontmatter, "id") || entry.name,
+      id,
       title: title ? title[1].trim() : entry.name,
       review_when: parseJsonScalar(frontmatter, "review_when", ""),
       triggers: parseJsonField(frontmatter, "triggers"),
@@ -169,7 +224,8 @@ export function supersedeStandard(root, id) {
   assertValidId(id);
   const path = standardPath(root, id);
   if (!existsSync(path)) return false;
-  const body = readFileSync(path, "utf8");
+  const body = readStandardFile(path);
+  if (body === null) return false;
   const match = body.match(/^(---\n)([\s\S]*?)(\n---\n)/);
   if (!match) return false;
   const updated = match[2].replace(/^status:\s*active\s*$/m, "status: superseded");

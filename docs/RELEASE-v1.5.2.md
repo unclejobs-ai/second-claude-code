@@ -1,5 +1,7 @@
 # Release v1.5.2
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 v1.5.2 adds Deep Interview as the 18th public command/skill and introduces a Code Engineering Lane for `domain=code` PDCA runs. The release keeps Second Claude's Plan -> Do -> Check -> Act architecture intact while improving both sides of code work: clearer requirements before execution, then stricter planning, implementation isolation, independent validation, cleanup, and durable handoff state during execution.
 
 ## Added

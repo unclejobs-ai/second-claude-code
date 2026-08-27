@@ -10,18 +10,25 @@
  * output at all.
  */
 
-import { readFileSync } from "fs";
 import { listActiveStandards } from "../scripts/lib/standard-record.mjs";
 import { sanitize } from "./lib/utils.mjs";
+import {
+  MAX_EXTERNAL_CONTEXT_CHARS,
+  readHookStdin,
+  sanitizeExternalText,
+} from "./lib/soul-observer.mjs";
 
 function readHookPayload() {
   if (process.stdin.isTTY) return null;
 
   try {
-    const rawPayload = readFileSync(0, "utf8");
+    const rawPayload = readHookStdin();
     if (!rawPayload.trim()) return null;
     return JSON.parse(rawPayload);
-  } catch {
+  } catch (error) {
+    if (error?.code === "SCC_HOOK_INPUT_TOO_LARGE") {
+      console.error(`[prompt-detect] ${error.message}; prompt trigger check skipped`);
+    }
     return null;
   }
 }
@@ -67,7 +74,11 @@ if (hits.length > 0) {
   }
   lines.push("");
   lines.push("기준을 지키거나, 명시적으로 폐기하고 새로 세우십시오. 조용히 다르게 가지 마십시오.");
-  process.stdout.write(lines.join("\n") + "\n");
+  // The record path is project-controlled input. Sanitize the complete
+  // envelope after assembling it so ANSI, bidi, and control characters in a
+  // path (or future output fields) cannot escape into the prompt context.
+  const output = sanitizeExternalText(lines.join("\n"), MAX_EXTERNAL_CONTEXT_CHARS);
+  process.stdout.write(output + "\n");
 }
 
 process.exit(0);

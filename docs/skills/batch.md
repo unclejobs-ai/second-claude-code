@@ -1,3 +1,5 @@
+[한국어](batch.ko.md)
+
 # Batch
 
 > Use when decomposing a large task into independent units that run in parallel, each in its own worktree.
@@ -8,7 +10,7 @@
 /scc:batch --topic "10-part newsletter series on AI infrastructure trends" --skill write --parallel 3
 ```
 
-**What happens:** The skill dispatches an Explore agent to scope the topic, then decomposes it into independent units (minimum 2, up to 10 by default, up to 20 with `--units`). The full decomposition plan is presented as a table, and execution does not begin until the user explicitly approves it. Once approved, one agent per unit spawns in its own isolated worktree, with concurrency capped at `--parallel` (default 3). Each unit's status (`PENDING`/`RUNNING`/`DONE`/`FAILED`) is tracked as units complete, and a Batch Summary Report is saved to `.captures/batch-{run_id}/00-summary.md` once all units finish.
+**What happens:** The skill dispatches an Explore agent to scope the topic, then decomposes it into 2–10 independent units. The full plan is shown as a table, and execution waits for explicit user approval. Approved units run in isolated worktrees with concurrency capped by `--parallel` (default 3); statuses are tracked and a summary is saved to `.captures/batch-{run_id}/00-summary.md`.
 
 ## Real-World Example
 
@@ -49,7 +51,7 @@ Combined document merging all 10 issues saved to .captures/batch-.../merged.md
 |------|--------|---------|
 | `--topic` | string | (required) |
 | `--skill` | `write`, `research`, `analyze`, `refine` | `write` |
-| `--units` | integer 2-20 | auto (up to 10) |
+| `--units` | integer 2-10 | auto (up to 10) |
 | `--parallel` | integer 1-5 | `3` |
 | `--format` | write-skill formats | `article` |
 | `--lang` | `ko`, `en` | `ko` |
@@ -59,7 +61,7 @@ Combined document merging all 10 issues saved to .captures/batch-.../merged.md
 
 ```mermaid
 graph TD
-    A[Analyze: scope task, determine unit type] --> B[Decompose: 2-20 independent units]
+    A[Analyze: scope task, determine unit type] --> B[Decompose: 2-10 independent units]
     B --> C[Approve: present plan, wait for explicit approval]
     C --> D[Execute: one agent per unit in isolated worktree]
     D --> E[Monitor: track PENDING/RUNNING/DONE/FAILED]
@@ -99,7 +101,7 @@ graph TD
 - **Units turn out to overlap or depend on each other** -- Reject the plan at the Approve gate with feedback; the skill re-decomposes and re-presents. If the dependency is inherent, this isn't a batch job -- use `workflow` instead.
 - **A unit fails during execution** -- The batch does not abort. Remaining units keep running, and the failure is logged and reported in the Synthesize step's Failures section with a recommended action. Completed units are still delivered.
 - **Estimated cost looks too high** -- Cost scales linearly with unit count. Reduce scope with `--units N` or reconsider the unit count before approving.
-- **Need more than the default 10 units** -- Override with `--units N` (accepts up to 20).
+- **Need more than the default 10 units** -- The current contract caps `--units` at 10; split the work into separate batches or use `workflow` for sequencing.
 - **No combined document in the output** -- `--synthesize` is off by default. Without it, batch produces per-unit files and the summary report only, not one merged document.
 
 ## Works With

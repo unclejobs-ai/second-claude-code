@@ -8,7 +8,8 @@
  *
  *   1. Reads the subagent event payload from STDIN.
  *   2. Identifies whether the subagent is a known reviewer.
- *   3. If review-aggregation.json does not exist, creates it as a safety net
+ *   3. If the namespaced review aggregation file does not exist, creates it
+ *      as a safety net (or uses the legacy file when no run ID is available)
  *      (the review skill should create it before dispatch, but this catches
  *      edge cases like manual reviewer invocations).
  *   4. Records the reviewer's start time in the aggregation file.
@@ -16,13 +17,15 @@
  *      path for tone-guardian, web search reminder for fact-checker).
  */
 
-import { readFileSync, existsSync } from "fs";
+import { existsSync, unlinkSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { readHookStdin, sanitizeExternalText, MAX_EXTERNAL_CONTEXT_CHARS } from "./lib/soul-observer.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
-import { recordParticipant } from "./lib/participation.mjs";
+import { participantScope, participantStateDir, readParticipantNames, recordParticipant } from "./lib/participation.mjs";
+import { reviewAggregationPath } from "./lib/review-session.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -67,12 +70,13 @@ const REVIEWER_CONTEXT = {
 
 function readPayload() {
   try {
-    // Use fd 0 directly instead of /dev/stdin for cross-platform compatibility.
-    // /dev/stdin may not exist in some CI/container environments.
-    const raw = readFileSync(0, "utf8");
+    const raw = readHookStdin();
     if (!raw.trim()) return null;
     return JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    if (error?.code === "SCC_HOOK_INPUT_TOO_LARGE") {
+      console.error(`[subagent-start] ${error.message}; event ignored`);
+    }
     return null;
   }
 }
@@ -83,7 +87,9 @@ function readPayload() {
 
 function normalizeReviewerName(value) {
   if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  let normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  if (normalized.startsWith("scc:")) normalized = normalized.slice("scc:".length);
+  else if (normalized.includes(":")) return null;
   return KNOWN_REVIEWERS.has(normalized) ? normalized : null;
 }
 
@@ -118,10 +124,33 @@ function identifyReviewer(payload) {
 function main() {
   const payload = readPayload();
   const reviewerName = identifyReviewer(payload);
+  const { namespace, path: aggregationPath } = reviewAggregationPath(STATE_DIR, payload);
+  const participantDir = participantStateDir(STATE_DIR, payload);
 
   // Fast-exit: not a known reviewer.
   if (!reviewerName) {
     process.exit(0);
+  }
+
+  // The native hook payload has no panel/run identifier. A second review
+  // command in the same session/prompt creates a new legacy configuration
+  // while the first session panel is still active; reject that overlap instead
+  // of silently mixing two panels.
+  if (namespace && existsSync(aggregationPath) && existsSync(AGGREGATION_FILE)) {
+    const activePanel = readJsonSafe(aggregationPath);
+    const pendingPanel = readJsonSafe(AGGREGATION_FILE);
+    if (activePanel && !activePanel.consensus && pendingPanel && !pendingPanel.namespace && !pendingPanel.consensus) {
+      console.error(`[subagent-start] concurrent review panel rejected for ${namespace}`);
+      console.log(JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: "SubagentStart",
+          additionalContext:
+            "[REVIEW CONFLICT] Another review panel is already active in this session and prompt. " +
+            "This reviewer will not be counted; finish the active panel before starting another.",
+        },
+      }));
+      process.exit(0);
+    }
   }
 
   // A reviewer-named agent starting outside the Check phase was borrowed by an
@@ -130,7 +159,7 @@ function main() {
   // skill's own safety net depends on exactly that condition.
   const activePhase = readJsonSafe(join(STATE_DIR, "pdca-active.json"))?.current_phase;
   if (typeof activePhase === "string" && activePhase && activePhase !== "check") {
-    recordParticipant(STATE_DIR, reviewerName);
+    recordParticipant(participantDir, reviewerName);
     console.log(
       JSON.stringify({
         hookSpecificOutput: {
@@ -147,8 +176,28 @@ function main() {
   // ── Locked read-modify-write of aggregation file ──────────────────────────
   // Serialized with subagent-stop to prevent reviewer record loss.
   ensureDir(STATE_DIR); // Ensure directory exists before lock creation
-  const state = withFileLockSync(AGGREGATION_FILE, () => {
-    let s = readJsonSafe(AGGREGATION_FILE);
+  const state = withFileLockSync(aggregationPath, () => {
+    let s = readJsonSafe(aggregationPath);
+
+    // Never let a reused filename from another run leak into this namespace.
+    if ((s?.namespace && s.namespace !== namespace) || (namespace && s?.consensus)) s = null;
+
+    if (!s && namespace) {
+      // Older review skill revisions create the panel configuration in the
+      // unnamespaced file before dispatch. Claim it exactly once so explicit
+      // thresholds, external-voter counts, and preset metadata survive the
+      // transition to session-isolated aggregation files.
+      s = withFileLockSync(AGGREGATION_FILE, () => {
+        const legacy = readJsonSafe(AGGREGATION_FILE);
+        if (!legacy || legacy.namespace || legacy.consensus) return null;
+        try {
+          unlinkSync(AGGREGATION_FILE);
+        } catch {
+          return null;
+        }
+        return legacy;
+      });
+    }
 
     if (!s) {
       // The review skill should create this before dispatch. If it didn't,
@@ -162,6 +211,26 @@ function main() {
         started_reviewers: [],
       };
     }
+
+    if (namespace) {
+      s.namespace = namespace;
+      if (payload?.session_id || payload?.sessionId) {
+        s.session_id = String(payload.session_id || payload.sessionId).slice(0, 160);
+      }
+      if (payload?.prompt_id || payload?.promptId) {
+        s.prompt_id = String(payload.prompt_id || payload.promptId).slice(0, 160);
+      }
+    }
+
+    // Snapshot producer participation into every panel before reviewers report.
+    // This keeps concurrent same-session panels honest even if one panel reaches
+    // consensus and clears the live Do -> Check participant list first.
+    const upstreamParticipants = readParticipantNames(participantDir);
+    s.upstream_participants = [...new Set([
+      ...(Array.isArray(s.upstream_participants) ? s.upstream_participants : []),
+      ...upstreamParticipants,
+    ])];
+    s.participant_scope = participantScope(payload);
 
     // Record reviewer start time.
     if (!Array.isArray(s.started_reviewers)) {
@@ -187,7 +256,7 @@ function main() {
       s.preset = config.preset;
     }
 
-    writeJsonAtomic(AGGREGATION_FILE, s);
+    writeJsonAtomic(aggregationPath, s);
     return s;
   });
 
@@ -206,14 +275,13 @@ function main() {
     }
   }
 
-  console.log(
-    JSON.stringify({
+  const additionalContext = sanitizeExternalText(lines.join("\n"), MAX_EXTERNAL_CONTEXT_CHARS);
+  console.log(JSON.stringify({
       hookSpecificOutput: {
         hookEventName: "SubagentStart",
-        additionalContext: lines.join("\n"),
+        additionalContext,
       },
-    })
-  );
+    }));
 }
 
 try {

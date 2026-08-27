@@ -1,3 +1,5 @@
+[한국어](coach.ko.md)
+
 # Coach Skill
 
 Coach settles forks. A fork is a request with more than one defensible direction — the test is whether another competent agent, reading the same evidence, could reach a different defensible answer, not whether this one feels uncertain. Coach confirms the scope topology, asks one question per round, scores ambiguity after each answer, records each settled fork as a standard under the project, and stops at approval options.

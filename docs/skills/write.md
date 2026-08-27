@@ -1,6 +1,8 @@
+[한국어](write.ko.md)
+
 # Write
 
-> Produce newsletters, articles, reports, shorts, or social content with automatic research and review.
+> Produce newsletters, articles, reports, shorts, or social content. Unless skipped, research and review run as part of this skill's own default workflow.
 
 ## Quick Example
 
@@ -8,7 +10,7 @@
 Write a newsletter about multi-agent AI systems
 ```
 
-**What happens:** The skill auto-triggers a research phase, drafts content in the selected format and voice, runs a review pass via the review skill, then applies an editing pass to address all Critical and Major findings.
+**What happens:** When the caller does not provide `--skip-research` or `--skip-review`, the write skill runs those phases internally: it researches, drafts in the selected format and voice, reviews through the review skill, then applies an editing pass to address Critical and Major findings. This is a write-skill default, not a hook-level trigger.
 
 ## Real-World Example
 
@@ -18,27 +20,29 @@ Write an expert article about the future of AI agents, approximately 800 words
 ```
 
 **Process:**
-1. Research phase triggers automatically -- 5 web searches covering market data, enterprise adoption, challenges, case studies, and multi-agent architecture.
+1. The internal research phase uses the selected research depth (exactly 3, exactly 5, or 10+ search calls), unless skipped or source material is supplied.
 2. Writer (opus) drafts in `article` format with `expert` voice: authoritative, evidence-led, domain vocabulary.
 3. Length negotiation activates: article format minimum is 4,000 chars, user requested ~800. The skill informs the user and offers alternatives.
-4. Review auto-triggers with the `content` preset (deep-reviewer + devil-advocate + tone-guardian).
+4. The internal review phase uses the `quick` preset by default (2 reviewers: devil-advocate + fact-checker), unless skipped.
 5. Editor (opus) addresses all Critical and Major review findings.
 
 **Output excerpt:**
 > 2026년 3월 현재, AI 에이전트 시장은 전례 없는 속도로 성장하고 있다. Grand View Research에 따르면 글로벌 AI 에이전트 시장 규모는 2025년 76억 3천만 달러에서 2026년 109억 1천만 달러로, 단 1년 만에 43% 이상 팽창했다.
 >
-> **Test quality:** 7/10 -- 12+ sources cited, every major claim backed by data, expert voice consistent throughout.
+> **Quality check:** sources, evidence coverage, and voice consistency are reported from the actual run; no fixed score or source count is implied.
 
 ## Options
 
 | Flag | Values | Default |
 |------|--------|---------|
-| `--format` | `newsletter\|article\|shorts\|report\|social\|card-news` | `newsletter` |
+| `--format` | `newsletter\|article\|shorts\|report\|social\|card-news` | `article` |
 | `--voice` | `peer-mentor\|expert\|casual` | format-specific |
 | `--publish` | `notion\|file` | `file` |
 | `--skip-research` | flag | off |
 | `--skip-review` | flag | off |
 | `--lang` | `ko\|en` | `ko` (set `--lang en` for English output) |
+| `--input` | file path | none |
+| `--constraints` | comma-separated strings | none |
 
 ### Voices
 
@@ -68,12 +72,15 @@ When user-specified length conflicts with format minimums:
 
 The skill never silently truncates or silently exceeds the user's request.
 
+`--input` supplies source material and implies `--skip-research`. `--constraints`
+are hard requirements injected into drafting (for example, from PDCA Act → Do).
+
 ## How It Works
 
 ```mermaid
 graph TD
     A[User Prompt] --> B{Sources Provided?}
-    B -->|No| C[Research Skill]
+    B -->|No source and no skip| C[Research Skill]
     B -->|Yes| D[Writer - opus]
     C --> D
     D --> E[Draft]
@@ -101,7 +108,7 @@ graph TD
 
 | Skill | Relationship |
 |-------|-------------|
-| research | Auto-called before drafting (unless `--skip-research`) |
-| review | Auto-called after drafting with `content` preset (unless `--skip-review`) |
+| research | Called internally before drafting unless `--skip-research` or source input applies |
+| review | Called internally after drafting with `quick` preset unless `--skip-review` |
 | workflow | Can be chained as a step in custom workflows |
 | refine | Iterative improvement after review findings |

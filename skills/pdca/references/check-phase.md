@@ -20,73 +20,25 @@ This is the quality gate that determines whether work ships or iterates.
    - Quick validation → `quick`
    - Pre-publish final pass → `full`
 2. **Dispatch review**: Run `/scc:review --preset {selected}`.
-   - Reviewers: Xatu (deep-reviewer), Absol (devil-advocate), Porygon (fact-checker), Jigglypuff (tone-guardian), Unown (structure-analyst)
+   - Reviewers: Xatu (deep-reviewer, opus), Absol (devil-advocate, sonnet), Porygon (fact-checker, sonnet), Jigglypuff (tone-guardian, sonnet), Unown (structure-analyst, sonnet)
    - Preset determines which subset is dispatched (see below)
-   - **Reviewer diversity is enforced** — see "Reviewer Model Diversity Rule" section below
+   - Presets dispatch the configured subset; the runtime gate only requires at least two reported reviewers.
    - For `--depth deep` PDCA cycles, add `--team-review` to enable interactive deliberation. In team review, reviewers complete independent assessments first, then enter a challenge round where they dispute or reinforce each other's findings. This catches issues that independent parallel reviews miss — particularly contradictory findings where one reviewer's blind spot cancels another's valid concern.
 3. **Read verdict**: The review skill returns one of four verdicts.
 4. **Route based on verdict**: See Gate Checklist below.
 
-## Reviewer Model Diversity Rule (Hard Contract)
+## Reviewer roster and gate boundary
 
-PDCA's Check phase **enforces reviewer model diversity** to prevent false consensus. Two reviewers running on the same model are not actually independent — they share the same training data, the same biases, and the same blind spots. They will agree on things they should disagree on.
+The review skill contract defines the panel and preset-specific checks. The built-in roster is
+Xatu (`deep-reviewer`, opus), Absol (`devil-advocate`, sonnet), Porygon (`fact-checker`, sonnet),
+Jigglypuff (`tone-guardian`, sonnet), and Unown (`structure-analyst`, sonnet). Presets dispatch
+between 2 and 5 of these reviewers: `quick` 2; `content`, `strategy`, `code`, and `security` 3;
+`academic` 4; `full` 5. `--external` is optional and only adds a detected external pass.
 
-### Diversity Requirements
-
-| Requirement | Threshold | Why |
-|------------|-----------|-----|
-| Minimum reviewer count | **2** (3 for `--depth deep`) | Single-reviewer = no consensus check |
-| Maximum same-model reviewers | **1 per model** | Two reviewers on the same model produce correlated errors |
-| External model required | **At least 1** for `content`, `strategy`, `full` presets | Internal model perspective alone misses issues that external models catch |
-| Model diversity score | **≥ 0.6** (if >2 reviewers) | Computed as (distinct models / total reviewers) |
-
-### Approved External Models for Cross-Review
-
-When the Check phase requires an external model (per the rule above), use one of:
-
-- **Codex GPT-5.4** (via `codex:codex-rescue` agent or `mmbridge_review --tool codex`)
-- **Kimi K2.5** (via `kimi-reviewer` agent or `mmbridge_review --tool kimi`)
-- **Qwen** (via `qwen-reviewer` agent or `mmbridge_review --tool qwen`)
-- **Gemini** (via `gemini-design-reviewer` agent or `mmbridge_review --tool gemini`)
-- **Droid** (via `mmbridge_review --tool droid`)
-
-The orchestrator picks 1 external model based on artifact type:
-- Code → Codex (best for code reasoning)
-- Korean content → Kimi or Qwen (best Korean understanding)
-- Strategy/analysis → Codex or Gemini (best for structured reasoning)
-- General content → any of the above; rotate to avoid model staleness
-
-### Reviewer Composition Examples
-
-| Preset + Depth | Reviewers Dispatched | Diversity Check |
-|---------------|---------------------|-----------------|
-| `content`, shallow | Internal sonnet (Xatu) + External Kimi | 2 reviewers, 2 distinct models, 1 external ✓ |
-| `content`, medium | Internal sonnet (Xatu) + Internal opus (Absol) + External Codex | 3 reviewers, 3 distinct models, 1 external ✓ |
-| `content`, deep | Internal sonnet (Xatu) + Internal opus (Absol) + External Codex + External Kimi | 4 reviewers, 4 distinct models, 2 external ✓ |
-| `strategy`, medium | Internal opus (Mewtwo perspective) + Internal sonnet (Porygon) + External Gemini | 3 reviewers, 3 distinct models, 1 external ✓ |
-| `code`, medium | Internal sonnet (general) + External Codex + Internal haiku (Unown) | 3 reviewers, 3 distinct models, 1 external ✓ |
-
-### Diversity Failure Actions
-
-| Failure | Action |
-|---------|--------|
-| Only 1 reviewer responded | Re-dispatch — single reviewer is structurally invalid (was already a rule, kept) |
-| 2 reviewers but same model | Re-dispatch with explicit model assignment for the second reviewer (force diversity) |
-| No external model included for `content`/`strategy`/`full` presets | Add 1 external model reviewer before passing the gate |
-| All reviewers agree (false consensus signal) | Run 1 additional external model in adversarial mode (`--devil-advocate`) to surface what the others missed |
-
-### False Consensus Detection
-
-When all reviewers return `APPROVED` with high agreement (avg score > 0.9, no critical findings, no top improvements), PDCA treats this as **suspicious** rather than confirming. Real artifacts almost always have some tension between reviewers — perfect agreement usually means they're all looking at the same surface and missing the same depth.
-
-In false consensus state:
-
-1. Log: "Reviewers in unanimous high agreement — running adversarial pass"
-2. Dispatch 1 additional reviewer using `--mode adversarial` and an external model that wasn't already used
-3. If adversarial reviewer also returns APPROVED → genuine consensus, ship
-4. If adversarial reviewer returns MINOR/NEEDS/MUST → re-evaluate with the new findings
-
-This prevents "everyone said it's fine" from being a Goodharted exit signal.
+The PDCA state MCP runtime enforces a smaller Check→Act subset: a verdict must be set and at least
+two reviewers must report. Model diversity, external coverage, score thresholds, and any
+adversarial/false-consensus follow-up are review-skill or advisory contracts; they are not implied
+runtime guarantees of the PDCA transition.
 
 ## Verdict Routing
 
@@ -102,7 +54,7 @@ This prevents "everyone said it's fine" from being a Goodharted exit signal.
 - [ ] **Review report exists** — Structured report with verdict, consensus score, and findings
 - [ ] **Verdict is clear** — One of the four standard verdicts
 - [ ] **Findings are actionable** — Each finding has location + severity + fix suggestion
-- [ ] **No false consensus** — Reviewers were independent (not converged)
+- [ ] **Reviewer independence** — Keep reviewer contexts independent; additional consensus checks are skill-level behavior
 - [ ] **MMBridge gate advisory** (optional) — If mmbridge available, coverage check logged
 
 ### On APPROVED

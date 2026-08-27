@@ -14,30 +14,45 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [22]
+        node-version: [20, 22]
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Syntax checks
-        run: node --check hooks/*.mjs mcp/*.mjs daemon/*.mjs
+      - name: Install build and test dependencies
+        run: npm ci --ignore-scripts
 
-      - name: Contract and runtime tests
-        run: >
-          node --test
-          tests/contracts/*.test.mjs
-          tests/hooks/*.test.mjs
-          tests/integration/*.test.mjs
-          tests/runtime/*.test.mjs
-          tests/skill-tests/*.test.mjs
-          tests/mcp/*.test.mjs
+      - name: Verify packaged MCP artifact
+        run: |
+          git ls-files --error-unmatch mcp/pdca-state-server.bundle.mjs
+          git ls-files --error-unmatch THIRD_PARTY_NOTICES.md
+          npm run build:mcp
+          git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
+
+      - name: Syntax checks
+        run: find hooks mcp daemon scripts skills -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
+
+      - name: Full test suite
+        run: npm test
+        env:
+          UNBLOCK_SKIP_NETWORK_TESTS: "1"
 
       - name: Validate plugin manifests
-        run: >
-          node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'));
-          JSON.parse(require('fs').readFileSync('.claude-plugin/marketplace.json','utf8'))"
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
+          const plugin = JSON.parse(fs.readFileSync('.claude-plugin/plugin.json', 'utf8'));
+          const market = JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json', 'utf8'));
+          const walnut = fs.readFileSync('walnut.manifest.yaml', 'utf8').match(/^version:\s*["']?([^"'\s]+)["']?/m)?.[1];
+          const versions = [lock.version, lock.packages?.['']?.version, plugin.version, market.metadata?.version, market.plugins?.[0]?.version, walnut];
+          if (versions.some((version) => version !== pkg.version)) {
+            throw new Error(`release version drift: package=${pkg.version}, surfaces=${versions.join(',')}`);
+          }
+          NODE
 
       - name: Verify agent frontmatter
         run: |
@@ -48,9 +63,6 @@ jobs:
               exit 1
             }
           done
-
-      - name: Benchmark suite regression
-        run: node --test tests/benchmarks/loop-suites.test.mjs
 
       - name: Verify skill docs
         run: |

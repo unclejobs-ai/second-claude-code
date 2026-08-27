@@ -1,5 +1,7 @@
 # Release Notes - v1.5.0
 
+> **Historical snapshot**: These release notes describe the shipped state at the release date; current behavior may differ.
+
 [English](RELEASE-v1.5.0.md) | [한국어](RELEASE-v1.5.0.ko.md)
 
 v1.5.0 adds the **`unblock` skill** — a 9-phase zero-key adaptive fetch chain

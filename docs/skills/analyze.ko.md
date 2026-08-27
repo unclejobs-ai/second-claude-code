@@ -2,105 +2,76 @@
 
 # Analyze
 
-> SWOT, RICE, OKR, GTM 등 전략 프레임워크를 적용하고 반박 패스를 내장한 분석 스킬입니다.
+> 전략 프레임워크를 적용하고 근거를 인용한 뒤, 취약점을 반박하고 실행 항목으로 정리합니다.
+
+## 언제 쓰나
+
+전략, 우선순위, 포지셔닝, 제품 기획처럼 이름 있는 프레임워크가 도움이
+되는 요청에 씁니다. 이후 `write`나 `workflow` 단계가 읽을 구조화된 산출물이
+필요할 때도 유용합니다.
 
 ## 빠른 예시
 
-```
-우리 SaaS 제품을 SWOT 분석해
-```
-
-**동작 방식:** 스킬이 SWOT 프레임워크 레퍼런스를 로드하고, 전략가 서브에이전트가 근거와 함께 프레임워크를 적용합니다. 그 뒤 반론자(devil-advocate)가 가장 취약한 3가지 포인트를 공격하고, 양쪽 관점을 종합하여 균형 잡힌 인사이트와 권고 사항을 도출합니다.
-
-## 실전 예시
-
-**입력:**
-```
-/scc:analyze --framework swot --depth standard "second-claude vs superpowers 플러그인"
+```text
+/scc:analyze --framework swot --depth standard "우리 온보딩 퍼널"
 ```
 
-**진행 과정:**
-1. 프레임워크 감지 후 `frameworks/swot.md`의 증거 요건 및 구조 규칙을 로드.
-2. 전략가(sonnet)가 프레임워크 적용: 강점 5개, 약점 5개, 기회 4개, 위협 4개 -- 각각 "So what?" 시사점 포함.
-3. 반론자(sonnet)가 가장 취약한 3가지를 공격: 불명확한 타겟 오디언스, "OS" 비유의 과대약속, 검증되지 않은 멀티 에이전트 품질 주장.
-4. 양측을 종합하여 균형 잡힌 인사이트와 우선순위화된 권고 사항 3가지를 도출.
+선택한 프레임워크를 불러오고 근거를 수집하거나 읽은 뒤, 전략가가 적용하고,
+선택한 깊이에 맞춰 취약점을 반박합니다. 마지막으로 균형 잡힌 인사이트와
+권고 사항을 종합합니다. 예시 주제는 설명용이며 결론과 인용은 실제 소스에서
+나옵니다.
 
-**출력 예시:**
-> **S2. 증거 강제 장치를 갖춘 15개 내장 전략 프레임워크**
-> `analyze` 스킬은 15개 프레임워크 레퍼런스 문서(SWOT, Porter, PESTLE, RICE, OKR, lean-canvas, battlecard 등)를 기본 탑재하며, 각 문서에 "증거 요건(Evidence Expectations)" 섹션이 있어 막연한 주장을 차단합니다.
->
-> *So what?* 전략, 프로덕트 매니지먼트, 컨설팅 분야 사용자에게 엄밀함을 강제하는 즉시 사용 가능한 분석 스캐폴딩을 제공합니다.
->
-> **반론 약점 #2: "OS" 비유가 과대약속**
-> second-claude를 "지식 노동 OS"라 부르면 포괄성, 안정성, 성숙도를 암시합니다. v0.2.0 단계에서 이 중 어느 것에도 해당하지 않습니다.
+## 프레임워크와 깊이
+
+지원 프레임워크(15종): `swot`, `rice`, `okr`, `prd`, `lean-canvas`,
+`persona`, `journey-map`, `pricing`, `gtm`, `north-star`, `porter`, `pestle`,
+`ansoff`, `battlecard`, `value-prop`.
+
+| `--depth` | 계약 |
+|---|---|
+| `quick` | 템플릿만 적용합니다. 리서치와 반박 라운드는 없습니다. |
+| `standard` (기본) | 근거 요건을 적용하고 반박 1라운드를 실행합니다. |
+| `thorough` | 전체 리서치, 반박 2라운드, 출처 품질 재검사를 실행하며, 가능하면 `mmbridge` 토론도 추가합니다. |
+
+`--framework`가 없으면 명시적 프레임워크, 의도 키워드 순서로 판별합니다.
+여러 개가 맞으면 질문하고, 아무것도 맞지 않으면 SWOT을 사용한다고 밝힙니다.
 
 ## 옵션
 
 | 플래그 | 값 | 기본값 |
-|--------|-----|--------|
-| `--framework` | 아래 목록 참조 | 자동 감지 |
+|---|---|---|
+| `--framework` | 위 목록 | 자동 판별 |
 | `--with-research` | flag | off |
 | `--depth` | `quick\|standard\|thorough` | `standard` |
 | `--skip-challenge` | flag | off |
 | `--lang` | `ko\|en` | `ko` |
 
-### 지원 프레임워크 (15종)
+`--with-research`는 리서치 단계를 명시적으로 추가합니다. `thorough`에서는
+깊이 계약에 포함됩니다. `--skip-challenge`는 기본 반박을 끄는 명시적 재정의입니다.
 
-**상황 및 환경 분석:**
-`swot` `porter` `pestle`
+## 근거와 출력
 
-**우선순위 및 목표:**
-`rice` `okr` `north-star`
+경쟁사·제품·외부 대상을 다룰 때는 실제 소스를 읽고, 섹션/사분면마다 구체적
+데이터를 최소 3개 사용하며, 외부 주장을 인라인 인용합니다. 인용할 수 없는
+주장은 `[unverified]`로 표시하고 사실과 추론을 구분합니다. 저장 경로는
+`.captures/analyze-{framework}-{slug}-{YYYY-MM-DD}.md`입니다.
 
-**제품 및 전략:**
-`prd` `lean-canvas` `gtm` `ansoff`
-
-**사용자 및 경험:**
-`persona` `journey-map` `value-prop`
-
-**경쟁 및 가격:**
-`battlecard` `pricing`
-
-### Depth 동작 방식
-
-- **quick**: 템플릿 적용만 수행. 반박 라운드 없음.
-- **standard**: 템플릿 적용 후 반박 1라운드(가장 취약한 3가지 공격).
-- **thorough**: 리서치 추가 + 반박 2라운드.
-
-## 작동 원리
-
-```mermaid
-graph TD
-    A[User Topic] --> B[Detect Framework]
-    B --> C[Load Reference Template]
-    C --> D{Need Research?}
-    D -->|Yes| E[Research Skill - shallow]
-    D -->|No| F[Strategist - sonnet]
-    E --> F
-    F --> G[Framework Analysis]
-    G --> H[Devil-Advocate - sonnet]
-    H --> I[Challenge: 3 Weak Points]
-    I --> J[Balanced Synthesis]
-    J --> K[Recommended Actions]
+```markdown
+# {Framework} Analysis: {topic}
+## Analysis
+## Challenge
+## Balanced Insight
+## Recommended Actions
 ```
 
-## 주의사항
+반박 결과는 최종 종합에 반드시 남깁니다. 근거가 고르지 않다면 섹션별 깊이가
+달라도 되며, 빈 내용을 채우지 않습니다.
 
-- **모든 섹션에 동일한 깊이 강요** -- 프레임워크 사분면에 따라 근거 분량이 자연스럽게 다릅니다. 약한 섹션을 억지 내용으로 채우지 마세요.
-- **증거 없는 막연한 주장** -- 프레임워크 레퍼런스가 "증거 요건"을 강제합니다: 이름, 수치, 또는 구체적 관찰이 반드시 필요합니다.
-- **반론 결과 무시** -- 반론 소견은 최종 종합에 반드시 반영되어야 하며, 조용히 누락해서는 안 됩니다.
-
-## 문제 해결
-
-- **엉뚱한 프레임워크가 잡혔다** -- 자동 판별이 빗나가면 직접 지정합니다: `/scc:analyze --framework porter "주제"`. 지원하는 15개 목록은 위 옵션 절에 있습니다.
-- **결론이 뻔한 말만 한다** -- 프레임워크 레퍼런스가 "근거 요구"를 강제합니다. 그래도 구체성이 없으면 `--with-research`로 실제 데이터를 먼저 모으거나, `--depth thorough`로 반박 라운드를 한 번 더 돌리십시오.
-- **depth가 뭘 바꾸나** -- `quick`은 1단계(템플릿만, 반박 없음), `standard`는 2단계(템플릿 + 반박 1회), `thorough`는 3단계(리서치 추가 + 반박 2회)입니다. 가장 엄격하게 가려면 `--depth thorough` 또는 별칭 `deep`.
-
-## 연동 스킬
+## 연동
 
 | 스킬 | 관계 |
-|------|------|
-| research | `--with-research` 설정 시 또는 `--depth thorough` 시 호출 |
-| review | 분석 결과를 추가 검증할 때 사용 가능 |
-| workflow | 전략 워크플로우의 한 단계로 연결 가능 |
-| write | 분석 결과가 리포트나 아티클의 입력으로 활용 |
+|---|---|
+| `research` | 요청했거나 `thorough`에서 필요한 근거를 제공합니다. |
+| `review` | 추가 검증 패스를 제공합니다. |
+| `workflow` | 파일을 전달하는 순차 단계로 실행합니다. |
+| `write` | 분석 산출물을 리포트나 아티클로 발전시킵니다. |

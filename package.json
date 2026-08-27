@@ -1,14 +1,16 @@
 {
   "name": "scc",
-  "version": "3.0.1",
-  "description": "PDCA-native Knowledge Work OS — skills, hooks, and MCP server for Claude Code",
+  "version": "3.0.2",
+  "description": "PDCA workflow skills, lifecycle hooks, and MCP tools for Claude Code",
   "type": "module",
   "private": true,
   "scripts": {
+    "build:mcp": "node scripts/build-mcp.mjs",
     "test": "node --test 'tests/**/*.test.mjs'"
   },
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0"
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "esbuild": "0.28.2"
   },
   "license": "MIT",
   "engines": {

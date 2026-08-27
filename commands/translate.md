@@ -6,7 +6,7 @@ argument-hint: '"text or file path" --target en|ko --style literal|natural|creat
 Invoke the `/scc:translate` command to translate content through the `translate` skill.
 
 ## Context
-- Current soul: !`cat .data/soul/SOUL.md 2>/dev/null | head -5 || echo "No soul synthesized yet"`
+- Current soul: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/SOUL.md" 2>/dev/null | head -5 || echo "No soul synthesized yet"`
 
 ## Arguments
 - Required: text, file path, or content to translate

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import path from "node:path";
+import { resolveReviewAggregationConfig } from "../../hooks/lib/review-config.mjs";
 
 const root = process.cwd();
 
@@ -35,6 +36,21 @@ function activePublicDocFiles() {
     ...markdownFilesUnder(path.join("docs", "skills")),
     path.join(root, "docs", "architecture.md"),
     path.join(root, "docs", "architecture.ko.md"),
+  ];
+}
+
+function routingContractDocFiles() {
+  return [
+    path.join(root, "README.md"),
+    path.join(root, "README.ko.md"),
+    path.join(root, "docs", "notion-manual.md"),
+    path.join(root, "docs", "notion-manual.ko.md"),
+    path.join(root, "docs", "orchestrator-architecture.md"),
+    path.join(root, "docs", "orchestrator-architecture.ko.md"),
+    path.join(root, "docs", "skills", "pdca.md"),
+    path.join(root, "docs", "skills", "pdca.ko.md"),
+    path.join(root, "skills", "pdca", "gotchas.md"),
+    path.join(root, "references", "lineage.md"),
   ];
 }
 
@@ -127,6 +143,30 @@ test("review presets only reference implemented reviewer agents", () => {
   );
 });
 
+test("consensus gate docs use the runtime Math.round rule for external voters", () => {
+  const consensusGate = read("skills/review/references/consensus-gate.md");
+  const presets = ["content", "strategy", "code", "security", "academic", "quick", "full"];
+
+  assert.match(consensusGate, /required\s*=\s*Math\.round\(threshold \* total_voters\)/);
+  assert.doesNotMatch(consensusGate, /`ceil\(/, "consensus docs must not describe the old ceil gate");
+
+  for (const preset of presets) {
+    const config = resolveReviewAggregationConfig({ preset });
+    const internalRequired = Math.round(config.threshold * config.expected_reviewers);
+    const externalRequired = Math.round(config.threshold * (config.expected_reviewers + 1));
+    const row = new RegExp(
+      "\\| `" + preset + "` \\| " +
+      internalRequired + "/" + config.expected_reviewers + " pass \\| " +
+      externalRequired + "/" + (config.expected_reviewers + 1) + " pass \\|"
+    );
+    assert.match(
+      consensusGate,
+      row,
+      `${preset} external denominator/required count should follow the hook config`
+    );
+  }
+});
+
 test("analyze supports exactly the framework templates it advertises", () => {
   const expectedFrameworks = [
     "swot",
@@ -215,6 +255,28 @@ test("command wrappers map each /scc command to the matching bare skill", () => 
   }
 });
 
+test("skill guide indexes classify skills and tool-only commands from disk", () => {
+  const skillNames = readdirSync(path.join(root, "skills"))
+    .filter((name) => existsSync(path.join(root, "skills", name, "SKILL.md")))
+    .sort();
+  const commandNames = readdirSync(path.join(root, "commands"))
+    .filter((name) => name.endsWith(".md"))
+    .map((name) => name.replace(/\.md$/, ""))
+    .sort();
+  const toolOnlyNames = commandNames.filter((name) => !skillNames.includes(name));
+
+  for (const relPath of ["docs/skills/README.md", "docs/skills/README.ko.md"]) {
+    const content = read(relPath);
+    const skillsRow = content.match(/\| (?:Skills|스킬) \| ([^\n]+?) \|/)?.[1] || "";
+    const toolsRow = content.match(/\| (?:Tools|도구) \| ([^\n]+?) \|/)?.[1] || "";
+    const listedSkills = [...skillsRow.matchAll(/`([^`]+)`/g)].map((match) => match[1]).sort();
+    const listedTools = [...toolsRow.matchAll(/`([^`]+)`/g)].map((match) => match[1]).sort();
+
+    assert.deepEqual(listedSkills, skillNames, `${relPath} should list every SKILL.md directory`);
+    assert.deepEqual(listedTools, toolOnlyNames, `${relPath} should list only command wrappers without SKILL.md`);
+  }
+});
+
 test("active public docs do not use the legacy /second-claude-code namespace", () => {
   const offenders = [];
 
@@ -246,6 +308,30 @@ test("active public docs reference only registered public commands", () => {
   }
 
   assert.deepEqual(offenders.sort(), []);
+});
+
+test("routing docs do not promise prompt-hook skill invocation", () => {
+  const forbidden = [
+    /router reads intent/i,
+    /라우터가 (?:한국어든 영어든 )?의도를 읽/i,
+    /router handles the rest/i,
+    /라우터가 알아서 붙/i,
+    /roughly 50 Korean trigger patterns and 77 English/i,
+    /Auto-routing via prompt-detect/i,
+    /prompt-detect.*detects user intent and suggests skills/i,
+    /Called before internal fallback when `getDispatchPlan\(\)`/i,
+    /내부 fallback 전에 호출/i,
+    /ORCHESTRATOR 지시/i,
+    /pdca로 라우팅 — 여기서 즉시 반환/i,
+  ];
+  const offenders = [];
+  for (const fullPath of routingContractDocFiles()) {
+    const content = readFileSync(fullPath, "utf8");
+    for (const pattern of forbidden) {
+      if (pattern.test(content)) offenders.push(`${path.relative(root, fullPath)} -> ${pattern}`);
+    }
+  }
+  assert.deepEqual(offenders, []);
 });
 
 test("research command wrapper preserves the research brief auto-save contract", () => {
@@ -356,6 +442,33 @@ test("README install and command namespace match the plugin surface", () => {
       new RegExp(publicPrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")),
       "README should document the public slash command prefix from plugin.json"
     );
+  }
+});
+
+test("discover documents use supported install paths and an explicit approval boundary", () => {
+  const discoverDocs = [read("docs/skills/discover.md"), read("docs/skills/discover.ko.md")];
+  const scoringRefs = [
+    read("references/discover-scoring.md"),
+    read("skills/discover/references/discover-scoring.md"),
+  ];
+
+  for (const doc of discoverDocs) {
+    assert.match(doc, /claude plugin marketplace add/);
+    assert.match(doc, /claude plugin install/);
+    assert.match(doc, /npx --yes skills find/);
+    assert.match(doc, /npx --yes skills add/);
+    assert.match(doc, /(?:explicit approval|명시적 승|승인)/i);
+    assert.doesNotMatch(doc, /claude\s+install\b/,
+      "discover docs must not advertise the unsupported Claude install shortcut");
+  }
+
+  for (const ref of scoringRefs) {
+    assert.match(ref, /Candidate type|후보 유형/);
+    assert.match(ref, /plugin-name@marketplace-name/);
+    assert.match(ref, /npx --yes skills add/);
+    assert.match(ref, /Discovery is read-only|Discovery itself never runs|탐색 중에는/);
+    assert.doesNotMatch(ref, /claude\s+install\b/,
+      "discover scoring references must not encode an unsupported install command");
   }
 });
 

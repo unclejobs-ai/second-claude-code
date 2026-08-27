@@ -1,6 +1,8 @@
+[한국어](pdca.ko.md)
+
 # PDCA
 
-> Full Plan → Do → Check → Act cycle orchestrator with **hard** quality gates (length floors, reviewer model diversity, calibrated 5+ Rule), external plugin dispatch, Action Router, and Pokemon-themed conceptual roles.
+> Plan → Do → Check → Act cycle with explicit runtime transition gates; format and review rules remain skill-level contracts unless a gate names them.
 
 ## Quick Example
 
@@ -8,7 +10,7 @@
 Research and write a report on AI agent frameworks
 ```
 
-**What happens:** The PDCA orchestrator detects compound intent (research + write), enters the full cycle, and chains Plan (research + analyze) → Do (write) → Check (review) → Act (loop or route back) with quality gates between each transition. Each phase can first dispatch to a stronger installed plugin capability before internal Second Claude skills run.
+**What happens:** The PDCA skill can orchestrate a compound request through Plan (research + analyze) → Do (write) → Check (review) → Act (refine or route back). Individual skills and commands remain available directly. External capability discovery is optional and advisory; an orchestrator plan does not execute an external skill for you.
 
 ## Real-World Example
 
@@ -19,10 +21,10 @@ Research and write a report on AI agent frameworks
 
 **Process:**
 1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
-2. **Plan→Do Gate**: Verifies research brief with 5+ distinct sources and analysis artifact.
+2. **Plan→Do Gate**: The runtime verifies a research brief, at least five counted sources, an analysis artifact, and plan approval. Five counted sources is not a guarantee of five unique usable URLs.
 3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
-5. **Check**: 5 reviewers (Xatu, Absol, Porygon, Jigglypuff, Unown) run parallel review with consensus gate. Code-review prompts prefer `Skill: coderabbit:code-review` when installed.
+5. **Check**: The selected review preset dispatches 2–5 reviewers from Xatu (opus), Absol (sonnet), Porygon (sonnet), Jigglypuff (sonnet), and Unown (sonnet), with the review skill's consensus rules. External review is optional.
 6. **Check→Act Gate**: APPROVED → ship. Others → Action Router.
 7. **Act**: Action Router classifies findings by root cause. Shipping prompts prefer `/commit-commands:commit` when installed:
    - Source/assumption gaps → back to **Plan**
@@ -53,52 +55,51 @@ When `--domain code` is active, PDCA loads the Code Engineering Lane from `skill
 
 ### Phase Gates
 
-Every gate now requires measurable numeric or boolean fields, not soft "looks complete" judgments.
+The runtime-enforced transition subset is smaller than the format and review contracts described by
+the phase skills. Do not read every documented quality check as an MCP transition requirement.
 
-| Gate | Hard Requirements |
+| Gate | Runtime-enforced subset |
 |------|------------------|
-| Plan → Do | `brief_char_count ≥ 3,000`, `sources_count ≥ 5`, `facts_count ≥ 8`, `quotes_count ≥ 1` (named speaker), `comparison_tables_count ≥ 1`, `media_inventory_count ≥ 1` (for content briefs), `meets_brief_floor: true` |
-| Do → Check | `meets_length_floor: true` (format-specific min), `meets_section_floor: true`, `references_count ≥ 3`, `plan_findings_integrated: true`, `sections_complete: true` |
-| Check → Act | `distinct_models_count ≥ 2`, `external_model_count ≥ 1` (content/strategy/full presets), `diversity_score ≥ 0.6`, `false_consensus_check_passed: true`, verdict routing: APPROVED exits, others route to Act |
-| Act → Exit/Cycle | **5+ Rule first** (P0 ≥ 1 or volume+spread trigger), then Action Router classifies root cause → Plan, Do, or Refine |
+| Plan → Do | plan brief exists, `sources_count ≥ 5`, analysis exists, and plan mode is approved |
+| Do → Check | artifact exists, artifact is marked complete, and plan findings are integrated |
+| Check → Act | a verdict is set and at least two reviewers report |
+| Act → Exit/Cycle | an Act decision and root-cause classification are set; route selection remains skill-level behavior |
+
+Format length floors, section checks, reviewer diversity/score checks, and the 5+ rewrite rule are
+skill contracts or advisory checks unless the runtime subset above names them explicitly.
 
 ### Length Floors by Format (Do Gate)
 
 | Format | Min chars | Target | Sub-skill dispatched |
 |--------|-----------|--------|---------------------|
-| Threads article | 4,000 | 5,000-7,000 | `/threads` |
-| Newsletter | 10,000 | 12,000-15,000 | `/newsletter` |
-| Generic article | 4,000 | 5,000-7,000 | `/scc:write` |
-| Strategy report | 5,000 | 6,000-9,000 | `/scc:write` |
-| SWOT/RICE/OKR | 3,000 | 4,000-5,000 | `/scc:analyze` |
-| Shorts script | 1,800 | 2,200-2,800 | `/academy-shorts` |
-| Card news | 8-10 cards | 9-12 cards | `/card-news` |
-| PRD | 4,000 | 5,000-7,000 | `/scc:write --format prd` |
+| Newsletter | 10,000 chars | format-specific | `/scc:write --format newsletter` |
+| Article | 4,000 chars | format-specific | `/scc:write --format article` |
+| Report | 5,000 chars | format-specific | `/scc:write --format report` |
+| Shorts | ~1,800 chars | format-specific | `/scc:write --format shorts` |
+| Social | platform-optimized | format-specific | `/scc:write --format social` |
+| Card news | slide-by-slide | format-specific | `/scc:write --format card-news` |
 
 Full table in `skills/pdca/references/do-phase.md`.
 
-### Domain Auto-Routing
+### Domain routing
 
-Do phase greedy-matches user prompts against trigger keywords and dispatches the most specialized sub-skill. Specialized always wins over generic.
+Use supported write formats explicitly. These are format selections, not hidden command routes;
+an external plugin may provide another route only when installed and explicitly selected.
 
-| Trigger | Sub-skill |
+| Requested format | Built-in route |
 |---------|-----------|
-| 스레드, threads, @unclejobs.ai | `/threads` |
-| 뉴스레터, newsletter | `/newsletter` |
-| 쇼츠, shorts, 릴스 | `/academy-shorts` |
-| 카드뉴스, card news, 캐러셀 | `/card-news` |
-| (no specialized match) | `/scc:write` |
+| newsletter | `/scc:write --format newsletter` |
+| article/report/shorts/social/card-news | `/scc:write --format <format>` |
+| analysis/strategy | `/scc:analyze` when analysis is requested |
 
 Sub-skill standard: `skills/pdca/references/domain-pipeline-integration.md` (input/output contracts, 4 failure modes).
 
-### Reviewer Diversity (Check Gate)
+### Reviewer checks (Check phase)
 
-Check phase enforces reviewer model diversity to prevent false consensus:
-
-- ≥ 2 distinct models (no two reviewers on the same model)
-- ≥ 1 external model for `content`/`strategy`/`full` presets (Codex GPT-5.4, Kimi K2.5, Qwen, Gemini, Droid)
-- Diversity score ≥ 0.6 when more than 2 reviewers run
-- **False consensus detection**: all reviewers APPROVED with avg > 0.9 and no critical findings → automatic adversarial pass with unused external model
+The review skill can perform reviewer-diversity and false-consensus checks, but the PDCA runtime
+transition only requires a verdict and two reported reviewers. Review presets dispatch 2–5 built-in
+reviewers; `--external` is optional. Model-diversity and adversarial follow-up are skill-level or
+advisory checks, not runtime guarantees.
 
 ### 5+ Rule (Act Phase)
 
@@ -140,7 +141,7 @@ At Plan entry, the orchestrator asks up to 3 scope-clarifying questions:
 
 | Skill | Relationship |
 |-------|-------------|
-| external plugins | Called before internal fallback when `getDispatchPlan()` finds a stronger phase or keyword match |
+| external plugins | `getDispatchPlan()` may recommend one; the caller must explicitly invoke it |
 | research | Called during Plan phase for data collection |
 | analyze | Called during Plan phase for structured analysis |
 | write | Called during Do phase in pure execution mode |

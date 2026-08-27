@@ -1,11 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-import { writeStandard, supersedeStandard } from "../../scripts/lib/standard-record.mjs";
+import {
+  MAX_STANDARD_FILE_BYTES,
+  renderStandard,
+  writeStandard,
+  supersedeStandard,
+} from "../../scripts/lib/standard-record.mjs";
 import { writeState } from "../../scripts/lib/coach-state.mjs";
 
 const HOOK = join(process.cwd(), "hooks", "session-start.mjs");
@@ -96,6 +101,51 @@ test("at most 12 standards are listed", () => {
     const out = runHook(root);
     const listed = (out.match(/^- std-\d+/gm) || []).length;
     assert.ok(listed <= 12, `listed ${listed} standards`);
+  });
+});
+
+test("SessionStart ignores oversized and malformed standard records", () => {
+  withRoot((root) => {
+    const standards = join(root, ".scc", "standards");
+    const oversizedDir = join(standards, "oversized-session-record");
+    const malformedDir = join(standards, "malformed-session-record");
+    mkdirSync(oversizedDir, { recursive: true });
+    mkdirSync(malformedDir, { recursive: true });
+    writeFileSync(
+      join(oversizedDir, "STANDARD.md"),
+      renderStandard(
+        {
+          id: "oversized-session-record",
+          title: "SessionStart에 나오면 안 되는 큰 기준",
+          chosen: "c",
+          rejected: [],
+          payload: "x".repeat(MAX_STANDARD_FILE_BYTES),
+          review_when: "when",
+          triggers: [],
+        },
+        { now: NOW }
+      ),
+      "utf8"
+    );
+    writeFileSync(
+      join(malformedDir, "STANDARD.md"),
+      renderStandard(
+        {
+          id: "../escape",
+          title: "SessionStart에 나오면 안 되는 잘못된 기준",
+          chosen: "c",
+          rejected: [],
+          payload: "",
+          review_when: "when",
+          triggers: [],
+        },
+        { now: NOW }
+      ),
+      "utf8"
+    );
+    const out = runHook(root);
+    assert.doesNotMatch(out, /oversized-session-record/);
+    assert.doesNotMatch(out, /malformed-session-record/);
   });
 });
 

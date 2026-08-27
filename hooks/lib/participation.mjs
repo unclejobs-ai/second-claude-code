@@ -20,6 +20,39 @@ import { existsSync } from "fs";
 import { readJsonSafe, ensureDir, writeJsonAtomic } from "./utils.mjs";
 import { withFileLockSync } from "./file-mutex-sync.mjs";
 
+function safeScope(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  return value.trim().replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 96) || null;
+}
+
+/**
+ * Participant lifetime follows the produced artifact (when the host provides
+ * an artifact identifier), otherwise the Claude session. Subagent run IDs are
+ * deliberately excluded: producer and reviewer calls have different run IDs.
+ */
+export function participantScope(payload) {
+  const candidates = [
+    payload?.review_artifact_id,
+    payload?.artifact_id,
+    payload?.tool_input?.review_artifact_id,
+    payload?.tool_input?.artifact_id,
+    payload?.session_id,
+    payload?.sessionId,
+    payload?.tool_input?.session_id,
+    process.env.CLAUDE_SESSION_ID,
+  ];
+  for (const candidate of candidates) {
+    const scope = safeScope(candidate);
+    if (scope) return scope;
+  }
+  return null;
+}
+
+export function participantStateDir(stateDir, payload) {
+  const scope = participantScope(payload);
+  return scope ? join(stateDir, "review-participants", scope) : stateDir;
+}
+
 export function participantsFile(stateDir) {
   return join(stateDir, "upstream-participants.json");
 }

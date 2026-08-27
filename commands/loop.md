@@ -7,7 +7,7 @@ Invoke the `/scc:loop` command to run the plugin's loaded `loop` skill.
 
 ## Context
 - Available suites: !`node scripts/loop-runner.mjs list-suites 2>/dev/null || echo '{"suites":[]}'`
-- Active loop state: !`cat .data/state/loop-active.json 2>/dev/null || echo "No active loop"`
+- Active loop state: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/state/loop-active.json" 2>/dev/null || echo "No active loop"`
 
 ## Subcommands
 - `list-suites`

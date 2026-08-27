@@ -35,17 +35,34 @@ Every candidate presented to the user **must** include the full score breakdown 
 
 The **Rationale** column is mandatory. It makes the scoring auditable and helps the user understand the ranking.
 
-## Version Pinning
+## Installation Paths and Approval Boundary
 
-When recommending installation, **always specify a pinned version or commit hash**.
+Discovery is read-only. Do not run an install, marketplace mutation, package
+manager command, or `--yes` flag while searching or scoring. Present the
+candidate, the exact source and the command below; wait for the user to approve
+that specific candidate and scope before executing it. Approval for one
+candidate does not approve the others.
 
-| Install Method | Pinning Format | Example |
-|----------------|----------------|---------|
-| `claude install` (GitHub) | `owner/repo@<tag or commit>` | `claude install antonbabenko/terraform-skill@v1.2.0` |
-| `npm install` | `package@<exact version>` | `npm install claude-terraform-audit@2.1.0` |
-| Manual clone | Specific commit SHA | `git clone ... && git checkout abc1234` |
+Classify a candidate before showing an install command. Do not turn an arbitrary
+GitHub URL into a made-up legacy Claude install shortcut: that syntax is not a
+Claude Code CLI command.
 
-**How to find the version**:
-- Use `gh api repos/{owner}/{repo}/releases/latest` to get the latest release tag.
-- If no releases exist, use `gh api repos/{owner}/{repo}/commits?per_page=1` to get the HEAD commit SHA.
-- If neither is available, note "no stable release -- pin to commit `<sha>`" and lower Recency score by 1.
+| Candidate type | Evidence required | Supported install path after approval |
+|----------------|-------------------|---------------------------------------|
+| Claude marketplace plugin | Marketplace source plus a valid marketplace/plugin manifest; record the marketplace and plugin names | `claude plugin marketplace add <marketplace-source>` (only if not already configured), then `claude plugin install <plugin-name>@<marketplace-name>` |
+| Skills ecosystem repository | A `SKILL.md` and a repository accepted by `skills add`; identify the skill and target agent | `npx --yes skills add <owner>/<repo> --skill <skill-name> --agent claude-code` (use `-g` only when the user approved global scope) |
+| npm/library dependency | Upstream documentation explicitly says it installs or supplies a skill | Follow that package's documented command; plain `npm install` is not a generic Claude skill installer |
+| Unsupported/manual repository | No supported installer or required manifest | Do not invent a command; offer a custom integration or the upstream instructions for approval |
+
+### Reproducibility
+
+Record the inspected commit, release, or marketplace version in the
+recommendation notes. The Claude plugin CLI resolves a plugin by
+`plugin-name@marketplace-name`, not by a GitHub repository tag suffix. For the
+skills ecosystem, `skills add` accepts the repository and optional skill/agent
+selectors; report the resolved source revision or lockfile after installation
+instead of pretending that an unsupported tag suffix pins the command.
+
+If the source has no identifiable revision, say so and lower the Recency and
+Source Trust scores. A version note is evidence for review, not permission to
+install.

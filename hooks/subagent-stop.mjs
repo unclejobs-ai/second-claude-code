@@ -33,13 +33,15 @@
  * forces the final consensus to MUST FIX regardless of pass/fail tallies.
  */
 
-import { readFileSync, existsSync } from "fs";
+import { existsSync } from "fs";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-import { readJsonSafe, sanitize, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { readJsonSafe, ensureDir, writeJsonAtomic } from "./lib/utils.mjs";
+import { readHookStdin, sanitizeExternalText } from "./lib/soul-observer.mjs";
 import { withFileLockSync } from "./lib/file-mutex-sync.mjs";
 import { resolveReviewAggregationConfig } from "./lib/review-config.mjs";
-import { readParticipantNames, clearParticipants } from "./lib/participation.mjs";
+import { participantStateDir, readParticipantNames, clearParticipants } from "./lib/participation.mjs";
+import { reviewAggregationPath } from "./lib/review-session.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -55,14 +57,6 @@ const KNOWN_REVIEWERS = new Set([
 ]);
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Fast-exit guard: do nothing when no aggregation is in progress.
-// ─────────────────────────────────────────────────────────────────────────────
-
-if (!existsSync(AGGREGATION_FILE)) {
-  process.exit(0);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Read the subagent event payload from STDIN.
 // Claude sends a JSON object on stdin for SubagentStop hooks.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -70,18 +64,22 @@ if (!existsSync(AGGREGATION_FILE)) {
 /** @returns {object | null} parsed subagent hook payload, or null on failure */
 function readPayload() {
   try {
-    // Use fd 0 directly instead of /dev/stdin for CI/container compatibility.
-    const raw = readFileSync(0, "utf8");
+    const raw = readHookStdin();
     if (!raw.trim()) return null;
     return JSON.parse(raw);
-  } catch {
+  } catch (error) {
+    if (error?.code === "SCC_HOOK_INPUT_TOO_LARGE") {
+      console.error(`[subagent-stop] ${error.message}; reviewer result ignored`);
+    }
     return null;
   }
 }
 
 function normalizeReviewerName(value) {
   if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  let normalized = value.trim().toLowerCase().replace(/[\s_]+/g, "-");
+  if (normalized.startsWith("scc:")) normalized = normalized.slice("scc:".length);
+  else if (normalized.includes(":")) return null;
   return KNOWN_REVIEWERS.has(normalized) ? normalized : null;
 }
 
@@ -105,21 +103,22 @@ function extractReviewerIdentity(payload) {
 }
 
 function textFromContent(value) {
-  if (typeof value === "string") return value;
+  if (typeof value === "string") return value.slice(0, 96 * 1024);
   if (Array.isArray(value)) {
     return value
+      .slice(0, 128)
       .map((item) => {
-        if (typeof item === "string") return item;
-        if (typeof item?.text === "string") return item.text;
-        if (typeof item?.content === "string") return item.content;
+        if (typeof item === "string") return item.slice(0, 8 * 1024);
+        if (typeof item?.text === "string") return item.text.slice(0, 8 * 1024);
+        if (typeof item?.content === "string") return item.content.slice(0, 8 * 1024);
         return "";
       })
       .filter(Boolean)
       .join("\n");
   }
   if (value && typeof value === "object") {
-    if (typeof value.text === "string") return value.text;
-    if (typeof value.content === "string") return value.content;
+    if (typeof value.text === "string") return value.text.slice(0, 96 * 1024);
+    if (typeof value.content === "string") return value.content.slice(0, 96 * 1024);
   }
   return "";
 }
@@ -166,6 +165,7 @@ const FAIL_VERDICTS = new Set(["NEEDS IMPROVEMENT", "MUST FIX", "FAIL"]);
  * @returns {{ name: string, verdict: string, is_pass: boolean, critical_count: number, warning_count: number, findings: string[], score: number | null }}
  */
 function parseReviewerOutput(text, reviewerName = null) {
+  text = sanitizeExternalText(text, 96 * 1024);
   const lines = text.split("\n");
 
   // ── Reviewer name ──────────────────────────────────────────────────────────
@@ -197,7 +197,9 @@ function parseReviewerOutput(text, reviewerName = null) {
   }
 
   // ── Verdict ────────────────────────────────────────────────────────────────
-  // Prefer the Critic Schema field; fallback to bounded, case-insensitive scan.
+  // Prefer the Critic Schema field; fallback only to a standalone verdict line.
+  // A prose scan turns "NOT APPROVED" into approval, so arbitrary mentions are
+  // deliberately not treated as gate decisions.
   const orderedVerdicts = [
     "MINOR FIXES",
     "NEEDS IMPROVEMENT",
@@ -221,7 +223,11 @@ function parseReviewerOutput(text, reviewerName = null) {
   if (!rawVerdict) {
     for (const v of orderedVerdicts) {
       const escaped = v.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      if (new RegExp(`\\b${escaped}\\b`, "i").test(text)) {
+      const standalone = new RegExp(
+        `^\\s*(?:#{1,6}\\s+)?(?:[-*]\\s+)?(?:\\*\\*|__)?${escaped}(?:\\*\\*|__)?\\s*[.!]?\\s*$`,
+        "im"
+      );
+      if (standalone.test(text)) {
         rawVerdict = v;
         break;
       }
@@ -237,12 +243,12 @@ function parseReviewerOutput(text, reviewerName = null) {
     const trimmed = line.trim();
     if (/^critical:/i.test(trimmed)) {
       critical_count++;
-      findings.push(sanitize(trimmed, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(trimmed, 200));
     } else if (/^warning:/i.test(trimmed)) {
       warning_count++;
-      findings.push(sanitize(trimmed, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(trimmed, 200));
     } else if (/^nitpick:/i.test(trimmed)) {
-      findings.push(sanitize(trimmed, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(trimmed, 200));
     }
     // Also count inline **Critical** markers that appear in the review report
     // format described in SKILL.md (e.g., "### Critical" section headings).
@@ -266,12 +272,12 @@ function parseReviewerOutput(text, reviewerName = null) {
     const description = cells.length >= 4 ? cells[3] : cells[2];
     if (/^critical$/.test(severity)) {
       tableCriticals++;
-      findings.push(sanitize(`Critical table: ${description}`, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(`Critical table: ${description}`, 200));
     } else if (/^(warning|major)$/.test(severity)) {
       tableWarnings++;
-      findings.push(sanitize(`Warning table: ${description}`, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(`Warning table: ${description}`, 200));
     } else if (/^(nitpick|minor)$/.test(severity)) {
-      findings.push(sanitize(`Nitpick table: ${description}`, 200));
+      if (findings.length < 24) findings.push(sanitizeExternalText(`Nitpick table: ${description}`, 200));
     }
   }
 
@@ -289,7 +295,7 @@ function parseReviewerOutput(text, reviewerName = null) {
       // Extract truncated findings for traceability.
       const bullets = section.match(/^[\s]*-\s+(.+)/gm) || [];
       for (const b of bullets) {
-        findings.push(sanitize(b.replace(/^[\s]*-\s+/, ""), 200));
+        if (findings.length < 24) findings.push(sanitizeExternalText(b.replace(/^[\s]*-\s+/, ""), 200));
       }
     }
   }
@@ -417,6 +423,10 @@ function computeConsensus(reviewers, expected, threshold = 0.67, excluded = []) 
 function main() {
   // ── Parse the subagent's output (before lock, no shared state) ─────────────
   const payload = readPayload();
+  const { path: aggregationPath } = reviewAggregationPath(STATE_DIR, payload);
+  const participantDir = participantStateDir(STATE_DIR, payload);
+  // Do not allow a stop from one session to touch another session's panel.
+  if (!existsSync(aggregationPath)) process.exit(0);
   const text = extractSubagentOutput(payload);
   if (!text.trim()) {
     // Empty output — subagent produced nothing useful; skip aggregation update.
@@ -452,8 +462,8 @@ function main() {
   // Multiple reviewer subagents may complete simultaneously. withFileLockSync
   // ensures the entire read→update→write cycle is atomic across processes.
   ensureDir(STATE_DIR); // Ensure directory exists before lock creation
-  const state = withFileLockSync(AGGREGATION_FILE, () => {
-    const s = readJsonSafe(AGGREGATION_FILE);
+  const state = withFileLockSync(aggregationPath, () => {
+    const s = readJsonSafe(aggregationPath);
     if (!s) return null;
 
     if (hasExplicitIdentity && Array.isArray(s.started_reviewers) && s.started_reviewers.length > 0) {
@@ -475,7 +485,10 @@ function main() {
 
     // An agent that ran upstream of this artifact keeps its report on file --
     // the findings are still worth reading -- but its vote does not count.
-    const upstream = new Set(readParticipantNames(STATE_DIR));
+    const upstream = new Set([
+      ...(Array.isArray(s.upstream_participants) ? s.upstream_participants : []),
+      ...readParticipantNames(participantDir),
+    ]);
     if (upstream.has(record.name)) {
       record.excluded = true;
       record.excluded_reason = "ran upstream of this artifact";
@@ -492,6 +505,7 @@ function main() {
     const eligible = s.reviewers.filter((r) => !r.excluded);
     const excludedNames = s.reviewers.filter((r) => r.excluded).map((r) => r.name);
     s.excluded_reviewers = excludedNames;
+    s.last_reviewer = record.name;
 
     // Compute consensus when all reviewers have reported.
     const consensusResult = computeConsensus(eligible, expected, threshold, excludedNames);
@@ -508,12 +522,15 @@ function main() {
         }
       : null;
 
-    // One Do -> Check pass. Clearing here keeps a name borrowed upstream once
-    // from barring that agent from every review thereafter.
-    if (consensusResult) clearParticipants(STATE_DIR);
+    // Clear only after an independent quorum reaches a real gate verdict.
+    // A quorum-short result asks for replacement reviewers of the same
+    // artifact, so producer identities must survive that retry.
+    if (consensusResult && consensusResult.verdict !== "BLOCKED — QUORUM SHORT") {
+      clearParticipants(participantDir);
+    }
 
     ensureDir(STATE_DIR);
-    writeJsonAtomic(AGGREGATION_FILE, s);
+    writeJsonAtomic(aggregationPath, s);
     return s;
   });
 
@@ -522,58 +539,9 @@ function main() {
     process.exit(0);
   }
 
-  const expected = state.expected_reviewers;
-
-  // ── Emit additionalContext for the main agent ──────────────────────────────
-  const reported = state.reviewers.length;
-  const lines = [];
-
-  lines.push(`[REVIEW AGGREGATION] ${reported}/${expected} reviewers reported.`);
-
-  lines.push(
-    `Latest: ${record.name} → ${record.verdict}` +
-      (record.score !== null && record.score !== undefined ? ` score=${record.score.toFixed(2)}` : "") +
-      (record.critical_count > 0 ? ` (${record.critical_count} Critical)` : "") +
-      (record.warning_count > 0 ? ` (${record.warning_count} Warning)` : "")
-  );
-
-  if (Array.isArray(state.excluded_reviewers) && state.excluded_reviewers.length > 0) {
-    lines.push(
-      `[EXCLUDED] ${state.excluded_reviewers.join(", ")} ran upstream of this artifact. ` +
-        "Findings still count as findings; the votes do not count toward quorum."
-    );
-  }
-
-  if (state.consensus) {
-    const c = state.consensus;
-    if (c.reason) {
-      lines.push(`CONSENSUS: ${c.verdict} — ${c.reason}`);
-    } else {
-      const scoreLabel =
-        c.average_score !== null && c.average_score !== undefined
-          ? ` avg_score=${c.average_score.toFixed(2)} [score-gate]`
-          : " [vote-gate]";
-      lines.push(
-        `CONSENSUS: ${c.verdict} (${c.pass_count}/${c.total} pass, required ${c.required}${scoreLabel})`
-      );
-      lines.push(
-        `Review complete. Proceed with the consensus verdict: ${c.verdict}.`
-      );
-    }
-  } else {
-    lines.push(
-      `Waiting for ${expected - reported} more reviewer(s) before consensus can be computed.`
-    );
-  }
-
-  console.log(
-    JSON.stringify({
-      hookSpecificOutput: {
-        hookEventName: "SubagentStop",
-        additionalContext: lines.join("\n"),
-      },
-    })
-  );
+  // SubagentStop additionalContext applies to the stopping subagent, not to
+  // its parent. Persist the aggregation here; the PostToolUse(Agent) bridge
+  // injects the supported parent-session summary after the tool returns.
 }
 
 
@@ -581,5 +549,5 @@ try {
   main();
 } catch (err) {
   console.error("[subagent-stop] Unexpected error:", err.message);
-  process.exit(1);
+  process.exit(0);
 }

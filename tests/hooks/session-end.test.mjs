@@ -110,6 +110,18 @@ test("session end persists a handoff from canonical state files", () => {
   assert.match(handoff, /\/scc:workflow run weekly-digest/);
 });
 
+test("session end fails open when the plugin data path is not writable as a directory", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
+  const dataFile = path.join(tempDir, "not-a-directory");
+  writeFileSync(dataFile, "occupied", "utf8");
+
+  const result = runSessionEnd(dataFile);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /session-end.*fail-open/i);
+  assert.doesNotMatch(result.stderr, /uncaught|node:internal/i);
+});
+
 test("session end prints an ANSI PDCA completion summary when a cycle has completed act", () => {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
   const stateDir = path.join(tempDir, "state");
@@ -220,6 +232,27 @@ test("session end summary box shows must-fix failures and counts critical issues
   assert.equal(result.status, 0);
   assert.match(result.stderr, /Check .*✗/);
   assert.match(result.stderr, /Time: 2m  Issues: 3  Score: 49/);
+});
+
+test("session end degrades an invalid completed run id instead of crashing the Stop hook", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
+
+  seedPdcaState(tempDir, {
+    run_id: "../escape",
+    topic: "Corrupt legacy state",
+    current_phase: "act",
+    completed: ["plan", "do", "check", "act"],
+    cycle_count: 1,
+    check_verdict: "APPROVED",
+    average_score: 0.9,
+  });
+
+  const result = runSessionEnd(tempDir);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(path.join(tempDir, "HANDOFF.md")), true);
+  assert.match(result.stderr, /Time: 0m/);
+  assert.doesNotMatch(result.stderr, /Invalid run_id|uncaught/i);
 });
 
 test("session end skips the PDCA summary box until act is completed", () => {

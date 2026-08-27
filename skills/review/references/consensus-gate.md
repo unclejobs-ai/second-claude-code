@@ -29,14 +29,16 @@ Applied only when score-based condition is met (no Critical findings, score `>= 
 
 | Preset | Reviewers (N) | Required Approvals | Formula |
 |--------|---------------|-------------------|---------|
-| `content` | 3 | 2 | `ceil(0.67 * 3) = 2` |
-| `strategy` | 3 | 2 | `ceil(0.67 * 3) = 2` |
-| `code` | 3 | 2 | `ceil(0.67 * 3) = 2` |
-| `security` | 3 | 2 | `ceil(0.67 * 3) = 2` |
-| `quick` | 2 | 2 | `ceil(0.67 * 2) = 2` (both must approve) |
-| `full` | 5 | 3 | `round(0.67 * 5) = 3` |
+| `content` | 3 | 2 | `Math.round(0.67 * 3) = 2` |
+| `strategy` | 3 | 2 | `Math.round(0.67 * 3) = 2` |
+| `code` | 3 | 2 | `Math.round(0.67 * 3) = 2` |
+| `security` | 3 | 2 | `Math.round(0.67 * 3) = 2` |
+| `academic` | 4 | 3 | `Math.round(0.75 * 4) = 3` |
+| `quick` | 2 | 2 | `Math.round(1.0 * 2) = 2` (both must approve) |
+| `full` | 5 | 3 | `Math.round(0.67 * 5) = 3` |
 
-Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `ceil(0.5 * 3) = 2`.
+The hook clamps the threshold to `0.5–1.0`, then computes `required = Math.round(threshold * total_voters)`.
+Override with `--threshold`: e.g., `--threshold 0.5` with 3 reviewers requires `Math.round(0.5 * 3) = 2`.
 
 ## Score Aggregation
 
@@ -88,16 +90,22 @@ For detection order, invocation pattern, error handling, and severity mapping, s
 
 ### Vote Weight
 
-The external review counts as **1 additional voter**, increasing the denominator by 1:
+The external review counts as **1 additional voter**, increasing the denominator by 1. After the external
+result is merged into the reviewer list, the same hook formula applies: `required = Math.round(threshold * total_voters)`.
+The approval requirement therefore changes as follows:
 
 | Preset | Without `--external` | With `--external` |
 |--------|---------------------|-------------------|
-| `content` | 2/3 pass | 2/4 pass |
-| `strategy` | 2/3 pass | 2/4 pass |
-| `code` | 2/3 pass | 2/4 pass |
-| `security` | 2/3 pass | 2/4 pass |
-| `quick` | 2/2 pass | 2/3 pass |
+| `content` | 2/3 pass | 3/4 pass |
+| `strategy` | 2/3 pass | 3/4 pass |
+| `code` | 2/3 pass | 3/4 pass |
+| `security` | 2/3 pass | 3/4 pass |
+| `academic` | 3/4 pass | 4/5 pass |
+| `quick` | 2/2 pass | 3/3 pass |
 | `full` | 3/5 pass | 4/6 pass |
+
+`--external` is opt-in. If no external runtime is available, the internal denominator and requirement stay
+unchanged; mmbridge failure never blocks the internal review.
 
 ### Score Handling
 

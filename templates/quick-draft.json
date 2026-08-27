@@ -10,9 +10,9 @@
     },
     {
       "skill": "/scc:write",
-      "args": "--format newsletter --skip-review",
+      "args": "--format newsletter --skip-research --skip-review",
       "input_from": "research-brief.md",
-      "output": "draft-{{topic}}.md",
+      "output": "draft.md",
       "on_fail": "abort"
     }
   ]

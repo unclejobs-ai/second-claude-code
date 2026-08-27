@@ -1,6 +1,8 @@
+[한국어](viewer.ko.md)
+
 # Viewer
 
-> Use when the user asks to open the SCC Artifact Viewer, show artifacts, inspect PDCA pipeline outputs, or after a PDCA pipeline run completes.
+> Tool-only command: open or export the SCC Artifact Viewer for PDCA artifacts. It serves state and does not make a quality judgment.
 
 ## Quick Example
 
@@ -65,7 +67,11 @@ Two things about where the numbers come from:
 - The phase timeline and its durations are reconstructed from the **event log**, the only per-run record of when each phase started and ended.
 - Re-entry reasons come from `state.action_router_history`, written by `pdca_transition` whenever a run leaves Act. Runs recorded before that field existed fall back to inference: a phase logged under a later cycle counts as a re-entry, but carries no reason.
 
-The export leads with the **audit trail**, not the content: which gates passed, how many reviewers attacked the draft and what they caught, every Act re-entry with its reason, and any drift between planned and delivered scope. The artifacts follow underneath. A finished document cannot show that it survived five adversarial reviewers and two re-entries — that record is what makes the page worth sharing.
+The export leads with the **audit trail**, not the content: which gates passed,
+the configured reviewer count and findings, every Act re-entry with its reason,
+and any drift between planned and delivered scope. The count comes from the
+run's event/state data; it is not a fixed five-reviewer claim. The artifacts
+follow underneath.
 
 ## How It Works
 

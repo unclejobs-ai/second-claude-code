@@ -1,5 +1,7 @@
 # Decision Standards — coach와 기준 문서
 
+> **Historical snapshot (과거 스냅샷)**: 이 설계 문서는 당시 제안을 기록하며 현재 구현 계약이 아닙니다.
+
 작성일: 2026-08-10
 상태: 설계 확정, 구현 대기
 

@@ -1,23 +1,26 @@
 {
   "name": "weekly-report",
-  "description": "Weekly report pipeline: research current topics, analyze with a strategic framework, then write a polished report. Designed for recurring weekly team or leadership reporting.",
+  "description": "Weekly report workflow: research a topic, analyze it, then write a polished report.",
+  "defaults": {
+    "lang": "ko"
+  },
   "steps": [
     {
       "skill": "/scc:research",
-      "args": "--depth medium --sources web,news --lang ko",
+      "args": "\"{{topic}}\" --depth medium --sources news --lang {{lang}}",
       "output": "research-brief.md",
       "on_fail": "abort"
     },
     {
       "skill": "/scc:analyze",
-      "args": "--framework swot --with-research --depth standard --lang ko",
+      "args": "--framework swot --with-research --depth standard --lang {{lang}}",
       "input_from": "research-brief.md",
       "output": "analysis.md",
       "on_fail": "abort"
     },
     {
       "skill": "/scc:write",
-      "args": "--format report --voice expert --skip-research --lang ko",
+      "args": "--format report --voice expert --skip-research --lang {{lang}}",
       "input_from": "analysis.md",
       "output": "weekly-report.md",
       "on_fail": "retry"

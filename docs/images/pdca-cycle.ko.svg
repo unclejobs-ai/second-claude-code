@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA 품질 사이클</title>
-  <desc id="pc-desc">모든 결과물이 수집, 집필, 검증, 개선을 거친다. 문제가 생기면 원인이 있는 단계로 돌아간다.</desc>
+  <desc id="pc-desc">하나의 PDCA 실행이 수집, 집필, 검증, 개선을 거친다. 문제가 생기면 원인이 있는 단계로 돌아간다.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -20,7 +20,7 @@
   <rect width="780" height="540" rx="12" fill="#0d1117"/>
 
   <!-- Philosophy header -->
-  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">모든 결과물은 검증을 통과해야 나간다.</text>
+  <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">PDCA 실행은 검증을 거쳐 마무리된다.</text>
   <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집, 집필, 검증, 개선 &#x2014; 단계마다 통과 기준이 있다.</text>
 
   <!-- Divider -->
@@ -42,7 +42,7 @@
   <rect x="170" y="174" width="3" height="58" rx="1.5" fill="#3fb950"/>
   <text x="186" y="194" fill="#3fb950" font-size="9" font-weight="600" font-family="SF Mono, Consolas, monospace">DO</text>
   <text x="214" y="194" fill="#e6edf3" font-size="13" font-weight="600" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">리서치를 바탕으로 초안을 쓴다</text>
-  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">포맷 길이 바닥을 넘긴 초안만 통과</text>
+  <text x="186" y="214" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">Do 스킬의 포맷 바닥 기준을 적용</text>
 
   <!-- Gate 2 -->
   <line x1="390" y1="232" x2="390" y2="250" stroke="#30363d" stroke-width="0.5" marker-end="url(#arr)"/>

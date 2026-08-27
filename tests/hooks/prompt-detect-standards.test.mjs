@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -81,5 +81,31 @@ test("an architecture prompt does not route to a content skill", () => {
 test("a project with no standards produces no output", () => {
   withRoot((root) => {
     assert.equal(runHook(root, "아무 말").trim(), "");
+  });
+});
+
+test("UserPromptSubmit sanitizes control and bidi characters in a standard path", () => {
+  const root = mkdtempSync(join(tmpdir(), "scc-pd-\u001b[31m-\u0007-\u202e"));
+  try {
+    writeStandard(root, VOICE, { now: NOW });
+    const out = runHook(root, "이번 글 목소리 어떻게 갈까");
+    assert.match(out, /voice-two-track/);
+    assert.doesNotMatch(out, /\u001b/);
+    assert.doesNotMatch(out, /\u0007/);
+    assert.doesNotMatch(out, /[\u202A-\u202E\u2066-\u2069]/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("an oversized prompt payload is a bounded no-op", () => {
+  withRoot((root) => {
+    const result = spawnSync("node", [HOOK], {
+      encoding: "utf8",
+      env: { ...process.env, CLAUDE_PROJECT_DIR: root },
+      input: JSON.stringify({ prompt: "x".repeat(600 * 1024) }),
+    });
+    assert.equal(result.status, 0);
+    assert.equal(result.stdout.trim(), "");
   });
 });
