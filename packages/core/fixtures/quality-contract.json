@@ -25,8 +25,21 @@
             "producerId": "worker-1",
             "result": "pass",
             "timestamp": "2026-08-28T00:00:00.000Z"
+          },
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "reviewerId": "reviewer-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:01:00.000Z"
           }
-        ]
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
       },
       "expected": []
     },
@@ -199,10 +212,92 @@
           "completedStages": ["explore", "plan", "work", "critic"]
         },
         "evidence": [
-          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" }
-        ]
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
       },
       "expected": ["MISSING_PROMOTE_STAGE"]
+    },
+    {
+      "id": "nonexistent-evolution-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": false,
+            "worktreeExists": false,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["ISOLATED_BRANCH_NOT_FOUND", "ISOLATED_WORKTREE_NOT_FOUND"]
+    },
+    {
+      "id": "current-evolution-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "review/task-2",
+          "isolatedWorktree": "/worktrees/review-task-2",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "review/task-2",
+            "candidateWorktree": "/worktrees/review-task-2",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["BRANCH_NOT_ISOLATED", "WORKTREE_NOT_ISOLATED"]
     },
     {
       "id": "invalid-creator-evaluator-benchmark-isolation",
@@ -231,6 +326,7 @@
         "CREATOR_EVALUATOR_CONFLICT",
         "MISSING_ISOLATED_BRANCH",
         "MISSING_ISOLATED_WORKTREE",
+        "MISSING_ISOLATION_ATTESTATION",
         "EVALUATOR_ASSET_MODIFIED",
         "BENCHMARK_ASSET_MODIFIED",
         "HUMAN_APPROVAL_PREGRANTED"

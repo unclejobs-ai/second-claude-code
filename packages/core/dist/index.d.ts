@@ -78,7 +78,7 @@ export interface PlanNode {
 export interface WorkPlan {
     readonly nodes?: readonly PlanNode[];
 }
-export type ValidationIssueCode = "MISSING_NODES" | "DUPLICATE_NODE_ID" | "MISSING_ACCEPTANCE_CRITERIA" | "MISSING_DEPENDENCY" | "DEPENDENCY_CYCLE" | "OVERLAPPING_FILE_OWNERSHIP" | "MISSING_ARTIFACT_HASH" | "MISSING_PRODUCER_ID" | "MISSING_REVIEWER_ID" | "FAILED_EVIDENCE" | "SELF_REVIEW" | "MISSING_REVIEWER_EVIDENCE" | "STALE_EVIDENCE" | "MISSING_COMPLETION_EVIDENCE" | "MISSING_CRITIC_STAGE" | "MISSING_PROMOTE_STAGE" | "CREATOR_EVALUATOR_CONFLICT" | "MISSING_ISOLATED_BRANCH" | "MISSING_ISOLATED_WORKTREE" | "EVALUATOR_ASSET_MODIFIED" | "POLICY_ASSET_MODIFIED" | "BENCHMARK_ASSET_MODIFIED" | "HUMAN_APPROVAL_PREGRANTED";
+export type ValidationIssueCode = "MISSING_NODES" | "DUPLICATE_NODE_ID" | "MISSING_ACCEPTANCE_CRITERIA" | "MISSING_DEPENDENCY" | "DEPENDENCY_CYCLE" | "OVERLAPPING_FILE_OWNERSHIP" | "MISSING_ARTIFACT_HASH" | "MISSING_PRODUCER_ID" | "MISSING_REVIEWER_ID" | "FAILED_EVIDENCE" | "SELF_REVIEW" | "MISSING_REVIEWER_EVIDENCE" | "STALE_EVIDENCE" | "MISSING_COMPLETION_EVIDENCE" | "RUN_GATE_NOT_PROCEED" | "RUN_HAS_FAILURES" | "INDEPENDENT_REVIEW_UNAVAILABLE" | "MISSING_CRITIC_STAGE" | "MISSING_PROMOTE_STAGE" | "CREATOR_EVALUATOR_CONFLICT" | "MISSING_ISOLATED_BRANCH" | "MISSING_ISOLATED_WORKTREE" | "MISSING_ISOLATION_ATTESTATION" | "ISOLATION_ATTESTATION_MISMATCH" | "ISOLATION_ATTESTOR_CONFLICT" | "ISOLATED_BRANCH_NOT_FOUND" | "ISOLATED_WORKTREE_NOT_FOUND" | "BRANCH_NOT_ISOLATED" | "WORKTREE_NOT_ISOLATED" | "EVALUATOR_ASSET_MODIFIED" | "POLICY_ASSET_MODIFIED" | "BENCHMARK_ASSET_MODIFIED" | "HUMAN_APPROVAL_PREGRANTED";
 export interface ValidationIssue {
     readonly code: ValidationIssueCode;
     readonly message: string;
@@ -126,11 +126,31 @@ export interface GateEvaluationInput extends EvidenceValidationContext {
     readonly limits?: Partial<IterationLimits>;
 }
 export declare function evaluateGate(input: GateEvaluationInput): GateDecision;
-export declare function validateRunCompletion(run: QualityRunProjection, evidence: readonly GateEvidence[]): ValidationResult;
+export interface RunCompletionValidationContext {
+    readonly currentArtifactHash: string;
+    readonly producerId: string;
+    readonly independentReviewerAvailable: boolean;
+    readonly reviewRequired?: boolean;
+}
+export declare function validateRunCompletion(run: QualityRunProjection, evidence: readonly GateEvidence[], context: RunCompletionValidationContext): ValidationResult;
+export interface EvolutionIsolationAttestation {
+    readonly candidateId: string;
+    readonly candidateBranch: string;
+    readonly candidateWorktree: string;
+    readonly branchExists: boolean;
+    readonly worktreeExists: boolean;
+    readonly baseBranch: string;
+    readonly baseWorktree: string;
+    readonly hostCurrentBranch: string;
+    readonly hostCurrentWorktree: string;
+    readonly attestorId: string;
+    readonly timestamp: string;
+}
 export interface EvolutionValidationContext {
     readonly evaluatorAssets: readonly string[];
     readonly policyAssets: readonly string[];
     readonly benchmarkAssets: readonly string[];
+    readonly isolation?: EvolutionIsolationAttestation;
 }
 export declare function validateEvolutionProposal(proposal: EvolutionProposal, context: EvolutionValidationContext): ValidationResult;
 export {};

@@ -143,11 +143,21 @@ export type ValidationIssueCode =
   | "MISSING_REVIEWER_EVIDENCE"
   | "STALE_EVIDENCE"
   | "MISSING_COMPLETION_EVIDENCE"
+  | "RUN_GATE_NOT_PROCEED"
+  | "RUN_HAS_FAILURES"
+  | "INDEPENDENT_REVIEW_UNAVAILABLE"
   | "MISSING_CRITIC_STAGE"
   | "MISSING_PROMOTE_STAGE"
   | "CREATOR_EVALUATOR_CONFLICT"
   | "MISSING_ISOLATED_BRANCH"
   | "MISSING_ISOLATED_WORKTREE"
+  | "MISSING_ISOLATION_ATTESTATION"
+  | "ISOLATION_ATTESTATION_MISMATCH"
+  | "ISOLATION_ATTESTOR_CONFLICT"
+  | "ISOLATED_BRANCH_NOT_FOUND"
+  | "ISOLATED_WORKTREE_NOT_FOUND"
+  | "BRANCH_NOT_ISOLATED"
+  | "WORKTREE_NOT_ISOLATED"
   | "EVALUATOR_ASSET_MODIFIED"
   | "POLICY_ASSET_MODIFIED"
   | "BENCHMARK_ASSET_MODIFIED"
@@ -412,15 +422,46 @@ export function evaluateGate(input: GateEvaluationInput): GateDecision {
   return input.findings.length === 0 ? "proceed" : "block";
 }
 
+export interface RunCompletionValidationContext {
+  readonly currentArtifactHash: string;
+  readonly producerId: string;
+  readonly independentReviewerAvailable: boolean;
+  readonly reviewRequired?: boolean;
+}
+
 export function validateRunCompletion(
   run: QualityRunProjection,
-  evidence: readonly GateEvidence[]
+  evidence: readonly GateEvidence[],
+  context: RunCompletionValidationContext
 ): ValidationResult {
   const issues: ValidationIssue[] = [];
+  if (run.gateDecision !== "proceed") {
+    issues.push({
+      code: "RUN_GATE_NOT_PROCEED",
+      message: `A run cannot complete with gate decision ${run.gateDecision}.`
+    });
+  }
+  if (run.failures.length > 0) {
+    issues.push({ code: "RUN_HAS_FAILURES", message: "A run with recorded failures cannot complete." });
+  }
   if (!evidence.some((entry) => entry.artifactHash.trim().length > 0)) {
     issues.push({
       code: "MISSING_COMPLETION_EVIDENCE",
       message: "A completed run needs documented artifact-bound evidence."
+    });
+  }
+
+  const requiresReview = run.profile !== "minimal" || context.reviewRequired === true;
+  const evidenceValidation = validateEvidence(evidence, {
+    currentArtifactHash: context.currentArtifactHash,
+    producerId: context.producerId,
+    reviewRequired: requiresReview
+  });
+  issues.push(...evidenceValidation.issues);
+  if (requiresReview && !context.independentReviewerAvailable) {
+    issues.push({
+      code: "INDEPENDENT_REVIEW_UNAVAILABLE",
+      message: "The required independent reviewer is unavailable."
     });
   }
 
@@ -436,10 +477,25 @@ export function validateRunCompletion(
   return validationResult(issues);
 }
 
+export interface EvolutionIsolationAttestation {
+  readonly candidateId: string;
+  readonly candidateBranch: string;
+  readonly candidateWorktree: string;
+  readonly branchExists: boolean;
+  readonly worktreeExists: boolean;
+  readonly baseBranch: string;
+  readonly baseWorktree: string;
+  readonly hostCurrentBranch: string;
+  readonly hostCurrentWorktree: string;
+  readonly attestorId: string;
+  readonly timestamp: string;
+}
+
 export interface EvolutionValidationContext {
   readonly evaluatorAssets: readonly string[];
   readonly policyAssets: readonly string[];
   readonly benchmarkAssets: readonly string[];
+  readonly isolation?: EvolutionIsolationAttestation;
 }
 
 export function validateEvolutionProposal(
@@ -458,6 +514,65 @@ export function validateEvolutionProposal(
   }
   if (proposal.isolatedWorktree.trim().length === 0) {
     issues.push({ code: "MISSING_ISOLATED_WORKTREE", message: "Evolution requires an isolated worktree." });
+  }
+
+  const isolation = context.isolation;
+  if (isolation === undefined) {
+    issues.push({
+      code: "MISSING_ISOLATION_ATTESTATION",
+      message: "Evolution requires host-resolved branch and worktree isolation evidence."
+    });
+  } else {
+    const bindingMismatch = isolation.candidateId !== proposal.candidateId
+      || isolation.candidateBranch !== proposal.isolatedBranch
+      || isolation.candidateWorktree !== proposal.isolatedWorktree;
+    if (bindingMismatch) {
+      issues.push({
+        code: "ISOLATION_ATTESTATION_MISMATCH",
+        message: "Isolation evidence is not bound to this candidate branch and worktree."
+      });
+    } else {
+      if (!isolation.branchExists) {
+        issues.push({
+          code: "ISOLATED_BRANCH_NOT_FOUND",
+          message: `The attested candidate branch does not exist: ${proposal.isolatedBranch}.`
+        });
+      }
+      if (!isolation.worktreeExists) {
+        issues.push({
+          code: "ISOLATED_WORKTREE_NOT_FOUND",
+          message: `The attested candidate worktree does not exist: ${proposal.isolatedWorktree}.`
+        });
+      }
+      if (
+        proposal.isolatedBranch === isolation.baseBranch
+        || proposal.isolatedBranch === isolation.hostCurrentBranch
+      ) {
+        issues.push({
+          code: "BRANCH_NOT_ISOLATED",
+          message: "The candidate branch matches the base or host current branch."
+        });
+      }
+      if (
+        proposal.isolatedWorktree === isolation.baseWorktree
+        || proposal.isolatedWorktree === isolation.hostCurrentWorktree
+      ) {
+        issues.push({
+          code: "WORKTREE_NOT_ISOLATED",
+          message: "The candidate worktree matches the base or host current worktree."
+        });
+      }
+      if (
+        isBlank(isolation.attestorId)
+        || isolation.attestorId === proposal.creatorId
+        || isolation.attestorId === proposal.evaluatorId
+      ) {
+        issues.push({
+          code: "ISOLATION_ATTESTOR_CONFLICT",
+          message: "Isolation evidence must come from a host resolver independent of creator and evaluator."
+        });
+      }
+    }
   }
 
   const changedAssets = new Set(proposal.changedAssets);

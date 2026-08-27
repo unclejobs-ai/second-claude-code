@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const corePromise = import("../dist/index.js");
+const corePromise = import("@second-claude/core");
 
 const CURRENT_HASH = "sha256:current";
 
@@ -37,6 +37,49 @@ function gateInput(overrides = {}) {
     independentReviewerAvailable: true,
     refineCount: 0,
     pivotCount: 0,
+    ...overrides
+  };
+}
+
+function completionContext(overrides = {}) {
+  return {
+    currentArtifactHash: CURRENT_HASH,
+    producerId: "worker-1",
+    independentReviewerAvailable: true,
+    ...overrides
+  };
+}
+
+function completedRun(overrides = {}) {
+  return {
+    runId: "run-complete",
+    profile: "standard",
+    currentStage: "promote",
+    currentPhase: "act",
+    score: 0.9,
+    failures: [],
+    iteration: 1,
+    refineCount: 0,
+    pivotCount: 0,
+    gateDecision: "proceed",
+    completedStages: ["explore", "plan", "work", "critic", "promote"],
+    ...overrides
+  };
+}
+
+function validIsolation(overrides = {}) {
+  return {
+    candidateId: "candidate-1",
+    candidateBranch: "evolve/candidate-1",
+    candidateWorktree: "/worktrees/candidate-1",
+    branchExists: true,
+    worktreeExists: true,
+    baseBranch: "main",
+    baseWorktree: "/repos/scc",
+    hostCurrentBranch: "review/task-2",
+    hostCurrentWorktree: "/worktrees/review-task-2",
+    attestorId: "host-isolation-resolver",
+    timestamp: "2026-08-28T00:00:00.000Z",
     ...overrides
   };
 }
@@ -134,6 +177,19 @@ test("plan validation catches concurrent nodes claiming the same file", async ()
 
   assert.deepEqual(concurrent.issues.map((issue) => issue.code), ["OVERLAPPING_FILE_OWNERSHIP"]);
   assert.equal(ordered.valid, true);
+});
+
+test("plan validation catches transitive dependency ordering being misclassified as concurrent", async () => {
+  const { validatePlan } = await corePromise;
+  const result = validatePlan({
+    nodes: [
+      { id: "a", acceptanceCriteria: ["a done"], dependencies: [], fileOwnership: ["src/shared.ts"] },
+      { id: "b", acceptanceCriteria: ["b done"], dependencies: ["a"], fileOwnership: [] },
+      { id: "c", acceptanceCriteria: ["c done"], dependencies: ["b"], fileOwnership: ["src/shared.ts"] }
+    ]
+  });
+
+  assert.equal(result.valid, true);
 });
 
 test("evidence validation catches a worker approving its own artifact", async () => {
@@ -246,6 +302,15 @@ test("gate evaluation catches critical policy violations proceeding", async () =
   );
 });
 
+test("gate evaluation catches critical plan violations pivoting instead of blocking", async () => {
+  const { evaluateGate } = await corePromise;
+
+  assert.equal(
+    evaluateGate(gateInput({ findings: [{ kind: "plan", severity: "critical", correctable: false }] })),
+    "block"
+  );
+});
+
 test("iteration bounds catch exhausted refine and pivot caps forcing proceed", async () => {
   const { DEFAULT_ITERATION_LIMITS, evaluateGate } = await corePromise;
 
@@ -268,24 +333,113 @@ test("gate evaluation proceeds only with current independent evidence and no fin
 
 test("run completion catches standard runs skipping critic or promote", async () => {
   const { validateRunCompletion } = await corePromise;
-  const run = {
-    runId: "run-1",
-    profile: "standard",
-    currentStage: "promote",
-    currentPhase: "act",
-    score: 0.9,
-    failures: [],
-    iteration: 1,
-    refineCount: 0,
-    pivotCount: 0,
-    gateDecision: "proceed",
-    completedStages: ["explore", "plan", "work", "critic"]
-  };
 
   assert.deepEqual(
-    validateRunCompletion(run, currentEvidence()).issues.map((issue) => issue.code),
+    validateRunCompletion(
+      completedRun({ completedStages: ["explore", "plan", "work", "critic"] }),
+      currentEvidence(),
+      completionContext()
+    ).issues.map((issue) => issue.code),
     ["MISSING_PROMOTE_STAGE"]
   );
+  assert.deepEqual(
+    validateRunCompletion(
+      completedRun({ completedStages: ["explore", "plan", "work", "promote"] }),
+      currentEvidence(),
+      completionContext()
+    ).issues.map((issue) => issue.code),
+    ["MISSING_CRITIC_STAGE"]
+  );
+});
+
+test("run completion catches non-proceed decisions being marked complete", async () => {
+  const { validateRunCompletion } = await corePromise;
+
+  for (const gateDecision of ["block", "unproven", "refine", "pivot"]) {
+    assert.deepEqual(
+      validateRunCompletion(
+        completedRun({ gateDecision }),
+        currentEvidence(),
+        completionContext()
+      ).issues.map((issue) => issue.code),
+      ["RUN_GATE_NOT_PROCEED"],
+      gateDecision
+    );
+  }
+});
+
+test("run completion catches recorded failures being ignored", async () => {
+  const { validateRunCompletion } = await corePromise;
+  const result = validateRunCompletion(
+    completedRun({ failures: ["tests failed"] }),
+    currentEvidence(),
+    completionContext()
+  );
+
+  assert.deepEqual(result.issues.map((issue) => issue.code), ["RUN_HAS_FAILURES"]);
+});
+
+test("run completion catches failed or stale evidence being accepted", async () => {
+  const { validateRunCompletion } = await corePromise;
+  const failed = currentEvidence().map((entry) => ({ ...entry, result: "fail" }));
+  const stale = currentEvidence().map((entry) => ({ ...entry, artifactHash: "sha256:old" }));
+
+  assert.deepEqual(
+    validateRunCompletion(completedRun(), failed, completionContext()).issues.map((issue) => issue.code),
+    ["FAILED_EVIDENCE", "FAILED_EVIDENCE"]
+  );
+  assert.deepEqual(
+    validateRunCompletion(completedRun(), stale, completionContext()).issues.map((issue) => issue.code),
+    ["STALE_EVIDENCE", "STALE_EVIDENCE"]
+  );
+});
+
+test("run completion catches standard evidence without an independent reviewer", async () => {
+  const { validateRunCompletion } = await corePromise;
+  const artifactOnly = [currentEvidence()[0]];
+
+  assert.deepEqual(
+    validateRunCompletion(completedRun(), artifactOnly, completionContext()).issues.map((issue) => issue.code),
+    ["MISSING_REVIEWER_EVIDENCE"]
+  );
+  assert.deepEqual(
+    validateRunCompletion(
+      completedRun(),
+      currentEvidence(),
+      completionContext({ independentReviewerAvailable: false })
+    ).issues.map((issue) => issue.code),
+    ["INDEPENDENT_REVIEW_UNAVAILABLE"]
+  );
+});
+
+test("run completion catches deep and creator profiles bypassing critic or promote", async () => {
+  const { validateRunCompletion } = await corePromise;
+
+  for (const profile of ["deep", "creator"]) {
+    assert.deepEqual(
+      validateRunCompletion(
+        completedRun({ profile, completedStages: ["explore", "plan", "work", "promote"] }),
+        currentEvidence(),
+        completionContext()
+      ).issues.map((issue) => issue.code),
+      ["MISSING_CRITIC_STAGE"],
+      `${profile}:critic`
+    );
+    assert.deepEqual(
+      validateRunCompletion(
+        completedRun({ profile, completedStages: ["explore", "plan", "work", "critic"] }),
+        currentEvidence(),
+        completionContext()
+      ).issues.map((issue) => issue.code),
+      ["MISSING_PROMOTE_STAGE"],
+      `${profile}:promote`
+    );
+    assert.equal(validateRunCompletion(
+      completedRun({ profile }),
+      currentEvidence(),
+      completionContext()
+    ).valid, true, profile);
+  }
 });
 
 test("run completion allows minimal evidence without mandatory critic and promote stages", async () => {
@@ -304,8 +458,11 @@ test("run completion allows minimal evidence without mandatory critic and promot
     completedStages: ["explore", "plan", "work"]
   };
 
-  assert.equal(validateRunCompletion(run, [currentEvidence()[0]]).valid, true);
-  assert.deepEqual(validateRunCompletion(run, []).issues.map((issue) => issue.code), ["MISSING_COMPLETION_EVIDENCE"]);
+  assert.equal(validateRunCompletion(run, [currentEvidence()[0]], completionContext()).valid, true);
+  assert.deepEqual(
+    validateRunCompletion(run, [], completionContext()).issues.map((issue) => issue.code),
+    ["MISSING_COMPLETION_EVIDENCE"]
+  );
 });
 
 test("evolution validation catches creator/evaluator and protected benchmark contamination", async () => {
@@ -326,13 +483,15 @@ test("evolution validation catches creator/evaluator and protected benchmark con
   const result = validateEvolutionProposal(proposal, {
     evaluatorAssets: ["evaluators/agent-1.md"],
     policyAssets: ["policy/gates.json"],
-    benchmarkAssets: ["benchmarks/held-out.json"]
+    benchmarkAssets: ["benchmarks/held-out.json"],
+    isolation: undefined
   });
 
   assert.deepEqual(result.issues.map((issue) => issue.code), [
     "CREATOR_EVALUATOR_CONFLICT",
     "MISSING_ISOLATED_BRANCH",
     "MISSING_ISOLATED_WORKTREE",
+    "MISSING_ISOLATION_ATTESTATION",
     "EVALUATOR_ASSET_MODIFIED",
     "POLICY_ASSET_MODIFIED",
     "BENCHMARK_ASSET_MODIFIED",
@@ -340,12 +499,150 @@ test("evolution validation catches creator/evaluator and protected benchmark con
   ]);
 });
 
+test("evolution validation catches nonblank branch and worktree claims without an attestation", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: ["skills/review/SKILL.md"],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+  const result = validateEvolutionProposal(proposal, {
+    evaluatorAssets: [],
+    policyAssets: [],
+    benchmarkAssets: []
+  });
+
+  assert.deepEqual(result.issues.map((issue) => issue.code), ["MISSING_ISOLATION_ATTESTATION"]);
+});
+
+test("evolution validation catches attested branch and worktree identities that do not exist", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+  const result = validateEvolutionProposal(proposal, {
+    evaluatorAssets: [],
+    policyAssets: [],
+    benchmarkAssets: [],
+    isolation: validIsolation({ branchExists: false, worktreeExists: false })
+  });
+
+  assert.deepEqual(result.issues.map((issue) => issue.code), [
+    "ISOLATED_BRANCH_NOT_FOUND",
+    "ISOLATED_WORKTREE_NOT_FOUND"
+  ]);
+});
+
+test("evolution validation catches candidate isolation equal to the base or current workspace", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  for (const [branch, worktree] of [
+    ["review/task-2", "/worktrees/review-task-2"],
+    ["main", "/repos/scc"]
+  ]) {
+    const proposal = {
+      candidateId: "candidate-1",
+      creatorId: "creator-1",
+      isolatedBranch: branch,
+      isolatedWorktree: worktree,
+      changedAssets: [],
+      evaluatorId: "evaluator-1",
+      heldOutBenchmarkId: "held-out-v1",
+      baselineScore: 0.7,
+      candidateScore: 0.8,
+      validationEvidence: currentEvidence(),
+      humanApproval: "pending"
+    };
+    const result = validateEvolutionProposal(proposal, {
+      evaluatorAssets: [],
+      policyAssets: [],
+      benchmarkAssets: [],
+      isolation: validIsolation({ candidateBranch: branch, candidateWorktree: worktree })
+    });
+
+    assert.deepEqual(result.issues.map((issue) => issue.code), [
+      "BRANCH_NOT_ISOLATED",
+      "WORKTREE_NOT_ISOLATED"
+    ], branch);
+  }
+});
+
+test("evolution validation catches an attestation bound to a different candidate location", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+  const result = validateEvolutionProposal(proposal, {
+    evaluatorAssets: [],
+    policyAssets: [],
+    benchmarkAssets: [],
+    isolation: validIsolation({
+      candidateBranch: "evolve/candidate-other",
+      candidateWorktree: "/worktrees/candidate-other"
+    })
+  });
+
+  assert.deepEqual(result.issues.map((issue) => issue.code), ["ISOLATION_ATTESTATION_MISMATCH"]);
+});
+
+test("evolution validation catches creator or evaluator supplied isolation attestations", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: currentEvidence(),
+    humanApproval: "pending"
+  };
+
+  for (const attestorId of ["creator-1", "evaluator-1"]) {
+    const result = validateEvolutionProposal(proposal, {
+      evaluatorAssets: [],
+      policyAssets: [],
+      benchmarkAssets: [],
+      isolation: validIsolation({ attestorId })
+    });
+    assert.deepEqual(result.issues.map((issue) => issue.code), ["ISOLATION_ATTESTOR_CONFLICT"]);
+  }
+});
+
 test("the shared fixture catches every documented cross-host contract regression", async () => {
   const core = await corePromise;
-  const fixture = JSON.parse(await readFile(
-    new URL("../fixtures/quality-contract.json", import.meta.url),
-    "utf8"
-  ));
+  const fixtureUrl = import.meta.resolve("@second-claude/core/fixtures/quality-contract.json");
+  const fixture = JSON.parse(await readFile(new URL(fixtureUrl), "utf8"));
 
   assert.equal(fixture.schemaVersion, 1);
   assert.deepEqual(
@@ -361,6 +658,8 @@ test("the shared fixture catches every documented cross-host contract regression
       "refine-cap",
       "pivot-cap",
       "missing-promote",
+      "nonexistent-evolution-isolation",
+      "current-evolution-isolation",
       "invalid-creator-evaluator-benchmark-isolation"
     ]
   );
@@ -374,7 +673,11 @@ test("the shared fixture catches every documented cross-host contract regression
     } else if (entry.operation === "evaluateGate") {
       actual = core.evaluateGate(entry.input);
     } else if (entry.operation === "validateRunCompletion") {
-      actual = core.validateRunCompletion(entry.input.run, entry.input.evidence).issues.map((issue) => issue.code);
+      actual = core.validateRunCompletion(
+        entry.input.run,
+        entry.input.evidence,
+        entry.input.context
+      ).issues.map((issue) => issue.code);
     } else if (entry.operation === "validateEvolutionProposal") {
       actual = core.validateEvolutionProposal(entry.input.proposal, entry.input.context).issues.map((issue) => issue.code);
     } else {
