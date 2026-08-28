@@ -398,6 +398,28 @@ test("stop_hook_active bypasses the gate and records why", () => {
   assert.match(audit, /recursive Stop hook invocation/);
 });
 
+test("an incomplete PDCA Stop blocks once, then the same-session retry passes", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished",
+    current_phase: "plan",
+    completed: [],
+  }));
+
+  const environment = {
+    CLAUDE_PROJECT_DIR: dir,
+    CLAUDE_SESSION_ID: "same-stop-session",
+  };
+  const first = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(first.status, 2);
+  assert.match(first.stderr, /Check phase not yet completed/);
+
+  const retry = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(retry.status, 0, retry.stderr);
+  const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
+  assert.match(audit, /recent stop-hook guard \(retry suppression\)/);
+});
+
 test("SessionStart survives a large MMBridge packet within the bounded context", () => {
   const dir = dataDir();
   const bin = path.join(dir, "bin");
