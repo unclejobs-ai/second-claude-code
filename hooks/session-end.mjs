@@ -892,11 +892,12 @@ function recordSessionRecall(state, handoffPath) {
 function main() {
   const payload = readPayload();
   activeSessionId = sessionIdFromPayload(payload);
+  const guardDirectorySafe = guardDirectoryIsSafe();
 
   // Claude marks recursive Stop-hook invocations with stop_hook_active. This
   // is the authoritative re-entry signal; honor it and leave an audit trail so
   // a gate bypass is explainable rather than silently weakening the gate.
-  if (payload?.stop_hook_active === true) {
+  if (payload?.stop_hook_active === true && guardDirectorySafe) {
     recordGateBypass("stop_hook_active=true (recursive Stop hook invocation)", payload);
   }
 
@@ -906,11 +907,13 @@ function main() {
   // into another bypass.
   const sessionGuard = guardFile();
   const legacyGuard = legacyGuardFile();
-  if (sessionIdentitySupplied) {
+  if (guardDirectorySafe && sessionIdentitySupplied) {
     // An unscoped legacy guard cannot prove which session created it.
     removeGuardNode(legacyGuard);
   }
-  const guardClaim = claimGuard(sessionGuard, activeSessionId, !sessionIdentitySupplied);
+  const guardClaim = guardDirectorySafe
+    ? claimGuard(sessionGuard, activeSessionId, !sessionIdentitySupplied)
+    : { status: "invalid", legacy: false };
 
   if (payload?.stop_hook_active === true || guardClaim.status === "consumed") {
     if (payload?.stop_hook_active !== true && guardClaim.legacy) {

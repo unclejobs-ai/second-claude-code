@@ -618,6 +618,41 @@ test("malformed, symlink, and directory guards never bypass the quality gate", (
   }
 });
 
+test("a symlinked state directory is never touched by Stop guard handling", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-hook-safety-data-"));
+  const externalState = mkdtempSync(path.join(os.tmpdir(), "scc-hook-safety-external-state-"));
+  const sessionId = "symlinked-state-session";
+  const pdcaPath = path.join(externalState, "pdca-active.json");
+  const legacyGuard = path.join(externalState, ".stop-hook-guard");
+  const sessionGuard = path.join(
+    externalState,
+    path.basename(stopGuardPath(dir, sessionId)),
+  );
+  writeFileSync(pdcaPath, JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  writeFileSync(legacyGuard, String(Date.now()));
+  writeFileSync(sessionGuard, JSON.stringify({
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: sessionId,
+  }));
+  const before = new Map([
+    [pdcaPath, readFileSync(pdcaPath)],
+    [legacyGuard, readFileSync(legacyGuard)],
+    [sessionGuard, readFileSync(sessionGuard)],
+  ]);
+  symlinkSync(externalState, path.join(dir, "state"), "dir");
+
+  const result = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(result.stderr, /Check phase not yet completed/);
+  for (const [targetPath, contents] of before) {
+    assert.deepEqual(readFileSync(targetPath), contents, targetPath);
+  }
+});
+
 test("guard writes do not follow the old predictable temp-file symlink", () => {
   const dir = dataDir();
   writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
