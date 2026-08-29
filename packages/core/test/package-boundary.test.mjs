@@ -64,7 +64,7 @@ test("packed package catches root or fixture exports disappearing from consumer 
       "const core = await import('@second-claude/core'); const fixture = await import('@second-claude/core/fixtures/quality-contract.json', { with: { type: 'json' } }); process.stdout.write(`${core.classifyQualityProfile({ complexity: 'simple', risk: 'low', creatorIntent: true })}:${fixture.default.cases.length}`);"
     ], consumerRoot);
     assert.equal(imported.status, 0, imported.stderr);
-    assert.equal(imported.stdout, "creator:15");
+    assert.equal(imported.stdout, "creator:17");
     await assert.rejects(access(path.join(consumerRoot, "node_modules", "typescript")), { code: "ENOENT" });
   } finally {
     await rm(temporaryRoot, { recursive: true });

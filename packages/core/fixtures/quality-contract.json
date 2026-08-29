@@ -59,6 +59,54 @@
       "expected": ["MISSING_ACCEPTANCE_CRITERIA"]
     },
     {
+      "id": "warning-reviewer-does-not-prove-gate",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "warning", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "unproven"
+    },
+    {
+      "id": "warning-reviewer-does-not-complete-standard-run",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard-warning",
+          "profile": "standard",
+          "currentStage": "promote",
+          "currentPhase": "act",
+          "score": 0.92,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic", "promote"]
+        },
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "warning", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
+      },
+      "expected": ["MISSING_REVIEWER_EVIDENCE"]
+    },
+    {
       "id": "self-review",
       "operation": "validateEvidence",
       "input": {

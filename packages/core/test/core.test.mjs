@@ -398,7 +398,7 @@ test("run completion catches failed or stale evidence being accepted", async () 
 
   assert.deepEqual(
     validateRunCompletion(completedRun(), failed, completionContext()).issues.map((issue) => issue.code),
-    ["FAILED_EVIDENCE", "FAILED_EVIDENCE"]
+    ["FAILED_EVIDENCE", "FAILED_EVIDENCE", "MISSING_REVIEWER_EVIDENCE"]
   );
   assert.deepEqual(
     validateRunCompletion(completedRun(), stale, completionContext()).issues.map((issue) => issue.code),
@@ -747,6 +747,8 @@ test("the shared fixture catches every documented cross-host contract regression
     [
       "valid-standard-run",
       "missing-acceptance-criteria",
+      "warning-reviewer-does-not-prove-gate",
+      "warning-reviewer-does-not-complete-standard-run",
       "self-review",
       "stale-artifact-verdict",
       "refine",

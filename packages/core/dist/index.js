@@ -153,7 +153,7 @@ export function markStaleEvidence(evidence, currentArtifactHash) {
 }
 export function validateEvidence(evidence, context) {
     const issues = [];
-    let hasReviewerEvidence = false;
+    let hasPassingReviewerEvidence = false;
     for (const entry of evidence) {
         if (entry.artifactHash.trim().length === 0) {
             issues.push({ code: "MISSING_ARTIFACT_HASH", message: "Every evidence item needs an artifact hash." });
@@ -174,7 +174,9 @@ export function validateEvidence(evidence, context) {
             issues.push({ code: "FAILED_EVIDENCE", message: "Failed evidence cannot prove the current artifact." });
         }
         if (entry.kind === "reviewer") {
-            hasReviewerEvidence = true;
+            if (entry.result === "pass" || entry.result === true) {
+                hasPassingReviewerEvidence = true;
+            }
             if (isBlank(entry.reviewerId)) {
                 issues.push({ code: "MISSING_REVIEWER_ID", message: "Reviewer evidence needs a reviewer identity." });
             }
@@ -184,8 +186,11 @@ export function validateEvidence(evidence, context) {
             }
         }
     }
-    if (context.reviewRequired && !hasReviewerEvidence) {
-        issues.push({ code: "MISSING_REVIEWER_EVIDENCE", message: "Independent reviewer evidence is required." });
+    if (context.reviewRequired && !hasPassingReviewerEvidence) {
+        issues.push({
+            code: "MISSING_REVIEWER_EVIDENCE",
+            message: "Passing independent reviewer evidence is required."
+        });
     }
     return validationResult(issues);
 }
