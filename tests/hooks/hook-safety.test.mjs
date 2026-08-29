@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
 import { execFileSync, spawnSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
@@ -393,7 +393,7 @@ test("stop_hook_active bypasses the gate and records why", () => {
   }));
   const result = run(sessionEnd, dir, { stop_hook_active: true, session_id: "stop-session" });
   assert.equal(result.status, 0);
-  assert.match(result.stderr, /gate bypassed.*stop_hook_active=true/i);
+  assert.doesNotMatch(result.stderr, /gate bypassed|recursive invocation/i);
   const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
   assert.match(audit, /recursive Stop hook invocation/);
 });
@@ -413,11 +413,72 @@ test("an incomplete PDCA Stop blocks once, then the same-session retry passes", 
   const first = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
   assert.equal(first.status, 2);
   assert.match(first.stderr, /Check phase not yet completed/);
+  assert.match(first.stderr, /Run \/scc:review before finishing the session/);
+  assert.equal(first.stderr.trim().split("\n").length, 1, first.stderr);
+  assert.equal(first.stdout, "");
+
+  const guardPath = path.join(dir, "state", ".stop-hook-guard-same-stop-session");
+  assert.deepEqual(
+    Object.keys(JSON.parse(readFileSync(guardPath, "utf8"))).sort(),
+    ["blocked_at", "session_id", "version"]
+  );
 
   const retry = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
   assert.equal(retry.status, 0, retry.stderr);
+  assert.equal(existsSync(guardPath), false);
+  assert.doesNotMatch(retry.stderr, /Check phase not yet completed|gate bypassed/i);
   const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
   assert.match(audit, /recent stop-hook guard \(retry suppression\)/);
+});
+
+test("a hot-upgrade legacy Stop guard is consumed once without repeating the block", () => {
+  for (const contents of [String(Date.now()), "{malformed-hot-upgrade-state"]) {
+    const dir = dataDir();
+    writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+      topic: "unfinished",
+      current_phase: "plan",
+      completed: [],
+    }));
+    const legacyGuard = path.join(dir, "state", ".stop-hook-guard");
+    writeFileSync(legacyGuard, contents);
+
+    const result = run(
+      sessionEnd,
+      dir,
+      { session_id: "upgraded-stop-session" },
+      { CLAUDE_SESSION_ID: "upgraded-stop-session" }
+    );
+
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(existsSync(legacyGuard), false);
+    assert.doesNotMatch(result.stderr, /Check phase not yet completed|gate bypassed/i);
+    const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
+    assert.match(audit, /legacy stop-hook guard \(hot-upgrade retry suppression\)/);
+  }
+});
+
+test("a stale legacy Stop guard does not weaken the quality gate", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished",
+    current_phase: "plan",
+    completed: [],
+  }));
+  const legacyGuard = path.join(dir, "state", ".stop-hook-guard");
+  writeFileSync(legacyGuard, String(Date.now() - 60_000));
+  const stale = new Date(Date.now() - 60_000);
+  utimesSync(legacyGuard, stale, stale);
+
+  const result = run(
+    sessionEnd,
+    dir,
+    { session_id: "stale-stop-session" },
+    { CLAUDE_SESSION_ID: "stale-stop-session" }
+  );
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Check phase not yet completed/);
+  assert.equal(existsSync(legacyGuard), false);
 });
 
 test("SessionStart survives a large MMBridge packet within the bounded context", () => {

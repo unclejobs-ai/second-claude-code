@@ -60,6 +60,10 @@ function guardFile() {
   return join(STATE_DIR, `.stop-hook-guard${suffix}`);
 }
 
+function legacyGuardFile() {
+  return join(STATE_DIR, ".stop-hook-guard");
+}
+
 function readPayload() {
   try {
     const raw = readHookStdin();
@@ -109,9 +113,9 @@ const ANSI_RED = "\u001b[31m";
 // Guard helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function guardIsActive() {
+function guardIsActive(path = guardFile()) {
   try {
-    const { mtimeMs } = statSync(guardFile());
+    const { mtimeMs } = statSync(path);
     return Date.now() - mtimeMs < GUARD_TTL_MS;
   } catch {
     // No guard file (or unreadable) → not active.
@@ -121,12 +125,16 @@ function guardIsActive() {
 
 function writeGuard() {
   ensureDirUtil(STATE_DIR);
-  writeFileSync(guardFile(), String(Date.now()), "utf8");
+  writeJsonAtomic(guardFile(), {
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: activeSessionId,
+  });
 }
 
-function clearGuard() {
+function clearGuard(path = guardFile()) {
   try {
-    unlinkSync(guardFile());
+    unlinkSync(path);
   } catch {
     // Non-fatal — missing guard or unlink failure; it expires via TTL anyway.
   }
@@ -704,7 +712,6 @@ function main() {
   // a gate bypass is explainable rather than silently weakening the gate.
   if (payload?.stop_hook_active === true) {
     recordGateBypass("stop_hook_active=true (recursive Stop hook invocation)", payload);
-    process.stderr.write("[stop-hook] gate bypassed: stop_hook_active=true (recursive invocation)\n");
   }
 
   // ── Stop-hook-active guard ─────────────────────────────────────────────────
@@ -712,11 +719,27 @@ function main() {
   // attempt, allow through unconditionally. This prevents Claude from being
   // permanently blocked if it retries the Stop event after the user sees the
   // quality gate message.
-  if (payload?.stop_hook_active === true || guardIsActive()) {
-    if (payload?.stop_hook_active !== true) {
+  const sessionGuard = guardFile();
+  const legacyGuard = legacyGuardFile();
+  const sessionGuardActive = guardIsActive(sessionGuard);
+  const legacyGuardActive = legacyGuard !== sessionGuard && guardIsActive(legacyGuard);
+
+  // Before guards were session-scoped, SCC wrote `.stop-hook-guard`. Consume a
+  // recent legacy sentinel once so a plugin hot-upgrade between Stop retries
+  // does not repeat the same transcript block. A stale legacy file cannot
+  // weaken the gate and is removed before normal evaluation.
+  if (legacyGuard !== sessionGuard && existsSync(legacyGuard) && !legacyGuardActive) {
+    clearGuard(legacyGuard);
+  }
+
+  if (payload?.stop_hook_active === true || sessionGuardActive || legacyGuardActive) {
+    if (payload?.stop_hook_active !== true && legacyGuardActive) {
+      recordGateBypass("legacy stop-hook guard (hot-upgrade retry suppression)", payload);
+    } else if (payload?.stop_hook_active !== true) {
       recordGateBypass("recent stop-hook guard (retry suppression)", payload);
     }
-    clearGuard();
+    clearGuard(sessionGuard);
+    if (legacyGuard !== sessionGuard) clearGuard(legacyGuard);
     // Proceed to HANDOFF generation below without blocking.
   } else {
     // ── PDCA quality gate ──────────────────────────────────────────────────
