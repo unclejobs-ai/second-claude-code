@@ -31,6 +31,13 @@ jobs:
           npm run build:mcp
           git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
 
+      - name: Verify checked-in core release
+        run: |
+          git ls-files --error-unmatch packages/core/release/second-claude-core-4.0.0.tgz
+          git ls-files --error-unmatch packages/core/release/second-claude-core-4.0.0.tgz.sha256
+          npm run verify:core-release
+          git diff --exit-code -- packages/core/release/second-claude-core-4.0.0.tgz packages/core/release/second-claude-core-4.0.0.tgz.sha256
+
       - name: Syntax checks
         run: find hooks mcp daemon scripts skills -type f -name '*.mjs' -print0 | xargs -0 -n1 node --check
 

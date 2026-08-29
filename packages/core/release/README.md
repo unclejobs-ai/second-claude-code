@@ -8,4 +8,10 @@ Maintainers regenerate both files from the repository root with:
 npm run release:core
 ```
 
+CI and reviewers verify the checksum and a fresh byte-identical pack without changing either checked-in file:
+
+```sh
+npm run verify:core-release
+```
+
 The release command first verifies that the checked-in `dist` directory exactly matches a clean strict TypeScript build. Plugin startup never runs this command and never compiles or fetches dependencies.

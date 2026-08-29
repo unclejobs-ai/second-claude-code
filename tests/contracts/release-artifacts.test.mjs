@@ -14,6 +14,25 @@ test("CI requires the bundled MCP artifact and notices to be tracked and drift-f
   }
 });
 
+test("CI verifies the checked-in core tarball and checksum without regenerating them", () => {
+  const workflow = readFileSync(path.join(root, ".github", "workflows", "ci.yml"), "utf8");
+  const packageManifest = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+  for (const artifact of [
+    "packages/core/release/second-claude-core-4.0.0.tgz",
+    "packages/core/release/second-claude-core-4.0.0.tgz.sha256",
+  ]) {
+    assert.match(workflow, new RegExp(`git ls-files --error-unmatch ${artifact.replaceAll(".", "\\.")}`));
+    assert.equal(existsSync(path.join(root, artifact)), true, `${artifact} must exist in the release tree`);
+  }
+  assert.match(workflow, /npm run verify:core-release/);
+  assert.equal(packageManifest.scripts["verify:core-release"], "node scripts/verify-core-release.mjs");
+
+  const verifier = readFileSync(path.join(root, "scripts", "verify-core-release.mjs"), "utf8");
+  assert.match(verifier, /createHash\("sha256"\)/);
+  assert.match(verifier, /Buffer\.compare\(freshTarball, checkedTarball\)/);
+  assert.doesNotMatch(verifier, /writeFile|rename|copyFile/);
+});
+
 test("generated notices cover every dependency bundled into the MCP server", () => {
   const noticesPath = path.join(root, "THIRD_PARTY_NOTICES.md");
   assert.equal(existsSync(noticesPath), true);
