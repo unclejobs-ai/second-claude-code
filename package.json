@@ -7,8 +7,8 @@
   "scripts": {
     "build:core": "tsc -p packages/core/tsconfig.json",
     "build:mcp": "node scripts/build-mcp.mjs",
-    "test": "node --test 'tests/**/*.test.mjs' 'packages/core/test/**/*.test.mjs'",
-    "test:core": "npm run verify:core-release && node --test 'packages/core/test/**/*.test.mjs'",
+    "test": "node --test",
+    "test:core": "npm run verify:core-release && node --test packages/core/test/*.test.mjs",
     "verify:core-release": "node scripts/verify-core-release.mjs",
     "release:core": "node scripts/release-core.mjs",
     "verify:core-dist": "node scripts/verify-core-dist.mjs"

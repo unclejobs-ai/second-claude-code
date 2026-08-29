@@ -33,6 +33,21 @@ test("CI verifies the checked-in core tarball and checksum without regenerating 
   assert.doesNotMatch(verifier, /writeFile|rename|copyFile/);
 });
 
+test("npm test discovery stays portable across the supported Node CI matrix", () => {
+  const workflow = readFileSync(path.join(root, ".github", "workflows", "ci.yml"), "utf8");
+  const packageManifest = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+
+  assert.equal(packageManifest.scripts.test, "node --test");
+  assert.equal(
+    packageManifest.scripts["test:core"],
+    "npm run verify:core-release && node --test packages/core/test/*.test.mjs"
+  );
+  assert.doesNotMatch(packageManifest.scripts.test, /\*\*|['"]/);
+  assert.doesNotMatch(packageManifest.scripts["test:core"], /\*\*|['"]/);
+  assert.match(workflow, /node-version:\s*\[20, 22\]/);
+  assert.match(workflow, /name:\s*Full test suite\s*\n\s*run:\s*npm test/);
+});
+
 test("generated notices cover every dependency bundled into the MCP server", () => {
   const noticesPath = path.join(root, "THIRD_PARTY_NOTICES.md");
   assert.equal(existsSync(noticesPath), true);
