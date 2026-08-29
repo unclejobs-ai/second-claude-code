@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
-import { execFileSync, spawnSync } from "node:child_process";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 
@@ -45,6 +46,51 @@ function run(script, dir, payload, extraEnv = {}) {
     },
     input: payload === undefined ? "" : JSON.stringify(payload),
     encoding: "utf8",
+  });
+}
+
+function stopGuardPath(dir, sessionId) {
+  const suffix = sessionId
+    ? `-${createHash("sha256").update(sessionId).digest("hex")}`
+    : "";
+  return path.join(dir, "state", `.stop-hook-guard${suffix}`);
+}
+
+function runWithoutSession(script, dir, payload) {
+  const { CLAUDE_SESSION_ID: _sessionId, ...env } = process.env;
+  return spawnSync(process.execPath, [script], {
+    cwd: root,
+    env: {
+      ...env,
+      CLAUDE_PLUGIN_DATA: dir,
+      CLAUDE_PROJECT_DIR: root,
+      SECOND_CLAUDE_CAPABILITIES: '["node"]',
+    },
+    input: payload === undefined ? "" : JSON.stringify(payload),
+    encoding: "utf8",
+  });
+}
+
+function runAsync(script, dir, payload, sessionId) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [script], {
+      cwd: root,
+      env: {
+        ...process.env,
+        CLAUDE_PLUGIN_DATA: dir,
+        CLAUDE_PROJECT_DIR: root,
+        CLAUDE_SESSION_ID: sessionId,
+        SECOND_CLAUDE_CAPABILITIES: '["node"]',
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk) => { stdout += chunk; });
+    child.stderr.setEncoding("utf8").on("data", (chunk) => { stderr += chunk; });
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stdout, stderr }));
+    child.stdin.end(JSON.stringify(payload));
   });
 }
 
@@ -417,11 +463,13 @@ test("an incomplete PDCA Stop blocks once, then the same-session retry passes", 
   assert.equal(first.stderr.trim().split("\n").length, 1, first.stderr);
   assert.equal(first.stdout, "");
 
-  const guardPath = path.join(dir, "state", ".stop-hook-guard-same-stop-session");
-  assert.deepEqual(
-    Object.keys(JSON.parse(readFileSync(guardPath, "utf8"))).sort(),
-    ["blocked_at", "session_id", "version"]
-  );
+  const guardPath = stopGuardPath(dir, "same-stop-session");
+  const guard = JSON.parse(readFileSync(guardPath, "utf8"));
+  assert.deepEqual(Object.keys(guard).sort(), ["blocked_at", "session_id", "version"]);
+  assert.equal(guard.version, 1);
+  assert.equal(guard.session_id, "same-stop-session");
+  assert.equal(new Date(guard.blocked_at).toISOString(), guard.blocked_at);
+  assert.equal(statSync(guardPath).mode & 0o777, 0o600);
 
   const retry = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
   assert.equal(retry.status, 0, retry.stderr);
@@ -429,32 +477,46 @@ test("an incomplete PDCA Stop blocks once, then the same-session retry passes", 
   assert.doesNotMatch(retry.stderr, /Check phase not yet completed|gate bypassed/i);
   const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
   assert.match(audit, /recent stop-hook guard \(retry suppression\)/);
+
+  const nextStopAttempt = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(nextStopAttempt.status, 2);
 });
 
-test("a hot-upgrade legacy Stop guard is consumed once without repeating the block", () => {
-  for (const contents of [String(Date.now()), "{malformed-hot-upgrade-state"]) {
-    const dir = dataDir();
-    writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
-      topic: "unfinished",
-      current_phase: "plan",
-      completed: [],
-    }));
-    const legacyGuard = path.join(dir, "state", ".stop-hook-guard");
-    writeFileSync(legacyGuard, contents);
+test("a session-tagged Stop never consumes an unscoped legacy guard", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const legacyGuard = stopGuardPath(dir, null);
+  writeFileSync(legacyGuard, String(Date.now()));
 
-    const result = run(
-      sessionEnd,
-      dir,
-      { session_id: "upgraded-stop-session" },
-      { CLAUDE_SESSION_ID: "upgraded-stop-session" }
-    );
+  const result = run(
+    sessionEnd,
+    dir,
+    { session_id: "unrelated-session" },
+    { CLAUDE_SESSION_ID: "unrelated-session" }
+  );
 
-    assert.equal(result.status, 0, result.stderr);
-    assert.equal(existsSync(legacyGuard), false);
-    assert.doesNotMatch(result.stderr, /Check phase not yet completed|gate bypassed/i);
-    const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
-    assert.match(audit, /legacy stop-hook guard \(hot-upgrade retry suppression\)/);
-  }
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Check phase not yet completed/);
+  assert.equal(existsSync(legacyGuard), false);
+});
+
+test("a valid legacy guard remains a one-shot fallback only without session identity", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const legacyGuard = stopGuardPath(dir, null);
+  writeFileSync(legacyGuard, String(Date.now()));
+
+  const result = runWithoutSession(sessionEnd, dir, {});
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(legacyGuard), false);
+  assert.doesNotMatch(result.stderr, /Check phase not yet completed|gate bypassed/i);
+  const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
+  assert.match(audit, /legacy stop-hook guard \(hot-upgrade retry suppression\)/);
 });
 
 test("a stale legacy Stop guard does not weaken the quality gate", () => {
@@ -479,6 +541,110 @@ test("a stale legacy Stop guard does not weaken the quality gate", () => {
   assert.equal(result.status, 2);
   assert.match(result.stderr, /Check phase not yet completed/);
   assert.equal(existsSync(legacyGuard), false);
+});
+
+test("raw session identities cannot alias the same Stop guard", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+
+  const slash = run(sessionEnd, dir, { session_id: "a/b" }, { CLAUDE_SESSION_ID: "a/b" });
+  const plain = run(sessionEnd, dir, { session_id: "ab" }, { CLAUDE_SESSION_ID: "ab" });
+
+  assert.equal(slash.status, 2);
+  assert.equal(plain.status, 2);
+  assert.notEqual(stopGuardPath(dir, "a/b"), stopGuardPath(dir, "ab"));
+});
+
+test("only one concurrent same-session retry can consume a Stop guard", async () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const sessionId = "concurrent-stop-session";
+  const blocked = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+  assert.equal(blocked.status, 2);
+
+  const retries = await Promise.all(Array.from(
+    { length: 12 },
+    () => runAsync(sessionEnd, dir, { session_id: sessionId }, sessionId)
+  ));
+  assert.equal(retries.filter((result) => result.status === 0).length, 1);
+  assert.equal(retries.filter((result) => result.status === 2).length, 11);
+});
+
+test("stale claim cleanup cannot race a fresh same-session claim", async () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const sessionId = "stale-claim-concurrent-session";
+  const blocked = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+  assert.equal(blocked.status, 2);
+
+  const claimedPath = `${stopGuardPath(dir, sessionId)}.claimed`;
+  writeFileSync(claimedPath, "{stale-claim", { mode: 0o600 });
+  const stale = new Date(Date.now() - 60_000);
+  utimesSync(claimedPath, stale, stale);
+
+  const retries = await Promise.all(Array.from(
+    { length: 12 },
+    () => runAsync(sessionEnd, dir, { session_id: sessionId }, sessionId)
+  ));
+  assert.equal(retries.filter((result) => result.status === 0).length, 1);
+  assert.equal(retries.filter((result) => result.status === 2).length, 11);
+});
+
+test("malformed, symlink, and directory guards never bypass the quality gate", () => {
+  for (const guardKind of ["malformed", "symlink", "directory"]) {
+    const dir = dataDir();
+    writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+      topic: "unfinished", current_phase: "plan", completed: [],
+    }));
+    const sessionId = `unsafe-${guardKind}`;
+    const guardPath = stopGuardPath(dir, sessionId);
+    const external = path.join(dir, `external-${guardKind}.txt`);
+    writeFileSync(external, "do-not-overwrite");
+    if (guardKind === "malformed") writeFileSync(guardPath, "{not-json");
+    if (guardKind === "symlink") symlinkSync(external, guardPath);
+    if (guardKind === "directory") mkdirSync(guardPath);
+
+    const result = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+
+    assert.equal(result.status, 2, `${guardKind}: ${result.stderr}`);
+    assert.match(result.stderr, /Check phase not yet completed/);
+    assert.equal(readFileSync(external, "utf8"), "do-not-overwrite");
+  }
+});
+
+test("guard writes do not follow the old predictable temp-file symlink", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const external = path.join(dir, "external-temp-target.txt");
+  writeFileSync(external, "do-not-overwrite");
+  const oldGuardBase = path.join(dir, "state", ".stop-hook-guard-temp-symlink-session");
+  const driver = [
+    'import { symlinkSync } from "node:fs";',
+    `symlinkSync(${JSON.stringify(external)}, ${JSON.stringify(oldGuardBase)} + ".tmp." + process.pid);`,
+    `await import(${JSON.stringify(sessionEnd)} + "?temp-symlink=" + process.pid);`,
+  ].join("\n");
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", driver], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: dir,
+      CLAUDE_PROJECT_DIR: root,
+      CLAUDE_SESSION_ID: "temp-symlink-session",
+    },
+    input: JSON.stringify({ session_id: "temp-symlink-session" }),
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 2, result.stderr);
+  assert.equal(readFileSync(external, "utf8"), "do-not-overwrite");
 });
 
 test("SessionStart survives a large MMBridge packet within the bounded context", () => {
