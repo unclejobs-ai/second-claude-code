@@ -56,6 +56,7 @@ const DATA_DIR =
 const STATE_DIR = join(DATA_DIR, "state");
 let activeSessionId = null;
 let sessionIdentitySupplied = false;
+let stateDirectorySafe = false;
 const STOP_BYPASS_LOG = join(STATE_DIR, "stop-hook-bypass.jsonl");
 
 // Sentinel file used as a stop-hook-active guard.
@@ -104,6 +105,7 @@ function sessionIdFromPayload(payload) {
 }
 
 function recordGateBypass(reason, payload) {
+  if (!stateDirectorySafe) return;
   try {
     ensureDirUtil(STATE_DIR);
     // Keep this diagnostic log bounded; it is not a second state database.
@@ -890,9 +892,30 @@ function recordSessionRecall(state, handoffPath) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main() {
+  // Resolve the state-directory trust boundary before parsing hook input. The
+  // oversized-input path records diagnostics, and every later gate/summary
+  // path reads or writes state, so none of them may run through a symlinked or
+  // otherwise unsafe STATE_DIR.
+  stateDirectorySafe = guardDirectoryIsSafe();
   const payload = readPayload();
   activeSessionId = sessionIdFromPayload(payload);
-  const guardDirectorySafe = guardDirectoryIsSafe();
+
+  if (!stateDirectorySafe) {
+    if (payload?.stop_hook_active === true) {
+      // Claude's recursive Stop marker is authoritative, but an authoritative
+      // bypass must remain a state-free no-op when the state boundary is
+      // unsafe. In particular, do not consume guards, audit, summarize, or
+      // update any file reachable through STATE_DIR.
+      console.error("[stop-hook] unsafe state directory; recursive Stop allowed without state access");
+      return;
+    }
+    process.stderr.write(
+      "SCC state directory is unsafe; refusing to bypass the session quality gate.\n"
+    );
+    process.exit(2);
+  }
+
+  const guardDirectorySafe = stateDirectorySafe;
 
   // Claude marks recursive Stop-hook invocations with stop_hook_active. This
   // is the authoritative re-entry signal; honor it and leave an audit trail so

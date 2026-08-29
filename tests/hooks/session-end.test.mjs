@@ -110,15 +110,15 @@ test("session end persists a handoff from canonical state files", () => {
   assert.match(handoff, /\/scc:workflow run weekly-digest/);
 });
 
-test("session end fails open when the plugin data path is not writable as a directory", () => {
+test("session end fail-closes when the plugin data path cannot contain a safe state directory", () => {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
   const dataFile = path.join(tempDir, "not-a-directory");
   writeFileSync(dataFile, "occupied", "utf8");
 
   const result = runSessionEnd(dataFile);
 
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stderr, /session-end.*fail-open/i);
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(result.stderr, /state directory is unsafe/i);
   assert.doesNotMatch(result.stderr, /uncaught|node:internal/i);
 });
 

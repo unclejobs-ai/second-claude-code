@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
 import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import os from "node:os";
@@ -647,9 +647,90 @@ test("a symlinked state directory is never touched by Stop guard handling", () =
   const result = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
 
   assert.equal(result.status, 2, result.stderr);
-  assert.match(result.stderr, /Check phase not yet completed/);
+  assert.match(result.stderr, /state directory is unsafe/i);
   for (const [targetPath, contents] of before) {
     assert.deepEqual(readFileSync(targetPath), contents, targetPath);
+  }
+});
+
+test("an unsafe state directory fail-closes ordinary Stop before any state access", () => {
+  for (const scenario of ["empty", "completed", "oversized"]) {
+    const dir = mkdtempSync(path.join(os.tmpdir(), `scc-hook-unsafe-${scenario}-data-`));
+    const externalState = mkdtempSync(path.join(os.tmpdir(), `scc-hook-unsafe-${scenario}-target-`));
+    writeFileSync(path.join(externalState, "marker.txt"), `unchanged-${scenario}`);
+    if (scenario === "completed") {
+      writeFileSync(path.join(externalState, "pdca-active.json"), JSON.stringify({
+        topic: "completed",
+        current_phase: "act",
+        completed: ["plan", "do", "check", "act"],
+      }));
+    }
+    symlinkSync(externalState, path.join(dir, "state"), "dir");
+    const namesBefore = readdirSync(externalState).sort();
+    const contentsBefore = new Map(namesBefore.map((name) => [
+      name,
+      readFileSync(path.join(externalState, name)),
+    ]));
+
+    const result = scenario === "oversized"
+      ? spawnSync(process.execPath, [sessionEnd], {
+          cwd: root,
+          env: {
+            ...process.env,
+            CLAUDE_PLUGIN_DATA: dir,
+            CLAUDE_PROJECT_DIR: root,
+            CLAUDE_SESSION_ID: `unsafe-${scenario}-session`,
+          },
+          input: JSON.stringify({ payload: "x".repeat(600 * 1024) }),
+          encoding: "utf8",
+        })
+      : run(
+          sessionEnd,
+          dir,
+          { session_id: `unsafe-${scenario}-session` },
+          { CLAUDE_SESSION_ID: `unsafe-${scenario}-session` },
+        );
+
+    assert.equal(result.status, 2, `${scenario}: ${result.stderr}`);
+    assert.match(result.stderr, /state directory is unsafe/i);
+    assert.deepEqual(readdirSync(externalState).sort(), namesBefore, scenario);
+    for (const [name, contents] of contentsBefore) {
+      assert.deepEqual(readFileSync(path.join(externalState, name)), contents, `${scenario}:${name}`);
+    }
+  }
+});
+
+test("an authoritative recursive Stop never mutates an unsafe state target", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-hook-unsafe-recursive-data-"));
+  const externalState = mkdtempSync(path.join(os.tmpdir(), "scc-hook-unsafe-recursive-target-"));
+  const sessionId = "unsafe-recursive-session";
+  writeFileSync(path.join(externalState, "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  writeFileSync(path.join(externalState, path.basename(stopGuardPath(dir, sessionId))), JSON.stringify({
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: sessionId,
+  }));
+  symlinkSync(externalState, path.join(dir, "state"), "dir");
+  const namesBefore = readdirSync(externalState).sort();
+  const contentsBefore = new Map(namesBefore.map((name) => [
+    name,
+    readFileSync(path.join(externalState, name)),
+  ]));
+
+  const result = run(
+    sessionEnd,
+    dir,
+    { stop_hook_active: true, session_id: sessionId },
+    { CLAUDE_SESSION_ID: sessionId },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /recursive Stop allowed without state access/);
+  assert.deepEqual(readdirSync(externalState).sort(), namesBefore);
+  for (const [name, contents] of contentsBefore) {
+    assert.deepEqual(readFileSync(path.join(externalState, name)), contents, name);
   }
 });
 
