@@ -211,3 +211,44 @@ test("stop-failure does not access state through a symlinked state directory", (
   assert.deepEqual(snapshotTree(targetState), before);
   assert.equal(existsSync(path.join(pluginData, "events")), false);
 });
+
+test("stop-failure recovery does not follow a symlinked events directory", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-events-link-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const targetEvents = path.join(sandbox, "target-events");
+  mkdirSync(path.join(pluginData, "state"), { recursive: true });
+  mkdirSync(targetEvents);
+  writeFileSync(
+    statePath(pluginData, "pdca-active.json"),
+    JSON.stringify({ run_id: "events-link", current_phase: "act", cycle_count: 3 })
+  );
+  symlinkSync(targetEvents, path.join(pluginData, "events"), "dir");
+  const before = snapshotTree(targetEvents);
+
+  const result = runHook(pluginData);
+
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(statePath(pluginData, "pdca-crash-recovery.json")), true);
+  assert.deepEqual(snapshotTree(targetEvents), before);
+});
+
+test("stop-failure recovery does not follow a symlinked event log leaf", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-event-file-link-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const targetLog = path.join(sandbox, "target.jsonl");
+  mkdirSync(path.join(pluginData, "state"), { recursive: true });
+  mkdirSync(path.join(pluginData, "events"));
+  writeFileSync(targetLog, "outside-before\n");
+  writeFileSync(
+    statePath(pluginData, "pdca-active.json"),
+    JSON.stringify({ run_id: "leaf-link", current_phase: "check", cycle_count: 2 })
+  );
+  symlinkSync(targetLog, path.join(pluginData, "events", "pdca-leaf-link.jsonl"));
+  const before = readFileSync(targetLog, "utf8");
+
+  const result = runHook(pluginData);
+
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(statePath(pluginData, "pdca-crash-recovery.json")), true);
+  assert.equal(readFileSync(targetLog, "utf8"), before);
+});

@@ -1,6 +1,6 @@
 import { lstatSync } from "fs";
 import { tmpdir } from "os";
-import { dirname, isAbsolute, parse, relative, resolve } from "path";
+import { dirname, isAbsolute, join, parse, relative, resolve } from "path";
 
 function pathIsWithin(candidate, root) {
   const offset = relative(root, candidate);
@@ -37,6 +37,30 @@ export function stateDirectoryIsSafe(stateDirectory) {
   try {
     const stat = lstatSync(stateDirectory);
     return stat.isDirectory() && !stat.isSymbolicLink();
+  } catch (error) {
+    return error?.code === "ENOENT";
+  }
+}
+
+export function eventLogBoundaryIsSafe(dataDirectory, runId) {
+  if (
+    typeof runId !== "string"
+    || runId.includes("..")
+    || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,119}$/.test(runId)
+  ) {
+    return false;
+  }
+  const eventsDirectory = join(resolve(dataDirectory), "events");
+  try {
+    const eventsStat = lstatSync(eventsDirectory);
+    if (eventsStat.isSymbolicLink() || !eventsStat.isDirectory()) return false;
+  } catch (error) {
+    return error?.code === "ENOENT";
+  }
+
+  try {
+    const eventStat = lstatSync(join(eventsDirectory, `pdca-${runId}.jsonl`));
+    return eventStat.isFile() && !eventStat.isSymbolicLink();
   } catch (error) {
     return error?.code === "ENOENT";
   }

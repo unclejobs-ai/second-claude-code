@@ -14,7 +14,11 @@ import { join, dirname, resolve } from "path";
 import { fileURLToPath } from "url";
 import { readJsonSafe, writeJsonAtomic } from "./lib/utils.mjs";
 import { logEvent } from "./lib/event-log.mjs";
-import { dataDirectoryIsSafe, stateDirectoryIsSafe } from "./lib/state-boundary.mjs";
+import {
+  dataDirectoryIsSafe,
+  eventLogBoundaryIsSafe,
+  stateDirectoryIsSafe,
+} from "./lib/state-boundary.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
@@ -48,6 +52,7 @@ function main() {
 
     // Log error event to the run's event log
     try {
+      if (!eventLogBoundaryIsSafe(DATA_DIR, active.run_id)) return;
       logEvent(DATA_DIR, active.run_id, {
         type: "error",
         phase: active.current_phase,
