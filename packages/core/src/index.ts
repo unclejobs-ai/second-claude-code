@@ -513,6 +513,7 @@ export interface EvolutionIsolationAttestation {
 }
 
 export interface EvolutionValidationContext {
+  readonly currentArtifactHash: string;
   readonly evaluatorAssets: readonly string[];
   readonly policyAssets: readonly string[];
   readonly benchmarkAssets: readonly string[];
@@ -538,6 +539,13 @@ export function validateEvolutionProposal(
   if (proposal.isolatedWorktree.trim().length === 0) {
     issues.push({ code: "MISSING_ISOLATED_WORKTREE", message: "Evolution requires an isolated worktree." });
   }
+
+  const evidenceValidation = validateEvidence(proposal.validationEvidence, {
+    currentArtifactHash: context.currentArtifactHash,
+    producerId: proposal.creatorId,
+    reviewRequired: true
+  });
+  issues.push(...evidenceValidation.issues);
 
   const isolation = context.isolation;
   if (isolation === undefined) {

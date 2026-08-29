@@ -147,6 +147,7 @@ export interface EvolutionIsolationAttestation {
     readonly timestamp: string;
 }
 export interface EvolutionValidationContext {
+    readonly currentArtifactHash: string;
     readonly evaluatorAssets: readonly string[];
     readonly policyAssets: readonly string[];
     readonly benchmarkAssets: readonly string[];

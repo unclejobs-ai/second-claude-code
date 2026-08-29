@@ -26,6 +26,32 @@ function currentEvidence() {
   ];
 }
 
+function evolutionEvidence(overrides = {}) {
+  const {
+    artifactHash = CURRENT_HASH,
+    producerId = "creator-1",
+    reviewerId = "reviewer-1",
+    result = "pass"
+  } = overrides;
+  return [
+    {
+      kind: "artifact",
+      artifactHash,
+      producerId,
+      result: "pass",
+      timestamp: "2026-08-28T00:00:00.000Z"
+    },
+    {
+      kind: "reviewer",
+      artifactHash,
+      producerId,
+      reviewerId,
+      result,
+      timestamp: "2026-08-28T00:01:00.000Z"
+    }
+  ];
+}
+
 function gateInput(overrides = {}) {
   return {
     findings: [],
@@ -86,6 +112,7 @@ function validIsolation(overrides = {}) {
 
 function evolutionContext(overrides = {}) {
   return {
+    currentArtifactHash: CURRENT_HASH,
     evaluatorAssets: [],
     policyAssets: [],
     benchmarkAssets: [],
@@ -511,7 +538,7 @@ test("evolution validation catches creator/evaluator and protected benchmark con
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence({ producerId: "agent-1" }),
     humanApproval: "approved"
   };
   const result = validateEvolutionProposal(proposal, evolutionContext({
@@ -545,12 +572,59 @@ test("evolution validation catches nonblank branch and worktree claims without a
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
   const result = validateEvolutionProposal(proposal, evolutionContext({ isolation: undefined }));
 
   assert.deepEqual(result.issues.map((issue) => issue.code), ["MISSING_ISOLATION_ATTESTATION"]);
+});
+
+test("evolution validation requires current passing independent candidate evidence", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const proposal = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: evolutionEvidence(),
+    humanApproval: "pending"
+  };
+
+  assert.equal(validateEvolutionProposal(proposal, evolutionContext()).valid, true);
+  assert.deepEqual(
+    validateEvolutionProposal(
+      { ...proposal, validationEvidence: [] },
+      evolutionContext()
+    ).issues.map((issue) => issue.code),
+    ["MISSING_REVIEWER_EVIDENCE"]
+  );
+  assert.deepEqual(
+    validateEvolutionProposal(
+      { ...proposal, validationEvidence: evolutionEvidence({ artifactHash: "sha256:stale" }) },
+      evolutionContext()
+    ).issues.map((issue) => issue.code),
+    ["STALE_EVIDENCE", "STALE_EVIDENCE"]
+  );
+  assert.deepEqual(
+    validateEvolutionProposal(
+      { ...proposal, validationEvidence: evolutionEvidence({ result: "fail" }) },
+      evolutionContext()
+    ).issues.map((issue) => issue.code),
+    ["FAILED_EVIDENCE", "MISSING_REVIEWER_EVIDENCE"]
+  );
+  assert.deepEqual(
+    validateEvolutionProposal(
+      { ...proposal, validationEvidence: evolutionEvidence({ reviewerId: "creator-1" }) },
+      evolutionContext()
+    ).issues.map((issue) => issue.code),
+    ["SELF_REVIEW"]
+  );
 });
 
 test("evolution validation catches attested branch and worktree identities that do not exist", async () => {
@@ -565,7 +639,7 @@ test("evolution validation catches attested branch and worktree identities that 
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
   const result = validateEvolutionProposal(proposal, evolutionContext({
@@ -594,7 +668,7 @@ test("evolution validation catches candidate isolation equal to the base or curr
       heldOutBenchmarkId: "held-out-v1",
       baselineScore: 0.7,
       candidateScore: 0.8,
-      validationEvidence: currentEvidence(),
+      validationEvidence: evolutionEvidence(),
       humanApproval: "pending"
     };
     const result = validateEvolutionProposal(proposal, evolutionContext({
@@ -620,7 +694,7 @@ test("evolution validation catches an attestation bound to a different candidate
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
   const result = validateEvolutionProposal(proposal, evolutionContext({
@@ -645,7 +719,7 @@ test("evolution validation catches creator or evaluator supplied isolation attes
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
 
@@ -669,7 +743,7 @@ test("evolution validation catches blank host isolation identities", async () =>
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
   for (const field of [
@@ -706,7 +780,7 @@ test("evolution validation catches stale isolation attestations at an explicit e
     heldOutBenchmarkId: "held-out-v1",
     baselineScore: 0.7,
     candidateScore: 0.8,
-    validationEvidence: currentEvidence(),
+    validationEvidence: evolutionEvidence(),
     humanApproval: "pending"
   };
   const stale = validateEvolutionProposal(proposal, evolutionContext({
@@ -761,6 +835,8 @@ test("the shared fixture catches every documented cross-host contract regression
       "current-evolution-isolation",
       "blank-evolution-isolation-attestation",
       "stale-evolution-isolation-attestation",
+      "empty-evolution-validation-evidence",
+      "untrusted-evolution-validation-evidence",
       "invalid-creator-evaluator-benchmark-isolation"
     ]
   );

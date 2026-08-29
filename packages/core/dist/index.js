@@ -280,6 +280,12 @@ export function validateEvolutionProposal(proposal, context) {
     if (proposal.isolatedWorktree.trim().length === 0) {
         issues.push({ code: "MISSING_ISOLATED_WORKTREE", message: "Evolution requires an isolated worktree." });
     }
+    const evidenceValidation = validateEvidence(proposal.validationEvidence, {
+        currentArtifactHash: context.currentArtifactHash,
+        producerId: proposal.creatorId,
+        reviewRequired: true
+    });
+    issues.push(...evidenceValidation.issues);
     const isolation = context.isolation;
     if (isolation === undefined) {
         issues.push({

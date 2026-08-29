@@ -59,7 +59,7 @@ const proposal: EvolutionProposal = {
   heldOutBenchmarkId: "benchmark-1",
   baselineScore: 0.7,
   candidateScore: 0.8,
-  validationEvidence: evidence,
+  validationEvidence: evidence.map((entry) => ({ ...entry, producerId: "creator-1" })),
   humanApproval: "pending"
 };
 
@@ -80,6 +80,7 @@ validateRunCompletion(run, evidence, {
   independentReviewerAvailable: true
 });
 const evolutionContext: EvolutionValidationContext = {
+  currentArtifactHash: "sha256:current",
   evaluatorAssets: [],
   policyAssets: [],
   benchmarkAssets: [],
