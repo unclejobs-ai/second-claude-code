@@ -33,8 +33,9 @@ import {
   appendFileSync,
 } from "fs";
 import { createHash, randomBytes } from "crypto";
-import { join, dirname } from "path";
+import { join, dirname, isAbsolute, parse, relative, resolve } from "path";
 import { fileURLToPath } from "url";
+import { tmpdir } from "os";
 import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
 import { generateCycleReport } from "./lib/report-generator.mjs";
 import { isSoulLearning, readSoulState, updateSoulState } from "./lib/soul-observer.mjs";
@@ -51,8 +52,9 @@ import { readHookStdin, readTextFileLimited, sanitizeExternalText } from "./lib/
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
-const DATA_DIR =
-  process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
+const DATA_DIR = resolve(
+  process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data")
+);
 const STATE_DIR = join(DATA_DIR, "state");
 let activeSessionId = null;
 let sessionIdentitySupplied = false;
@@ -286,6 +288,37 @@ function guardDirectoryIsSafe() {
     return stat.isDirectory() && !stat.isSymbolicLink();
   } catch {
     return false;
+  }
+}
+
+function pathIsWithin(candidate, root) {
+  const offset = relative(root, candidate);
+  return offset === "" || (!offset.startsWith("..") && !isAbsolute(offset));
+}
+
+function dataDirectoryIsSafe() {
+  // macOS exposes its temporary tree through lexical aliases such as /var ->
+  // /private/var. Treat the host-provided temp root as a canonicalized trust
+  // anchor, then reject every symlink from that anchor down to DATA_DIR. Paths
+  // outside the temp tree are checked all the way to the filesystem root.
+  const temporaryRoot = resolve(tmpdir());
+  const boundary = pathIsWithin(DATA_DIR, temporaryRoot)
+    ? temporaryRoot
+    : parse(DATA_DIR).root;
+  let cursor = DATA_DIR;
+
+  while (true) {
+    try {
+      const stat = lstatSync(cursor);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+    } catch (error) {
+      if (error?.code !== "ENOENT") return false;
+    }
+
+    if (cursor === boundary) return true;
+    const parent = dirname(cursor);
+    if (parent === cursor) return true;
+    cursor = parent;
   }
 }
 
@@ -892,25 +925,27 @@ function recordSessionRecall(state, handoffPath) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main() {
-  // Resolve the state-directory trust boundary before parsing hook input. The
-  // oversized-input path records diagnostics, and every later gate/summary
-  // path reads or writes state, so none of them may run through a symlinked or
-  // otherwise unsafe STATE_DIR.
-  stateDirectorySafe = guardDirectoryIsSafe();
+  // Resolve the plugin-data and state-directory trust boundaries before
+  // parsing hook input. The oversized-input path records diagnostics, and
+  // every later gate/summary path reads or writes state, so none of them may
+  // run through a symlinked or otherwise unsafe STATE_DIR.
+  const dataDirectorySafe = dataDirectoryIsSafe();
+  stateDirectorySafe = dataDirectorySafe && guardDirectoryIsSafe();
   const payload = readPayload();
   activeSessionId = sessionIdFromPayload(payload);
 
   if (!stateDirectorySafe) {
+    const unsafeBoundary = dataDirectorySafe ? "state directory" : "plugin data directory";
     if (payload?.stop_hook_active === true) {
       // Claude's recursive Stop marker is authoritative, but an authoritative
       // bypass must remain a state-free no-op when the state boundary is
       // unsafe. In particular, do not consume guards, audit, summarize, or
       // update any file reachable through STATE_DIR.
-      console.error("[stop-hook] unsafe state directory; recursive Stop allowed without state access");
+      console.error(`[stop-hook] unsafe ${unsafeBoundary}; recursive Stop allowed without state access`);
       return;
     }
     process.stderr.write(
-      "SCC state directory is unsafe; refusing to bypass the session quality gate.\n"
+      `SCC ${unsafeBoundary} is unsafe; refusing to bypass the session quality gate.\n`
     );
     process.exit(2);
   }

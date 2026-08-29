@@ -118,7 +118,7 @@ test("session end fail-closes when the plugin data path cannot contain a safe st
   const result = runSessionEnd(dataFile);
 
   assert.equal(result.status, 2, result.stderr);
-  assert.match(result.stderr, /state directory is unsafe/i);
+  assert.match(result.stderr, /plugin data directory is unsafe/i);
   assert.doesNotMatch(result.stderr, /uncaught|node:internal/i);
 });
 

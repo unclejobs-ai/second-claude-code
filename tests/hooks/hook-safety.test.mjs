@@ -33,6 +33,20 @@ function dataDir() {
   return dir;
 }
 
+function snapshotTree(rootDir, currentDir = rootDir, snapshot = new Map()) {
+  for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+    const absolute = path.join(currentDir, entry.name);
+    const relativePath = path.relative(rootDir, absolute);
+    if (entry.isDirectory()) {
+      snapshot.set(`${relativePath}/`, "directory");
+      snapshotTree(rootDir, absolute, snapshot);
+    } else {
+      snapshot.set(relativePath, readFileSync(absolute));
+    }
+  }
+  return snapshot;
+}
+
 function run(script, dir, payload, extraEnv = {}) {
   return spawnSync(process.execPath, [script], {
     cwd: root,
@@ -731,6 +745,75 @@ test("an authoritative recursive Stop never mutates an unsafe state target", () 
   assert.deepEqual(readdirSync(externalState).sort(), namesBefore);
   for (const [name, contents] of contentsBefore) {
     assert.deepEqual(readFileSync(path.join(externalState, name)), contents, name);
+  }
+});
+
+test("symlinked plugin data or parent paths are rejected before every state access", () => {
+  for (const linkKind of ["data", "parent"]) {
+    for (const scenario of ["empty", "completed", "oversized", "recursive"]) {
+      const rootDir = mkdtempSync(path.join(os.tmpdir(), `scc-hook-${linkKind}-${scenario}-root-`));
+      const externalRoot = mkdtempSync(path.join(os.tmpdir(), `scc-hook-${linkKind}-${scenario}-external-`));
+      let pluginData;
+      let externalData;
+      if (linkKind === "data") {
+        externalData = externalRoot;
+        pluginData = path.join(rootDir, "plugin-data");
+        symlinkSync(externalData, pluginData, "dir");
+      } else {
+        externalData = path.join(externalRoot, "plugin-data");
+        mkdirSync(externalData);
+        const linkedParent = path.join(rootDir, "linked-parent");
+        symlinkSync(externalRoot, linkedParent, "dir");
+        pluginData = path.join(linkedParent, "plugin-data");
+      }
+
+      const stateDir = path.join(externalData, "state");
+      mkdirSync(stateDir);
+      writeFileSync(path.join(externalData, "marker.txt"), `${linkKind}-${scenario}`);
+      const sessionId = `${linkKind}-${scenario}-session`;
+      if (scenario === "completed") {
+        writeFileSync(path.join(stateDir, "pdca-active.json"), JSON.stringify({
+          topic: "completed",
+          current_phase: "act",
+          completed: ["plan", "do", "check", "act"],
+        }));
+      } else if (scenario === "recursive") {
+        writeFileSync(path.join(stateDir, "pdca-active.json"), JSON.stringify({
+          topic: "unfinished", current_phase: "plan", completed: [],
+        }));
+        writeFileSync(path.join(stateDir, path.basename(stopGuardPath(pluginData, sessionId))), JSON.stringify({
+          version: 1,
+          blocked_at: new Date().toISOString(),
+          session_id: sessionId,
+        }));
+      }
+      const before = snapshotTree(externalData);
+
+      const result = scenario === "oversized"
+        ? spawnSync(process.execPath, [sessionEnd], {
+            cwd: root,
+            env: {
+              ...process.env,
+              CLAUDE_PLUGIN_DATA: pluginData,
+              CLAUDE_PROJECT_DIR: root,
+              CLAUDE_SESSION_ID: sessionId,
+            },
+            input: JSON.stringify({ payload: "x".repeat(600 * 1024) }),
+            encoding: "utf8",
+          })
+        : run(
+            sessionEnd,
+            pluginData,
+            scenario === "recursive"
+              ? { stop_hook_active: true, session_id: sessionId }
+              : { session_id: sessionId },
+            { CLAUDE_SESSION_ID: sessionId },
+          );
+
+      assert.equal(result.status, scenario === "recursive" ? 0 : 2, `${linkKind}:${scenario}: ${result.stderr}`);
+      assert.match(result.stderr, /unsafe plugin data directory|plugin data directory is unsafe/i);
+      assert.deepEqual(snapshotTree(externalData), before, `${linkKind}:${scenario}`);
+    }
   }
 });
 
