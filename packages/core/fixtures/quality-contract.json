@@ -1,0 +1,631 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "id": "valid-standard-run",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard",
+          "profile": "standard",
+          "currentStage": "promote",
+          "currentPhase": "act",
+          "score": 0.92,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic", "promote"]
+        },
+        "evidence": [
+          {
+            "kind": "artifact",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          },
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "reviewerId": "reviewer-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:01:00.000Z"
+          }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
+      },
+      "expected": []
+    },
+    {
+      "id": "missing-acceptance-criteria",
+      "operation": "validatePlan",
+      "input": {
+        "nodes": [
+          {
+            "id": "build",
+            "acceptanceCriteria": [],
+            "dependencies": [],
+            "fileOwnership": ["src/build.ts"]
+          }
+        ]
+      },
+      "expected": ["MISSING_ACCEPTANCE_CRITERIA"]
+    },
+    {
+      "id": "blank-plan-node-id",
+      "operation": "validatePlan",
+      "input": {
+        "nodes": [
+          {
+            "id": " ",
+            "acceptanceCriteria": ["done"],
+            "dependencies": [],
+            "fileOwnership": []
+          }
+        ]
+      },
+      "expected": ["MISSING_NODE_ID"]
+    },
+    {
+      "id": "warning-reviewer-does-not-prove-gate",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "warning", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "unproven"
+    },
+    {
+      "id": "warning-reviewer-does-not-complete-standard-run",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard-warning",
+          "profile": "standard",
+          "currentStage": "promote",
+          "currentPhase": "act",
+          "score": 0.92,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic", "promote"]
+        },
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "warning", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
+      },
+      "expected": ["MISSING_REVIEWER_EVIDENCE"]
+    },
+    {
+      "id": "self-review",
+      "operation": "validateEvidence",
+      "input": {
+        "evidence": [
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-current",
+            "producerId": "worker-1",
+            "reviewerId": "worker-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "reviewRequired": true
+        }
+      },
+      "expected": ["SELF_REVIEW"]
+    },
+    {
+      "id": "stale-artifact-verdict",
+      "operation": "validateEvidence",
+      "input": {
+        "evidence": [
+          {
+            "kind": "reviewer",
+            "artifactHash": "sha256:fixture-old",
+            "producerId": "worker-1",
+            "reviewerId": "reviewer-1",
+            "result": "pass",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "reviewRequired": true
+        }
+      },
+      "expected": ["STALE_EVIDENCE"]
+    },
+    {
+      "id": "refine",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "implementation", "severity": "medium", "correctable": true, "direction": "tighten" }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "refine"
+    },
+    {
+      "id": "pivot",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "plan", "severity": "high", "correctable": false }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "pivot"
+    },
+    {
+      "id": "reviewer-independence-unavailable",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [],
+        "evidence": [],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": false,
+        "refineCount": 0,
+        "pivotCount": 0
+      },
+      "expected": "unproven"
+    },
+    {
+      "id": "refine-cap",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "implementation", "severity": "medium", "correctable": true, "direction": "tighten" }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 3,
+        "pivotCount": 0
+      },
+      "expected": "block"
+    },
+    {
+      "id": "pivot-cap",
+      "operation": "evaluateGate",
+      "input": {
+        "findings": [{ "kind": "acceptance", "severity": "high", "correctable": false }],
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "currentArtifactHash": "sha256:fixture-current",
+        "producerId": "worker-1",
+        "reviewRequired": true,
+        "independentProviderAvailable": true,
+        "independentReviewerAvailable": true,
+        "refineCount": 0,
+        "pivotCount": 2
+      },
+      "expected": "block"
+    },
+    {
+      "id": "missing-promote",
+      "operation": "validateRunCompletion",
+      "input": {
+        "run": {
+          "runId": "run-standard",
+          "profile": "standard",
+          "currentStage": "critic",
+          "currentPhase": "check",
+          "score": 0.9,
+          "failures": [],
+          "iteration": 1,
+          "refineCount": 0,
+          "pivotCount": 0,
+          "gateDecision": "proceed",
+          "completedStages": ["explore", "plan", "work", "critic"]
+        },
+        "evidence": [
+          { "kind": "artifact", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "result": "pass", "timestamp": "2026-08-28T00:00:00.000Z" },
+          { "kind": "reviewer", "artifactHash": "sha256:fixture-current", "producerId": "worker-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:01:00.000Z" }
+        ],
+        "context": {
+          "currentArtifactHash": "sha256:fixture-current",
+          "producerId": "worker-1",
+          "independentReviewerAvailable": true
+        }
+      },
+      "expected": ["MISSING_PROMOTE_STAGE"]
+    },
+    {
+      "id": "nonexistent-evolution-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": false,
+            "worktreeExists": false,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["ISOLATED_BRANCH_NOT_FOUND", "ISOLATED_WORKTREE_NOT_FOUND"]
+    },
+    {
+      "id": "current-evolution-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "review/task-2",
+          "isolatedWorktree": "/worktrees/review-task-2",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "review/task-2",
+            "candidateWorktree": "/worktrees/review-task-2",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["BRANCH_NOT_ISOLATED", "WORKTREE_NOT_ISOLATED"]
+    },
+    {
+      "id": "blank-evolution-isolation-attestation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "",
+            "baseWorktree": "",
+            "hostCurrentBranch": "",
+            "hostCurrentWorktree": "",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": ""
+          }
+        }
+      },
+      "expected": ["INVALID_ISOLATION_ATTESTATION"]
+    },
+    {
+      "id": "stale-evolution-isolation-attestation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:10:00.001Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["STALE_ISOLATION_ATTESTATION"]
+    },
+    {
+      "id": "empty-evolution-validation-evidence",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": ["MISSING_REVIEWER_EVIDENCE"]
+    },
+    {
+      "id": "untrusted-evolution-validation-evidence",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-stale", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-stale", "producerId": "creator-1", "reviewerId": "creator-1", "result": "fail", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000,
+          "isolation": {
+            "candidateId": "candidate-1",
+            "candidateBranch": "evolve/candidate-1",
+            "candidateWorktree": "/worktrees/candidate-1",
+            "branchExists": true,
+            "worktreeExists": true,
+            "baseBranch": "main",
+            "baseWorktree": "/repos/scc",
+            "hostCurrentBranch": "review/task-2",
+            "hostCurrentWorktree": "/worktrees/review-task-2",
+            "attestorId": "host-isolation-resolver",
+            "timestamp": "2026-08-28T00:00:00.000Z"
+          }
+        }
+      },
+      "expected": [
+        "STALE_EVIDENCE",
+        "STALE_EVIDENCE",
+        "FAILED_EVIDENCE",
+        "SELF_REVIEW",
+        "MISSING_REVIEWER_EVIDENCE"
+      ]
+    },
+    {
+      "id": "invalid-evolution-benchmark-comparison",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": " ",
+          "baselineScore": 0.7,
+          "candidateScore": 0.7,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000
+        }
+      },
+      "expected": [
+        "MISSING_HELD_OUT_BENCHMARK_ID",
+        "CANDIDATE_NOT_IMPROVED",
+        "MISSING_ISOLATION_ATTESTATION"
+      ]
+    },
+    {
+      "id": "invalid-creator-evaluator-benchmark-isolation",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "agent-1",
+          "isolatedBranch": "",
+          "isolatedWorktree": "",
+          "changedAssets": ["benchmarks/held-out.json", "evaluators/agent-1.md"],
+          "evaluatorId": "agent-1",
+          "heldOutBenchmarkId": "held-out-v1",
+          "baselineScore": 0.7,
+          "candidateScore": 0.8,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "agent-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "agent-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "approved"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": ["evaluators/agent-1.md"],
+          "policyAssets": [],
+          "benchmarkAssets": ["benchmarks/held-out.json"],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000
+        }
+      },
+      "expected": [
+        "CREATOR_EVALUATOR_CONFLICT",
+        "MISSING_ISOLATED_BRANCH",
+        "MISSING_ISOLATED_WORKTREE",
+        "MISSING_ISOLATION_ATTESTATION",
+        "EVALUATOR_ASSET_MODIFIED",
+        "BENCHMARK_ASSET_MODIFIED",
+        "HUMAN_APPROVAL_PREGRANTED"
+      ]
+    }
+  ]
+}

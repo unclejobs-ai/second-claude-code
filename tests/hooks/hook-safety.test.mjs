@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
-import { execFileSync, spawnSync } from "node:child_process";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, symlinkSync, utimesSync, writeFileSync } from "node:fs";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import os from "node:os";
 import path from "node:path";
 
@@ -32,6 +33,20 @@ function dataDir() {
   return dir;
 }
 
+function snapshotTree(rootDir, currentDir = rootDir, snapshot = new Map()) {
+  for (const entry of readdirSync(currentDir, { withFileTypes: true })) {
+    const absolute = path.join(currentDir, entry.name);
+    const relativePath = path.relative(rootDir, absolute);
+    if (entry.isDirectory()) {
+      snapshot.set(`${relativePath}/`, "directory");
+      snapshotTree(rootDir, absolute, snapshot);
+    } else {
+      snapshot.set(relativePath, readFileSync(absolute));
+    }
+  }
+  return snapshot;
+}
+
 function run(script, dir, payload, extraEnv = {}) {
   return spawnSync(process.execPath, [script], {
     cwd: root,
@@ -45,6 +60,51 @@ function run(script, dir, payload, extraEnv = {}) {
     },
     input: payload === undefined ? "" : JSON.stringify(payload),
     encoding: "utf8",
+  });
+}
+
+function stopGuardPath(dir, sessionId) {
+  const suffix = sessionId
+    ? `-${createHash("sha256").update(sessionId).digest("hex")}`
+    : "";
+  return path.join(dir, "state", `.stop-hook-guard${suffix}`);
+}
+
+function runWithoutSession(script, dir, payload) {
+  const { CLAUDE_SESSION_ID: _sessionId, ...env } = process.env;
+  return spawnSync(process.execPath, [script], {
+    cwd: root,
+    env: {
+      ...env,
+      CLAUDE_PLUGIN_DATA: dir,
+      CLAUDE_PROJECT_DIR: root,
+      SECOND_CLAUDE_CAPABILITIES: '["node"]',
+    },
+    input: payload === undefined ? "" : JSON.stringify(payload),
+    encoding: "utf8",
+  });
+}
+
+function runAsync(script, dir, payload, sessionId) {
+  return new Promise((resolve, reject) => {
+    const child = spawn(process.execPath, [script], {
+      cwd: root,
+      env: {
+        ...process.env,
+        CLAUDE_PLUGIN_DATA: dir,
+        CLAUDE_PROJECT_DIR: root,
+        CLAUDE_SESSION_ID: sessionId,
+        SECOND_CLAUDE_CAPABILITIES: '["node"]',
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    let stdout = "";
+    let stderr = "";
+    child.stdout.setEncoding("utf8").on("data", (chunk) => { stdout += chunk; });
+    child.stderr.setEncoding("utf8").on("data", (chunk) => { stderr += chunk; });
+    child.on("error", reject);
+    child.on("close", (status) => resolve({ status, stdout, stderr }));
+    child.stdin.end(JSON.stringify(payload));
   });
 }
 
@@ -393,9 +453,397 @@ test("stop_hook_active bypasses the gate and records why", () => {
   }));
   const result = run(sessionEnd, dir, { stop_hook_active: true, session_id: "stop-session" });
   assert.equal(result.status, 0);
-  assert.match(result.stderr, /gate bypassed.*stop_hook_active=true/i);
+  assert.doesNotMatch(result.stderr, /gate bypassed|recursive invocation/i);
   const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
   assert.match(audit, /recursive Stop hook invocation/);
+});
+
+test("an incomplete PDCA Stop blocks once, then the same-session retry passes", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished",
+    current_phase: "plan",
+    completed: [],
+  }));
+
+  const environment = {
+    CLAUDE_PROJECT_DIR: dir,
+    CLAUDE_SESSION_ID: "same-stop-session",
+  };
+  const first = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(first.status, 2);
+  assert.match(first.stderr, /Check phase not yet completed/);
+  assert.match(first.stderr, /Run \/scc:review before finishing the session/);
+  assert.equal(first.stderr.trim().split("\n").length, 1, first.stderr);
+  assert.equal(first.stdout, "");
+
+  const guardPath = stopGuardPath(dir, "same-stop-session");
+  const guard = JSON.parse(readFileSync(guardPath, "utf8"));
+  assert.deepEqual(Object.keys(guard).sort(), ["blocked_at", "session_id", "version"]);
+  assert.equal(guard.version, 1);
+  assert.equal(guard.session_id, "same-stop-session");
+  assert.equal(new Date(guard.blocked_at).toISOString(), guard.blocked_at);
+  assert.equal(statSync(guardPath).mode & 0o777, 0o600);
+
+  const retry = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(retry.status, 0, retry.stderr);
+  assert.equal(existsSync(guardPath), false);
+  assert.doesNotMatch(retry.stderr, /Check phase not yet completed|gate bypassed/i);
+  const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
+  assert.match(audit, /recent stop-hook guard \(retry suppression\)/);
+
+  const nextStopAttempt = run(sessionEnd, dir, { session_id: "same-stop-session" }, environment);
+  assert.equal(nextStopAttempt.status, 2);
+});
+
+test("a session-tagged Stop never consumes an unscoped legacy guard", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const legacyGuard = stopGuardPath(dir, null);
+  writeFileSync(legacyGuard, String(Date.now()));
+
+  const result = run(
+    sessionEnd,
+    dir,
+    { session_id: "unrelated-session" },
+    { CLAUDE_SESSION_ID: "unrelated-session" }
+  );
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Check phase not yet completed/);
+  assert.equal(existsSync(legacyGuard), false);
+});
+
+test("a valid legacy guard remains a one-shot fallback only without session identity", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const legacyGuard = stopGuardPath(dir, null);
+  writeFileSync(legacyGuard, String(Date.now()));
+
+  const result = runWithoutSession(sessionEnd, dir, {});
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(legacyGuard), false);
+  assert.doesNotMatch(result.stderr, /Check phase not yet completed|gate bypassed/i);
+  const audit = readFileSync(path.join(dir, "state", "stop-hook-bypass.jsonl"), "utf8");
+  assert.match(audit, /legacy stop-hook guard \(hot-upgrade retry suppression\)/);
+});
+
+test("a stale legacy Stop guard does not weaken the quality gate", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished",
+    current_phase: "plan",
+    completed: [],
+  }));
+  const legacyGuard = path.join(dir, "state", ".stop-hook-guard");
+  writeFileSync(legacyGuard, String(Date.now() - 60_000));
+  const stale = new Date(Date.now() - 60_000);
+  utimesSync(legacyGuard, stale, stale);
+
+  const result = run(
+    sessionEnd,
+    dir,
+    { session_id: "stale-stop-session" },
+    { CLAUDE_SESSION_ID: "stale-stop-session" }
+  );
+
+  assert.equal(result.status, 2);
+  assert.match(result.stderr, /Check phase not yet completed/);
+  assert.equal(existsSync(legacyGuard), false);
+});
+
+test("raw session identities cannot alias the same Stop guard", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+
+  const slash = run(sessionEnd, dir, { session_id: "a/b" }, { CLAUDE_SESSION_ID: "a/b" });
+  const plain = run(sessionEnd, dir, { session_id: "ab" }, { CLAUDE_SESSION_ID: "ab" });
+
+  assert.equal(slash.status, 2);
+  assert.equal(plain.status, 2);
+  assert.notEqual(stopGuardPath(dir, "a/b"), stopGuardPath(dir, "ab"));
+});
+
+test("only one concurrent same-session retry can consume a Stop guard", async () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const sessionId = "concurrent-stop-session";
+  const blocked = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+  assert.equal(blocked.status, 2);
+
+  const retries = await Promise.all(Array.from(
+    { length: 12 },
+    () => runAsync(sessionEnd, dir, { session_id: sessionId }, sessionId)
+  ));
+  assert.equal(retries.filter((result) => result.status === 0).length, 1);
+  assert.equal(retries.filter((result) => result.status === 2).length, 11);
+});
+
+test("stale claim cleanup cannot race a fresh same-session claim", async () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const sessionId = "stale-claim-concurrent-session";
+  const blocked = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+  assert.equal(blocked.status, 2);
+
+  const claimedPath = `${stopGuardPath(dir, sessionId)}.claimed`;
+  writeFileSync(claimedPath, "{stale-claim", { mode: 0o600 });
+  const stale = new Date(Date.now() - 60_000);
+  utimesSync(claimedPath, stale, stale);
+
+  const retries = await Promise.all(Array.from(
+    { length: 12 },
+    () => runAsync(sessionEnd, dir, { session_id: sessionId }, sessionId)
+  ));
+  assert.equal(retries.filter((result) => result.status === 0).length, 1);
+  assert.equal(retries.filter((result) => result.status === 2).length, 11);
+});
+
+test("malformed, symlink, and directory guards never bypass the quality gate", () => {
+  for (const guardKind of ["malformed", "symlink", "directory"]) {
+    const dir = dataDir();
+    writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+      topic: "unfinished", current_phase: "plan", completed: [],
+    }));
+    const sessionId = `unsafe-${guardKind}`;
+    const guardPath = stopGuardPath(dir, sessionId);
+    const external = path.join(dir, `external-${guardKind}.txt`);
+    writeFileSync(external, "do-not-overwrite");
+    if (guardKind === "malformed") writeFileSync(guardPath, "{not-json");
+    if (guardKind === "symlink") symlinkSync(external, guardPath);
+    if (guardKind === "directory") mkdirSync(guardPath);
+
+    const result = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+
+    assert.equal(result.status, 2, `${guardKind}: ${result.stderr}`);
+    assert.match(result.stderr, /Check phase not yet completed/);
+    assert.equal(readFileSync(external, "utf8"), "do-not-overwrite");
+  }
+});
+
+test("a symlinked state directory is never touched by Stop guard handling", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-hook-safety-data-"));
+  const externalState = mkdtempSync(path.join(os.tmpdir(), "scc-hook-safety-external-state-"));
+  const sessionId = "symlinked-state-session";
+  const pdcaPath = path.join(externalState, "pdca-active.json");
+  const legacyGuard = path.join(externalState, ".stop-hook-guard");
+  const sessionGuard = path.join(
+    externalState,
+    path.basename(stopGuardPath(dir, sessionId)),
+  );
+  writeFileSync(pdcaPath, JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  writeFileSync(legacyGuard, String(Date.now()));
+  writeFileSync(sessionGuard, JSON.stringify({
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: sessionId,
+  }));
+  const before = new Map([
+    [pdcaPath, readFileSync(pdcaPath)],
+    [legacyGuard, readFileSync(legacyGuard)],
+    [sessionGuard, readFileSync(sessionGuard)],
+  ]);
+  symlinkSync(externalState, path.join(dir, "state"), "dir");
+
+  const result = run(sessionEnd, dir, { session_id: sessionId }, { CLAUDE_SESSION_ID: sessionId });
+
+  assert.equal(result.status, 2, result.stderr);
+  assert.match(result.stderr, /state directory is unsafe/i);
+  for (const [targetPath, contents] of before) {
+    assert.deepEqual(readFileSync(targetPath), contents, targetPath);
+  }
+});
+
+test("an unsafe state directory fail-closes ordinary Stop before any state access", () => {
+  for (const scenario of ["empty", "completed", "oversized"]) {
+    const dir = mkdtempSync(path.join(os.tmpdir(), `scc-hook-unsafe-${scenario}-data-`));
+    const externalState = mkdtempSync(path.join(os.tmpdir(), `scc-hook-unsafe-${scenario}-target-`));
+    writeFileSync(path.join(externalState, "marker.txt"), `unchanged-${scenario}`);
+    if (scenario === "completed") {
+      writeFileSync(path.join(externalState, "pdca-active.json"), JSON.stringify({
+        topic: "completed",
+        current_phase: "act",
+        completed: ["plan", "do", "check", "act"],
+      }));
+    }
+    symlinkSync(externalState, path.join(dir, "state"), "dir");
+    const namesBefore = readdirSync(externalState).sort();
+    const contentsBefore = new Map(namesBefore.map((name) => [
+      name,
+      readFileSync(path.join(externalState, name)),
+    ]));
+
+    const result = scenario === "oversized"
+      ? spawnSync(process.execPath, [sessionEnd], {
+          cwd: root,
+          env: {
+            ...process.env,
+            CLAUDE_PLUGIN_DATA: dir,
+            CLAUDE_PROJECT_DIR: root,
+            CLAUDE_SESSION_ID: `unsafe-${scenario}-session`,
+          },
+          input: JSON.stringify({ payload: "x".repeat(600 * 1024) }),
+          encoding: "utf8",
+        })
+      : run(
+          sessionEnd,
+          dir,
+          { session_id: `unsafe-${scenario}-session` },
+          { CLAUDE_SESSION_ID: `unsafe-${scenario}-session` },
+        );
+
+    assert.equal(result.status, 2, `${scenario}: ${result.stderr}`);
+    assert.match(result.stderr, /state directory is unsafe/i);
+    assert.deepEqual(readdirSync(externalState).sort(), namesBefore, scenario);
+    for (const [name, contents] of contentsBefore) {
+      assert.deepEqual(readFileSync(path.join(externalState, name)), contents, `${scenario}:${name}`);
+    }
+  }
+});
+
+test("an authoritative recursive Stop never mutates an unsafe state target", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "scc-hook-unsafe-recursive-data-"));
+  const externalState = mkdtempSync(path.join(os.tmpdir(), "scc-hook-unsafe-recursive-target-"));
+  const sessionId = "unsafe-recursive-session";
+  writeFileSync(path.join(externalState, "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  writeFileSync(path.join(externalState, path.basename(stopGuardPath(dir, sessionId))), JSON.stringify({
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: sessionId,
+  }));
+  symlinkSync(externalState, path.join(dir, "state"), "dir");
+  const namesBefore = readdirSync(externalState).sort();
+  const contentsBefore = new Map(namesBefore.map((name) => [
+    name,
+    readFileSync(path.join(externalState, name)),
+  ]));
+
+  const result = run(
+    sessionEnd,
+    dir,
+    { stop_hook_active: true, session_id: sessionId },
+    { CLAUDE_SESSION_ID: sessionId },
+  );
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /recursive Stop allowed without state access/);
+  assert.deepEqual(readdirSync(externalState).sort(), namesBefore);
+  for (const [name, contents] of contentsBefore) {
+    assert.deepEqual(readFileSync(path.join(externalState, name)), contents, name);
+  }
+});
+
+test("symlinked plugin data or parent paths are rejected before every state access", () => {
+  for (const linkKind of ["data", "parent"]) {
+    for (const scenario of ["empty", "completed", "oversized", "recursive"]) {
+      const rootDir = mkdtempSync(path.join(os.tmpdir(), `scc-hook-${linkKind}-${scenario}-root-`));
+      const externalRoot = mkdtempSync(path.join(os.tmpdir(), `scc-hook-${linkKind}-${scenario}-external-`));
+      let pluginData;
+      let externalData;
+      if (linkKind === "data") {
+        externalData = externalRoot;
+        pluginData = path.join(rootDir, "plugin-data");
+        symlinkSync(externalData, pluginData, "dir");
+      } else {
+        externalData = path.join(externalRoot, "plugin-data");
+        mkdirSync(externalData);
+        const linkedParent = path.join(rootDir, "linked-parent");
+        symlinkSync(externalRoot, linkedParent, "dir");
+        pluginData = path.join(linkedParent, "plugin-data");
+      }
+
+      const stateDir = path.join(externalData, "state");
+      mkdirSync(stateDir);
+      writeFileSync(path.join(externalData, "marker.txt"), `${linkKind}-${scenario}`);
+      const sessionId = `${linkKind}-${scenario}-session`;
+      if (scenario === "completed") {
+        writeFileSync(path.join(stateDir, "pdca-active.json"), JSON.stringify({
+          topic: "completed",
+          current_phase: "act",
+          completed: ["plan", "do", "check", "act"],
+        }));
+      } else if (scenario === "recursive") {
+        writeFileSync(path.join(stateDir, "pdca-active.json"), JSON.stringify({
+          topic: "unfinished", current_phase: "plan", completed: [],
+        }));
+        writeFileSync(path.join(stateDir, path.basename(stopGuardPath(pluginData, sessionId))), JSON.stringify({
+          version: 1,
+          blocked_at: new Date().toISOString(),
+          session_id: sessionId,
+        }));
+      }
+      const before = snapshotTree(externalData);
+
+      const result = scenario === "oversized"
+        ? spawnSync(process.execPath, [sessionEnd], {
+            cwd: root,
+            env: {
+              ...process.env,
+              CLAUDE_PLUGIN_DATA: pluginData,
+              CLAUDE_PROJECT_DIR: root,
+              CLAUDE_SESSION_ID: sessionId,
+            },
+            input: JSON.stringify({ payload: "x".repeat(600 * 1024) }),
+            encoding: "utf8",
+          })
+        : run(
+            sessionEnd,
+            pluginData,
+            scenario === "recursive"
+              ? { stop_hook_active: true, session_id: sessionId }
+              : { session_id: sessionId },
+            { CLAUDE_SESSION_ID: sessionId },
+          );
+
+      assert.equal(result.status, scenario === "recursive" ? 0 : 2, `${linkKind}:${scenario}: ${result.stderr}`);
+      assert.match(result.stderr, /unsafe plugin data directory|plugin data directory is unsafe/i);
+      assert.deepEqual(snapshotTree(externalData), before, `${linkKind}:${scenario}`);
+    }
+  }
+});
+
+test("guard writes do not follow the old predictable temp-file symlink", () => {
+  const dir = dataDir();
+  writeFileSync(path.join(dir, "state", "pdca-active.json"), JSON.stringify({
+    topic: "unfinished", current_phase: "plan", completed: [],
+  }));
+  const external = path.join(dir, "external-temp-target.txt");
+  writeFileSync(external, "do-not-overwrite");
+  const oldGuardBase = path.join(dir, "state", ".stop-hook-guard-temp-symlink-session");
+  const driver = [
+    'import { symlinkSync } from "node:fs";',
+    `symlinkSync(${JSON.stringify(external)}, ${JSON.stringify(oldGuardBase)} + ".tmp." + process.pid);`,
+    `await import(${JSON.stringify(sessionEnd)} + "?temp-symlink=" + process.pid);`,
+  ].join("\n");
+  const result = spawnSync(process.execPath, ["--input-type=module", "--eval", driver], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: dir,
+      CLAUDE_PROJECT_DIR: root,
+      CLAUDE_SESSION_ID: "temp-symlink-session",
+    },
+    input: JSON.stringify({ session_id: "temp-symlink-session" }),
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 2, result.stderr);
+  assert.equal(readFileSync(external, "utf8"), "do-not-overwrite");
 });
 
 test("SessionStart survives a large MMBridge packet within the bounded context", () => {

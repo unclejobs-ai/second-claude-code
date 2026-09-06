@@ -5,11 +5,15 @@ import {
   existsSync,
   mkdtempSync,
   mkdirSync,
+  renameSync,
+  readdirSync,
   readFileSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { logEvent } from "../../hooks/lib/event-log.mjs";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "stop-failure.mjs");
@@ -33,6 +37,23 @@ function runHook(tempDir) {
     },
     encoding: "utf8",
   });
+}
+
+function snapshotTree(directory, relativeDirectory = "") {
+  const snapshot = {};
+  const absoluteDirectory = path.join(directory, relativeDirectory);
+
+  for (const entry of readdirSync(absoluteDirectory, { withFileTypes: true })) {
+    const relativePath = path.join(relativeDirectory, entry.name);
+    if (entry.isDirectory()) {
+      snapshot[`${relativePath}/`] = "directory";
+      Object.assign(snapshot, snapshotTree(directory, relativePath));
+    } else {
+      snapshot[relativePath] = readFileSync(path.join(directory, relativePath), "base64");
+    }
+  }
+
+  return snapshot;
 }
 
 test("stop-failure exits cleanly when there is no active PDCA run", () => {
@@ -127,4 +148,137 @@ test("stop-failure ignores malformed active state files", () => {
 
   assert.equal(result.status, 0);
   assert.equal(existsSync(statePath(tempDir, "pdca-crash-recovery.json")), false);
+});
+
+test("stop-failure does not access state through a symlinked plugin data path", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-data-link-"));
+  const targetData = path.join(sandbox, "target-data");
+  mkdirSync(path.join(targetData, "state"), { recursive: true });
+  writeFileSync(
+    statePath(targetData, "pdca-active.json"),
+    JSON.stringify({ run_id: "data-link", current_phase: "do", cycle_count: 1 })
+  );
+  const dataLink = path.join(sandbox, "plugin-data-link");
+  symlinkSync(targetData, dataLink, "dir");
+  const before = snapshotTree(targetData);
+
+  const result = runHook(dataLink);
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
+  assert.deepEqual(snapshotTree(targetData), before);
+});
+
+test("stop-failure does not access state through a symlinked plugin data ancestor", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-parent-link-"));
+  const targetParent = path.join(sandbox, "target-parent");
+  const targetData = path.join(targetParent, "plugin-data");
+  mkdirSync(path.join(targetData, "state"), { recursive: true });
+  writeFileSync(
+    statePath(targetData, "pdca-active.json"),
+    JSON.stringify({ run_id: "parent-link", current_phase: "check", cycle_count: 2 })
+  );
+  const parentLink = path.join(sandbox, "parent-link");
+  symlinkSync(targetParent, parentLink, "dir");
+  const linkedData = path.join(parentLink, "plugin-data");
+  const before = snapshotTree(targetParent);
+
+  const result = runHook(linkedData);
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
+  assert.deepEqual(snapshotTree(targetParent), before);
+});
+
+test("stop-failure does not access state through a symlinked state directory", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-state-link-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const targetState = path.join(sandbox, "target-state");
+  mkdirSync(pluginData);
+  mkdirSync(targetState);
+  writeFileSync(
+    path.join(targetState, "pdca-active.json"),
+    JSON.stringify({ run_id: "state-link", current_phase: "act", cycle_count: 3 })
+  );
+  symlinkSync(targetState, path.join(pluginData, "state"), "dir");
+  const before = snapshotTree(targetState);
+
+  const result = runHook(pluginData);
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
+  assert.deepEqual(snapshotTree(targetState), before);
+  assert.equal(existsSync(path.join(pluginData, "events")), false);
+});
+
+test("stop-failure recovery does not follow a symlinked events directory", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-events-link-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const targetEvents = path.join(sandbox, "target-events");
+  mkdirSync(path.join(pluginData, "state"), { recursive: true });
+  mkdirSync(targetEvents);
+  writeFileSync(
+    statePath(pluginData, "pdca-active.json"),
+    JSON.stringify({ run_id: "events-link", current_phase: "act", cycle_count: 3 })
+  );
+  symlinkSync(targetEvents, path.join(pluginData, "events"), "dir");
+  const before = snapshotTree(targetEvents);
+
+  const result = runHook(pluginData);
+
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(statePath(pluginData, "pdca-crash-recovery.json")), true);
+  assert.deepEqual(snapshotTree(targetEvents), before);
+});
+
+test("stop-failure recovery does not follow a symlinked event log leaf", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-failure-event-file-link-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const targetLog = path.join(sandbox, "target.jsonl");
+  mkdirSync(path.join(pluginData, "state"), { recursive: true });
+  mkdirSync(path.join(pluginData, "events"));
+  writeFileSync(targetLog, "outside-before\n");
+  writeFileSync(
+    statePath(pluginData, "pdca-active.json"),
+    JSON.stringify({ run_id: "leaf-link", current_phase: "check", cycle_count: 2 })
+  );
+  symlinkSync(targetLog, path.join(pluginData, "events", "pdca-leaf-link.jsonl"));
+  const before = readFileSync(targetLog, "utf8");
+
+  const result = runHook(pluginData);
+
+  assert.equal(result.status, 0);
+  assert.equal(existsSync(statePath(pluginData, "pdca-crash-recovery.json")), true);
+  assert.equal(readFileSync(targetLog, "utf8"), before);
+});
+
+test("event append cannot be redirected by an events-directory swap at the write seam", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-event-log-race-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const events = path.join(pluginData, "events");
+  const movedEvents = path.join(pluginData, "events-opened");
+  const externalEvents = path.join(sandbox, "external-events");
+  const externalLog = path.join(externalEvents, "pdca-race-run.jsonl");
+  mkdirSync(events, { recursive: true });
+  mkdirSync(externalEvents);
+  writeFileSync(externalLog, "external-marker\n");
+
+  logEvent(
+    pluginData,
+    "race-run",
+    { type: "error", action: "race-proof" },
+    {
+      beforeAppend() {
+        renameSync(events, movedEvents);
+        symlinkSync(externalEvents, events, "dir");
+      },
+    }
+  );
+
+  assert.equal(readFileSync(externalLog, "utf8"), "external-marker\n");
+  const originalLog = readFileSync(path.join(movedEvents, "pdca-race-run.jsonl"), "utf8");
+  assert.match(originalLog, /"action":"race-proof"/);
 });

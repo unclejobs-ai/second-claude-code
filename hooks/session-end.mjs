@@ -20,13 +20,22 @@ import {
   writeFileSync,
   existsSync,
   chmodSync,
+  closeSync,
+  constants,
+  fstatSync,
+  fsyncSync,
+  lstatSync,
+  openSync,
+  renameSync,
   unlinkSync,
   statSync,
   readFileSync,
   appendFileSync,
 } from "fs";
-import { join, dirname } from "path";
+import { createHash, randomBytes } from "crypto";
+import { join, dirname, isAbsolute, parse, relative, resolve } from "path";
 import { fileURLToPath } from "url";
+import { tmpdir } from "os";
 import { sanitize, readJsonSafe, ensureDir as ensureDirUtil, writeJsonAtomic } from "./lib/utils.mjs";
 import { generateCycleReport } from "./lib/report-generator.mjs";
 import { isSoulLearning, readSoulState, updateSoulState } from "./lib/soul-observer.mjs";
@@ -43,10 +52,13 @@ import { readHookStdin, readTextFileLimited, sanitizeExternalText } from "./lib/
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PLUGIN_ROOT = join(__dirname, "..");
-const DATA_DIR =
-  process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
+const DATA_DIR = resolve(
+  process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data")
+);
 const STATE_DIR = join(DATA_DIR, "state");
-let activeSessionId = process.env.CLAUDE_SESSION_ID || null;
+let activeSessionId = null;
+let sessionIdentitySupplied = false;
+let stateDirectorySafe = false;
 const STOP_BYPASS_LOG = join(STATE_DIR, "stop-hook-bypass.jsonl");
 
 // Sentinel file used as a stop-hook-active guard.
@@ -55,9 +67,15 @@ const STOP_BYPASS_LOG = join(STATE_DIR, "stop-hook-bypass.jsonl");
 // session so one session's retry-suppression can't unblock another's PDCA gate
 // (all sessions share the global .data dir).
 function guardFile() {
-  const sid = activeSessionId;
-  const suffix = sid ? `-${String(sid).replace(/[^a-zA-Z0-9._-]/g, "")}` : "";
-  return join(STATE_DIR, `.stop-hook-guard${suffix}`);
+  if (activeSessionId) {
+    const digest = createHash("sha256").update(activeSessionId).digest("hex");
+    return join(STATE_DIR, `.stop-hook-guard-${digest}`);
+  }
+  return sessionIdentitySupplied ? null : legacyGuardFile();
+}
+
+function legacyGuardFile() {
+  return join(STATE_DIR, ".stop-hook-guard");
 }
 
 function readPayload() {
@@ -75,12 +93,21 @@ function readPayload() {
 }
 
 function sessionIdFromPayload(payload) {
-  const value = payload?.session_id || payload?.sessionId || process.env.CLAUDE_SESSION_ID;
-  if (typeof value !== "string" || !value.trim()) return null;
-  return value.trim().replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 160) || null;
+  const values = [payload?.session_id, payload?.sessionId, process.env.CLAUDE_SESSION_ID];
+  for (const value of values) {
+    if (typeof value !== "string" || !value.trim()) continue;
+    sessionIdentitySupplied = true;
+    // Hook stdin is already bounded, but guard records have a much smaller
+    // contract. An oversized identity disables retry bypass rather than
+    // falling back to the shared unscoped guard.
+    if (Buffer.byteLength(value, "utf8") > 512) return null;
+    return value;
+  }
+  return null;
 }
 
 function recordGateBypass(reason, payload) {
+  if (!stateDirectorySafe) return;
   try {
     ensureDirUtil(STATE_DIR);
     // Keep this diagnostic log bounded; it is not a second state database.
@@ -98,8 +125,11 @@ function recordGateBypass(reason, payload) {
   }
 }
 
-// Sentinel is considered "recent" if written within the last 30 seconds.
+// A claimed guard remains as a short-lived tombstone. Concurrent invocations
+// that lose the atomic claim must block, not turn the newly-written guard into
+// a second bypass.
 const GUARD_TTL_MS = 30_000;
+const MAX_GUARD_BYTES = 4096;
 const ANSI_RESET = "\u001b[0m";
 const ANSI_GREEN = "\u001b[32m";
 const ANSI_YELLOW = "\u001b[33m";
@@ -109,26 +139,225 @@ const ANSI_RED = "\u001b[31m";
 // Guard helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function guardIsActive() {
+function removeGuardNode(path) {
+  if (!path) return false;
   try {
-    const { mtimeMs } = statSync(guardFile());
-    return Date.now() - mtimeMs < GUARD_TTL_MS;
+    const stat = lstatSync(path);
+    if (!stat.isFile() && !stat.isSymbolicLink()) return false;
+    unlinkSync(path);
+    return true;
   } catch {
-    // No guard file (or unreadable) → not active.
     return false;
   }
 }
 
-function writeGuard() {
-  ensureDirUtil(STATE_DIR);
-  writeFileSync(guardFile(), String(Date.now()), "utf8");
+function canonicalTimestamp(value) {
+  if (typeof value !== "string") return null;
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp) || new Date(timestamp).toISOString() !== value) return null;
+  return timestamp;
 }
 
-function clearGuard() {
+function readGuardRecord(path, expectedSessionId, allowLegacy) {
+  let descriptor = null;
   try {
-    unlinkSync(guardFile());
+    const entry = lstatSync(path);
+    if (!entry.isFile() || entry.isSymbolicLink()) return null;
+    descriptor = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    const stat = fstatSync(descriptor);
+    if (!stat.isFile() || stat.isSymbolicLink() || stat.size <= 0 || stat.size > MAX_GUARD_BYTES) {
+      return null;
+    }
+    const raw = readFileSync(descriptor, "utf8");
+
+    if (allowLegacy && /^\d{10,16}$/.test(raw.trim())) {
+      const blockedAt = Number(raw.trim());
+      const age = Date.now() - blockedAt;
+      return age >= 0 && age < GUARD_TTL_MS
+        ? { legacy: true, blockedAt, sessionId: null }
+        : null;
+    }
+
+    const record = JSON.parse(raw);
+    if (!record || typeof record !== "object" || Array.isArray(record)) return null;
+    const keys = Object.keys(record).sort();
+    if (keys.join("\0") !== ["blocked_at", "session_id", "version"].join("\0")) return null;
+    if (record.version !== 1 || record.session_id !== expectedSessionId) return null;
+    const blockedAt = canonicalTimestamp(record.blocked_at);
+    if (blockedAt === null) return null;
+    const age = Date.now() - blockedAt;
+    return age >= 0 && age < GUARD_TTL_MS
+      ? { legacy: false, blockedAt, sessionId: record.session_id }
+      : null;
   } catch {
-    // Non-fatal — missing guard or unlink failure; it expires via TTL anyway.
+    return null;
+  } finally {
+    if (descriptor !== null) {
+      try { closeSync(descriptor); } catch { /* best effort */ }
+    }
+  }
+}
+
+function claimGuardUnlocked(path, expectedSessionId, allowLegacy) {
+  const claimedPath = `${path}.claimed`;
+  let claimDescriptor = null;
+  let ownedPath = null;
+  try {
+    try {
+      const existing = lstatSync(claimedPath);
+      const priorClaim = readGuardRecord(claimedPath, expectedSessionId, allowLegacy);
+      const age = Date.now() - existing.mtimeMs;
+      if (priorClaim || age < GUARD_TTL_MS) {
+        // A valid tombstone or a fresh, possibly still-being-written exclusive
+        // claim means another process owns this retry. Never delete it based on
+        // an earlier read: that would race the owner between rename and verify.
+        removeGuardNode(path);
+        return { status: "already-claimed", legacy: priorClaim?.legacy === true };
+      }
+      if (!existing.isFile() || existing.isSymbolicLink()) {
+        return { status: "invalid", legacy: false };
+      }
+      removeGuardNode(claimedPath);
+    } catch (error) {
+      if (error?.code !== "ENOENT") return { status: "invalid", legacy: false };
+    }
+
+    try {
+      claimDescriptor = openSync(claimedPath, "wx", 0o600);
+    } catch (error) {
+      return error?.code === "EEXIST"
+        ? { status: "already-claimed", legacy: false }
+        : { status: "invalid", legacy: false };
+    }
+
+    ownedPath = `${claimedPath}.owned-${randomBytes(18).toString("hex")}`;
+    try {
+      const source = lstatSync(path);
+      if (!source.isFile() || source.isSymbolicLink()) {
+        removeGuardNode(path);
+        return { status: "invalid", legacy: false };
+      }
+      renameSync(path, ownedPath);
+    } catch {
+      return { status: "none", legacy: false };
+    }
+
+    const record = readGuardRecord(ownedPath, expectedSessionId, allowLegacy);
+    if (!record) return { status: "invalid", legacy: false };
+
+    const tombstone = JSON.stringify({
+      version: 1,
+      blocked_at: new Date(record.blockedAt).toISOString(),
+      session_id: expectedSessionId,
+    });
+    writeFileSync(claimDescriptor, tombstone, "utf8");
+    fsyncSync(claimDescriptor);
+    closeSync(claimDescriptor);
+    claimDescriptor = null;
+    removeGuardNode(ownedPath);
+    ownedPath = null;
+    return { status: "consumed", legacy: record.legacy };
+  } finally {
+    if (claimDescriptor !== null) {
+      try { closeSync(claimDescriptor); } catch { /* best effort */ }
+      removeGuardNode(claimedPath);
+    }
+    if (ownedPath) removeGuardNode(ownedPath);
+  }
+}
+
+function claimGuard(path, expectedSessionId, allowLegacy) {
+  if (!path) return { status: "none", legacy: false };
+  try {
+    return withFileLockSync(
+      path,
+      () => claimGuardUnlocked(path, expectedSessionId, allowLegacy),
+      { maxWaitMs: 10_000 }
+    );
+  } catch {
+    // A lock or filesystem failure must evaluate the quality gate. It must
+    // never be reinterpreted as permission to bypass Stop.
+    return { status: "invalid", legacy: false };
+  }
+}
+
+function guardDirectoryIsSafe() {
+  try {
+    ensureDirUtil(STATE_DIR);
+    const stat = lstatSync(STATE_DIR);
+    return stat.isDirectory() && !stat.isSymbolicLink();
+  } catch {
+    return false;
+  }
+}
+
+function pathIsWithin(candidate, root) {
+  const offset = relative(root, candidate);
+  return offset === "" || (!offset.startsWith("..") && !isAbsolute(offset));
+}
+
+function dataDirectoryIsSafe() {
+  // macOS exposes its temporary tree through lexical aliases such as /var ->
+  // /private/var. Treat the host-provided temp root as a canonicalized trust
+  // anchor, then reject every symlink from that anchor down to DATA_DIR. Paths
+  // outside the temp tree are checked all the way to the filesystem root.
+  const temporaryRoot = resolve(tmpdir());
+  const boundary = pathIsWithin(DATA_DIR, temporaryRoot)
+    ? temporaryRoot
+    : parse(DATA_DIR).root;
+  let cursor = DATA_DIR;
+
+  while (true) {
+    try {
+      const stat = lstatSync(cursor);
+      if (stat.isSymbolicLink() || !stat.isDirectory()) return false;
+    } catch (error) {
+      if (error?.code !== "ENOENT") return false;
+    }
+
+    if (cursor === boundary) return true;
+    const parent = dirname(cursor);
+    if (parent === cursor) return true;
+    cursor = parent;
+  }
+}
+
+function writeGuard() {
+  const destination = guardFile();
+  if (!destination || !guardDirectoryIsSafe()) return false;
+
+  const content = JSON.stringify({
+    version: 1,
+    blocked_at: new Date().toISOString(),
+    session_id: activeSessionId,
+  });
+  let tempPath = null;
+  let descriptor = null;
+  try {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      tempPath = join(STATE_DIR, `.stop-hook-tmp-${randomBytes(18).toString("hex")}`);
+      try {
+        descriptor = openSync(tempPath, "wx", 0o600);
+        break;
+      } catch (error) {
+        if (error?.code !== "EEXIST" || attempt === 3) throw error;
+      }
+    }
+    if (descriptor === null) return false;
+    writeFileSync(descriptor, content, "utf8");
+    fsyncSync(descriptor);
+    closeSync(descriptor);
+    descriptor = null;
+    renameSync(tempPath, destination);
+    tempPath = null;
+    return true;
+  } catch {
+    return false;
+  } finally {
+    if (descriptor !== null) {
+      try { closeSync(descriptor); } catch { /* best effort */ }
+    }
+    if (tempPath) removeGuardNode(tempPath);
   }
 }
 
@@ -696,27 +925,60 @@ function recordSessionRecall(state, handoffPath) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function main() {
+  // Resolve the plugin-data and state-directory trust boundaries before
+  // parsing hook input. The oversized-input path records diagnostics, and
+  // every later gate/summary path reads or writes state, so none of them may
+  // run through a symlinked or otherwise unsafe STATE_DIR.
+  const dataDirectorySafe = dataDirectoryIsSafe();
+  stateDirectorySafe = dataDirectorySafe && guardDirectoryIsSafe();
   const payload = readPayload();
   activeSessionId = sessionIdFromPayload(payload);
+
+  if (!stateDirectorySafe) {
+    const unsafeBoundary = dataDirectorySafe ? "state directory" : "plugin data directory";
+    if (payload?.stop_hook_active === true) {
+      // Claude's recursive Stop marker is authoritative, but an authoritative
+      // bypass must remain a state-free no-op when the state boundary is
+      // unsafe. In particular, do not consume guards, audit, summarize, or
+      // update any file reachable through STATE_DIR.
+      console.error(`[stop-hook] unsafe ${unsafeBoundary}; recursive Stop allowed without state access`);
+      return;
+    }
+    process.stderr.write(
+      `SCC ${unsafeBoundary} is unsafe; refusing to bypass the session quality gate.\n`
+    );
+    process.exit(2);
+  }
+
+  const guardDirectorySafe = stateDirectorySafe;
 
   // Claude marks recursive Stop-hook invocations with stop_hook_active. This
   // is the authoritative re-entry signal; honor it and leave an audit trail so
   // a gate bypass is explainable rather than silently weakening the gate.
-  if (payload?.stop_hook_active === true) {
+  if (payload?.stop_hook_active === true && guardDirectorySafe) {
     recordGateBypass("stop_hook_active=true (recursive Stop hook invocation)", payload);
-    process.stderr.write("[stop-hook] gate bypassed: stop_hook_active=true (recursive invocation)\n");
   }
 
   // ── Stop-hook-active guard ─────────────────────────────────────────────────
-  // If this hook has already fired within the last 30 seconds for this stop
-  // attempt, allow through unconditionally. This prevents Claude from being
-  // permanently blocked if it retries the Stop event after the user sees the
-  // quality gate message.
-  if (payload?.stop_hook_active === true || guardIsActive()) {
-    if (payload?.stop_hook_active !== true) {
+  // A valid guard has one atomic consumer. Losers see the claimed tombstone
+  // and evaluate the quality gate instead of turning a concurrent rewrite
+  // into another bypass.
+  const sessionGuard = guardFile();
+  const legacyGuard = legacyGuardFile();
+  if (guardDirectorySafe && sessionIdentitySupplied) {
+    // An unscoped legacy guard cannot prove which session created it.
+    removeGuardNode(legacyGuard);
+  }
+  const guardClaim = guardDirectorySafe
+    ? claimGuard(sessionGuard, activeSessionId, !sessionIdentitySupplied)
+    : { status: "invalid", legacy: false };
+
+  if (payload?.stop_hook_active === true || guardClaim.status === "consumed") {
+    if (payload?.stop_hook_active !== true && guardClaim.legacy) {
+      recordGateBypass("legacy stop-hook guard (hot-upgrade retry suppression)", payload);
+    } else if (payload?.stop_hook_active !== true) {
       recordGateBypass("recent stop-hook guard (retry suppression)", payload);
     }
-    clearGuard();
     // Proceed to HANDOFF generation below without blocking.
   } else {
     // ── PDCA quality gate ──────────────────────────────────────────────────
@@ -725,8 +987,9 @@ function main() {
     const blockReason = pdcaBlockReason(pdcaState) || coachBlockReason(readState(projectRoot));
 
     if (blockReason) {
-      // Write the guard before blocking so a second stop attempt passes through.
-      writeGuard();
+      // Do not publish another consumable guard while a recent claim exists.
+      // Every failed or unsafe claim still takes the intentional exit-2 path.
+      if (guardClaim.status !== "already-claimed") writeGuard();
 
       // Exit 2 blocks the stop; on exit 2 Claude Code reads the reason from
       // stderr (structured stdout JSON is only consumed on exit 0, so the old

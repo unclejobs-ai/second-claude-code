@@ -18,7 +18,18 @@
  *   error           — unexpected error or crash captured
  */
 
-import { appendFileSync, readFileSync, mkdirSync, existsSync, readdirSync } from "fs";
+import {
+  closeSync,
+  constants,
+  existsSync,
+  fstatSync,
+  lstatSync,
+  mkdirSync,
+  openSync,
+  readFileSync,
+  readdirSync,
+  writeSync,
+} from "fs";
 import { join } from "path";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +77,89 @@ function eventFile(dataDir, runId) {
  * @param {string} dataDir
  */
 function ensureEventsDir(dataDir) {
-  mkdirSync(eventsDir(dataDir), { recursive: true });
+  try {
+    mkdirSync(eventsDir(dataDir), { mode: 0o700 });
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
+}
+
+function sameFile(left, right) {
+  return left.dev === right.dev && left.ino === right.ino;
+}
+
+/**
+ * Append through file descriptors acquired once for the entire security boundary.
+ * `O_NOFOLLOW` rejects a symlink at either leaf, and identity checks reject a
+ * directory/leaf replacement before the append. Once the descriptors are open,
+ * a later rename or symlink swap cannot redirect the write to another inode.
+ *
+ * `beforeAppend` is an intentionally narrow test seam used to prove that property.
+ * Production callers must not supply it.
+ *
+ * @param {string} dataDir
+ * @param {string} runId
+ * @param {string} line
+ * @param {{ beforeAppend?: () => void }} [options]
+ */
+export function appendEventLineNoFollow(dataDir, runId, line, options = {}) {
+  if (!Number.isInteger(constants.O_NOFOLLOW)) {
+    throw new Error("Secure event append requires O_NOFOLLOW support");
+  }
+  const directory = eventsDir(dataDir);
+  const file = eventFile(dataDir, runId);
+  ensureEventsDir(dataDir);
+
+  let directoryFd;
+  let fileFd;
+  try {
+    const directoryFlags = constants.O_RDONLY
+      | (constants.O_DIRECTORY ?? 0)
+      | (constants.O_NOFOLLOW ?? 0);
+    directoryFd = openSync(directory, directoryFlags);
+    const openedDirectory = fstatSync(directoryFd);
+    if (!openedDirectory.isDirectory() || openedDirectory.nlink < 1) {
+      throw new Error("Event log directory is not a stable directory");
+    }
+    const currentDirectory = lstatSync(directory);
+    if (currentDirectory.isSymbolicLink() || !sameFile(openedDirectory, currentDirectory)) {
+      throw new Error("Event log directory changed while opening");
+    }
+
+    const fileFlags = constants.O_WRONLY
+      | constants.O_APPEND
+      | constants.O_CREAT
+      | (constants.O_NOFOLLOW ?? 0);
+    fileFd = openSync(file, fileFlags, 0o600);
+    const openedFile = fstatSync(fileFd);
+    if (!openedFile.isFile() || openedFile.nlink !== 1) {
+      throw new Error("Event log leaf is not a private regular file");
+    }
+
+    const directoryAfterOpen = lstatSync(directory);
+    const fileAfterOpen = lstatSync(file);
+    if (
+      directoryAfterOpen.isSymbolicLink()
+      || fileAfterOpen.isSymbolicLink()
+      || !sameFile(openedDirectory, directoryAfterOpen)
+      || !sameFile(openedFile, fileAfterOpen)
+    ) {
+      throw new Error("Event log boundary changed while opening");
+    }
+
+    options.beforeAppend?.();
+
+    const bytes = Buffer.from(line, "utf8");
+    let offset = 0;
+    while (offset < bytes.length) {
+      const count = writeSync(fileFd, bytes, offset, bytes.length - offset);
+      if (count <= 0) throw new Error("Event log append made no progress");
+      offset += count;
+    }
+  } finally {
+    if (fileFd !== undefined) closeSync(fileFd);
+    if (directoryFd !== undefined) closeSync(directoryFd);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -81,7 +174,7 @@ function ensureEventsDir(dataDir) {
  * @param {{ type: string, phase?: string, action?: string, data?: unknown }} event
  * @returns {{ ts: string, type: string, run_id: string }}
  */
-export function logEvent(dataDir, runId, event) {
+export function logEvent(dataDir, runId, event, options = {}) {
   if (typeof dataDir !== "string" || dataDir.trim() === "") {
     throw new Error("logEvent: dataDir must be a non-empty string");
   }
@@ -103,7 +196,7 @@ export function logEvent(dataDir, runId, event) {
     ...(event.data !== undefined && { data: event.data }),
   };
 
-  appendFileSync(eventFile(dataDir, runId), JSON.stringify(record) + "\n", "utf8");
+  appendEventLineNoFollow(dataDir, runId, JSON.stringify(record) + "\n", options);
 
   return { ts: record.ts, type: record.type, run_id: runId };
 }

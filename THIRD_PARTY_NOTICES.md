@@ -116,7 +116,7 @@ Source file: `LICENSE`
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-## fast-uri@3.1.3
+## fast-uri@3.1.6
 
 Declared license: BSD-3-Clause
 
