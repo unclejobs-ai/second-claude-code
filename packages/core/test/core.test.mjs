@@ -183,6 +183,18 @@ test("plan validation catches nodes without acceptance criteria", async () => {
   assert.deepEqual(result.issues.map((issue) => issue.code), ["MISSING_ACCEPTANCE_CRITERIA"]);
 });
 
+test("plan validation rejects blank node identities", async () => {
+  const { validatePlan } = await corePromise;
+  assert.deepEqual(
+    validatePlan({ nodes: [{ id: "  ", acceptanceCriteria: ["done"] }] }).issues.map((issue) => issue.code),
+    ["MISSING_NODE_ID"]
+  );
+  assert.deepEqual(
+    validatePlan({ nodes: [{ id: null, acceptanceCriteria: ["done"] }] }).issues.map((issue) => issue.code),
+    ["MISSING_NODE_ID"]
+  );
+});
+
 test("plan validation catches missing dependencies and dependency cycles", async () => {
   const { validatePlan } = await corePromise;
   const missing = validatePlan({
@@ -580,6 +592,61 @@ test("evolution validation catches nonblank branch and worktree claims without a
   assert.deepEqual(result.issues.map((issue) => issue.code), ["MISSING_ISOLATION_ATTESTATION"]);
 });
 
+test("evolution validation requires auditable identities and a strict finite held-out improvement", async () => {
+  const { validateEvolutionProposal } = await corePromise;
+  const valid = {
+    candidateId: "candidate-1",
+    creatorId: "creator-1",
+    isolatedBranch: "evolve/candidate-1",
+    isolatedWorktree: "/worktrees/candidate-1",
+    changedAssets: [],
+    evaluatorId: "evaluator-1",
+    heldOutBenchmarkId: "held-out-v1",
+    baselineScore: 0.7,
+    candidateScore: 0.8,
+    validationEvidence: evolutionEvidence(),
+    humanApproval: "pending"
+  };
+
+  const blank = validateEvolutionProposal({
+    ...valid,
+    candidateId: " ",
+    creatorId: " ",
+    evaluatorId: " ",
+    heldOutBenchmarkId: " "
+  }, evolutionContext());
+  for (const code of [
+    "MISSING_CANDIDATE_ID",
+    "MISSING_CREATOR_ID",
+    "MISSING_EVALUATOR_ID",
+    "MISSING_HELD_OUT_BENCHMARK_ID"
+  ]) assert.ok(blank.issues.some((issue) => issue.code === code), code);
+
+  assert.ok(validateEvolutionProposal({ ...valid, baselineScore: Number.NaN }, evolutionContext())
+    .issues.some((issue) => issue.code === "INVALID_BASELINE_SCORE"));
+  assert.ok(validateEvolutionProposal({ ...valid, candidateScore: Number.NEGATIVE_INFINITY }, evolutionContext())
+    .issues.some((issue) => issue.code === "INVALID_CANDIDATE_SCORE"));
+  assert.ok(validateEvolutionProposal({ ...valid, candidateScore: valid.baselineScore }, evolutionContext())
+    .issues.some((issue) => issue.code === "CANDIDATE_NOT_IMPROVED"));
+  assert.ok(validateEvolutionProposal({ ...valid, candidateScore: 0.6 }, evolutionContext())
+    .issues.some((issue) => issue.code === "CANDIDATE_NOT_IMPROVED"));
+  const malformed = validateEvolutionProposal({
+    ...valid,
+    candidateId: null,
+    evaluatorId: 7,
+    heldOutBenchmarkId: null,
+    isolatedBranch: null,
+    isolatedWorktree: 7
+  }, evolutionContext());
+  for (const code of [
+    "MISSING_CANDIDATE_ID",
+    "MISSING_EVALUATOR_ID",
+    "MISSING_HELD_OUT_BENCHMARK_ID",
+    "MISSING_ISOLATED_BRANCH",
+    "MISSING_ISOLATED_WORKTREE"
+  ]) assert.ok(malformed.issues.some((issue) => issue.code === code), code);
+});
+
 test("evolution validation requires current passing independent candidate evidence", async () => {
   const { validateEvolutionProposal } = await corePromise;
   const proposal = {
@@ -821,6 +888,7 @@ test("the shared fixture catches every documented cross-host contract regression
     [
       "valid-standard-run",
       "missing-acceptance-criteria",
+      "blank-plan-node-id",
       "warning-reviewer-does-not-prove-gate",
       "warning-reviewer-does-not-complete-standard-run",
       "self-review",
@@ -837,6 +905,7 @@ test("the shared fixture catches every documented cross-host contract regression
       "stale-evolution-isolation-attestation",
       "empty-evolution-validation-evidence",
       "untrusted-evolution-validation-evidence",
+      "invalid-evolution-benchmark-comparison",
       "invalid-creator-evaluator-benchmark-isolation"
     ]
   );

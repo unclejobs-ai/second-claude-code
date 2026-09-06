@@ -39,7 +39,7 @@ function validationResult(issues) {
     return { valid: issues.length === 0, issues };
 }
 function isBlank(value) {
-    return value === undefined || value.trim().length === 0;
+    return typeof value !== "string" || value.trim().length === 0;
 }
 function parseCanonicalUtcTimestamp(value) {
     if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
@@ -89,6 +89,13 @@ export function validatePlan(plan) {
     const issues = [];
     const nodesById = new Map();
     for (const node of nodes) {
+        if (isBlank(node.id)) {
+            issues.push({
+                code: "MISSING_NODE_ID",
+                message: "Every plan node needs a nonblank id."
+            });
+            continue;
+        }
         if (nodesById.has(node.id)) {
             issues.push({
                 code: "DUPLICATE_NODE_ID",
@@ -268,16 +275,45 @@ export function validateRunCompletion(run, evidence, context) {
 }
 export function validateEvolutionProposal(proposal, context) {
     const issues = [];
-    if (proposal.creatorId === proposal.evaluatorId) {
+    if (isBlank(proposal.candidateId)) {
+        issues.push({ code: "MISSING_CANDIDATE_ID", message: "Evolution requires a candidate id." });
+    }
+    if (isBlank(proposal.creatorId)) {
+        issues.push({ code: "MISSING_CREATOR_ID", message: "Evolution requires a candidate creator id." });
+    }
+    if (isBlank(proposal.evaluatorId)) {
+        issues.push({ code: "MISSING_EVALUATOR_ID", message: "Evolution requires an independent evaluator id." });
+    }
+    if (isBlank(proposal.heldOutBenchmarkId)) {
+        issues.push({
+            code: "MISSING_HELD_OUT_BENCHMARK_ID",
+            message: "Evolution requires a held-out benchmark id."
+        });
+    }
+    if (!Number.isFinite(proposal.baselineScore)) {
+        issues.push({ code: "INVALID_BASELINE_SCORE", message: "The baseline score must be finite." });
+    }
+    if (!Number.isFinite(proposal.candidateScore)) {
+        issues.push({ code: "INVALID_CANDIDATE_SCORE", message: "The candidate score must be finite." });
+    }
+    if (Number.isFinite(proposal.baselineScore)
+        && Number.isFinite(proposal.candidateScore)
+        && proposal.candidateScore <= proposal.baselineScore) {
+        issues.push({
+            code: "CANDIDATE_NOT_IMPROVED",
+            message: "The candidate score must strictly improve on the held-out baseline."
+        });
+    }
+    if (!isBlank(proposal.creatorId) && proposal.creatorId === proposal.evaluatorId) {
         issues.push({
             code: "CREATOR_EVALUATOR_CONFLICT",
             message: "A candidate creator cannot evaluate the same candidate."
         });
     }
-    if (proposal.isolatedBranch.trim().length === 0) {
+    if (isBlank(proposal.isolatedBranch)) {
         issues.push({ code: "MISSING_ISOLATED_BRANCH", message: "Evolution requires an isolated branch." });
     }
-    if (proposal.isolatedWorktree.trim().length === 0) {
+    if (isBlank(proposal.isolatedWorktree)) {
         issues.push({ code: "MISSING_ISOLATED_WORKTREE", message: "Evolution requires an isolated worktree." });
     }
     const evidenceValidation = validateEvidence(proposal.validationEvidence, {

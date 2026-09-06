@@ -16,7 +16,6 @@ import { readJsonSafe, writeJsonAtomic } from "./lib/utils.mjs";
 import { logEvent } from "./lib/event-log.mjs";
 import {
   dataDirectoryIsSafe,
-  eventLogBoundaryIsSafe,
   stateDirectoryIsSafe,
 } from "./lib/state-boundary.mjs";
 
@@ -52,7 +51,6 @@ function main() {
 
     // Log error event to the run's event log
     try {
-      if (!eventLogBoundaryIsSafe(DATA_DIR, active.run_id)) return;
       logEvent(DATA_DIR, active.run_id, {
         type: "error",
         phase: active.current_phase,

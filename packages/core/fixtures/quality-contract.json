@@ -59,6 +59,21 @@
       "expected": ["MISSING_ACCEPTANCE_CRITERIA"]
     },
     {
+      "id": "blank-plan-node-id",
+      "operation": "validatePlan",
+      "input": {
+        "nodes": [
+          {
+            "id": " ",
+            "acceptanceCriteria": ["done"],
+            "dependencies": [],
+            "fileOwnership": []
+          }
+        ]
+      },
+      "expected": ["MISSING_NODE_ID"]
+    },
+    {
       "id": "warning-reviewer-does-not-prove-gate",
       "operation": "evaluateGate",
       "input": {
@@ -536,6 +551,41 @@
         "FAILED_EVIDENCE",
         "SELF_REVIEW",
         "MISSING_REVIEWER_EVIDENCE"
+      ]
+    },
+    {
+      "id": "invalid-evolution-benchmark-comparison",
+      "operation": "validateEvolutionProposal",
+      "input": {
+        "proposal": {
+          "candidateId": "candidate-1",
+          "creatorId": "creator-1",
+          "isolatedBranch": "evolve/candidate-1",
+          "isolatedWorktree": "/worktrees/candidate-1",
+          "changedAssets": [],
+          "evaluatorId": "evaluator-1",
+          "heldOutBenchmarkId": " ",
+          "baselineScore": 0.7,
+          "candidateScore": 0.7,
+          "validationEvidence": [
+            { "kind": "artifact", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "result": "pass", "timestamp": "2026-08-28T00:02:00.000Z" },
+            { "kind": "reviewer", "artifactHash": "sha256:candidate-current", "producerId": "creator-1", "reviewerId": "reviewer-1", "result": "pass", "timestamp": "2026-08-28T00:03:00.000Z" }
+          ],
+          "humanApproval": "pending"
+        },
+        "context": {
+          "currentArtifactHash": "sha256:candidate-current",
+          "evaluatorAssets": [],
+          "policyAssets": [],
+          "benchmarkAssets": [],
+          "evaluationTimestamp": "2026-08-28T00:05:00.000Z",
+          "maxAttestationAgeMs": 600000
+        }
+      },
+      "expected": [
+        "MISSING_HELD_OUT_BENCHMARK_ID",
+        "CANDIDATE_NOT_IMPROVED",
+        "MISSING_ISOLATION_ATTESTATION"
       ]
     },
     {

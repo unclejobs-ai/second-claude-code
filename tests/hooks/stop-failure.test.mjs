@@ -5,6 +5,7 @@ import {
   existsSync,
   mkdtempSync,
   mkdirSync,
+  renameSync,
   readdirSync,
   readFileSync,
   symlinkSync,
@@ -12,6 +13,7 @@ import {
 } from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { logEvent } from "../../hooks/lib/event-log.mjs";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "stop-failure.mjs");
@@ -251,4 +253,32 @@ test("stop-failure recovery does not follow a symlinked event log leaf", () => {
   assert.equal(result.status, 0);
   assert.equal(existsSync(statePath(pluginData, "pdca-crash-recovery.json")), true);
   assert.equal(readFileSync(targetLog, "utf8"), before);
+});
+
+test("event append cannot be redirected by an events-directory swap at the write seam", () => {
+  const sandbox = mkdtempSync(path.join(os.tmpdir(), "second-claude-event-log-race-"));
+  const pluginData = path.join(sandbox, "plugin-data");
+  const events = path.join(pluginData, "events");
+  const movedEvents = path.join(pluginData, "events-opened");
+  const externalEvents = path.join(sandbox, "external-events");
+  const externalLog = path.join(externalEvents, "pdca-race-run.jsonl");
+  mkdirSync(events, { recursive: true });
+  mkdirSync(externalEvents);
+  writeFileSync(externalLog, "external-marker\n");
+
+  logEvent(
+    pluginData,
+    "race-run",
+    { type: "error", action: "race-proof" },
+    {
+      beforeAppend() {
+        renameSync(events, movedEvents);
+        symlinkSync(externalEvents, events, "dir");
+      },
+    }
+  );
+
+  assert.equal(readFileSync(externalLog, "utf8"), "external-marker\n");
+  const originalLog = readFileSync(path.join(movedEvents, "pdca-race-run.jsonl"), "utf8");
+  assert.match(originalLog, /"action":"race-proof"/);
 });
