@@ -690,7 +690,7 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 
 ## Document index
 
-Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.0**; GitHub Latest Release is still **v3.0.0** — do not treat a 3.1.0 GitHub Release as published.
+Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.0**; GitHub Latest Release is **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**.
 
 **Archive / delete** (not runtime; do not treat as current architecture):
 

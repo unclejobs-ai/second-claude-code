@@ -34,10 +34,9 @@ not mirror every Claude slash command.
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
-**This tree is 3.1.0. GitHub Latest Release is still v3.0.0.** There is no 3.1.0
-GitHub Release yet. Install from marketplace **`main`** (the three blocks below), not
-from the Release zip. CHANGELOG records 3.0.1–3.1.0 on disk; 3.0.1–3.0.3 were
-never GitHub Releases.
+**This tree is 3.1.0. GitHub Latest Release is [v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0).**
+Install from marketplace **`main`** or that release. Uninstall any leftover
+`second-claude-code` / old `scc` cache first.
 
 **Start here:** [User manual](docs/notion-manual.md) · [Skill index](docs/skills/) ·
 [Command and document index](docs/README.md) · [Architecture](docs/architecture.md) ·
@@ -45,8 +44,8 @@ never GitHub Releases.
 
 ## Install
 
-Use the host that you actually run. All three pull **`main`**, which is 3.1.0 on
-disk. Do not pin the GitHub Latest Release tag (`v3.0.0`).
+Use the host that you actually run. All three pull **`main`**, which is 3.1.0.
+The GitHub Latest Release tag is **`v3.1.0`**.
 
 ### Claude Code
 
@@ -81,7 +80,7 @@ codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
 codex plugin add scc@scc
 ```
 
-`--ref main` is required so Codex does not follow the stale v3.0.0 GitHub Release.
+`--ref main` is required so Codex follows current `main` (v3.1.0), not an older Release zip.
 Restart Codex after installing or refreshing the marketplace.
 
 Codex uses `.codex-plugin/plugin.json` and plugin-relative MCP paths. It does not
@@ -103,7 +102,7 @@ grok plugin install unclejobs-ai/second-claude-code --trust
 
 `--trust` is required. This repository has **`.grok-plugin/plugin.json`** and
 **`walnut.manifest.yaml`** (Walnut listing, version 3.1.0). Grok installs from
-GitHub **`main`**. Do not install from the v3.0.0 Release asset. After install,
+GitHub **`main`** or the **v3.1.0** Release. After install,
 request skills by name the same way Codex does.
 
 ### Migrating a pre-v3 Claude install
@@ -420,4 +419,4 @@ configuration expects it:
 
 Issues and pull requests are welcome. Built by [Unclejobs](https://github.com/unclejobs-ai).
 
-*Version 3.1.0 on disk | GitHub Latest Release v3.0.0 | MIT License*
+*Version 3.1.0 | GitHub Latest Release [v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0) | MIT License*

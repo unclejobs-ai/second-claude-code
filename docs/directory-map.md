@@ -40,7 +40,7 @@ second-claude/
 ├── walnut.manifest.yaml           # walnut.world listing 3.1.0
 ├── AGENTS.md · CLAUDE.md          # Working contract
 ├── README.md · README.ko.md       # Install + God Hands
-├── CHANGELOG.md                   # [3.1.0] on disk; GitHub Latest still v3.0.0
+├── CHANGELOG.md                   # [3.1.0]; GitHub Latest is v3.1.0
 ├── skills/                        # 16 SKILL.md + unblock engine
 │   ├── godhands/SKILL.md          # Public orchestrator
 │   ├── pdca/                      # Compat skill + gate checklists in references/
@@ -81,7 +81,7 @@ second-claude/
 
 - Do not add a fourth orchestrator or a host loop (no DSH copy, no Uncle Code runtime inside SCC).
 - Do not document slash-menu duplicates as current 3.1.0 (`user-invocable: false` is shipped on this tree).
-- Do not document a 3.1.0 GitHub Release until one exists. Latest is **v3.0.0**.
+- GitHub Latest Release is **v3.1.0**. Uninstall leftover `second-claude-code` / old `scc` caches.
 - Do not advertise “31 MCP tools” in user blurbs. Say **3 servers**.
 - Do not move `skills/*/SKILL.md` into `docs/` or treat `docs/skills/` as the runtime.
 - Do not delete folded skills. Slash `/scc:<name>` still works.

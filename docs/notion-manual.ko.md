@@ -58,9 +58,9 @@ Claude 명령 래퍼이며 Codex 스킬이 아닙니다.
 이 저장소의 **GitHub 마켓플레이스**에서 설치하세요. 로컬 체크아웃 디렉터리를 마켓플레이스로
 추가하지 마세요.
 
-디스크와 `CHANGELOG.md`의 플러그인 버전은 **3.1.0**입니다(3.0.1, 3.0.2도 기록되어 있습니다).
-GitHub **Latest Release**는 여전히 **v3.0.0**입니다. v3.0.3 GitHub Release는 없습니다.
-마켓플레이스 설치는 그 오래된 Release 태그가 아니라 저장소를 따릅니다.
+디스크와 `CHANGELOG.md`의 플러그인 버전은 **3.1.0**입니다. GitHub
+**Latest Release**는 **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**입니다.
+마켓플레이스 `main` 또는 그 태그를 쓰세요. 예전 `second-claude-code` / 옛 `scc` 캐시는 먼저 지우세요.
 
 ### Claude Code
 
@@ -336,12 +336,10 @@ MMBridge는 선택입니다. `pdca-state`의 오케스트레이터 결과는 자
 사용 정책은 각각 적용됩니다. 리뷰어를 여러 명 쓰거나 깊은 리서치를 하면 토큰 사용량이
 늘 수 있습니다.
 
-### GitHub Latest Release가 v3.0.0인 이유는?
+### 어느 GitHub Release를 설치하나요?
 
-그 태그가 게시된 GitHub Release입니다. 플러그인 버전과 `CHANGELOG.md`는 3.0.1, 3.0.2,
-3.0.3까지 이어집니다. v3.0.0 Release 자산이 아니라 GitHub 마켓플레이스
-(`unclejobs-ai/second-claude-code`)에서 설치하세요. Latest Release를 현재 플러그인
-버전으로 보지 마세요.
+**v3.1.0**이 Latest입니다. 마켓플레이스 `main`과 그 태그가 이 트리와 같습니다. 예전
+`second-claude-code`나 `scc`가 중복이면 둘 다 지우고 다시 설치하세요.
 
 ### 상세 문서는 어디에 있나요?
 

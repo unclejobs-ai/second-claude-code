@@ -38,10 +38,9 @@
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
-**이 트리는 3.1.0입니다. GitHub Latest Release는 여전히 v3.0.0입니다.** 3.1.0 GitHub
-Release는 아직 없습니다. 아래 세 블록처럼 마켓플레이스 **`main`**에서 설치하세요. Release zip으로
-설치하지 마세요. CHANGELOG에는 3.0.1–3.1.0이 기록되어 있습니다. 3.0.1–3.0.3은 GitHub Release가
-아닙니다.
+**이 트리는 3.1.0입니다. GitHub Latest Release는 [v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)입니다.**
+아래 세 블록처럼 마켓플레이스 **`main`** 또는 그 릴리즈에서 설치하세요. 예전
+`second-claude-code` / 옛 `scc` 캐시는 먼저 지우세요.
 
 **먼저 볼 곳:** [사용 매뉴얼](docs/notion-manual.ko.md) · [스킬 색인](docs/skills/) ·
 [명령·문서 색인](docs/README.md) · [아키텍처](docs/architecture.ko.md) ·
@@ -49,8 +48,8 @@ Release는 아직 없습니다. 아래 세 블록처럼 마켓플레이스 **`ma
 
 ## 설치
 
-실제로 쓰는 호스트의 블록만 실행하세요. 세 경로 모두 **`main`**(디스크상 3.1.0)을 받습니다.
-GitHub Latest Release 태그(`v3.0.0`)에 고정하지 마세요.
+실제로 쓰는 호스트의 블록만 실행하세요. 세 경로 모두 **`main`**(3.1.0)을 받습니다.
+GitHub Latest Release 태그는 **`v3.1.0`**입니다.
 
 ### Claude Code
 
@@ -86,7 +85,7 @@ codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
 codex plugin add scc@scc
 ```
 
-Codex가 오래된 v3.0.0 GitHub Release를 따라가지 않도록 `--ref main`이 필요합니다.
+Codex가 현재 `main`(v3.1.0)을 따라가도록 `--ref main`이 필요합니다.
 설치하거나 마켓플레이스를 새로 고친 뒤 Codex를 다시 시작하세요.
 
 Codex는 `.codex-plugin/plugin.json`과 플러그인 상대경로 MCP 설정을 사용하므로
@@ -106,9 +105,9 @@ codex plugin add scc@scc
 grok plugin install unclejobs-ai/second-claude-code --trust
 ```
 
-`--trust`가 필요합니다. 이 저장소에는 **`walnut.manifest.yaml`**(Walnut 리스팅, 버전 3.1.0)이
-있고 **`.grok-plugin/` 디렉터리는 없습니다**. Grok는 GitHub **`main`**에서 설치합니다.
-v3.0.0 Release 자산으로 설치하지 마세요. 설치 후에는 Codex와 같이 스킬 이름으로 요청하세요.
+`--trust`가 필요합니다. 이 저장소에는 **`.grok-plugin/plugin.json`**과
+**`walnut.manifest.yaml`**(Walnut 리스팅, 버전 3.1.0)이 있습니다. Grok는 GitHub **`main`**
+또는 **v3.1.0** 릴리즈에서 설치합니다. 설치 후에는 Codex와 같이 스킬 이름으로 요청하세요.
 
 ### v3 이전 Claude 설치에서 마이그레이션
 
@@ -409,4 +408,4 @@ claude agents
 
 이슈와 풀 리퀘스트를 환영합니다. [Unclejobs](https://github.com/unclejobs-ai)가 만들었습니다.
 
-*디스크상 버전 3.1.0 | GitHub Latest Release v3.0.0 | MIT 라이선스*
+*버전 3.1.0 | GitHub Latest Release [v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0) | MIT 라이선스*

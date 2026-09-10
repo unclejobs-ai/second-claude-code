@@ -58,8 +58,8 @@ Install from the **GitHub marketplace** for this repository. Do not add a local 
 as the marketplace.
 
 The plugin version on disk and in `CHANGELOG.md` is **3.1.0**. GitHub
-**Latest Release** is still **v3.0.0**. There is no v3.1.0 GitHub Release yet; marketplace install
-follows the repo, not that older Release tag.
+**Latest Release** is **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**.
+Marketplace install follows `main` or that tag. Uninstall leftover `second-claude-code` / old `scc` caches first.
 
 ### Claude Code
 
@@ -336,11 +336,10 @@ The plugin is MIT-licensed. Claude Code, Codex, Grok, and any external providers
 their own pricing, credentials, and usage policies. Multiple reviewers or deeper research can use
 more tokens.
 
-### Why does GitHub Latest Release say v3.0.0?
+### Which GitHub Release should I install?
 
-That tag is the published GitHub Release. Plugin version and `CHANGELOG.md` continue through
-3.0.1, 3.0.2, and 3.0.3. Install from the GitHub marketplace (`unclejobs-ai/second-claude-code`),
-not from the v3.0.0 Release asset. Do not treat Latest Release as the current plugin version.
+**v3.1.0** is Latest. Marketplace `main` and that tag match this tree. If an old
+`second-claude-code` or duplicate `scc` entry is listed, uninstall both and reinstall.
 
 ### Where are the detailed references?
 

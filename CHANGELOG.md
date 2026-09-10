@@ -12,9 +12,8 @@ decompose, benchmark, and improve — then refuse to skip Check. Not a PDCA-loop
 brand and not a reincarnation cycle. Runtime state and MCP tools stay `pdca_*`.
 `/scc:pdca` still exists as a slash-only compat alias.
 
-**GitHub Latest Release was v3.0.0 through 3.0.3.** This tag is what marketplace
-hosts should follow. Install from this release or from marketplace `main`. Do
-not keep a second plugin id.
+**GitHub Latest Release is v3.1.0.** Install from this release or from marketplace
+`main`. Do not keep a second plugin id.
 
 ### Upgrade — remove the old install first
 

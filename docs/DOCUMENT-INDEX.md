@@ -2,7 +2,7 @@
 
 Public file catalog for **Second Claude Code** (display name; plugin id `scc`; slash `/scc:*`; GitHub [unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)).
 
-디스크 버전 **3.1.0**. GitHub Latest Release는 여전히 **v3.0.0**이며 **3.1.0 GitHub Release는 아직 없다.** CHANGELOG에는 `[3.0.1]`–`[3.1.0]`이 있다. 설치는 Release zip이 아니라 마켓플레이스 `main`을 쓴다.
+디스크 버전 **3.1.0**. GitHub Latest Release는 **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**. CHANGELOG에는 `[3.0.1]`–`[3.1.0]`이 있다. 설치는 마켓플레이스 `main` 또는 그 릴리즈.
 
 This index is the full inventory. Start with [docs/README.md](README.md) for the human map. Do not treat archive rows as current product contracts. `.data/` and `.claude/agent-memory` are runtime state, not product docs, and are not listed.
 
@@ -37,7 +37,7 @@ These counts must match this tree:
 
 | Item | Fact |
 |---|---|
-| GitHub Latest Release | Still **v3.0.0**. No 3.1.0 GitHub Release. Do not document a 3.1.0 GitHub Release. |
+| GitHub Latest Release | **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**. Uninstall leftover `second-claude-code` / old `scc` caches. |
 | Duplicate `/scc:*` names | **3.1.0 ships `user-invocable: false`.** Each `/scc:*` name is the command. Do not document duplicates as current. |
 | Grok layout | Install is `grok plugin install unclejobs-ai/second-claude-code --trust`. This tree has `.grok-plugin/plugin.json` and `walnut.manifest.yaml`. |
 | Write + God Hands | `/scc:write` runs internal `/scc:review` unless `--skip-review`. God Hands Check is a separate review. Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips. |
@@ -63,11 +63,11 @@ Default auto-router: `/scc:godhands`, `/scc:research`, `/scc:write`, `/scc:revie
 
 | path | audience | role | status |
 |---|---|---|---|
-| [README.md](../README.md) | user | Install and overview (EN). Display name Second Claude Code; plugin id `scc`; `/scc:*`; GitHub unclejobs-ai/second-claude-code; tree 3.1.0 vs GitHub Latest v3.0.0 | drift-fixed-this-run |
+| [README.md](../README.md) | user | Install and overview (EN). Display name Second Claude Code; plugin id `scc`; `/scc:*`; GitHub unclejobs-ai/second-claude-code; tree 3.1.0 = GitHub Latest v3.1.0 | canonical |
 | [README.ko.md](../README.ko.md) | user | 설치·개요 (한국어). 표시 이름 Second Claude Code, 플러그인 id `scc`, `/scc:*` | drift-fixed-this-run |
 | [AGENTS.md](../AGENTS.md) | maintainer | Working contract: host split, catalog counts, MCP = 3 servers, orchestrator picker (`/scc:godhands`), write/God Hands double-review, DOCUMENT-INDEX pointer. Soul path is `soul/observations/YYYY-MM-DD.jsonl` | drift-fixed-this-run |
 | [CLAUDE.md](../CLAUDE.md) | maintainer | Claude Code adapter. Install: `claude plugin marketplace add unclejobs-ai/second-claude-code` then `claude plugin install scc` | drift-fixed-this-run |
-| [CHANGELOG.md](../CHANGELOG.md) | user | Notes `[3.0.0]`–`[3.1.0]`. `[3.1.0]` is God Hands + `user-invocable: false`. Empty `[Unreleased]`. No 3.1.0 GitHub Release yet | canonical |
+| [CHANGELOG.md](../CHANGELOG.md) | user | Notes `[3.0.0]`–`[3.1.0]`. `[3.1.0]` is God Hands + `user-invocable: false`. GitHub Latest is v3.1.0 | canonical |
 | [package.json](../package.json) | maintainer | Package name `scc`, version `3.1.0`, description 16 skills / 19 commands / 17 agents / 3 MCP servers | drift-fixed-this-run |
 | [walnut.manifest.yaml](../walnut.manifest.yaml) | user | walnut.world listing. Version 3.1.0. Pair with `.grok-plugin/plugin.json` | drift-fixed-this-run |
 | [LICENSE](../LICENSE) | user | MIT license | canonical |

@@ -24,7 +24,7 @@ Other hosts (do not mix manifests):
 - Codex: `codex plugin marketplace add unclejobs-ai/second-claude-code --ref main` then `codex plugin add scc@scc`. Skills only; no full `/scc:*` command mirror. Playwright and MMBridge disabled by default.
 - Grok: `grok plugin install unclejobs-ai/second-claude-code --trust`. `.grok-plugin/plugin.json` plus `walnut.manifest.yaml`.
 
-Plugin version 3.1.0 is in the manifests and `CHANGELOG.md`. GitHub **Latest Release is still v3.0.0**. There is no 3.1.0 GitHub Release yet.
+Plugin version 3.1.0 is in the manifests and `CHANGELOG.md`. GitHub **Latest Release is v3.1.0**.
 
 ## Slash surface (3.1.0)
 

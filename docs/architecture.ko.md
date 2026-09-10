@@ -678,7 +678,7 @@ CI가 생성물의 변경 여부를 확인해요.
 
 ## 문서 색인
 
-제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.0**이고, GitHub Latest Release는 아직 **v3.0.0**입니다. 3.0.3 GitHub Release가 나온 것처럼 쓰지 마세요.
+제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.0**이고, GitHub Latest Release도 **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**입니다.
 
 **보관 / 삭제** (런타임이 아님. 현재 아키텍처로 다루지 마세요):
 
