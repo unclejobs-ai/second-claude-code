@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture — SCC 3.0.3
+# Orchestrator Architecture — SCC 3.1.0
 
-SCC 3.0.3 can inspect installed Claude Code plugins, score capabilities against a requested intent,
+SCC 3.1.0 can inspect installed Claude Code plugins, score capabilities against a requested intent,
 and return an advisory dispatch plan. The orchestrator does not execute external Skills or slash
 commands.
 
@@ -10,12 +10,34 @@ The `unblock` chain is a separate access path. A caller may choose `/scc:unblock
 is needed; prompt-detect does not invoke it or inject invocation instructions. See
 `skills/unblock/engine/` and `commands/unblock.md`.
 
+## Built-in orchestrator vs this planner
+
+This file describes the **advisory cross-plugin planner**. It is not a skill, it does not run work,
+and it is not a fourth orchestrator. The built-in orchestrator is `/scc:godhands`. `/scc:pdca` is
+slash-only compat; `/scc:workflow` is a slash-only named replay; `/scc:batch` is a slash-only
+parallel split. Users still call those with `/scc:*`; they are not peer orchestrators for auto-route:
+
+| Kind | Command | When |
+| --- | --- | --- |
+| Built-in orchestrator | `/scc:godhands` | One compound task needs gated Gather → Draft → Check → Cut. `/scc:pdca` is slash-only compat; runtime stays `pdca_*`. |
+| Slash-only named replay | `/scc:workflow` | Reusable or sequenced steps. The `autopilot` preset approximates that God Hands pass as a saved pipeline (`research` → `analyze` → `write --skip-review` → `review` → `refine`); it is not the God Hands runtime gates. Not auto-routed. |
+| Slash-only parallel split | `/scc:batch` | Large homogeneous work that splits into independent parallel units. Not auto-routed. |
+
+Layer 1 in the diagram below ("compound intent?") is only a hint that the caller may choose the
+built-in orchestrator, `/scc:godhands`. It does not auto-dispatch `godhands`. `/scc:workflow` and
+`/scc:batch` are slash-only (named replay and parallel split); God Hands Draft may mention `/scc:workflow`
+as an explicit slash, not as auto-route.
+
+`write` runs an internal `/scc:review` unless `--skip-review`. God Hands Check is a separate review.
+Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips write's internal review (God Hands
+Draft already passes `--skip-review`).
+
 ## Dispatch Layers
 
 ```mermaid
 flowchart TB
     U[User prompt] --> L1{"Layer 1<br/>compound intent?"}
-    L1 -->|yes| PDCA[["Caller may choose pdca"]]
+    L1 -->|yes| HANDS[["Caller may choose /scc:godhands"]]
     L1 -->|no| L2["Caller requests a route plan"]
     L2 --> G[getDispatchPlan]
     G --> D[Runtime plugin discovery]
@@ -25,7 +47,7 @@ flowchart TB
     L3 -->|invoke explicitly if appropriate| O[["Optional external invocation"]]
     L3 -->|otherwise| I[["Use local skill/command"]]
 
-    style PDCA fill:#fff3bf,stroke:#f08c00
+    style HANDS fill:#fff3bf,stroke:#f08c00
     style O fill:#d3f9d8,stroke:#2f9e44
     style I fill:#e7f5ff,stroke:#1971c2
 ```
@@ -46,7 +68,7 @@ That default is overridable without touching source. Drop a `plugin-preferences.
 
 With the **default** preferences. A `plugin-preferences.json` override changes which plugin wins each lifecycle intent, so these are the shipped defaults rather than a guarantee about your machine.
 
-| Input | Intent | Top dispatch |
+| Input | Intent | Top advisory candidate |
 | --- | --- | --- |
 | `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |
 | `phase=do` | PDCA Do | `Skill: frontend-design:frontend-design` |
@@ -79,7 +101,26 @@ Skill: coderabbit:code-review
 
 The returned name is not an execution result. Claude may call it explicitly when it is appropriate, or continue with a local skill/command. `orchestrator_*` MCP tools only provide inventory, inspection, planning, and health data.
 
-## MCP Tool Surface - 31 Tools Total
+## MCP Servers — 3 registered
+
+`.claude-plugin/plugin.json` registers three MCP servers. User-facing counts name those servers, not
+the tool total.
+
+| Server | Required | Role |
+| --- | --- | --- |
+| `pdca-state` | Yes | Bundled state, memory, soul, daemon/session, and advisory orchestrator tools |
+| `playwright` | Optional | Chromium access for JavaScript-rendered pages |
+| `mmbridge` | Optional | External multi-model research and review |
+
+`playwright` and `mmbridge` are `optional: true`. Their packages and caches are not part of core
+startup. If Playwright is unavailable, research records the gap and uses its fallback path. If
+MMBridge is unavailable, skills that can use it skip the external pass. The prebundled `pdca-state`
+server remains available.
+
+### pdca-state tool surface
+
+The bundled `pdca-state` server exposes 31 tools. They inspect, plan, and store state; they do not
+execute Skills or slash commands.
 
 | Area | Count | Tools |
 | --- | ---: | --- |
@@ -90,11 +131,8 @@ The returned name is not an execution result. Claude may call it explicitly when
 | Daemon and session | 7 | `daemon_get_status`, `daemon_schedule_workflow`, `daemon_list_jobs`, `daemon_start_background_run`, `daemon_list_background_runs`, `daemon_queue_notification`, `session_recall_search` |
 | Orchestrator | 4 | `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health` |
 
-The four `orchestrator_*` tools are the public MCP surface for plugin inventory, single-plugin inspection, route planning, and ecosystem health.
-
-The manifest also registers `playwright` as an optional MCP server (`optional: true`). Its package and
-cache are not part of core startup: if Playwright is unavailable, research records the gap and uses its
-fallback path while the prebundled `pdca-state` server remains available.
+The four `orchestrator_*` tools live on `pdca-state`. They are the public MCP surface for plugin
+inventory, single-plugin inspection, route planning, and ecosystem health.
 
 ## File Architecture
 
@@ -107,15 +145,15 @@ second-claude/
 │       ├── plugin-discovery.mjs       # runtime scanner, scorer, dispatch planner
 │       └── soul-observer.mjs          # hook-side soul readiness helpers
 ├── mcp/
-│   ├── pdca-state-server.bundle.mjs    # prebundled 31-tool server used at runtime
+│   ├── pdca-state-server.bundle.mjs    # prebundled pdca-state server (31 tools) used at runtime
 │   ├── pdca-state-server.mjs          # readable source for development/tests
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* tool implementations
 │       ├── soul-handlers.mjs
 │       └── ...
 ├── tests/
-│   ├── hooks/prompt-detect-standards.test.mjs  # 6 tests
-│   └── mcp/orchestrator-handlers.test.mjs  # 17 tests
+│   ├── hooks/prompt-detect-standards.test.mjs
+│   └── mcp/orchestrator-handlers.test.mjs
 └── config/
     └── stage-contracts.json           # PDCA phase contracts
 ```

@@ -120,16 +120,17 @@ test("the soul skill drives the soul_* tools instead of a second storage layout"
 });
 
 // PDCA chains its sub-skills by slash command, so the skills it dispatches have
-// to stay reachable. Only the maintainer loops, which nothing chains to and
-// which both READMEs already promise are never auto-routed, are pinned shut.
-test("only the maintainer loops are marked user-invoked", () => {
+// to stay reachable. Folded adjacent skills plus the maintainer loops, which
+// nothing auto-routes and which both READMEs already promise are never
+// auto-routed, are pinned shut.
+test("folded adjacent skills plus maintainer loops are marked user-invoked", () => {
   const userInvoked = [];
   for (const name of readdirSync(path.join(root, "skills"))) {
     const file = path.join(root, "skills", name, "SKILL.md");
     if (!existsSync(file)) continue;
     if (/^disable-model-invocation:\s*true$/m.test(readFileSync(file, "utf8"))) userInvoked.push(name);
   }
-  assert.deepEqual(userInvoked.sort(), ["evolve", "loop"]);
+  assert.deepEqual(userInvoked.sort(), ["batch", "collect", "discover", "evolve", "loop", "pdca", "soul", "translate", "workflow"]);
 });
 
 // The map pointed at skills/investigate/SKILL.md for a release after nothing

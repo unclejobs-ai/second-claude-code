@@ -5,6 +5,67 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.1.0] - 2026-09-10
+
+**God Hands** (신의 손) is the public name. Extra hands that find, analyze, plan,
+decompose, benchmark, and improve — then refuse to skip Check. Not a PDCA-loop
+brand and not a reincarnation cycle. Runtime state and MCP tools stay `pdca_*`.
+`/scc:pdca` still exists as a slash-only compat alias.
+
+**GitHub Latest Release was v3.0.0 through 3.0.3.** This tag is what marketplace
+hosts should follow. Install from this release or from marketplace `main`. Do
+not keep a second plugin id.
+
+### Upgrade — remove the old install first
+
+People get duplicates when `second-claude-code` (pre-v3 cache key) and `scc`
+both sit in the host plugin list, or when Codex follows the stale v3.0.0
+Release zip.
+
+```bash
+claude plugin uninstall second-claude-code
+claude plugin uninstall scc
+claude plugin marketplace add unclejobs-ai/second-claude-code
+claude plugin install scc
+
+codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
+codex plugin add scc@scc
+
+grok plugin install unclejobs-ai/second-claude-code --trust
+```
+
+Restart the host. You should see plugin id **`scc`** once. Commands: `/scc:godhands`,
+`/scc:write`.
+
+### Added
+
+- **`/scc:godhands`.** Public orchestrator. Gather → Draft → Check → Cut with the
+  same gates as before. 16 skills, 19 command markdown files.
+- **HTML artifact export.** `scripts/export-artifact.mjs --format html` (or
+  `--out *.html`) writes one self-contained provenance page from the event log.
+  Markdown remains the default. Live viewer is not an Artifact.
+- **`.grok-plugin/plugin.json`.** Grok marketplace layout that origin/main
+  previously lacked. `walnut.manifest.yaml` stays the Walnut listing.
+
+### Changed
+
+- Auto-router spine: `godhands`, `research`, `write`, `review`, `refine`, `coach`.
+  `analyze` stays model-invocable for God Hands Gather. `collect`, `discover`,
+  `translate`, `batch`, `workflow`, `soul`, `pdca` carry
+  `disable-model-invocation` like `loop`/`evolve`. Files stay; slash still works.
+- README thumbnail is a bronze God Hands still-life (`docs/images/thumbnail.png`).
+- SessionStart injects only restoreable state (standards, crash/compaction,
+  active run, project memory). No product banner, capability probe, soul CTA,
+  daemon ad, or MMBridge dump.
+- Stop is the Check/coach gate only. It does not write `HANDOFF.md` every turn.
+  SessionEnd writes the handoff when a run is active.
+
+### Fixed
+
+- Claude Code merges `commands/` and `skills/` onto the same `/` menu. Every
+  skill sets `user-invocable: false` so each `/scc:*` name appears once (the
+  command). God Hands still slash-chains research, analyze, write, review, and refine.
+
 ## [3.0.3] - 2026-08-28
 
 ### Fixed

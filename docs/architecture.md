@@ -1,45 +1,47 @@
 **English** | [한국어](architecture.ko.md)
 
-# Architecture — SCC 3.0.3
+# Architecture — SCC 3.1.0
 
 ## Runtime Boundary
 
-Second Claude Code is intentionally a Claude Code plugin, not a standalone agent runtime.
+Second Claude Code is a Claude Code plugin, not a standalone agent runtime and not Uncle Code.
 
+- Public method: **God Hands** (`/scc:godhands`) — find, analyze, plan, decompose, benchmark, improve. Check is never skipped.
+- Runtime state and MCP tools stay `pdca_*`. `/scc:pdca` is slash-only compat.
 - `soul` is the persistent identity layer for user preferences and behavioral patterns.
 - Project recall belongs to PDCA recovery state, MMBridge memory, handoff artifacts, and session resume.
 - External skill discovery remains approval-first.
 
-This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the Claude Code execution model.
+This boundary is deliberate. Hermes-style runtime features can inspire individual subsystems, but the plugin should not embed a second agent OS inside the host.
 
 ---
 
-## PDCA Structure
+## God Hands pass
 
-Second Claude Code is structured as a PDCA-native knowledge-work system.
-The product-facing phases are `Gather → Produce → Verify → Refine`, which map
-directly to `Plan → Do → Check → Act`.
+Product phases are `Gather → Draft → Check → Cut`. They map onto the runtime
+`Plan → Do → Check → Act` gates. Do not skip Check.
 
-| PDCA | Product Phase | Primary Skills |
+| Runtime | Product | Primary skills |
 |------|---------------|----------------|
-| Requirements | Clarify | `coach` |
-| Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
-| Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
-| Check | Verify | `review` |
-| Act | Refine | `refine` |
-| **Optimization** | **Evolve** | **`loop`**, `evolve` |
-| **Orchestrator** | **Full Cycle** | **`pdca`** |
+| Requirements | Clarify | `coach` (plan-fork; not the pass) |
+| Plan | Gather | `research`, `analyze` |
+| Do | Draft | `write --skip-research --skip-review` |
+| Check | Check | `review` |
+| Act | Cut | `refine`, or back via the Action Router |
+| **Compat** | **Slash alias** | **`pdca`** |
 | **Identity** | **Extend** | **`soul`** |
 
-The `pdca` meta-skill can orchestrate a full cycle with quality gates between phase transitions.
-It is one explicit workflow option; individual skills and commands remain usable directly.
+`/scc:godhands` is the one orchestrator. Individual skills stay callable. Folded
+skills (`collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`,
+`evolve`, `pdca`) remain on disk as slash-only.
 
-*`analyze` spans both phases: in Plan it synthesizes research findings; in Do it can apply a different framework for the production artifact.
+*`analyze` stays model-invocable so God Hands Gather can slash-chain `/scc:analyze`. It is not a top-level chooser.
 
-### The 15 skills
+### The 16 skills
 
 | Skill | Phase | Role |
 |---|---|---|
+| `godhands` | Public orchestrator | Gated gather → draft → check → cut. `/scc:pdca` is the compat name |
 | `coach` | Requirements | Settles a fork with two or more defensible directions into a standard |
 | `research` | Plan | Autonomous multi-round web research |
 | `analyze` | Plan / Do | 15 strategic frameworks |
@@ -54,9 +56,23 @@ It is one explicit workflow option; individual skills and commands remain usable
 | `batch` | Do | Parallel decomposition of large homogeneous work |
 | `soul` | Extend | User identity profile synthesis |
 | `translate` | Extend | Soul-aware EN↔KO translation |
-| `pdca` | Full cycle | Orchestrator (meta-skill) |
+| `pdca` | Compat | Slash-only alias for God Hands. MCP state stays `pdca_*` |
 
-Three commands sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one.
+Three **tool-only commands** sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `viewer` is a command, not a skill. `skills/unblock/` keeps the fetch engine and has no `SKILL.md`. `standard-check` is command-plus-script only.
+
+On this tree (3.1.0), every skill sets `user-invocable: false` so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Duplicate slash rows were a 3.0.3 host-merge artifact. `commands/version.mjs` is a version helper, not an eighteenth slash-skill pair.
+
+### Built-in orchestrator and slash-only replay
+
+`/scc:godhands` is the built-in orchestrator. `/scc:workflow` and `/scc:batch` are slash-only; they are not peer orchestrators.
+
+| Surface | When |
+|------|------|
+| `/scc:godhands` (built-in orchestrator) | One gated Gather → Draft → Check → Cut pass, with phase gates and the Action Router. Runtime stays `pdca_*`. `/scc:pdca` is slash-only compat. |
+| `/scc:workflow` (slash-only named replay) | A named, reusable multi-step pipeline you will run again. Steps pass files, not memory. The shipped `autopilot` preset approximates God Hands (`research → analyze → write(--skip-research --skip-review) → review → refine`) without gates. |
+| `/scc:batch` (slash-only parallel split) | Five or more independent homogeneous units (same skill, different topics) executed in parallel worktrees. If unit N needs unit N−1's output, it is not a batch job — use an explicit `/scc:workflow`. |
+
+`write` runs an internal `/scc:review` unless `--skip-review`. God Hands Check is a separate review. Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips write's internal review. Autopilot already passes `--skip-review` to write because the workflow's own `review` step is the Check.
 
 ## Decision Standards
 
@@ -104,115 +120,53 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 
 ## Directory Structure
 
-```
-second-claude/
-├── .claude-plugin/plugin.json    # Plugin manifest — MCP servers: pdca-state (31 tools), playwright (optional), mmbridge (optional)
-├── skills/                       # 15 skills (SKILL.md each)
-│   ├── coach/                    # Fork settlement (topology, scoring, standards under .scc/)
-│   ├── pdca/                     # PDCA cycle orchestrator (meta-skill)
-│   │   └── references/           # Phase gates + action router + question protocol
-│   ├── research/                 # Depth-controlled research with layered fallbacks
-│   │   └── references/           # research-methodology.md, playwright-guide.md
-│   ├── write/                    # Content production
-│   ├── analyze/                  # Strategic framework analysis (15 frameworks)
-│   ├── review/                   # Multi-perspective quality gate
-│   ├── refine/                   # Iterative improvement
-│   ├── collect/                  # Knowledge collection (PARA)
-│   ├── workflow/                 # Custom workflow builder
-│   ├── discover/                 # Skill discovery
-│   ├── loop/                     # Karpathy-style prompt optimization loop
-│   ├── evolve/                   # Ouroboros maintainer loop (harvest failures → maintainer check → loop)
-│   ├── batch/                    # Parallel task decomposition and execution
-│   │   └── references/           # Decomposition guide, split strategies, merge patterns
-│   ├── soul/                     # User identity profile synthesis
-│   │   └── references/           # Observation signals, synthesis algorithm, templates
-│   ├── translate/                # Soul-aware EN↔KO translation
-│   └── unblock/                  # Engine only — no SKILL.md; ships as /scc:unblock
-│       ├── engine/               # CLI + chain + 10 probes + orchestrator
-│       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
-├── agents/                       # 17 specialized subagents (Pokemon-themed)
-├── commands/                     # 18 slash commands — 15 skill wrappers + 3 tools
-├── hooks/                        # Lifecycle hooks + context injection (8 files, 9 events)
-│   ├── hooks.json                # Hook configuration
-│   ├── session-start.mjs         # Session startup state/context restore and injection
-│   ├── prompt-detect.mjs         # Active-standard literal-trigger reporting
-│   ├── subagent-start.mjs        # Review-panel context and participation tracking
-│   ├── subagent-stop.mjs         # Persist reviewer result and consensus state
-│   ├── review-result.mjs         # Inject review state into parent after Agent returns
-│   ├── session-end.mjs           # Stop gate, handoff, and cleanup
-│   ├── stop-failure.mjs          # Crash-recovery snapshot
-│   ├── compaction.mjs            # Pre/PostCompact snapshot lifecycle
-│   └── lib/                      # Shared hook modules
-│       ├── plugin-discovery.mjs  # Runtime plugin capability discovery for advisory plans
-│       ├── soul-observer.mjs     # Soul signal detection + readiness/retro utilities
-│       ├── event-log.mjs         # PDCA event sourcing (append-only JSONL)
-│       └── ...                   # file-mutex-sync, project-memory, review-config, report-generator, companion-daemon, utils
-├── mcp/
-│   ├── pdca-state-server.bundle.mjs # Self-contained 31-tool server used at runtime
-│   ├── pdca-state-server.mjs     # Unbundled source used for development and tests
-│   └── lib/
-│       ├── orchestrator-handlers.mjs  # orchestrator_* tool handlers
-│       ├── soul-handlers.mjs          # soul_* tool handlers (inc. retro, synthesis, readiness)
-│       ├── cycle-memory.mjs           # Cycle memory persistence (phase snapshots, insights, metrics)
-│       └── ...                        # pdca-handlers, memory-handlers, etc.
-├── references/                   # Design principles, consensus gate
-├── templates/                    # Output templates
-├── scripts/                      # coach-runner, standard-check, viewer-session, export-artifact, evolve-runner
-└── config/                       # User configuration
-```
-
-| Directory | Role |
-|-----------|------|
-| `skills/` | Each skill has a `SKILL.md` (short, context-efficient) plus a `references/` subdirectory for deep documentation. Progressive disclosure in action. |
-| `skills/pdca/` | Meta-skill with phase gate checklists, Action Router, and Question Protocol in `references/`. |
-| `agents/` | 17 Pokemon-themed subagent definitions across 3 model tiers. See Agent Roster below. |
-| `commands/` | Thin wrappers that route `/scc:*` invocations to the matching skill. |
-| `hooks/` | 8 hook files registered across 9 events: standard-trigger reporting, review lifecycle and parent handoff, session lifecycle, compaction, and quality gates. |
-| `references/` | Shared knowledge: design principles, consensus gate spec, PARA method. |
+The directory architecture is **locked** in [directory-map.md](directory-map.md) (tree 3.1.0).
+Do not restyle the tree here. `godhands` is the public orchestrator; `pdca` is slash-only
+compat plus `pdca_*` runtime. Counts: 16 skills, 19 command markdown files, 17 agents,
+10 hook events, 3 MCP servers.
 
 ---
 
-## Agent Roster — Pokemon Edition
+## Agent Roster
 
-17 specialized subagents across 3 model tiers, themed as Pokemon.
-Each Pokemon is chosen because its characteristics match the agent's role.
+17 specialized subagents across 3 model tiers. Filenames are Pokemon labels for humans; dispatch uses the frontmatter `name` (the job). `Agent(subagent_type: "eevee")` fails. `Agent(subagent_type: "researcher")` is the job.
 
 ### Production Agents (Plan / Do)
 
-| Agent | Pokemon | Model | PDCA Phase | Role | Why This Pokemon |
-|-------|---------|-------|------------|------|------------------|
-| researcher | **Eevee** | sonnet | Gather | Web search + multi-source data collection | Adapts anywhere, evolves in many directions |
-| analyst | **Alakazam** | sonnet | Produce | Pattern recognition + data synthesis | IQ 5000, two spoons = cross-data analysis |
-| strategist | **Mewtwo** | sonnet | Produce | Strategic framework application | Ultimate strategic mind |
-| writer | **Smeargle** | opus | Produce | Long-form content creation | The painter — masters any technique |
-| editor | **Ditto** | opus | Refine | Content editing + quality improvement | Transforms the original into a better form |
+| Job (`name`) | File | Model | PDCA Phase | Role |
+|--------------|------|-------|------------|------|
+| researcher | eevee.md | sonnet | Gather | Web search + multi-source data collection |
+| analyst | alakazam.md | sonnet | Produce | Pattern recognition + data synthesis |
+| strategist | mewtwo.md | sonnet | Produce | Strategic framework application |
+| writer | smeargle.md | opus | Produce | Long-form content creation |
+| editor | ditto.md | opus | Refine | Content editing + quality improvement |
 
 ### Review Agents (Check)
 
-| Agent | Pokemon | Model | PDCA Phase | Role | Why This Pokemon |
-|-------|---------|-------|------------|------|------------------|
-| deep-reviewer | **Xatu** | opus | Verify | Logic, structure, and completeness | Sees past and future simultaneously = structural flaw detection |
-| devil-advocate | **Absol** | sonnet | Verify | Attacks weakest points and blind spots | The disaster-sensing Pokemon, warns of danger |
-| fact-checker | **Porygon** | sonnet | Verify | Verifies claims, numbers, and sources | Digital native, data-driven binary judgment |
-| tone-guardian | **Jigglypuff** | sonnet | Verify | Voice and audience fit | THE voice Pokemon, sensitive to tone |
-| structure-analyst | **Unown** | sonnet | Verify | Organization and readability | Letter-shaped, obsessed with structure |
+| Job (`name`) | File | Model | PDCA Phase | Role |
+|--------------|------|-------|------------|------|
+| deep-reviewer | xatu.md | opus | Verify | Logic, structure, and completeness |
+| devil-advocate | absol.md | sonnet | Verify | Attacks weakest points and blind spots |
+| fact-checker | porygon.md | sonnet | Verify | Verifies claims, numbers, and sources |
+| tone-guardian | jigglypuff.md | sonnet | Verify | Voice and audience fit |
+| structure-analyst | unown.md | sonnet | Verify | Organization and readability |
 
 ### Pipeline & Discover Agents
 
-| Agent | Pokemon | Model | PDCA Phase | Role | Why This Pokemon |
-|-------|---------|-------|------------|------|------------------|
-| orchestrator | **Arceus** | sonnet | Produce | Pipeline orchestration | Creator god, coordinates everything |
-| step-executor | **Machamp** | sonnet | Produce | Single pipeline step execution | Four arms, gets things done |
-| searcher | **Noctowl** | haiku | Gather | External source search | Nocturnal scout, sharp eyes |
-| inspector | **Magnezone** | sonnet | Gather | Skill candidate inspection | Magnetic scanner, attracts details |
-| evaluator | **Deoxys** | sonnet | Gather | Skill candidate scoring | Analysis form, adaptive evaluation |
-| connector | **Abra** | haiku | Extend | Knowledge linking | Teleport = connects distant concepts |
+| Job (`name`) | File | Model | PDCA Phase | Role |
+|--------------|------|-------|------------|------|
+| pipeline-orchestrator | arceus.md | sonnet | Produce | Pipeline orchestration |
+| pipeline-step-executor | machamp.md | sonnet | Produce | Single pipeline step execution |
+| skill-searcher | noctowl.md | haiku | Gather | External source search for skill candidates |
+| skill-inspector | magnezone.md | sonnet | Gather | Skill candidate inspection |
+| skill-evaluator | deoxys.md | sonnet | Gather | Skill candidate scoring |
+| knowledge-connector | abra.md | haiku | Extend | Knowledge linking |
 
 ### Soul Agents
 
-| Agent | Pokemon | Model | Phase | Role | Why This Pokemon |
-|-------|---------|-------|-------|------|------------------|
-| soul-keeper | **Pikachu** | opus | Extend | User identity synthesis | The iconic companion — knows the trainer better than anyone |
+| Job (`name`) | File | Model | Phase | Role |
+|--------------|------|-------|-------|------|
+| soul-keeper | pikachu.md | opus | Extend | User identity synthesis |
 
 ### Model Distribution
 
@@ -234,33 +188,33 @@ The Action Router operates in Act:
 flowchart TD
     subgraph PLAN["Gather (Plan)"]
         direction LR
-        P1[Eevee — researcher]
-        P2[Noctowl — searcher]
-        P3[Magnezone — inspector]
-        P4[Abra — connector]
+        P1[researcher]
+        P2[skill-searcher]
+        P3[skill-inspector]
+        P4[knowledge-connector]
     end
 
     subgraph DO["Produce (Do)"]
         direction LR
-        D1[Alakazam — analyst]
-        D2[Mewtwo — strategist]
-        D3[Smeargle — writer]
-        D4[Arceus — orchestrator]
-        D5[Machamp — step-executor]
+        D1[analyst]
+        D2[strategist]
+        D3[writer]
+        D4[pipeline-orchestrator]
+        D5[pipeline-step-executor]
     end
 
     subgraph CHECK["Verify (Check)"]
         direction LR
-        C1[Xatu — deep-reviewer]
-        C2[Absol — devil-advocate]
-        C3[Porygon — fact-checker]
-        C4[Jigglypuff — tone-guardian]
-        C5[Unown — structure-analyst]
+        C1[deep-reviewer]
+        C2[devil-advocate]
+        C3[fact-checker]
+        C4[tone-guardian]
+        C5[structure-analyst]
     end
 
     subgraph ACT["Refine (Act)"]
         direction LR
-        A1[Ditto — editor]
+        A1[editor]
         AR{Action Router}
     end
 
@@ -274,14 +228,14 @@ flowchart TD
 
 Supporting commands reinforce the same loop:
 
-- `pdca` orchestrates the full cycle with quality gates and the Action Router
+- `pdca` orchestrates one gated cycle with quality gates and the Action Router
 - `/scc:loop` runs fixed benchmark suites to evolve prompt assets in isolated winner branches
 - `collect` keeps source material and notes available for the next planning cycle
-- `discover` expands the system when the current skill set is not enough
-- `workflow` automates full Gather → Produce → Verify → Refine runs
+- `discover` expands the system when the current skill set is not enough (`skill-searcher`, `skill-inspector`, `skill-evaluator`)
+- `workflow` builds named reusable pipelines; `autopilot` approximates PDCA
 - `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
-- `viewer` starts the local artifact viewer for saved PDCA/session artifacts and returns a browser URL
+- `/scc:viewer` is a tool-only command: it starts the local artifact viewer for saved PDCA/session artifacts and returns a browser URL
 
 ### Artifact Viewer Lifecycle
 
@@ -297,7 +251,7 @@ flowchart LR
     SERVER --> IDLE[30-minute idle shutdown]
 ```
 
-The viewer command is intentionally a thin wrapper: it delegates to the skill, which starts the zero-dependency Node server in the background, records runtime metadata for follow-up commands, streams artifact state through HTTP/WebSocket, and shuts down through either the stop script or the idle timeout.
+`/scc:viewer` is a tool-only command, not a skill. There is no `skills/viewer/SKILL.md`. The command is a thin wrapper around `scripts/viewer-session.mjs` and `ui/scripts/start-server.sh`: it starts the zero-dependency Node server in the background, records runtime metadata for follow-up commands, streams artifact state through HTTP/WebSocket, and shuts down through either the stop script or the idle timeout.
 
 ### Loop Runner Architecture
 
@@ -476,16 +430,17 @@ normal Claude Code skill/command flow.
 
 ## Lifecycle Hooks
 
-8 hook files registered across 9 events in `hooks/hooks.json` (`compaction.mjs` serves both PreCompact and PostCompact):
+8 hook files registered across 10 events in `hooks/hooks.json` (`compaction.mjs` serves PreCompact and PostCompact; `session-end.mjs` serves Stop and SessionEnd):
 
 | Event | Hook file | Behavior |
 |-------|-----------|----------|
-| `SessionStart` | `session-start.mjs` | Session banner plus available state/context restoration and injection |
+| `SessionStart` | `session-start.mjs` | Restore standards, crash/compaction snapshots, active runs, and project memory. Silent when there is nothing to restore |
 | `UserPromptSubmit` | `prompt-detect.mjs` | Active-standard literal-trigger reporting |
-| `SubagentStart` | `subagent-start.mjs` | Review session context injection |
+| `SubagentStart` | `subagent-start.mjs` | Review-panel participation; `[REVIEW START]` dispatch count only |
 | `SubagentStop` | `subagent-stop.mjs` | Silently persist reviewer output and consensus state |
 | `PostToolUse` (`Agent`) | `review-result.mjs` | Inject the persisted review summary into the parent session |
-| `Stop` | `session-end.mjs` | Session-end quality gate, handoff, and cleanup |
+| `Stop` | `session-end.mjs` | Per-turn quality gate. Incomplete Check or open coach exits 2. Does not write `HANDOFF.md` |
+| `SessionEnd` | `session-end.mjs` | Once-per-session handoff, recall, and soul flush. Writes `HANDOFF.md` only when a run is active |
 | `StopFailure` | `stop-failure.mjs` | Crash-recovery snapshot (does not enforce the Check gate) |
 | `PreCompact` | `compaction.mjs` | PDCA state snapshot before context compression |
 | `PostCompact` | `compaction.mjs` | Retains the snapshot for the following `SessionStart(source=compact)` |
@@ -496,10 +451,11 @@ mid-cycle state loss.
 
 The hooks have deliberately separate responsibilities:
 
-- `SessionStart` restores active state, crash-recovery notices, standards, memory, and environment capabilities. A compact snapshot is consumed once when the host follows compaction with `source=compact`.
+- `SessionStart` restores active state, crash-recovery notices, standards, and project memory. It does not inject a product banner, capability probe, soul CTAs, daemon status, or MMBridge memory. A compact snapshot is consumed once when the host follows compaction with `source=compact`.
 - `UserPromptSubmit` (`prompt-detect`) reports matching literal triggers from active project standards. It does not choose, invoke, or install a skill.
-- `SubagentStart` records review-panel participation and injects role context. `SubagentStop` parses reviewer output and silently persists the preset's quorum state. When the `Agent` tool returns, `PostToolUse` injects that state into the parent session and removes a completed namespaced panel.
-- `Stop` is the normal session-end path. With an active PDCA run whose Check phase is incomplete, it writes the reason to stderr and exits **2**, which asks Claude Code to continue. A session-scoped guard and the host's `stop_hook_active` retry signal prevent an infinite denial loop. Once allowed, it writes `HANDOFF.md` and performs non-blocking summaries and cleanup.
+- `SubagentStart` records review-panel participation and emits a dispatch count. Role prompts stay in agent files. `SubagentStop` parses reviewer output and silently persists the preset's quorum state. When the `Agent` tool returns, `PostToolUse` injects that state into the parent session and removes a completed namespaced panel.
+- `Stop` is the per-turn quality gate. With an active PDCA run whose Check phase is incomplete, it writes the reason to stderr and exits **2**, which asks Claude Code to continue. A session-scoped guard and the host's `stop_hook_active` retry signal prevent an infinite denial loop. Passing Stop stamps the session id and returns.
+- `SessionEnd` is the real session close. It writes `HANDOFF.md` only when a run is active, then recall, notifications, and soul flush. It cannot block.
 - `StopFailure` is crash recovery, not a quality gate. It copies active PDCA state to `.data/state/pdca-crash-recovery.json`, appends an error event when possible, and exits **0** even when recovery logging fails. The next `SessionStart` surfaces the snapshot.
 
 ## MCP servers
@@ -540,23 +496,23 @@ PDCA phases leverage parallel execution where possible:
 
 ```yaml
 team_name: pdca-{topic-slug}
-lead: Arceus (orchestrator, sonnet)
+lead: pipeline-orchestrator (sonnet)
 phases:
   plan:
     agent:
-      role: Eevee (researcher)
+      role: researcher
       task: "depth-controlled research"
     optional_parallel:
       - mmbridge research pass  # configured, medium/deep depth only
     sequential:
-      - Alakazam + Mewtwo: analyze (merged research results)
+      - analyst + strategist: analyze (merged research results)
   do:
-    agent: Smeargle (writer, opus)
+    agent: writer (opus)  # PDCA Do should pass --skip-review so Check is the review
   check:
     parallel_agents:  # selected by the review preset (2–5 reviewers)
       - preset-selected reviewers
   act:
-    agent: Ditto (editor, opus)  # loop internal editing
+    agent: editor (opus)  # loop internal editing
 ```
 
 - Plan phase follows the research depth contract; a configured MMBridge pass runs in parallel at medium/deep depth
@@ -602,12 +558,12 @@ For detection, invocation, and error handling rules, see `references/mmbridge-in
 
 ```
 Review Dispatch
-├── Internal — preset selects 2–5 roles
-│   ├── Xatu / deep-reviewer (opus)
-│   ├── Absol / devil-advocate (sonnet)
-│   ├── Porygon / fact-checker (sonnet)
-│   ├── Jigglypuff / tone-guardian (sonnet)
-│   └── Unown / structure-analyst (sonnet)
+├── Internal — preset selects 2–5 jobs
+│   ├── deep-reviewer (opus)
+│   ├── devil-advocate (sonnet)
+│   ├── fact-checker (sonnet)
+│   ├── tone-guardian (sonnet)
+│   └── structure-analyst (sonnet)
 │
 ├── External — review (--external flag)
 │   └── mmbridge review --tool kimi
@@ -648,7 +604,7 @@ Research Dispatch
 
 Second Claude Code keeps two memory layers separate on purpose:
 
-- `soul` stores persistent user identity and preference signals.
+- `soul` stores persistent user identity and preference signals. Hooks, `soul_record_observation`, and `/scc:soul` use `soul/observations/YYYY-MM-DD.jsonl`. A single `soul/observations.jsonl` is not the write path.
 - Project recall comes from PDCA recovery state plus MMBridge continuity features such as memory search, handoff, and resume.
 
 This project can borrow ideas from standalone agent runtimes, but it should not embed a second runtime inside the Claude Code plugin model.
@@ -700,7 +656,7 @@ Insights use a 30-day linear time-decay for weight. When a critical insight repe
 ## Playwright MCP — Optional Browser Research
 
 The `playwright` MCP server is registered in `.claude-plugin/plugin.json` with `optional: true`. It provides
-a real Chromium browser to the researcher agent (Eevee) for URLs that `WebFetch` cannot read. A missing
+a real Chromium browser to the `researcher` agent for URLs that `WebFetch` cannot read. A missing
 package or cache/network failure disables this fallback only; the prebundled `pdca-state` server and its
 core tools still start normally.
 
@@ -732,5 +688,14 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 
 ---
 
+## Document index
+
+Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.0**; GitHub Latest Release is still **v3.0.0** — do not treat a 3.1.0 GitHub Release as published.
+
+**Archive / delete** (not runtime; do not treat as current architecture):
+
+- `translations/` — Claude mythos translation workspace; not part of the plugin runtime.
+- `docs/RELEASE-v*` — historical release notes (v0.9 through v1.5.2). Current version history is [CHANGELOG.md](../CHANGELOG.md).
+
 Release history and migration notes live in [CHANGELOG.md](../CHANGELOG.md). This architecture guide
-describes the SCC 3.0.3 runtime rather than copying historical release notes.
+describes the SCC 3.1.0 runtime rather than copying historical release notes.

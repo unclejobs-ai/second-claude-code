@@ -28,6 +28,10 @@ selected external capability. The built-in route uses `/scc:write` or `/scc:anal
 external plugin is optional and must be invoked explicitly. PDCA's Plan provides context,
 and Check + Act validate the returned output.
 
+PDCA still slash-chains `/scc:research`, `/scc:analyze`, `/scc:write`, `/scc:review`, and
+`/scc:refine`. If Do mentions `/scc:workflow`, that is an explicit slash (named replay),
+not an auto-route.
+
 | Detected format / intent | Sub-skill PDCA dispatches | Sub-skill mode | What runs inside |
 |--------------------------|--------------------------|----------------|------------------|
 | Newsletter / 뉴스레터 | `/scc:write --format newsletter` | Format contract | Format-specific draft and character floor |
@@ -38,7 +42,7 @@ and Check + Act validate the returned output.
 | Card news / 카드뉴스 | `/scc:write --format card-news` | Format contract | Format-specific draft and character floor |
 | Generic article / report / blog post | `/scc:write --format article --skip-research --skip-review` | Pure execution from Plan artifacts | Single-pass write using research brief and analysis |
 | Different framework analysis (SWOT, Porter, OKR, RICE) | `/scc:analyze` | Framework execution | Apply named framework to Plan inputs |
-| Pre-defined multi-step workflow | `/scc:workflow` | Pipeline replay | Run a saved pipeline definition |
+| Pre-defined multi-step workflow | `/scc:workflow` (explicit slash, not auto-route) | Named replay | Caller invokes `/scc:workflow`; PDCA does not auto-route here |
 | Code change / PR / refactor | Caller-selected implementation path, then `/scc:review --preset code` | Two-step | No built-in `write --format code`; an installed external coding capability is optional |
 
 ### Selection Algorithm (Run This At Do Phase Entry)
@@ -55,7 +59,7 @@ and Check + Act validate the returned output.
 3. If no specialized format matches, scan for **generic content type**:
    - Long-form analysis/report → `/scc:write --format article` or `--format report` with target length from the format table
    - Strategic framework → `/scc:analyze`
-   - Multi-step → `/scc:workflow`
+   - Multi-step named pipeline → explicit `/scc:workflow` slash (named replay; not auto-routed)
 4. Default fallback: `/scc:write --skip-research --skip-review` with the format that best matches the Plan output's recommended scope.
 
 Format matching selects the corresponding `/scc:write --format` contract. An external

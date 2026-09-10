@@ -1,7 +1,8 @@
 ---
 name: refine
-description: "Use when iteratively improving a draft until it meets a review target"
+description: "Use when improving a draft until it meets a review target — the improve step after Check"
 effort: medium
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

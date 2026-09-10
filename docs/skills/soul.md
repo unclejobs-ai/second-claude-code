@@ -4,6 +4,8 @@
 
 > Tool-only command: observe user patterns and synthesize a persistent, evidence-backed identity profile (SOUL.md). It records or serves state; it is not a reasoning skill.
 
+**Not auto-routed.** The skill carries `disable-model-invocation: true` — it runs when you call `/scc:soul`. Files stay in the plugin. Daily observations remain `soul/observations/YYYY-MM-DD.jsonl`.
+
 ## Quick Example
 
 ```

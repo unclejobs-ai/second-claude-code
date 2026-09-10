@@ -7,7 +7,7 @@ Invoke the `/scc:soul` command to build and maintain a user identity profile thr
 
 ## Context
 - Current soul: !`cat "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/SOUL.md" 2>/dev/null | head -5 || echo "No soul synthesized yet"`
-- Observation count: !`wc -l < "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/observations.jsonl" 2>/dev/null || echo "0"` observations logged
+- Observation count: !`find "${CLAUDE_PLUGIN_DATA:-${CLAUDE_PLUGIN_ROOT}/.data}/soul/observations" -maxdepth 1 -name '*.jsonl' -type f -exec cat {} + 2>/dev/null | wc -l | xargs echo || echo "0"` observations logged
 
 ## Subcommands
 - `init` — bootstrap a fresh observation log and SOUL.md stub
@@ -21,7 +21,6 @@ Invoke the `/scc:soul` command to build and maintain a user identity profile thr
 ## Options
 - `--mode manual|learning|hybrid` (default: hybrid)
 - `--template default|developer|writer|researcher` (for init only)
-- `--import <path>` (import observations from external file)
 
 ## Your task
 Run the plugin's loaded `soul` skill using the provided subcommand and arguments.

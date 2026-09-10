@@ -2,6 +2,8 @@
 name: workflow
 description: "Use when chaining multiple /scc commands into a reusable workflow"
 effort: medium
+disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

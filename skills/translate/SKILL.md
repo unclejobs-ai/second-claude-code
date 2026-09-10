@@ -2,6 +2,8 @@
 name: translate
 description: "Use when translating content between English and Korean with formatting preservation"
 effort: medium
+disable-model-invocation: true
+user-invocable: false
 ---
 
 ## Iron Law

@@ -4,6 +4,8 @@
 
 > Use when the current skills cannot handle a task and new skills are needed.
 
+**Not auto-routed.** The skill carries `disable-model-invocation: true` — it runs when you call `/scc:discover`. Files stay in the plugin.
+
 ## Quick Example
 
 ```

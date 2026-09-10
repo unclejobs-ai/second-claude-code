@@ -32,6 +32,7 @@ tests/skill-tests/
 # Temp
 *.tmp
 *.log
+.grok/
 
 # Codex test artifacts (numbered dirs at root)
 /[0-9]*/

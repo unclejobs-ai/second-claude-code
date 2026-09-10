@@ -2,6 +2,8 @@
 name: soul
 description: "Use when observing user patterns and synthesizing a persistent identity profile"
 effort: high
+disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

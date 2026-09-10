@@ -108,6 +108,22 @@ test("skill descriptions use trigger-only frontmatter", () => {
   }
 });
 
+// Claude Code merged plugin commands/ and skills/ onto the same slash surface.
+// Skills stay model-invocable for auto-routing; commands own the /scc:* menu.
+test("skills stay off the slash menu so each /scc:* name appears once", () => {
+  const skillsDir = path.join(root, "skills");
+  const skillNames = readdirSync(skillsDir).filter((name) => existsSync(path.join(skillsDir, name, "SKILL.md")));
+
+  for (const skillName of skillNames) {
+    const content = readFileSync(path.join(skillsDir, skillName, "SKILL.md"), "utf8");
+    assert.match(
+      content,
+      /^user-invocable:\s*false$/m,
+      `${skillName} must set user-invocable: false so /scc:${skillName} is the command, not a second skill row`
+    );
+  }
+});
+
 test("review presets only reference implemented reviewer agents", () => {
   const expectedAgents = [
     "deep-reviewer",

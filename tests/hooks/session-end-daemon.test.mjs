@@ -41,6 +41,7 @@ test("session end writes recall entries and queues notifications when daemon is 
       CLAUDE_SESSION_ID: "sess-42",
       TELEGRAM_CHAT_ID: "123",
     },
+    input: JSON.stringify({ hook_event_name: "SessionEnd", session_id: "sess-42" }),
     encoding: "utf8",
   });
 

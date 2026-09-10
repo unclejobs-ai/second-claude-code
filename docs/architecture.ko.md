@@ -1,37 +1,38 @@
 [English](architecture.md) | **한국어**
 
-# 아키텍처 — SCC 3.0.3
+# 아키텍처 — SCC 3.1.0
 
 ## 런타임 경계
 
-Second Claude Code는 의도적으로 Claude Code 플러그인이지, 독립 실행 에이전트 런타임이 아닙니다.
+Second Claude Code는 Claude Code 플러그인이지, 독립 실행 에이전트 런타임도 Uncle Code도 아닙니다.
 
+- 공개 방법: **God Hands** (`/scc:godhands`) — 찾고, 분석하고, 기획하고, 분해하고, 벤치마크하고, 개선한다. Check를 건너뛰면 신의 손이 아니다.
+- 런타임 상태와 MCP 도구는 `pdca_*`. `/scc:pdca`는 슬래시 전용 호환 이름.
 - `soul`은 사용자 선호와 행동 패턴을 위한 영속 정체성 레이어입니다.
 - 프로젝트 리콜은 PDCA 복구 상태, MMBridge 메모리, 핸드오프 아티팩트, 세션 재개에 속합니다.
 - 외부 스킬 탐색은 승인-우선 방식을 유지합니다.
 
-이 경계는 의도적입니다. Hermes 스타일 런타임 기능에서 개별 서브시스템에 영감을 받을 수 있지만, 플러그인이 Claude Code 실행 모델 안에 두 번째 에이전트 OS를 내장해서는 안 됩니다.
+이 경계는 의도적입니다. Hermes 스타일 런타임 기능에서 개별 서브시스템에 영감을 받을 수 있지만, 플러그인이 호스트 안에 두 번째 에이전트 OS를 내장해서는 안 됩니다.
 
 ---
 
-## PDCA 구조
+## God Hands 패스
 
-scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이는 페이즈 이름은 Gather, Produce, Verify, Refine이고, 각각 Plan, Do, Check, Act에 대응해요.
+사용자에게 보이는 페이즈는 `Gather → Draft → Check → Cut`이고, 런타임 게이트는 `Plan → Do → Check → Act`입니다. Check를 건너뛰지 마세요.
 
-| PDCA | 사용자 페이즈 | 주요 스킬 |
+| 런타임 | 제품 | 주요 스킬 |
 |------|--------------|-----------|
-| Requirements | Clarify | `coach` |
-| Plan | Gather | `research`, `analyze`*, `discover`, `collect` |
-| Do | Produce | `analyze`*, `write`, `workflow`, `batch` |
-| Check | Verify | `review` |
-| Act | Refine | `refine` |
-| **최적화** | **Evolve** | **`loop`**, `evolve` |
-| **오케스트레이터** | **전체 사이클** | **`pdca`** |
+| Requirements | Clarify | `coach` (계획 갈림길. 패스가 아님) |
+| Plan | Gather | `research`, `analyze` |
+| Do | Draft | `write --skip-research --skip-review` |
+| Check | Check | `review` |
+| Act | Cut | `refine`, 또는 액션 라우터로 되돌림 |
+| **호환** | **슬래시 별칭** | **`pdca`** |
 | **정체성** | **확장** | **`soul`** |
 
-`pdca` 메타스킬은 품질 게이트를 사이에 두고 전체 사이클을 조율할 수 있어요. 복합 작업에는 이 흐름을 쓰고, 개별 스킬과 명령은 직접 실행할 수 있어요.
+오케스트레이터는 `/scc:godhands` 하나입니다. 개별 스킬은 직접 호출할 수 있습니다. 접힌 스킬(`collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`, `evolve`, `pdca`)은 디스크에 남고 슬래시 전용입니다.
 
-*`analyze`는 두 페이즈에 걸쳐요: Plan에서는 리서치 결과를 종합하고, Do에서는 다른 프레임워크를 적용해 프로덕션 아티팩트를 만들어요.
+*`analyze`는 God Hands Gather가 `/scc:analyze`를 슬래시 체이닝할 수 있도록 모델 호출이 가능합니다. 최상위 초이스 행이 아닙니다.
 
 ### 코드 엔지니어링 레인
 
@@ -39,10 +40,11 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 
 핵심은 새 런타임을 얹는 게 아니라, 기존 Plan → Do → Check → Act 게이트를 코드 작업에 맞게 더 엄격하게 만드는 거예요. Plan에서는 테스트 가능한 수용 기준과 영향 범위를 확정하고, Do에서는 필요하면 브랜치나 워크트리로 격리해 단계별로 진행하며, Check에서는 구현자 자기 보고가 아니라 validator/reviewer 증거를 요구해요. Act에서는 clean-ai-slop, 단순화, 성능 측정이 필요할 때의 Rob Pike식 baseline/after 비교, PR 또는 로컬 리포트 핸드오프를 마무리 조건으로 둡니다.
 
-### 15개 스킬 목록
+### 16개 스킬 목록
 
 | 스킬 | 페이즈 | 역할 |
 |------|--------|------|
+| `godhands` | 공개 오케스트레이터 | 게이트가 있는 수집 → 초안 → 검사 → 손질. `/scc:pdca`는 호환 이름 |
 | `coach` | Requirements | 방어 가능한 방향이 둘 이상인 갈림길을 기준 문서로 확정 |
 | `research` | Plan | 자율적 다회차 웹 리서치 |
 | `analyze` | Plan / Do | 15개 전략 프레임워크 분석 |
@@ -57,9 +59,23 @@ scc는 PDCA 품질 사이클을 기본 구조로 써요. 사용자에게 보이�
 | `batch` | Do | 대규모 동종 작업 병렬 분해/실행 |
 | `soul` | 확장 | 사용자 정체성 프로필 합성 |
 | `translate` | 확장 | 소울 기반 EN↔KO 번역 |
-| `pdca` | 전체 | 오케스트레이터 (메타스킬) |
+| `pdca` | 호환 | God Hands의 슬래시 전용 별칭. MCP 상태는 `pdca_*` |
 
-스킬 목록 밖에 명령 셋이 있습니다 — `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`. 실행만 하고 판단이 없습니다. 판단 0인 항목이 스킬 목록에 앉아 있으면 모델의 선택지만 갉아먹습니다.
+스킬 목록 밖에 **도구 전용 명령** 셋이 있습니다 — `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`. 실행만 하고 판단이 없습니다. 판단 0인 항목이 스킬 목록에 앉아 있으면 모델의 선택지만 갉아먹습니다. `viewer`는 스킬이 아니라 명령입니다. `skills/unblock/`은 페치 엔진만 두고 `SKILL.md`가 없습니다. `standard-check`는 명령과 스크립트뿐입니다.
+
+이 트리(3.1.0)에서는 모든 스킬이 `user-invocable: false`라서 Claude Code가 합친 `/` 메뉴에 `/scc:*` 이름이 한 번만 보입니다(명령). 슬래시 중복은 3.0.3 호스트 머지 잔재입니다. `commands/version.mjs`는 버전 헬퍼이지 열여덟 번째 슬래시-스킬 쌍이 아닙니다.
+
+### 내장 오케스트레이터와 슬래시 전용 재생
+
+`/scc:godhands`가 내장 오케스트레이터입니다. `/scc:workflow`와 `/scc:batch`는 슬래시 전용이며 동등한 오케스트레이터가 아닙니다.
+
+| 표면 | 언제 |
+|---------|------|
+| `/scc:godhands` (내장 오케스트레이터) | 게이트가 있는 수집 → 초안 → 검사 → 손질 패스. 런타임은 `pdca_*`. `/scc:pdca`는 슬래시 전용 호환 이름. |
+| `/scc:workflow` (슬래시 전용 이름 있는 재생) | 다시 돌릴 이름 있는 다단계 파이프라인. 스텝은 메모리가 아니라 파일로 넘깁니다. 기본 `autopilot` 프리셋이 God Hands에 가깝습니다 (`research → analyze → write(--skip-research --skip-review) → review → refine`). 게이트는 없습니다. |
+| `/scc:batch` (슬래시 전용 병렬 분할) | 같은 스킬·다른 주제의 독립 동종 단위 5개 이상을 병렬 worktree에서 실행. 단위 N이 N−1 출력이 필요하면 배치가 아닙니다 — 명시적 `/scc:workflow`를 쓰세요. |
+
+`write`는 `--skip-review`가 없으면 내부에서 `/scc:review`를 돌립니다. God Hands Check는 그와 별개의 리뷰입니다. `/scc:write` 다음에 `/scc:godhands`를 바로 쓰면 Draft가 write 내부 리뷰를 건너뛰지 않는 한 리뷰가 두 번입니다. Autopilot은 write에 `--skip-review`를 넘깁니다. 워크플로의 `review` 스텝이 Check이기 때문입니다.
 
 ---
 
@@ -105,105 +121,52 @@ flowchart LR
 
 ## 디렉토리 구조
 
-```
-second-claude/
-├── .claude-plugin/plugin.json    # 플러그인 매니페스트 — MCP 서버: pdca-state (31개 도구), playwright (선택), mmbridge (선택)
-├── skills/                       # 15개 스킬 (각각 SKILL.md)
-│   ├── coach/                    # 갈림길 확정 (topology, scoring, .scc/ 아래 기준 문서)
-│   ├── pdca/                     # PDCA 사이클 오케스트레이터 (메타스킬)
-│   │   └── references/           # 페이즈 게이트 + 액션 라우터 + 질문 프로토콜
-│   ├── research/                 # 깊이 조절형 리서치와 단계별 폴백
-│   │   └── references/           # research-methodology.md, playwright-guide.md
-│   ├── write/                    # 콘텐츠 제작
-│   ├── analyze/                  # 전략 프레임워크 분석 (15개 프레임워크)
-│   ├── review/                   # 다관점 품질 게이트
-│   ├── refine/                   # 반복 개선
-│   ├── collect/                  # 지식 수집 (PARA)
-│   ├── workflow/                 # 커스텀 워크플로 빌더
-│   ├── discover/                 # 스킬 탐색
-│   ├── loop/                     # Karpathy 스타일 프롬프트 최적화 루프
-│   ├── evolve/                   # 우로보로스 메인테이너 루프 (실패 수확 → 메인테이너 체크 → loop)
-│   ├── batch/                    # 병렬 작업 분해 및 실행
-│   │   └── references/           # 분해 가이드, 분할 전략, 병합 패턴
-│   ├── soul/                     # 사용자 정체성 프로필 합성
-│   │   └── references/           # 관찰 시그널, 합성 알고리즘, 템플릿
-│   ├── translate/                # 소울 기반 EN↔KO 번역
-│   └── unblock/                  # 엔진만 있음 — SKILL.md 없이 /scc:unblock으로 나감
-│       ├── engine/               # CLI + 체인 + 10개 probe + 오케스트레이터
-│       └── references/           # waf-detection, tls-impersonation, archive-fallbacks, eevee-flow
-├── agents/                       # 17개 포켓몬 테마 서브에이전트
-├── commands/                     # 18개 슬래시 커맨드 래퍼 (스킬 15 + 도구 전용 3)
-├── hooks/                        # 라이프사이클 훅 + 컨텍스트 주입 (파일 8개, 이벤트 9개)
-│   ├── hooks.json                # 훅 설정
-│   ├── prompt-detect.mjs         # 활성 기준 literal trigger 보고 (UserPromptSubmit)
-│   ├── session-start.mjs         # 세션 상태·컨텍스트 복원/주입 (SessionStart)
-│   ├── subagent-start.mjs        # 리뷰 세션 컨텍스트 초기화 (SubagentStart)
-│   ├── subagent-stop.mjs         # 리뷰어 합의 집계 (SubagentStop)
-│   ├── review-result.mjs         # Agent 반환 뒤 부모 세션에 리뷰 결과 주입 (PostToolUse)
-│   ├── stop-failure.mjs          # 크래시 복구 스냅샷 (StopFailure)
-│   ├── session-end.mjs           # 세션 정리 (Stop)
-│   └── compaction.mjs            # PDCA 상태 스냅샷/복원 (PreCompact, PostCompact)
-├── references/                   # 설계 원칙, 합의 게이트
-├── templates/                    # 출력 템플릿
-├── scripts/                      # coach-runner, standard-check, viewer-session, export-artifact, evolve-runner
-├── mcp/
-│   ├── pdca-state-server.bundle.mjs # 런타임에서 사용하는 자체 포함 31개 도구 서버
-│   ├── pdca-state-server.mjs      # 개발·테스트용 원본
-│   └── lib/cycle-memory.mjs       # 사이클 메모리 영속 (페이즈 스냅샷, 인사이트, 메트릭스)
-└── config/                       # 사용자 설정
-```
-
-| 디렉토리 | 역할 |
-|----------|------|
-| `skills/` | 각 스킬마다 `SKILL.md`(짧고 컨텍스트 효율적)와 `references/` 하위 디렉토리(상세 문서)가 있어요. 점진적 공개 구조예요. |
-| `skills/pdca/` | 페이즈 게이트 체크리스트, 액션 라우터, 질문 프로토콜이 `references/`에 있는 메타스킬이에요. |
-| `agents/` | 3개 모델 티어에 걸친 17개 포켓몬 테마 서브에이전트 정의예요. 아래 에이전트 로스터를 참고하세요. |
-| `commands/` | `/scc:*` 호출을 해당 스킬로 연결하는 얇은 래퍼예요. |
-| `hooks/` | 훅 파일 8개가 9개 이벤트에 등록돼 있어요: 기준 trigger 보고, 리뷰 수명주기와 부모 전달, 세션 관리, 컴팩션, 품질 게이트. |
-| `references/` | 공유 지식: 설계 원칙, 합의 게이트 스펙, PARA 방법론. |
+디렉터리 아키텍처는 [directory-map.md](directory-map.md)에 **잠겨 있습니다** (트리 3.1.0).
+여기서 트리를 다시 그리지 마세요. 공개 오케스트레이터는 `godhands`, `pdca`는 슬래시 전용 호환과
+`pdca_*` 런타임입니다. 수: 스킬 16, 명령 마크다운 19, 에이전트 17, 훅 이벤트 10, MCP 서버 3.
 
 ---
 
-## 에이전트 로스터 — 포켓몬 에디션
+## 에이전트 로스터
 
-17개 서브에이전트가 3개 모델 티어에 걸쳐 배치돼 있어요. 각 포켓몬은 에이전트의 역할에 맞는 특성을 가진 포켓몬으로 골랐어요.
+서브에이전트 17개가 3개 모델 티어에 걸쳐 배치돼 있어요. 파일명은 사람을 위한 포켓몬 라벨이고, 디스패치는 frontmatter `name`(잡)을 씁니다. `Agent(subagent_type: "eevee")`는 실패합니다. `Agent(subagent_type: "researcher")`가 잡입니다.
 
 ### 프로덕션 에이전트 (Plan / Do)
 
-| 에이전트 | 포켓몬 | 모델 | PDCA 페이즈 | 역할 | 선정 이유 |
-|---------|--------|------|------------|------|----------|
-| researcher | **이브이(Eevee)** | sonnet | Gather | 웹 검색 + 다출처 데이터 수집 | 어디든 적응하고, 여러 방향으로 진화 |
-| analyst | **후딘(Alakazam)** | sonnet | Produce | 패턴 인식 + 데이터 종합 | IQ 5000, 두 숟가락 = 교차 데이터 분석 |
-| strategist | **뮤츠(Mewtwo)** | sonnet | Produce | 전략 프레임워크 적용 | 최고의 전략적 두뇌 |
-| writer | **루브도(Smeargle)** | opus | Produce | 장문 콘텐츠 제작 | 화가 — 어떤 기법이든 익힘 |
-| editor | **메타몽(Ditto)** | opus | Refine | 콘텐츠 편집 + 품질 개선 | 원본을 더 나은 형태로 변환 |
+| 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
+|-------------|------|------|------------|------|
+| researcher | eevee.md | sonnet | Gather | 웹 검색 + 다출처 데이터 수집 |
+| analyst | alakazam.md | sonnet | Produce | 패턴 인식 + 데이터 종합 |
+| strategist | mewtwo.md | sonnet | Produce | 전략 프레임워크 적용 |
+| writer | smeargle.md | opus | Produce | 장문 콘텐츠 제작 |
+| editor | ditto.md | opus | Refine | 콘텐츠 편집 + 품질 개선 |
 
 ### 리뷰 에이전트 (Check)
 
-| 에이전트 | 포켓몬 | 모델 | PDCA 페이즈 | 역할 | 선정 이유 |
-|---------|--------|------|------------|------|----------|
-| deep-reviewer | **네이티오(Xatu)** | opus | Verify | 논리, 구조, 완성도 검토 | 과거와 미래를 동시에 봄 = 구조적 결함 탐지 |
-| devil-advocate | **앱솔(Absol)** | sonnet | Verify | 약점과 맹점 공격 | 재해 감지 포켓몬, 위험을 경고 |
-| fact-checker | **폴리곤(Porygon)** | sonnet | Verify | 주장, 수치, 출처 검증 | 디지털 네이티브, 데이터 기반 이진 판단 |
-| tone-guardian | **푸린(Jigglypuff)** | sonnet | Verify | 목소리와 대상 독자 적합성 | 목소리의 포켓몬, 톤에 민감 |
-| structure-analyst | **안농(Unown)** | sonnet | Verify | 구성과 가독성 | 글자 모양, 구조에 집착 |
+| 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
+|-------------|------|------|------------|------|
+| deep-reviewer | xatu.md | opus | Verify | 논리, 구조, 완성도 검토 |
+| devil-advocate | absol.md | sonnet | Verify | 약점과 맹점 공격 |
+| fact-checker | porygon.md | sonnet | Verify | 주장, 수치, 출처 검증 |
+| tone-guardian | jigglypuff.md | sonnet | Verify | 목소리와 대상 독자 적합성 |
+| structure-analyst | unown.md | sonnet | Verify | 구성과 가독성 |
 
 ### 파이프라인 & 탐색 에이전트
 
-| 에이전트 | 포켓몬 | 모델 | PDCA 페이즈 | 역할 | 선정 이유 |
-|---------|--------|------|------------|------|----------|
-| orchestrator | **아르세우스(Arceus)** | sonnet | Produce | 파이프라인 조율 | 창조신, 모든 것을 조율 |
-| step-executor | **괴력몬(Machamp)** | sonnet | Produce | 단일 파이프라인 스텝 실행 | 네 팔, 일을 해치움 |
-| searcher | **야부엉(Noctowl)** | haiku | Gather | 외부 소스 검색 | 야행성 정찰, 날카로운 눈 |
-| inspector | **자포코일(Magnezone)** | sonnet | Gather | 스킬 후보 검사 | 자기 스캐너, 디테일을 끌어당김 |
-| evaluator | **테오키스(Deoxys)** | sonnet | Gather | 스킬 후보 채점 | 분석 폼, 적응형 평가 |
-| connector | **캐이시(Abra)** | haiku | 확장 | 지식 연결 | 순간이동 = 먼 개념을 연결 |
+| 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
+|-------------|------|------|------------|------|
+| pipeline-orchestrator | arceus.md | sonnet | Produce | 파이프라인 조율 |
+| pipeline-step-executor | machamp.md | sonnet | Produce | 단일 파이프라인 스텝 실행 |
+| skill-searcher | noctowl.md | haiku | Gather | 스킬 후보용 외부 소스 검색 |
+| skill-inspector | magnezone.md | sonnet | Gather | 스킬 후보 검사 |
+| skill-evaluator | deoxys.md | sonnet | Gather | 스킬 후보 채점 |
+| knowledge-connector | abra.md | haiku | 확장 | 지식 연결 |
 
 ### Soul 에이전트
 
-| 에이전트 | 포켓몬 | 모델 | 페이즈 | 역할 | 선정 이유 |
-|---------|--------|------|-------|------|----------|
-| soul-keeper | **피카츄(Pikachu)** | opus | 확장 | 사용자 정체성 합성 | 상징적 파트너 — 트레이너를 누구보다 잘 앎 |
+| 잡 (`name`) | 파일 | 모델 | 페이즈 | 역할 |
+|-------------|------|-------|-------|------|
+| soul-keeper | pikachu.md | opus | 확장 | 사용자 정체성 합성 |
 
 ### 모델 분포
 
@@ -225,33 +188,33 @@ Act 페이즈에는 액션 라우터가 있어요.
 flowchart TD
     subgraph PLAN["Gather (Plan)"]
         direction LR
-        P1["이브이(Eevee) — 리서처"]
-        P2["야부엉(Noctowl) — 서처"]
-        P3["자포코일(Magnezone) — 인스펙터"]
-        P4["캐이시(Abra) — 커넥터"]
+        P1[researcher]
+        P2[skill-searcher]
+        P3[skill-inspector]
+        P4[knowledge-connector]
     end
 
     subgraph DO["Produce (Do)"]
         direction LR
-        D1["후딘(Alakazam) — 애널리스트"]
-        D2["뮤츠(Mewtwo) — 전략가"]
-        D3["루브도(Smeargle) — 라이터"]
-        D4["아르세우스(Arceus) — 오케스트레이터"]
-        D5["괴력몬(Machamp) — 스텝 실행"]
+        D1[analyst]
+        D2[strategist]
+        D3[writer]
+        D4[pipeline-orchestrator]
+        D5[pipeline-step-executor]
     end
 
     subgraph CHECK["Verify (Check)"]
         direction LR
-        C1["네이티오(Xatu) — 심층 리뷰어"]
-        C2["앱솔(Absol) — 데빌 어드보킷"]
-        C3["폴리곤(Porygon) — 팩트체커"]
-        C4["푸린(Jigglypuff) — 톤 가디언"]
-        C5["안농(Unown) — 구조 분석가"]
+        C1[deep-reviewer]
+        C2[devil-advocate]
+        C3[fact-checker]
+        C4[tone-guardian]
+        C5[structure-analyst]
     end
 
     subgraph ACT["Refine (Act)"]
         direction LR
-        A1["메타몽(Ditto) — 에디터"]
+        A1[editor]
         AR{"액션 라우터"}
     end
 
@@ -265,14 +228,14 @@ flowchart TD
 
 보조 커맨드도 같은 루프를 따라가요:
 
-- `pdca` — 품질 게이트와 액션 라우터로 전체 사이클을 조율
+- `pdca` — 품질 게이트와 액션 라우터로 게이트된 1사이클을 조율
 - `/scc:loop` — 고정 벤치마크 스위트로 프롬프트 자산을 격리 브랜치에서 최적화
 - `collect` — 다음 Plan 사이클에 쓸 원천 자료와 노트를 보관
-- `discover` — 현재 스킬셋으로 부족할 때 시스템을 확장
-- `workflow` — Gather → Produce → Verify → Refine 전체 흐름을 자동화
+- `discover` — 현재 스킬셋으로 부족할 때 시스템을 확장 (`skill-searcher`, `skill-inspector`, `skill-evaluator`)
+- `workflow` — 이름 있는 재사용 파이프라인을 만들고, `autopilot`이 PDCA에 가깝게 동작
 - `batch` — 큰 동종 작업을 병렬 단위로 분해하고 격리된 worktree에서 동시 실행
 - `soul` — 관찰된 행동 시그널로부터 사용자 정체성 프로필을 구축하고 유지
-- `viewer` — 저장된 PDCA/session 아티팩트를 로컬 뷰어로 띄우고 브라우저 URL을 반환
+- `/scc:viewer` — 도구 전용 명령. 저장된 PDCA/session 아티팩트를 로컬 뷰어로 띄우고 브라우저 URL을 반환
 
 ### Artifact Viewer 라이프사이클
 
@@ -288,7 +251,7 @@ flowchart LR
     SERVER --> IDLE[30분 비활동 자동 종료]
 ```
 
-Viewer 커맨드는 얇은 래퍼입니다. 스킬이 zero-dependency Node 서버를 백그라운드로 시작하고, 후속 커맨드가 재사용할 런타임 메타데이터를 기록하며, HTTP/WebSocket으로 아티팩트 상태를 스트리밍합니다. 종료는 stop script 또는 idle timeout 경로를 탑니다.
+`/scc:viewer`는 스킬이 아니라 도구 전용 명령입니다. `skills/viewer/SKILL.md`는 없습니다. 명령은 `scripts/viewer-session.mjs`와 `ui/scripts/start-server.sh`의 얇은 래퍼예요. zero-dependency Node 서버를 백그라운드로 시작하고, 후속 커맨드가 재사용할 런타임 메타데이터를 기록하며, HTTP/WebSocket으로 아티팩트 상태를 스트리밍합니다. 종료는 stop script 또는 idle timeout 경로를 탑니다.
 
 ### Loop Runner 아키텍처
 
@@ -459,23 +422,23 @@ PDCA 페이즈별로 가능한 곳에서 병렬 실행을 활용해요.
 
 ```yaml
 team_name: pdca-{topic-slug}
-lead: 아르세우스 (오케스트레이터, sonnet)
+lead: pipeline-orchestrator (sonnet)
 phases:
   plan:
     agent:
-      role: 이브이 (리서처)
+      role: researcher
       task: "깊이 조절형 리서치"
     optional_parallel:
       - mmbridge research 패스  # 설정됨, medium/deep 깊이에서만
     sequential:
-      - 후딘 + 뮤츠: 분석 (병합된 리서치 결과)
+      - analyst + strategist: 분석 (병합된 리서치 결과)
   do:
-    agent: 루브도 (라이터, opus)
+    agent: writer (opus)  # PDCA Do는 --skip-review를 넘겨 Check가 리뷰를 맡게 함
   check:
     parallel_agents:  # review 스킬이 프리셋에 따라 2~5명 선택
       - 프리셋이 선택한 리뷰어
   act:
-    agent: 메타몽 (에디터, opus)  # 내부 편집 루프
+    agent: editor (opus)  # 내부 편집 루프
 ```
 
 - Plan 페이즈는 리서치 깊이 계약을 따르며, MMBridge가 설정돼 있으면 medium/deep 깊이에서 병렬 패스를 실행해요
@@ -520,12 +483,12 @@ MMBridge CLI는 스킬이나 호출자가 선택한 통합 지점에서 멀티�
 
 ```
 리뷰 디스패치
-├── 내부 — 프리셋이 2~5개 역할 선택
-│   ├── 네이티오 / deep-reviewer (opus)
-│   ├── 앱솔 / devil-advocate (sonnet)
-│   ├── 폴리곤 / fact-checker (sonnet)
-│   ├── 푸린 / tone-guardian (sonnet)
-│   └── 안농 / structure-analyst (sonnet)
+├── 내부 — 프리셋이 2~5개 잡을 선택
+│   ├── deep-reviewer (opus)
+│   ├── devil-advocate (sonnet)
+│   ├── fact-checker (sonnet)
+│   ├── tone-guardian (sonnet)
+│   └── structure-analyst (sonnet)
 │
 ├── 외부 — review (--external 플래그)
 │   └── mmbridge review --tool kimi
@@ -545,7 +508,7 @@ MMBridge CLI는 스킬이나 호출자가 선택한 통합 지점에서 멀티�
 
 ```
 리서치 디스패치
-├── 리서처 (이브이, sonnet)
+├── researcher (sonnet)
 │   ├── 설정돼 있으면 Jina Search
 │   ├── WebSearch + WebFetch 폴백
 │   ├── 막히거나 빈 페이지에는 /scc:unblock
@@ -566,7 +529,7 @@ MMBridge CLI는 스킬이나 호출자가 선택한 통합 지점에서 멀티�
 
 Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 둡니다.
 
-- `soul`은 지속되는 사용자 정체성과 선호 신호를 저장합니다.
+- `soul`은 지속되는 사용자 정체성과 선호 신호를 저장합니다. 훅, `soul_record_observation`, `/scc:soul`은 `soul/observations/YYYY-MM-DD.jsonl`을 씁니다. 단일 `soul/observations.jsonl`은 쓰기 경로가 아닙니다.
 - 프로젝트 리콜은 PDCA 복구 상태와 MMBridge의 연속성 기능(메모리 검색, 핸드오프, 재개)에서 옵니다.
 
 독립 에이전트 런타임에서 아이디어를 빌려올 수는 있지만, Claude Code 플러그인 모델 안에 두 번째 런타임을 심어서는 안 됩니다.
@@ -617,8 +580,8 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ## Playwright MCP — 선택적 브라우저 리서치
 
-`playwright` MCP 서버는 `.claude-plugin/plugin.json`에서 `optional: true`로 표시돼 있어요. 리서처
-에이전트(이브이)가 `WebFetch`로 읽을 수 없는 URL에 실제 Chromium 브라우저를 쓸 수 있게 해줘요.
+`playwright` MCP 서버는 `.claude-plugin/plugin.json`에서 `optional: true`로 표시돼 있어요. `researcher`
+에이전트가 `WebFetch`로 읽을 수 없는 URL에 실제 Chromium 브라우저를 쓸 수 있게 해줘요.
 패키지가 없거나 캐시·네트워크 조회가 실패해도 이 폴백만 비활성화되고, 사전 번들된
 `pdca-state` 서버와 핵심 도구는 정상 시작해요.
 
@@ -627,7 +590,7 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 ### 작동 조건
 
 ```
-리서처: WebFetch(url) → 비어 있음 / 오류
+researcher: WebFetch(url) → 비어 있음 / 오류
                  │
                  └─ Playwright 사용 가능?
                       ├─ 예 → browser_navigate(url)
@@ -644,7 +607,7 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ### 접근성 트리의 이점
 
-`browser_snapshot()`은 원시 HTML 대신 구조화된 접근성 트리를 반환해요. 같은 정보를 담은 HTML 대비 토큰 비용이 80-90% 낮아요. 리서처가 접근성 트리에서 헤딩, 문단, 테이블 셀을 직접 추출하기 때문에 내비게이션 크롬이나 광고가 구조적으로 제외돼요.
+`browser_snapshot()`은 원시 HTML 대신 구조화된 접근성 트리를 반환해요. 같은 정보를 담은 HTML 대비 토큰 비용이 80-90% 낮아요. `researcher`가 접근성 트리에서 헤딩, 문단, 테이블 셀을 직접 추출하기 때문에 내비게이션 크롬이나 광고가 구조적으로 제외돼요.
 
 자세한 도구 레퍼런스와 패턴은 `skills/research/references/playwright-guide.md`를 참고하세요.
 
@@ -652,16 +615,17 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 ## 라이프사이클 훅
 
-훅 파일 8개가 9개 이벤트에 등록돼 있어요 (`compaction.mjs`가 PreCompact와 PostCompact 둘 다 맡습니다). `hooks/hooks.json`에서 설정해요.
+훅 파일 8개가 10개 이벤트에 등록돼 있어요 (`compaction.mjs`가 PreCompact와 PostCompact, `session-end.mjs`가 Stop과 SessionEnd를 맡습니다). `hooks/hooks.json`에서 설정해요.
 
 | 이벤트 | 훅 파일 | 동작 |
 |--------|--------|------|
-| `SessionStart` | `session-start.mjs` | 세션 배너 + 가능한 상태·컨텍스트 복원/주입 |
+| `SessionStart` | `session-start.mjs` | 기준·크래시/컴팩션·활성 런·프로젝트 메모리 복원. 복원할 것이 없으면 침묵 |
 | `UserPromptSubmit` | `prompt-detect.mjs` | 활성 기준 literal trigger 보고 |
-| `SubagentStart` | `subagent-start.mjs` | 리뷰 세션 컨텍스트 주입 |
+| `SubagentStart` | `subagent-start.mjs` | 리뷰 패널 참여 기록. `[REVIEW START]` 디스패치 수만 |
 | `SubagentStop` | `subagent-stop.mjs` | 리뷰어 출력과 합의 상태를 조용히 저장 |
 | `PostToolUse` (`Agent`) | `review-result.mjs` | 저장된 리뷰 요약을 부모 세션에 주입 |
-| `Stop` | `session-end.mjs` | 세션 종료 품질 게이트·핸드오프·정리 |
+| `Stop` | `session-end.mjs` | 턴마다 품질 게이트. Check 미완 또는 열린 coach는 exit 2. `HANDOFF.md`를 쓰지 않음 |
+| `SessionEnd` | `session-end.mjs` | 세션이 닫힐 때 핸드오프·리콜·소울 플러시. 활성 런이 있을 때만 `HANDOFF.md` |
 | `StopFailure` | `stop-failure.mjs` | 크래시 복구 스냅샷 (Check 게이트를 집행하지 않음) |
 | `PreCompact` | `compaction.mjs` | 컨텍스트 압축 전 PDCA 상태 스냅샷 |
 | `PostCompact` | `compaction.mjs` | 다음 `SessionStart(source=compact)`에서 복원하도록 스냅샷 유지 |
@@ -672,10 +636,11 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 
 훅의 책임은 서로 분리돼 있어요.
 
-- `SessionStart`는 활성 상태, 크래시 복구 알림, 기준 문서, 메모리, 환경 capability를 복원·주입해요. 컴팩션 뒤 호스트가 보내는 `source=compact`에서 스냅샷을 한 번 소비해요.
+- `SessionStart`는 활성 상태, 크래시 복구 알림, 기준 문서, 프로젝트 메모리를 복원해요. 제품 배너, capability 프로브, 소울 CTA, 데몬 상태, MMBridge 메모리는 넣지 않아요. 컴팩션 뒤 호스트가 보내는 `source=compact`에서 스냅샷을 한 번 소비해요.
 - `UserPromptSubmit`(`prompt-detect`)는 활성 프로젝트 기준의 literal trigger가 프롬프트에 있는지만 보고해요. 스킬을 선택하거나 호출·설치하지 않아요.
-- `SubagentStart`는 리뷰 패널 참여를 기록하고 역할 컨텍스트를 주입해요. `SubagentStop`은 리뷰어 출력에서 판정과 소견을 파싱해 프리셋 합의 상태를 조용히 저장해요. `Agent` 도구가 반환되면 `PostToolUse`가 그 상태를 부모 세션에 주입하고 완료된 세션별 패널을 정리해요.
-- `Stop`은 정상 세션 종료 경로예요. 활성 PDCA의 Check가 끝나지 않았으면 이유를 stderr에 쓰고 **exit 2**로 종료를 막아요. 세션별 guard와 호스트의 `stop_hook_active` 재시도 신호로 무한 차단을 막고, 허용된 뒤에는 `HANDOFF.md`를 쓰고 요약·정리를 수행해요.
+- `SubagentStart`는 리뷰 패널 참여를 기록하고 디스패치 수만 내요. 역할 프롬프트는 에이전트 파일에 둡니다. `SubagentStop`은 리뷰어 출력에서 판정과 소견을 파싱해 프리셋 합의 상태를 조용히 저장해요. `Agent` 도구가 반환되면 `PostToolUse`가 그 상태를 부모 세션에 주입하고 완료된 세션별 패널을 정리해요.
+- `Stop`은 턴마다 품질 게이트예요. 활성 PDCA의 Check가 끝나지 않았으면 이유를 stderr에 쓰고 **exit 2**로 종료를 막아요. 세션별 guard와 호스트의 `stop_hook_active` 재시도 신호로 무한 차단을 막아요. 통과하면 세션 id만 찍고 끝나요. `HANDOFF.md`는 쓰지 않아요.
+- `SessionEnd`가 진짜 세션 종료예요. 활성 런이 있을 때만 `HANDOFF.md`를 쓰고, 리콜·알림·소울 플러시를 해요. 막을 수는 없어요.
 - `StopFailure`는 품질 게이트가 아니라 크래시 복구예요. 활성 PDCA 상태를 `.data/state/pdca-crash-recovery.json`에 복사하고 가능하면 오류 이벤트를 남긴 뒤, 복구 기록이 실패해도 항상 **exit 0**이에요. 다음 `SessionStart`가 스냅샷을 알려줘요.
 
 ---
@@ -711,5 +676,14 @@ CI가 생성물의 변경 여부를 확인해요.
 
 ---
 
+## 문서 색인
+
+제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.0**이고, GitHub Latest Release는 아직 **v3.0.0**입니다. 3.0.3 GitHub Release가 나온 것처럼 쓰지 마세요.
+
+**보관 / 삭제** (런타임이 아님. 현재 아키텍처로 다루지 마세요):
+
+- `translations/` — Claude mythos 번역 작업 공간. 플러그인 런타임이 아닙니다.
+- `docs/RELEASE-v*` — 과거 릴리스 노트 (v0.9 ~ v1.5.2). 현재 버전 기록은 [CHANGELOG.md](../CHANGELOG.md)입니다.
+
 릴리스 기록과 마이그레이션 노트는 [CHANGELOG.md](../CHANGELOG.md)에 모아 두었습니다. 이 문서는
-과거 릴리스 내용을 복사하지 않고 SCC 3.0.3 런타임의 현재 구조를 설명합니다.
+과거 릴리스 내용을 복사하지 않고 SCC 3.1.0 런타임의 현재 구조를 설명합니다.

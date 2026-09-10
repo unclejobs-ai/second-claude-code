@@ -1,7 +1,8 @@
 ---
 name: review
-description: "Use when reviewing content, strategy, or code with parallel specialized reviewers"
+description: "Use when benchmarking content, strategy, or code against a quality bar with parallel specialized reviewers"
 effort: medium
+user-invocable: false
 ---
 
 ## Iron Law

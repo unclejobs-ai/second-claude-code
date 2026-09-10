@@ -2,6 +2,8 @@
 name: collect
 description: "Use when collecting URLs, notes, files, or excerpts into structured PARA knowledge"
 effort: low
+disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

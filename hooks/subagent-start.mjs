@@ -13,8 +13,8 @@
  *      (the review skill should create it before dispatch, but this catches
  *      edge cases like manual reviewer invocations).
  *   4. Records the reviewer's start time in the aggregation file.
- *   5. Emits additionalContext with reviewer-specific guidance (e.g., SOUL.md
- *      path for tone-guardian, web search reminder for fact-checker).
+ *   5. Emits a [REVIEW START] dispatch count. Role prompts live in agent
+ *      files, not here.
  */
 
 import { existsSync, unlinkSync } from "fs";
@@ -32,7 +32,6 @@ const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA || join(PLUGIN_ROOT, ".data");
 const STATE_DIR = join(DATA_DIR, "state");
 const AGGREGATION_FILE = join(STATE_DIR, "review-aggregation.json");
-const SOUL_FILE = join(DATA_DIR, "soul", "SOUL.md");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Known reviewer names (must match agent definition names)
@@ -45,24 +44,6 @@ const KNOWN_REVIEWERS = new Set([
   "tone-guardian",
   "structure-analyst",
 ]);
-
-// Reviewer-specific context hints injected via additionalContext.
-// These help each reviewer find project-specific resources without bloating
-// the agent system prompt.
-const REVIEWER_CONTEXT = {
-  "tone-guardian": () => {
-    if (existsSync(SOUL_FILE)) {
-      return "SOUL.md found at .data/soul/SOUL.md — use its ## Tone Rules and ## Anti-Patterns as primary voice criteria.";
-    }
-    return null;
-  },
-  "fact-checker": () => {
-    return "Use WebSearch and WebFetch to verify every claim. Include source URLs for each verified fact.";
-  },
-  "deep-reviewer": () => {
-    return "Focus on logic gaps, missing edge cases, and structural completeness. Cite exact sections.";
-  },
-};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Read the subagent event payload from STDIN
@@ -265,15 +246,6 @@ function main() {
   lines.push(
     `[REVIEW START] ${reviewerName} started (${state.started_reviewers.length}/${state.expected_reviewers} dispatched).`
   );
-
-  // Inject reviewer-specific context if available.
-  const contextFn = REVIEWER_CONTEXT[reviewerName];
-  if (contextFn) {
-    const hint = contextFn();
-    if (hint) {
-      lines.push(`[CONTEXT] ${hint}`);
-    }
-  }
 
   const additionalContext = sanitizeExternalText(lines.join("\n"), MAX_EXTERNAL_CONTEXT_CHARS);
   console.log(JSON.stringify({

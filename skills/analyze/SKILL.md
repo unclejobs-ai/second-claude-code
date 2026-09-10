@@ -1,7 +1,8 @@
 ---
 name: analyze
-description: "Use when applying strategic frameworks such as SWOT, RICE, OKR, or GTM"
+description: "Use when analyzing a topic with a strategic framework, then stress-testing the plan against evidence"
 effort: high
+user-invocable: false
 ---
 
 ## Iron Law

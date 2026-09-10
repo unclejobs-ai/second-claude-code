@@ -2,7 +2,9 @@
 
 # Viewer
 
-> Tool-only command: open or export the SCC Artifact Viewer for PDCA artifacts. It serves state and does not make a quality judgment.
+> Tool-only command: open PDCA artifacts in a local web UI, or export the same run as a shareable provenance page. It serves or projects state. It does not make a quality judgment.
+
+The live viewer is a local WebSocket server. It is **not** a Claude Code Artifact. Do not publish `localhost`, and do not pack that runtime into the export. SCC does not own the host loop and does not embed a second one.
 
 ## Quick Example
 
@@ -10,7 +12,7 @@
 /scc:viewer
 ```
 
-**What happens:** The skill first runs `scripts/viewer-session.mjs`, which builds the session directory from the run, then runs `ui/scripts/start-server.sh` against it. The script serves the pre-built viewer UI from `ui/dist`, watches `state.json` and `artifacts/*.json` for changes, and prints a JSON blob with a local URL once the server is ready. Opening that URL in a browser renders each artifact -- markdown, charts, code, flow diagrams -- and updates live over WebSocket as the pipeline writes new artifacts.
+**What happens:** The command first runs `scripts/viewer-session.mjs`, which builds the session directory from the run, then runs `ui/scripts/start-server.sh` against it. The script serves the pre-built viewer UI from `ui/dist`, watches `state.json` and `artifacts/*.json` for changes, and prints a JSON blob with a local URL once the server is ready. Opening that URL in a browser renders each artifact -- markdown, charts, code, flow diagrams -- and updates live over WebSocket as the pipeline writes new artifacts.
 
 ## Real-World Example
 
@@ -40,7 +42,7 @@ The AI agent market report cycle just finished -- show me the artifacts
   "dist_dir": "/Users/you/project/ui/dist"
 }
 ```
-> Open `http://localhost:3847` -- the session shows a markdown research brief, a bar chart of framework adoption, and a code sample, each updating live as the pipeline writes more artifacts.
+> Open `http://localhost:3847` -- the session shows a markdown research brief, a bar chart of framework adoption, and a code sample, each updating live as the pipeline writes more artifacts. That URL is local only. It is not an Artifact.
 
 ## Options
 
@@ -49,16 +51,52 @@ The AI agent market report cycle just finished -- show me the artifacts
 | `--session-dir` | path to a `.scc/sessions/{id}` directory | current PDCA session |
 | `--port` | port number | `3847` |
 | `--export` | write a shareable page instead of serving | off |
+| `--format` | `md` \| `html` | `md` |
+| `--out` | export path | `pdca-export.md` (`*.html` selects HTML) |
 
-## Export mode
+`--format html` and `--out *.html` are the same choice. Markdown stays the default when neither is set.
 
-The live viewer is local and dies after 30 minutes of inactivity. To hand someone the result, export instead:
+## Two surfaces
+
+| Surface | What it is | What it is not |
+|---------|------------|----------------|
+| Live viewer | Local WebSocket UI over the session directory that `viewer-session.mjs` projected | Not an Artifact. Dies after 30 minutes idle. No shareable URL |
+| Export | One file from `scripts/export-artifact.mjs`, Markdown or HTML, published with the Artifact tool | Not a replay of the host loop. Not a second runtime |
+
+A harness trajectory log can re-derive model context. SCC does not. Export reconstructs only PDCA gates, reviews, and router decisions from the append-only event log. The HTML page is a **projection** of that log.
+
+## Export formats
+
+The live viewer is local and dies after 30 minutes of inactivity. To hand someone the result, export instead. Both formats read the same event log through `scripts/export-artifact.mjs`. After the file is written, publish the Markdown or HTML with the Artifact tool to get a shareable URL.
+
+### Markdown (default)
+
+For mermaid-friendly hosts:
 
 ```bash
 node "${CLAUDE_PLUGIN_ROOT}/scripts/export-artifact.mjs" --out pdca-export.md
 ```
 
-This writes one Markdown file and prints `{"out","artifacts","cycles","source"}`. Publish it with the Artifact tool to get a shareable URL. Charts and flows become mermaid, so there is no bundle and no external asset to break.
+This writes one Markdown file and prints `{"out","artifacts","cycles","source"}`. Charts and flows become mermaid, so there is no bundle and no external asset to break.
+
+### HTML (`--format html` or `--out *.html`)
+
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/export-artifact.mjs" --format html --out pdca-export.html
+```
+
+Same log, one Claude-Artifact-safe page:
+
+- one self-contained HTML file
+- inline CSS and JS
+- images as data URI or SVG
+- no `fetch`, no WebSocket
+- no Nivo or Shiki CDN
+- well under 16MB
+
+The live viewer's Nivo charts, Shiki highlighter, and WebSocket watch do **not** travel into this file.
+
+### What it reads
 
 It reads what the pipeline actually writes — `.data/state/pdca-last-completed.json`, the `.data/events/pdca-{run_id}.jsonl` event log, and the `.data/cycles/` markdown. Pass `--data-dir` for a different root or `--run <run_id>` to pick an older run. The `--session-dir` form still reads the live viewer's `state.json` + `artifacts/*.json` layout.
 
@@ -83,11 +121,23 @@ graph TD
     D --> E[Browser renders artifacts -- markdown, charts, code, flow diagrams]
 ```
 
+That path is the live viewer. Export does not start it:
+
+```mermaid
+graph LR
+    L[".data/events pdca-{run}.jsonl"] --> X[export-artifact.mjs]
+    S[".data/state + .data/cycles"] --> X
+    X --> M[Markdown default]
+    X --> H[HTML --format html or --out *.html]
+    M --> P[Publish with the Artifact tool]
+    H --> P
+```
+
 ## Artifact Types
 
-Each artifact file must have `id`, `type`, `phase`, and `title`, plus type-specific fields:
+Each artifact file must have `id`, `type`, `phase`, and `title`, plus type-specific fields. The live viewer renders these with Nivo and Shiki. Markdown export uses mermaid fences. HTML export inlines CSS/JS and SVG or data-URI images — never a Nivo/Shiki CDN.
 
-| Type | Renders as | Type-specific fields |
+| Type | Live viewer | Type-specific fields |
 |------|-----------|----------------------|
 | `markdown` | Markdown prose | `content` |
 | `chart` | Chart via Nivo (`bar`, `line`, `pie`, `radar`) | `chartType`, `data.labels`, `data.datasets[].values` |
@@ -110,13 +160,24 @@ Each PDCA session lives in its own directory:
     └── server.pid
 ```
 
+## Optional companions
+
+Companion plugins are optional. They must not replace `/scc:coach`. The decision owner stays `.scc/standards`. Do not add these as SCC dependencies.
+
+| Plugin | Role |
+|--------|------|
+| `design-crit` | HTML wireframes Keep/Cut |
+| `design-with-ai` | Direction before code |
+| `alexei-led/architect` | Read-only coupling review |
+
 ## Gotchas
 
-- **Confirm before sharing** -- Don't hand over a URL without confirming the server actually responds. A dead server produces a broken link.
+- **Confirm before sharing** -- Don't hand over a live-viewer URL without confirming the server actually responds. A dead server produces a broken link. That URL is still not an Artifact.
 - **JSON validity isn't visual correctness** -- A well-formed artifact file can still render wrong. Open the viewer and check the rendered chart, flow, or markdown -- don't stop at validating the JSON.
 - **Raw JSON is not a substitute** -- A screenshot of the artifact JSON is not the same as the rendered page. The viewer exists to render artifacts interactively.
 - **Session must be populated first** -- Starting the server against a session directory with no `state.json` or nothing under `artifacts/` produces a blank page, not an error.
 - **"Still running" is not guaranteed** -- The server auto-stops after 30 minutes of inactivity. Check `state/server.pid` before assuming a long-idle server is still up.
+- **Do not embed the live runtime** -- HTML export is a static projection of the event log. No WebSocket, no `fetch`, no Nivo/Shiki CDN, no second host loop.
 
 ## Troubleshooting
 
@@ -132,3 +193,4 @@ Each PDCA session lives in its own directory:
 | `pdca` | Writes the `state.json` and `artifacts/*.json` files the viewer renders |
 | `write` | Runs inside PDCA's Do phase; its output can be saved as a session artifact for the viewer to display |
 | `analyze` | Runs inside PDCA's Plan phase; its charts and findings can be saved as a session artifact for the viewer to display |
+| `coach` | Settles forks into `.scc/standards`. Optional design/architecture companions do not replace it |

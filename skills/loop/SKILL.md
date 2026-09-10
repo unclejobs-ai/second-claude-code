@@ -3,6 +3,7 @@ name: loop
 description: "Use when benchmarking and evolving prompt assets through a fixed-suite optimization loop"
 effort: high
 disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

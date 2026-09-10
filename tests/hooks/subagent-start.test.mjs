@@ -89,13 +89,13 @@ test("subagent start creates a safety-net aggregation file for reviewers", () =>
     output.hookSpecificOutput.additionalContext,
     /\[REVIEW START\] fact-checker started \(1\/3 dispatched\)\./
   );
-  assert.match(
+  assert.doesNotMatch(
     output.hookSpecificOutput.additionalContext,
     /Use WebSearch and WebFetch to verify every claim/
   );
 });
 
-test("subagent start injects SOUL guidance for tone-guardian when SOUL.md exists", () => {
+test("subagent start does not inject SOUL or role prompts for tone-guardian", () => {
   const tempDir = makeTempDataDir();
   const soulDir = path.join(tempDir, "soul");
 
@@ -107,10 +107,11 @@ test("subagent start injects SOUL guidance for tone-guardian when SOUL.md exists
 
   assert.equal(result.status, 0);
   assert.match(output.hookSpecificOutput.additionalContext, /tone-guardian started/);
-  assert.match(
+  assert.doesNotMatch(
     output.hookSpecificOutput.additionalContext,
     /SOUL\.md found at \.data\/soul\/SOUL\.md/
   );
+  assert.doesNotMatch(output.hookSpecificOutput.additionalContext, /\[CONTEXT\]/);
 });
 
 test("subagent start does not duplicate started reviewers on retry", () => {

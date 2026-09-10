@@ -17,7 +17,7 @@ PDCA (when selected)
   └── Do
         ├── /scc:write --format <format>
         ├── /scc:analyze <framework>
-        ├── /scc:workflow (saved workflow)
+        ├── /scc:workflow (explicit slash; named replay, not auto-route)
         └── optional external capability (explicit invocation)
 ```
 
@@ -32,7 +32,7 @@ or assume unavailable commands such as `/threads`, `/newsletter`, `/academy-shor
    `newsletter`, `article`, `shorts`, `report`, `social`, `card-news`, or the format values
    documented by `skills/write/SKILL.md`.
 3. Use `/scc:analyze` for a named strategic framework.
-4. Use `/scc:workflow` for a saved multi-step workflow.
+4. A saved multi-step workflow is an explicit `/scc:workflow` slash (named replay), not an auto-route from Do.
 5. If an external plugin is explicitly selected, verify that capability is installed before
    invocation. Otherwise use `/scc:write` as the generic fallback.
 

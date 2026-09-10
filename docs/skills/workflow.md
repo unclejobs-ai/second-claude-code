@@ -4,6 +4,8 @@
 
 > Use when chaining multiple /scc commands into a reusable PDCA workflow.
 
+**Not auto-routed.** Named pipeline replay; not a second PDCA. PDCA remains the gated cycle. The skill carries `disable-model-invocation: true` — it runs when you call `/scc:workflow`. Files stay in the plugin.
+
 ## Quick Example
 
 ```

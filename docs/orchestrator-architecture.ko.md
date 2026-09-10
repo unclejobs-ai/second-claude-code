@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | **한국어**
 
-# 오케스트레이터 아키텍처 — SCC 3.0.3
+# 오케스트레이터 아키텍처 — SCC 3.1.0
 
-SCC 3.0.3의 크로스-플러그인 오케스트레이터는 설치된 플러그인 capability를 런타임에 발견하고
+SCC 3.1.0의 크로스-플러그인 오케스트레이터는 설치된 플러그인 capability를 런타임에 발견하고
 사용자 의도와 점수화한 뒤, 호출자가 검토할 자문용 dispatch plan을 반환합니다.
 오케스트레이터나 MCP 도구가 외부 Skill 또는 슬래시 커맨드를 실행하지는 않습니다.
 
@@ -10,22 +10,45 @@ SCC 3.0.3의 크로스-플러그인 오케스트레이터는 설치된 플러그
 선택할 수 있으며, prompt-detect가 이를 자동 호출하거나 invocation 지시를 주입하지 않습니다.
 구현은 `skills/unblock/engine/`과 `commands/unblock.md`를 참고하세요.
 
+## 내장 오케스트레이터와 이 플래너
+
+이 문서는 **자문용 크로스-플러그인 플래너**를 설명합니다. 스킬이 아니고 작업을 실행하지 않으며,
+네 번째 오케스트레이터도 아닙니다. 내장 오케스트레이터는 `/scc:godhands` 하나입니다. 말로 부를 때는
+신의 손이라고 해도 됩니다. `/scc:pdca`는 슬래시 전용 호환 이름이고,
+`/scc:workflow`는 슬래시 전용 이름 있는 재생이며, `/scc:batch`는 슬래시 전용 병렬 분할입니다.
+사용자는 여전히 `/scc:*`로 부르지만, 자동 라우트의 동등한 오케스트레이터는 아닙니다.
+
+| 종류 | 명령 | 고를 때 |
+| --- | --- | --- |
+| 내장 오케스트레이터 | `/scc:godhands` | 한 건의 복합 작업에 게이트가 있는 수집 → 초안 → 검사 → 손질이 필요할 때. `/scc:pdca`는 슬래시 전용 호환 이름이며 런타임은 `pdca_*`입니다. |
+| 슬래시 전용 이름 있는 재생 | `/scc:workflow` | 재사용하거나 순서가 있는 단계. `autopilot` 프리셋은 그 Hands 패스를 저장된 파이프라인으로 근사합니다 (`research` → `analyze` → `write --skip-review` → `review` → `refine`). Hands 런타임 게이트 자체는 아닙니다. 자동 라우트되지 않습니다. |
+| 슬래시 전용 병렬 분할 | `/scc:batch` | 독립 단위로 나눌 수 있는 대규모 동종 작업을 병렬로 돌릴 때. 자동 라우트되지 않습니다. |
+
+아래 다이어그램 Layer 1("복합 의도인가?")은 호출자가 내장 오케스트레이터 `/scc:godhands`를
+선택할 수 있다는 힌트일 뿐입니다. `godhands`를 자동 디스패치하지 않습니다. `/scc:workflow`와
+`/scc:batch`는 슬래시 전용(이름 있는 재생·병렬 분할)입니다. Hands 초안이 `/scc:workflow`를
+언급할 때는 명시적 슬래시이지 자동 라우트가 아닙니다.
+
+`write`는 `--skip-review`가 없으면 내부에서 `/scc:review`를 실행합니다. Hands 검사는 별도의
+리뷰입니다. 직접 `/scc:write` 다음에 `/scc:godhands`를 붙이면 초안이 write 내부 리뷰를 건너뛰지
+않는 한 리뷰가 두 번입니다. Hands 자신의 초안 경로는 이미 `--skip-review`를 넘깁니다.
+
 ## 디스패치 레이어
 
 ```mermaid
 flowchart TB
     U[사용자 프롬프트] --> L1{"Layer 1<br/>복합 의도인가?"}
-    L1 -->|예| PDCA[["호출자가 pdca를 선택할 수 있음"]]
+    L1 -->|예| HANDS[["호출자가 /scc:godhands를 선택할 수 있음"]]
     L1 -->|아니오| L2["호출자가 라우트 계획을 요청"]
     L2 --> G[getDispatchPlan]
     G --> D[런타임 플러그인 발견]
     D --> C[Capability map]
     C --> S["의도 점수화 + preferred-plugin 보정"]
-    S --> L3{"Layer 3<br/>호출자 판단"]
+    S --> L3{"Layer 3<br/>호출자 판단"}
     L3 -->|적절하면 명시적으로 호출| O[["선택적 외부 호출"]]
     L3 -->|그 외| I[["내장 스킬/커맨드 사용"]]
 
-    style PDCA fill:#fff3bf,stroke:#f08c00
+    style HANDS fill:#fff3bf,stroke:#f08c00
     style O fill:#d3f9d8,stroke:#2f9e44
     style I fill:#e7f5ff,stroke:#1971c2
 ```
@@ -46,7 +69,7 @@ flowchart TB
 
 **기본 설정 기준**입니다. `plugin-preferences.json`으로 덮어쓰면 lifecycle 의도별 1순위가 달라지므로, 아래는 사장님 머신의 결과가 아니라 출하 기본값입니다.
 
-| 입력 | 의도 | 1순위 디스패치 |
+| 입력 | 의도 | 1순위 자문 후보 |
 | --- | --- | --- |
 | `phase=plan` | PDCA Plan | `Skill: claude-mem:knowledge-agent` |
 | `phase=do` | PDCA Do | `Skill: frontend-design:frontend-design` |
@@ -84,7 +107,26 @@ Skill: coderabbit:code-review
 호출하고, 아니면 내장 스킬·커맨드를 사용합니다. `orchestrator_*` MCP는 인벤토리·검사·계획·
 상태 정보만 제공합니다.
 
-## MCP 도구 표면 - 총 31개
+## MCP 서버 — 3개
+
+`.claude-plugin/plugin.json`에 MCP 서버가 세 개 등록됩니다. 사용자에게 보이는 숫자는 도구
+총합이 아니라 이 서버 개수입니다.
+
+| 서버 | 필수 | 역할 |
+| --- | --- | --- |
+| `pdca-state` | 예 | 번들된 상태·메모리·soul·데몬/세션·자문용 오케스트레이터 도구 |
+| `playwright` | 선택 | JavaScript 렌더링 페이지용 Chromium 접근 |
+| `mmbridge` | 선택 | 외부 멀티모델 리서치·리뷰 |
+
+`playwright`와 `mmbridge`는 `optional: true`입니다. 패키지와 캐시는 핵심 시작 경로에 들어가지
+않습니다. Playwright를 쓸 수 없으면 리서치가 갭을 기록하고 폴백 경로를 씁니다. MMBridge를
+쓸 수 없으면 이를 쓰는 스킬은 외부 패스를 건너뜁니다. 사전 번들된 `pdca-state` 서버는 계속
+사용할 수 있습니다.
+
+### pdca-state 도구 표면
+
+번들된 `pdca-state` 서버는 도구 31개를 노출합니다. 인벤토리·계획·상태만 다루며 Skill이나
+슬래시 커맨드를 실행하지 않습니다.
 
 | 영역 | 개수 | 도구 |
 | --- | ---: | --- |
@@ -95,11 +137,8 @@ Skill: coderabbit:code-review
 | 데몬과 세션 | 7 | `daemon_get_status`, `daemon_schedule_workflow`, `daemon_list_jobs`, `daemon_start_background_run`, `daemon_list_background_runs`, `daemon_queue_notification`, `session_recall_search` |
 | 오케스트레이터 | 4 | `orchestrator_list_plugins`, `orchestrator_get_plugin`, `orchestrator_route`, `orchestrator_health` |
 
-네 개의 `orchestrator_*` 도구는 플러그인 인벤토리, 단일 플러그인 조회, 라우트 계획, 생태계 상태 점검을 위한 공개 MCP 표면입니다.
-
-매니페스트는 `playwright`도 `optional: true`인 선택적 MCP 서버로 등록합니다. 이 패키지와 캐시는
-핵심 시작 경로에 포함되지 않으므로 Playwright를 사용할 수 없으면 리서치가 갭을 기록하고 폴백
-경로를 사용하며, 사전 번들된 `pdca-state` 서버는 계속 사용할 수 있습니다.
+네 개의 `orchestrator_*` 도구는 `pdca-state`에 있습니다. 플러그인 인벤토리, 단일 플러그인 조회,
+라우트 계획, 생태계 상태 점검을 위한 공개 MCP 표면입니다.
 
 ## 파일 구조
 
@@ -112,15 +151,15 @@ second-claude/
 │       ├── plugin-discovery.mjs       # 런타임 스캐너, 점수화, 디스패치 플래너
 │       └── soul-observer.mjs          # 훅용 soul readiness 헬퍼
 ├── mcp/
-│   ├── pdca-state-server.bundle.mjs   # 런타임에서 쓰는 사전 번들 31개 도구 서버
+│   ├── pdca-state-server.bundle.mjs   # 런타임에서 쓰는 사전 번들 pdca-state 서버 (31개 도구)
 │   ├── pdca-state-server.mjs          # 개발·테스트용 읽기 쉬운 원본
 │   └── lib/
 │       ├── orchestrator-handlers.mjs  # orchestrator_* 도구 구현
 │       ├── soul-handlers.mjs
 │       └── ...
 ├── tests/
-│   ├── hooks/prompt-detect-standards.test.mjs  # 6개 테스트
-│   └── mcp/orchestrator-handlers.test.mjs  # 17개 테스트
+│   ├── hooks/prompt-detect-standards.test.mjs
+│   └── mcp/orchestrator-handlers.test.mjs
 └── config/
     └── stage-contracts.json           # PDCA 페이즈 계약
 ```

@@ -2,6 +2,8 @@
 name: discover
 description: "Use when the current skills cannot handle a task and new skills are needed"
 effort: low
+disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

@@ -3,8 +3,8 @@
 
 # Required
 name: "Second Claude Code"
-description: "PDCA workflow toolkit for Claude Code with 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 3 MCP servers. Run research, writing, preset-based independent review, refinement, decision standards, and artifact history directly or as a gated Plan → Do → Check → Act cycle. Cross-plugin routing is advisory and optional."
-tags: [plugin, knowledge-work, pdca, research, writing, review, automation, productivity, agents, workflow]
+description: "God Hands — extra hands that find, analyze, plan, decompose, benchmark, and improve. The AI workflow that does not skip Check. /scc:godhands gathers, drafts, checks, and cuts on Claude Code, Codex, and Grok."
+tags: [plugin, knowledge-work, godhands, pdca, research, writing, review, automation, productivity, agents, workflow]
 author: "unclejobs-ai"
 
 # Category — one of: tool, skill, plugin, mcp, capsule, site, game, data
@@ -15,5 +15,5 @@ url: "https://github.com/unclejobs-ai/second-claude-code"
 repo: "https://github.com/unclejobs-ai/second-claude-code"
 
 # Metadata
-version: "3.0.3"
+version: "3.1.0"
 license: "MIT"

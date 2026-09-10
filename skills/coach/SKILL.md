@@ -1,7 +1,8 @@
 ---
 name: coach
-description: "Use when a request has more than one defensible direction and no active standard covers it — a fork that has to be settled before work starts. Do not use merely because a request is vague or underspecified; vagueness takes a clarifying question, not a standard."
+description: "Use when planning a fork: more than one defensible direction and no active standard covers it. Settle the plan before work starts. Do not use merely because a request is vague or underspecified; vagueness takes a clarifying question, not a standard."
 effort: high
+user-invocable: false
 ---
 
 # Coach

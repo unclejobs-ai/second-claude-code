@@ -2,7 +2,7 @@
 
 # PDCA
 
-> Plan → Do → Check → Act cycle with explicit runtime transition gates; format and review rules remain skill-level contracts unless a gate names them.
+> Slash-only compat for `/scc:godhands`. Runtime stays Plan → Do → Check → Act (`pdca_*`) with explicit transition gates; format and review rules remain skill-level contracts unless a gate names them.
 
 ## Quick Example
 
@@ -147,7 +147,7 @@ At Plan entry, the orchestrator asks up to 3 scope-clarifying questions:
 | write | Called during Do phase in pure execution mode |
 | review | Called during Check phase with parallel reviewers |
 | refine | Called during Act phase when Action Router routes to Refine |
-| workflow | Can automate full PDCA cycles |
+| workflow | Explicit `/scc:workflow` slash (named replay); not auto-routed from Do |
 
 ## Cycle Memory
 

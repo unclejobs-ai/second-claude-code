@@ -4,24 +4,17 @@
   "description": "God Hands — extra hands that find, analyze, plan, decompose, benchmark, and improve. The AI workflow that does not skip Check. 16 skills, 19 commands, 17 agents, 10 lifecycle hook events, and 3 MCP servers. /scc:godhands gathers, drafts, checks, and cuts.",
   "author": {
     "name": "Unclejobs",
-    "email": "parkeungje@gmail.com"
+    "url": "https://github.com/unclejobs-ai"
   },
-  "homepage": "https://github.com/unclejobs-ai/second-claude-code",
   "repository": "https://github.com/unclejobs-ai/second-claude-code",
+  "homepage": "https://github.com/unclejobs-ai/second-claude-code",
   "license": "MIT",
   "keywords": [
-    "knowledge-work",
     "godhands",
-    "hands",
+    "knowledge-work",
     "pdca",
     "research",
     "writing",
-    "strategy",
-    "review",
-    "workflow",
-    "second-brain",
-    "automation"
-  ],
-  "mcpServers": "./.mcp.json",
-  "skills": "./skills/"
+    "review"
+  ]
 }

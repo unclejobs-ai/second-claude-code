@@ -4,20 +4,21 @@
     "name": "unclejobs-ai"
   },
   "metadata": {
-    "description": "PDCA workflow toolkit for Claude Code: 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 31 MCP tools. Includes decision standards, independent review gates, artifact history, and advisory cross-plugin discovery.",
-    "version": "3.0.3"
+    "description": "God Hands — extra hands that find, analyze, plan, decompose, benchmark, and improve. The AI workflow that does not skip Check. 16 skills, 19 commands, 17 agents, 10 lifecycle hook events, and 3 MCP servers. /scc:godhands gathers, drafts, checks, and cuts.",
+    "version": "3.1.0"
   },
   "plugins": [
     {
       "name": "scc",
       "source": "./",
-      "description": "PDCA workflow toolkit for Claude Code: 15 skills, 18 commands, 17 agents, 9 lifecycle hook events, and 31 MCP tools. Includes decision standards, independent review gates, artifact history, and advisory cross-plugin discovery.",
-      "version": "3.0.3",
+      "description": "God Hands — extra hands that find, analyze, plan, decompose, benchmark, and improve. The AI workflow that does not skip Check. 16 skills, 19 commands, 17 agents, 10 lifecycle hook events, and 3 MCP servers. /scc:godhands gathers, drafts, checks, and cuts.",
+      "version": "3.1.0",
       "author": {
         "name": "unclejobs-ai"
       },
       "keywords": [
         "knowledge-work",
+        "godhands",
         "pdca",
         "research",
         "writing",

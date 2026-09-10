@@ -1,5 +1,5 @@
 ---
-description: "PDCA cycle -- orchestrate Plan→Do→Check→Act with quality gates"
+description: "Compat alias for /scc:godhands -- gated Plan→Do→Check→Act"
 argument-hint: '"AI agent market report" or --phase plan "topic" or --no-questions'
 ---
 

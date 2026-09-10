@@ -1,7 +1,9 @@
 ---
 name: batch
-description: "Use when decomposing large tasks into independent parallel units"
+description: "Use when decomposing large tasks into independent parallel units that do not depend on each other"
 effort: high
+disable-model-invocation: true
+user-invocable: false
 ---
 
 ## Iron Law

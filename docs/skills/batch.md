@@ -4,6 +4,8 @@
 
 > Use when decomposing a large task into independent units that run in parallel, each in its own worktree.
 
+**Not auto-routed.** Independent parallel units; sequential work is PDCA or an explicit workflow. The skill carries `disable-model-invocation: true` — it runs when you call `/scc:batch`. Files stay in the plugin.
+
 ## Quick Example
 
 ```

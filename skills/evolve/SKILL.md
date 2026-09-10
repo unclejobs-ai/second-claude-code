@@ -3,6 +3,7 @@ name: evolve
 description: "Use when a prompt asset keeps causing the same PDCA gate failure and you want to evolve it against a maintainer-authored structural check"
 effort: high
 disable-model-invocation: true
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before file or script operations.

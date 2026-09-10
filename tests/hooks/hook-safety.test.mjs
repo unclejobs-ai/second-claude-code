@@ -139,7 +139,9 @@ test("all lifecycle hook entrypoints fail open on oversized stdin", () => {
 
 test("hook registry bridges completed Agent reviews into the parent session", () => {
   const registry = JSON.parse(readFileSync(path.join(root, "hooks", "hooks.json"), "utf8"));
-  assert.equal(Object.keys(registry.hooks).length, 9);
+  assert.equal(Object.keys(registry.hooks).length, 10);
+  assert.ok(registry.hooks.SessionEnd, "SessionEnd must share session-end.mjs");
+  assert.match(registry.hooks.SessionEnd[0].hooks[0].command, /hooks\/session-end\.mjs/);
   const bridge = registry.hooks.PostToolUse;
   assert.equal(bridge.length, 1);
   assert.equal(bridge[0].matcher, "Agent");
@@ -846,7 +848,7 @@ test("guard writes do not follow the old predictable temp-file symlink", () => {
   assert.equal(readFileSync(external, "utf8"), "do-not-overwrite");
 });
 
-test("SessionStart survives a large MMBridge packet within the bounded context", () => {
+test("SessionStart does not fetch or inject MMBridge packets", () => {
   const dir = dataDir();
   const bin = path.join(dir, "bin");
   mkdirSync(bin, { recursive: true });
@@ -861,6 +863,6 @@ test("SessionStart survives a large MMBridge packet within the bounded context",
   chmodSync(bridge, 0o755);
   const result = run(sessionStart, dir, { source: "startup" }, { PATH: `${bin}:${process.env.PATH || ""}` });
   assert.equal(result.status, 0);
-  assert.ok(result.stdout.length <= 12 * 1024);
+  assert.doesNotMatch(result.stdout, /MMBridge/);
   assert.doesNotMatch(result.stdout, /\u001b|\u202E|\u0007/);
 });

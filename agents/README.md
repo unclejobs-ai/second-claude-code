@@ -2,9 +2,11 @@
 
 Pokemon filenames are labels for humans. Dispatch uses the frontmatter `name`.
 
-`Agent(subagent_type: "eevee")` fails. `Agent(subagent_type: "researcher")` is the job.
+`Agent(subagent_type: "eevee")` fails. `Agent(subagent_type: "researcher")` is the job. Skills must call job names (`researcher`, `writer`, `deep-reviewer`, …), never the file stem.
 
-These are Claude Code subagents. As of host **2.1.232** (2026-08-14) the runtime may fork them (`subagent_type: "fork"` keeps the parent prefix). SCC does not implement that fork and does not own a Trajectory. Return the envelope the calling skill asked for. Do not dump search logs into the parent. Do not spawn siblings unless the skill says so.
+These 17 files are **Claude Code** subagents (`agents/*.md`). Codex exposes the 15 skills and does not mirror this Agent roster or `/scc:*` slash commands. Grok install is `grok plugin install unclejobs-ai/second-claude-code --trust`; there is **no `.grok-plugin/` on origin/main**. Do not rewrite these agent files to rename them.
+
+As of Claude Code host **2.1.232** (2026-08-14) the runtime may fork them (`subagent_type: "fork"` keeps the parent prefix). SCC does not implement that fork and does not own a Trajectory. Return the envelope the calling skill asked for. Do not dump search logs into the parent. Do not spawn siblings unless the skill says so.
 
 ## Roster
 

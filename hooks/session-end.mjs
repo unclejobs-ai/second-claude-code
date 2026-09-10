@@ -1,19 +1,15 @@
 #!/usr/bin/env node
 
 /**
- * Stop Hook — Session Quality Gate
+ * Stop + SessionEnd Hook
  *
- * Synchronous quality gate that fires when Claude attempts to end the session.
+ * Stop (every turn): quality gate only. Incomplete PDCA Check or an open
+ * coach interview exits 2. Passing Stop stamps the PDCA session id and
+ * returns — it does not write HANDOFF.md. Claude Code Stop is per-turn.
  *
- * Gate behavior:
- * - If a PDCA cycle is active AND the Check phase has not been completed,
- *   deny termination with exit code 2 and a user-facing reason.
- * - A short-lived sentinel file prevents the hook from blocking infinitely
- *   if Claude retries the Stop event after the user acknowledges the gate.
- *
- * After passing the gate, writes HANDOFF.md unconditionally (including a
- * "last completed cycle" summary when no active state exists).
- * HANDOFF.md is written with 0o600 permissions (owner read/write only).
+ * SessionEnd (once per session): handoff, recall, notifications, cycle
+ * report, and soul flush. Writes HANDOFF.md only when a run is active.
+ * SessionEnd cannot block; an unsafe state directory is a no-op.
  */
 
 import {
@@ -90,6 +86,13 @@ function readPayload() {
     }
     return null;
   }
+}
+
+function isSessionEndEvent(payload) {
+  const name = String(
+    payload?.hook_event_name || payload?.hookEventName || payload?.event || ""
+  ).toLowerCase();
+  return name === "sessionend" || name === "session_end" || name === "session-end";
 }
 
 function sessionIdFromPayload(payload) {
@@ -866,10 +869,8 @@ function emitChannelNotification(state) {
   if (!text) return;
 
   // Deliver through the companion daemon's notification queue when it is online.
-  // There is intentionally no stdout emission here: on the Stop hook, stdout is
-  // the decision channel, and Claude Code has no mechanism that routes a
-  // {notification} object from Stop stdout to a transport — writing one only
-  // pollutes the decision stream with a schema nothing consumes.
+  // There is intentionally no stdout emission here: SessionEnd stderr is for
+  // the user; stdout has no transport that consumes a {notification} object.
   try {
     const daemonStatus = readDaemonStatus(DATA_DIR);
     if (daemonStatus.online) {
@@ -903,6 +904,141 @@ function buildRecallSummary(state) {
   return "Session ended with no active PDCA, workflow, or refine state.";
 }
 
+function stampPdcaSessionId() {
+  const currentSessionId = activeSessionId;
+  if (!currentSessionId) return;
+  const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
+  withFileLockSync(pdcaActivePath, () => {
+    const rawPdca = readJsonSafe(pdcaActivePath);
+    if (!rawPdca) return;
+
+    const sessionHistory = Array.isArray(rawPdca.session_history)
+      ? rawPdca.session_history
+      : [];
+
+    const recordedPhases = new Set(
+      sessionHistory.map((e) => String(e.phase_completed || ""))
+    );
+    const allCompleted = Array.isArray(rawPdca.completed)
+      ? rawPdca.completed
+      : [];
+    const newPhases = allCompleted.filter((p) => !recordedPhases.has(p));
+
+    if (newPhases.length > 0) {
+      const ts = new Date().toISOString();
+      for (const phase of newPhases) {
+        sessionHistory.push({
+          session_id: currentSessionId,
+          phase_completed: phase,
+          timestamp: ts,
+        });
+      }
+    }
+
+    rawPdca.session_id = currentSessionId;
+    rawPdca.session_history = sessionHistory;
+
+    try {
+      ensureDirUtil(STATE_DIR);
+      writeJsonAtomic(pdcaActivePath, rawPdca);
+    } catch {
+      // Non-fatal — session tracking must never block Stop or SessionEnd.
+    }
+  });
+}
+
+function finishSessionEnd() {
+  stampPdcaSessionId();
+
+  const state = collectActiveState();
+  const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;
+  let handoffPath = null;
+  if (hasActiveState) {
+    const content = generateHandoff(state);
+    handoffPath = writeHandoff(content);
+    try {
+      recordSessionRecall(state, handoffPath);
+    } catch {
+      // Non-fatal — recall indexing must never affect session exit.
+    }
+  }
+
+  emitChannelNotification(state);
+
+  const pdcaSummaryBox = buildPdcaSummaryBox(state.pdca);
+  if (pdcaSummaryBox) {
+    console.error(pdcaSummaryBox);
+  }
+
+  if (state.pdca && state.pdca.current_phase === "act") {
+    try {
+      const pdca = state.pdca;
+      const completedPhases = Array.isArray(pdca.completed) ? pdca.completed : [];
+      const phaseStatus = (p) =>
+        completedPhases.includes(p) ? (pdca.check_verdict === "MUST FIX" && p === "check" ? "fail" : "pass") : "warn";
+      const htmlPath = generateCycleReport(DATA_DIR, {
+        cycleNumber: pdca.cycle_count || 1,
+        phases: {
+          plan: phaseStatus("plan"),
+          do: phaseStatus("do"),
+          check: pdca.check_verdict === "MUST FIX" ? "fail" : pdca.check_verdict === "MINOR FIXES" ? "warn" : phaseStatus("check"),
+          act: "pass",
+        },
+        totalTimeMs: pdca.elapsed_ms || 0,
+        issueCount: (pdca.critical_findings || []).length + (pdca.top_improvements || []).length,
+        score: pdca.average_score != null ? Math.round(pdca.average_score * 100) : null,
+        topic: sanitize(pdca.topic || ""),
+        issues: (pdca.critical_findings || []).concat(pdca.top_improvements || []).map(sanitize),
+        nextAction: sanitize(pdca.next_action || ""),
+      });
+      console.error(`[SCC] Cycle report: ${htmlPath}`);
+    } catch {
+      // Non-fatal — report generation must never block session exit.
+    }
+  }
+
+  if (hasActiveState) {
+    const parts = [
+      state.loop && "active loop",
+      state.refine && "active refine",
+      state.pipeline && "active pipeline",
+      state.pdca && "active PDCA cycle",
+    ].filter(Boolean);
+    console.error(
+      `Session ended. HANDOFF.md saved with ${parts.join(" + ")} state.`
+    );
+  }
+
+  try {
+    if (isSoulLearning(DATA_DIR)) {
+      const today = new Date().toISOString().slice(0, 10);
+      const todayFile = join(DATA_DIR, "soul", "observations", `${today}.jsonl`);
+      let todayCount = 0;
+      if (existsSync(todayFile)) {
+        const lines = (readTextFileLimited(todayFile, 512 * 1024) || "")
+          .split("\n")
+          .filter((l) => l.trim().length > 0);
+        todayCount = lines.length;
+      }
+
+      const soulState = readSoulState(DATA_DIR);
+      const synthesisThreshold = Number(soulState?.synthesis_threshold) || 30;
+      const autoPropose = soulState?.auto_propose !== false;
+      const currentCount = Number(soulState?.observation_count) || 0;
+      const newTotal = currentCount + todayCount;
+      const proposalDue = autoPropose && newTotal >= synthesisThreshold;
+
+      updateSoulState(DATA_DIR, {
+        increment_observations: todayCount,
+        increment_sessions: true,
+        set_proposal_due: proposalDue,
+      });
+    }
+  } catch {
+    // Non-fatal — soul flush errors must never affect session exit.
+  }
+}
+
 function recordSessionRecall(state, handoffPath) {
   const tags = [];
   if (state.loop) tags.push("loop");
@@ -933,9 +1069,14 @@ function main() {
   stateDirectorySafe = dataDirectorySafe && guardDirectoryIsSafe();
   const payload = readPayload();
   activeSessionId = sessionIdFromPayload(payload);
+  const sessionEndEvent = isSessionEndEvent(payload);
 
   if (!stateDirectorySafe) {
     const unsafeBoundary = dataDirectorySafe ? "state directory" : "plugin data directory";
+    if (sessionEndEvent) {
+      console.error(`[stop-hook] unsafe ${unsafeBoundary}; SessionEnd skipped`);
+      return;
+    }
     if (payload?.stop_hook_active === true) {
       // Claude's recursive Stop marker is authoritative, but an authoritative
       // bypass must remain a state-free no-op when the state boundary is
@@ -948,6 +1089,11 @@ function main() {
       `SCC ${unsafeBoundary} is unsafe; refusing to bypass the session quality gate.\n`
     );
     process.exit(2);
+  }
+
+  if (sessionEndEvent) {
+    finishSessionEnd();
+    return;
   }
 
   const guardDirectorySafe = stateDirectorySafe;
@@ -979,7 +1125,7 @@ function main() {
     } else if (payload?.stop_hook_active !== true) {
       recordGateBypass("recent stop-hook guard (retry suppression)", payload);
     }
-    // Proceed to HANDOFF generation below without blocking.
+    // Stop already blocked once this turn; do not write HANDOFF.
   } else {
     // ── PDCA quality gate ──────────────────────────────────────────────────
     const pdcaState = readJsonSafe(join(STATE_DIR, "pdca-active.json"));
@@ -999,151 +1145,7 @@ function main() {
     }
   }
 
-  // ── PDCA session tracking (before HANDOFF generation) ────────────────────
-  // Record the current session ID into pdca-active.json so the next session
-  // can offer `claude --resume` for full context restoration.
-  const currentSessionId = activeSessionId;
-  if (currentSessionId) {
-    const pdcaActivePath = join(STATE_DIR, "pdca-active.json");
-    // Lock the read-modify-write: a concurrent session or MCP transition writes
-    // this same file, and an unlocked RMW would clobber session_history. Uses the
-    // same lock path (file + ".lock") the MCP handlers acquire.
-    withFileLockSync(pdcaActivePath, () => {
-      const rawPdca = readJsonSafe(pdcaActivePath);
-      if (!rawPdca) return;
-
-      const sessionHistory = Array.isArray(rawPdca.session_history)
-        ? rawPdca.session_history
-        : [];
-
-      // Append an entry for every phase completed in the current session
-      // (phases not yet recorded in session_history).
-      const recordedPhases = new Set(
-        sessionHistory.map((e) => String(e.phase_completed || ""))
-      );
-      const allCompleted = Array.isArray(rawPdca.completed)
-        ? rawPdca.completed
-        : [];
-      const newPhases = allCompleted.filter((p) => !recordedPhases.has(p));
-
-      if (newPhases.length > 0) {
-        const ts = new Date().toISOString();
-        for (const phase of newPhases) {
-          sessionHistory.push({
-            session_id: currentSessionId,
-            phase_completed: phase,
-            timestamp: ts,
-          });
-        }
-      }
-
-      // Always stamp session_id as the last-writer, even if no new phases.
-      rawPdca.session_id = currentSessionId;
-      rawPdca.session_history = sessionHistory;
-
-      try {
-        ensureDirUtil(STATE_DIR);
-        writeJsonAtomic(pdcaActivePath, rawPdca);
-      } catch {
-        // Non-fatal — HANDOFF generation continues.
-      }
-    });
-  }
-
-  // ── HANDOFF.md (always written) ───────────────────────────────────────────
-  const state = collectActiveState();
-  const content = generateHandoff(state);
-  const handoffPath = writeHandoff(content);
-
-  try {
-    recordSessionRecall(state, handoffPath);
-  } catch {
-    // Non-fatal — recall indexing must never affect session exit.
-  }
-
-  // ── Channel notification (after HANDOFF, non-blocking) ────────────────────
-  emitChannelNotification(state);
-
-  const pdcaSummaryBox = buildPdcaSummaryBox(state.pdca);
-  if (pdcaSummaryBox) {
-    console.error(pdcaSummaryBox);
-  }
-
-  // ── HTML Cycle Report (when PDCA cycle completes act phase) ──────────────
-  if (state.pdca && state.pdca.current_phase === "act") {
-    try {
-      const pdca = state.pdca;
-      const completedPhases = Array.isArray(pdca.completed) ? pdca.completed : [];
-      const phaseStatus = (p) =>
-        completedPhases.includes(p) ? (pdca.check_verdict === "MUST FIX" && p === "check" ? "fail" : "pass") : "warn";
-      const htmlPath = generateCycleReport(DATA_DIR, {
-        cycleNumber: pdca.cycle_count || 1,
-        phases: {
-          plan: phaseStatus("plan"),
-          do: phaseStatus("do"),
-          check: pdca.check_verdict === "MUST FIX" ? "fail" : pdca.check_verdict === "MINOR FIXES" ? "warn" : phaseStatus("check"),
-          act: "pass",
-        },
-        totalTimeMs: pdca.elapsed_ms || 0,
-        issueCount: (pdca.critical_findings || []).length + (pdca.top_improvements || []).length,
-        score: pdca.average_score != null ? Math.round(pdca.average_score * 100) : null,
-        topic: sanitize(pdca.topic || ""),
-        issues: (pdca.critical_findings || []).concat(pdca.top_improvements || []).map(sanitize),
-        nextAction: sanitize(pdca.next_action || ""),
-      });
-      console.error(`[SCC] Cycle report: ${htmlPath}`);
-    } catch {
-      // Non-fatal — report generation must never block session exit.
-    }
-  }
-
-  const hasActiveState = state.loop || state.refine || state.pipeline || state.pdca;
-  if (hasActiveState) {
-    const parts = [
-      state.loop && "active loop",
-      state.refine && "active refine",
-      state.pipeline && "active pipeline",
-      state.pdca && "active PDCA cycle",
-    ].filter(Boolean);
-    console.error(
-      `Session ended. HANDOFF.md saved with ${parts.join(" + ")} state.`
-    );
-  } else {
-    console.error("Session ended. HANDOFF.md saved (no active state).");
-  }
-
-  // ── Soul observation flush ─────────────────────────────────────────────────
-  // Count observations written today by reading today's JSONL, then update
-  // soul-active.json counters. Proposal threshold check runs without synthesis.
-  try {
-    if (isSoulLearning(DATA_DIR)) {
-      // Count new observations from today's JSONL
-      const today = new Date().toISOString().slice(0, 10);
-      const todayFile = join(DATA_DIR, "soul", "observations", `${today}.jsonl`);
-      let todayCount = 0;
-      if (existsSync(todayFile)) {
-        const lines = (readTextFileLimited(todayFile, 512 * 1024) || "")
-          .split("\n")
-          .filter((l) => l.trim().length > 0);
-        todayCount = lines.length;
-      }
-
-      const soulState = readSoulState(DATA_DIR);
-      const synthesisThreshold = Number(soulState?.synthesis_threshold) || 30;
-      const autoPropose = soulState?.auto_propose !== false;
-      const currentCount = Number(soulState?.observation_count) || 0;
-      const newTotal = currentCount + todayCount;
-      const proposalDue = autoPropose && newTotal >= synthesisThreshold;
-
-      updateSoulState(DATA_DIR, {
-        increment_observations: todayCount,
-        increment_sessions: true,
-        set_proposal_due: proposalDue,
-      });
-    }
-  } catch {
-    // Non-fatal — soul flush errors must never affect session exit.
-  }
+  stampPdcaSessionId();
 }
 
 try {

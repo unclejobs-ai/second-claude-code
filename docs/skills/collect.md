@@ -4,6 +4,8 @@
 
 > Use when collecting URLs, notes, files, or excerpts into structured PARA knowledge.
 
+**Not auto-routed.** The skill carries `disable-model-invocation: true` — it runs when you call `/scc:collect`. Files stay in the plugin.
+
 ## Quick Example
 
 ```

@@ -11,7 +11,7 @@ import { upsertProjectMemoryEntry } from "../../hooks/lib/project-memory.mjs";
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "session-start.mjs");
 
-test("session start injects project memory and daemon status as separate layers", () => {
+test("session start injects project memory without daemon status", () => {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-project-memory-"));
   const memoryDir = path.join(tempDir, "memory");
 
@@ -39,8 +39,8 @@ test("session start injects project memory and daemon status as separate layers"
   assert.match(output, /## Project Memory/);
   assert.match(output, /JavaScript ESM only/);
   assert.match(output, /Companion daemon is planned but optional/);
-  assert.match(output, /## Companion Daemon/);
-  assert.match(output, /queued scheduling, background-run handoff, notification mirroring, and session recall are available/i);
+  assert.doesNotMatch(output, /## Companion Daemon/);
+  assert.doesNotMatch(output, /queued scheduling, background-run handoff/i);
 });
 
 test("project memory rejects instruction-like content before session-start injection", () => {

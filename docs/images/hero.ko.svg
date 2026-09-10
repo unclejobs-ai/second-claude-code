@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 460" fill="none" role="img" aria-labelledby="h-title h-desc">
-  <title id="h-title">Second Claude Code — 한 줄로 완성까지</title>
+  <title id="h-title">Second Claude Code — God Hands</title>
   <desc id="h-desc">프롬프트 하나로 소스 수집, 초안 작성, 선택한 프리셋 검증, 원인별 개선까지. 개별 스킬도 따로 쓸 수 있다.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
@@ -11,8 +11,8 @@
   <rect width="960" height="460" rx="12" fill="#0d1117"/>
 
   <!-- Header -->
-  <text x="480" y="38" text-anchor="middle" fill="#e6edf3" font-size="24" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">PDCA 루프</text>
-  <text x="480" y="60" text-anchor="middle" fill="#8b949e" font-size="13" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">한 줄이면 조사부터 검증까지.</text>
+  <text x="480" y="38" text-anchor="middle" fill="#e6edf3" font-size="24" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">God Hands</text>
+  <text x="480" y="60" text-anchor="middle" fill="#8b949e" font-size="13" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">찾고 분석하고 기획하고 분해하고 벤치마크하고 개선한다.</text>
 
   <!-- Divider -->
   <line x1="40" y1="78" x2="920" y2="78" stroke="#30363d" stroke-width="0.5"/>

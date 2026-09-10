@@ -2,6 +2,7 @@
 name: write
 description: "Use when producing newsletters, articles, reports, shorts, or social content"
 effort: high
+user-invocable: false
 ---
 
 ## Iron Law

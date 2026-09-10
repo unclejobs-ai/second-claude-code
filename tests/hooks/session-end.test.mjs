@@ -14,8 +14,9 @@ import path from "node:path";
 
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "session-end.mjs");
+const SESSION_END = { hook_event_name: "SessionEnd" };
 
-function runSessionEnd(tempDir, extraEnv = {}) {
+function runSessionEnd(tempDir, extraEnv = {}, payload) {
   return spawnSync(process.execPath, [hookPath], {
     cwd: root,
     env: {
@@ -23,6 +24,7 @@ function runSessionEnd(tempDir, extraEnv = {}) {
       CLAUDE_PLUGIN_DATA: tempDir,
       ...extraEnv,
     },
+    input: payload === undefined ? "" : JSON.stringify(payload),
     encoding: "utf8",
   });
 }
@@ -86,7 +88,7 @@ test("session end persists a handoff from canonical state files", () => {
     })
   );
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   // session-end.mjs writes the status message to stderr
   const stderr = result.stderr || "";
@@ -167,7 +169,7 @@ test("session end prints an ANSI PDCA completion summary when a cycle has comple
     "utf8"
   );
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   assert.equal(result.status, 0);
   assert.match(result.stderr, /\u001b\[[0-9;]*m/);
@@ -197,7 +199,7 @@ test("session end summary box shows warning status, prior cycle number, and plac
     "2026-03-28T00:05:00.000Z",
   ]);
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   assert.equal(result.status, 0);
   assert.match(result.stderr, /PDCA Cycle #2/);
@@ -227,7 +229,7 @@ test("session end summary box shows must-fix failures and counts critical issues
     "2026-03-28T01:02:00.000Z",
   ]);
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   assert.equal(result.status, 0);
   assert.match(result.stderr, /Check .*✗/);
@@ -247,7 +249,7 @@ test("session end degrades an invalid completed run id instead of crashing the S
     average_score: 0.9,
   });
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   assert.equal(result.status, 0, result.stderr);
   assert.equal(existsSync(path.join(tempDir, "HANDOFF.md")), true);
@@ -268,7 +270,7 @@ test("session end skips the PDCA summary box until act is completed", () => {
     average_score: 0.91,
   });
 
-  const result = runSessionEnd(tempDir);
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
 
   assert.equal(result.status, 0);
   assert.doesNotMatch(result.stderr, /PDCA Cycle #/);
@@ -290,7 +292,7 @@ test("session end generates a cycle report only when the PDCA state is in act ph
     next_action: "Ship after edits",
   });
 
-  const actResult = runSessionEnd(actDir);
+  const actResult = runSessionEnd(actDir, {}, SESSION_END);
   const actReportPath = path.join(actDir, "reports", "cycle-4.html");
 
   assert.equal(actResult.status, 0);
@@ -312,10 +314,41 @@ test("session end generates a cycle report only when the PDCA state is in act ph
     next_action: "Ship after edits",
   });
 
-  const checkResult = runSessionEnd(checkDir);
+  const checkResult = runSessionEnd(checkDir, {}, SESSION_END);
   const checkReportPath = path.join(checkDir, "reports", "cycle-4.html");
 
   assert.equal(checkResult.status, 0);
   assert.equal(existsSync(checkReportPath), false);
   assert.doesNotMatch(checkResult.stderr, /\[SCC\] Cycle report:/);
+});
+
+test("Stop does not write HANDOFF.md on a passing turn", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
+  const stateDir = path.join(tempDir, "state");
+  mkdirSync(stateDir, { recursive: true });
+  writeFileSync(
+    path.join(stateDir, "refine-active.json"),
+    JSON.stringify({
+      goal: "Raise the draft to APPROVED",
+      current_iteration: 2,
+      max: 4,
+    })
+  );
+
+  const result = runSessionEnd(tempDir);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(path.join(tempDir, "HANDOFF.md")), false);
+  assert.doesNotMatch(result.stderr || "", /HANDOFF\.md saved/i);
+});
+
+test("SessionEnd without active state does not write HANDOFF.md", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-stop-"));
+  mkdirSync(path.join(tempDir, "state"), { recursive: true });
+
+  const result = runSessionEnd(tempDir, {}, SESSION_END);
+
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(existsSync(path.join(tempDir, "HANDOFF.md")), false);
+  assert.doesNotMatch(result.stderr || "", /HANDOFF\.md saved/i);
 });

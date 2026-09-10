@@ -8,7 +8,7 @@ import path from "node:path";
 const root = process.cwd();
 const hookPath = path.join(root, "hooks", "session-start.mjs");
 
-test("session start renders active state with canonical keys and capability summary", () => {
+test("session start renders active state with canonical keys", () => {
   const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-"));
   const stateDir = path.join(tempDir, "state");
 
@@ -55,9 +55,27 @@ test("session start renders active state with canonical keys and capability summ
   assert.match(output, /Active refine: "Polish newsletter draft to 4\.5\+" \(iteration 2\/3\)/);
   assert.match(output, /Active loop: "write-core" \(generation 1\/3, status: running\)/);
   assert.match(output, /Active workflow: "weekly-digest" \(step 2\/4\)/);
-  assert.match(output, /Capabilities/i);
-  assert.match(output, /git/);
+  assert.doesNotMatch(output, /Capabilities/i);
+  assert.doesNotMatch(output, /Second Claude Code — PDCA loop/);
   assert.doesNotMatch(output, /undefined/);
+});
+
+test("session start stays silent when there is nothing to restore", () => {
+  const tempDir = mkdtempSync(path.join(os.tmpdir(), "second-claude-"));
+  mkdirSync(path.join(tempDir, "state"), { recursive: true });
+
+  const output = execFileSync(process.execPath, [hookPath], {
+    cwd: root,
+    env: {
+      ...process.env,
+      CLAUDE_PLUGIN_DATA: tempDir,
+      SECOND_CLAUDE_CAPABILITIES: '["git","node"]',
+    },
+    encoding: "utf8",
+  });
+
+  assert.equal(output, "");
+  assert.doesNotMatch(output, /Soul|Companion Daemon|MMBridge|Capabilities/i);
 });
 
 test("session start still resumes legacy pipeline-active state", () => {

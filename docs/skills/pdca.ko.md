@@ -146,7 +146,7 @@ Plan 진입 시 최대 3개의 범위 확인 질문을 합니다:
 | write | Do 페이즈에서 순수 실행 모드로 호출 |
 | review | Check 페이즈에서 병렬 리뷰어와 함께 호출 |
 | refine | Act 페이즈에서 액션 라우터가 Refine으로 라우팅할 때 호출 |
-| workflow | 전체 PDCA 사이클 자동화 가능 |
+| workflow | 명시적 `/scc:workflow` 슬래시(이름 있는 재생). Do에서 자동 라우트하지 않음 |
 
 ## 사이클 메모리
 

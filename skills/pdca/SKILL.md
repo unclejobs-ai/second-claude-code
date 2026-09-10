@@ -2,6 +2,8 @@
 name: pdca
 description: "Use when running a PDCA cycle across research, production, review, and refinement"
 effort: high
+disable-model-invocation: true
+user-invocable: false
 ---
 
 ## Iron Law

@@ -4,6 +4,8 @@
 
 > Use when translating content between English and Korean while preserving formatting, voice, and technical accuracy.
 
+**Not auto-routed.** The skill carries `disable-model-invocation: true` — it runs when you call `/scc:translate`. Files stay in the plugin.
+
 ## Quick Example
 
 ```

@@ -4,6 +4,8 @@
 
 > 도구 전용 명령: 여러 세션의 사용자 패턴을 관찰해 근거 기반 SOUL.md를 기록·제공합니다. 추론 스킬이 아닙니다.
 
+**자동 라우팅되지 않습니다.** 스킬에 `disable-model-invocation: true`가 붙어 있어 `/scc:soul`로 직접 부를 때만 돕니다. 파일은 플러그인에 그대로 남습니다. 일별 관찰은 계속 `soul/observations/YYYY-MM-DD.jsonl`입니다.
+
 ## 빠른 예시
 
 ```

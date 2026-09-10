@@ -1,7 +1,8 @@
 ---
 name: research
-description: "Use when researching a topic through iterative web exploration and synthesis"
+description: "Use when finding sources through iterative web exploration and synthesis"
 effort: high
+user-invocable: false
 ---
 
 [Resolve runtime paths](../runtime-paths.md) before operations.
