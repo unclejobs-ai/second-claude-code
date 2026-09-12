@@ -12,7 +12,7 @@
 /scc:translate --input docs/skills/collect.md --target ko
 ```
 
-**What happens:** The skill detects English as the source (Korean target set explicitly), defaults to `natural` style and `preserve` format, loads `references/glossary.md` for terminology, dispatches Smeargle to draft the Korean version, dispatches Ditto to QA it for accuracy and formatting, then auto-saves the result.
+**What happens:** The skill detects English as the source (Korean target set explicitly), defaults to `natural` style and `preserve` format, loads `references/glossary.md` for terminology, dispatches `writer` to draft the Korean version, dispatches `editor` to QA it for accuracy and formatting, then auto-saves the result.
 
 ## Real-World Example
 
@@ -30,8 +30,8 @@ your project instructions and applies the relevant checkpoint rules.
 1. Language detection -- source identified as English; the request names the target ("into Korean"), so no clarifying question is needed. Style and format map to `--style natural --format preserve`.
 2. Soul check -- `.data/soul/SOUL.md` exists and its `## Tone Rules` section calls for short, declarative sentences and minimal nested honorifics. This constrains the `natural`-style draft on top of the language default.
 3. Glossary load -- `references/glossary.md` maps terms such as "plugin" → 플러그인, "agent" → 에이전트, and "checkpoint" → 체크포인트. Mapped terms are used consistently.
-4. Draft -- Smeargle (writer, opus) produces the Korean draft with natural-mode restructuring and the `##` heading kept as a heading.
-5. QA -- Ditto (editor, opus) checks accuracy, glossary use, and paragraph shape under `--format preserve`.
+4. Draft -- `writer` (opus) produces the Korean draft with natural-mode restructuring and the `##` heading kept as a heading.
+5. QA -- `editor` (opus) checks accuracy, glossary use, and paragraph shape under `--format preserve`.
 6. Fix -- Critical and Major findings are corrected before saving; Minor findings may remain.
 7. Auto-save -- written to `.captures/translate-en-to-ko-quick-start-2026-07-12.md`.
 
@@ -58,8 +58,8 @@ your project instructions and applies the relevant checkpoint rules.
 graph TD
     A[Detect source + target language] --> B[Read SOUL.md tone rules if present]
     B --> C[Load glossary]
-    C --> D[Draft with Smeargle]
-    D --> E[QA with Ditto]
+    C --> D[Draft with writer]
+    D --> E[QA with editor]
     E --> F[Address Critical/Major findings]
     F --> G[Auto-save result]
 ```
@@ -119,7 +119,7 @@ Soul tone rules override language defaults but never override an explicit `--sty
 - **Assuming literal-by-default** -- The default style is `natural` (idiomatic, restructured for fluency), not word-for-word. Idioms without a direct target-language match still get adapted to an equivalent in `natural`/`creative` mode; only `--style literal` preserves them as-is.
 - **Code blocks and inline code** -- Never translated inside ``` fences or backtick spans; only surrounding prose (and, in `creative` mode, adjacent comments) is translated.
 - **Mixed speech levels** -- 존댓말 and 반말 must not mix within one translation. Lock the level at the start (default 해요체) and keep it consistent through QA.
-- **Glossary drift** -- When `references/glossary.md` (or a custom `--glossary` file) has a mapping, it must be used every time; Ditto's QA pass cross-checks every glossary term.
+- **Glossary drift** -- When `references/glossary.md` (or a custom `--glossary` file) has a mapping, it must be used every time; `editor`'s QA pass cross-checks every glossary term.
 - **Structure changes in `preserve` mode** -- Headings, list nesting, and table columns must stay identical; only the natural-language text inside them changes.
 - **Guessing the target language** -- If source or target isn't clear from the prompt, the skill asks. It never assumes English→Korean by default.
 - **Proper nouns** -- Left as-is unless a glossary entry maps them; Korean names romanize via Revised Romanization only when translating to English.
@@ -129,7 +129,7 @@ Soul tone rules override language defaults but never override an explicit `--sty
 - **Skill asks which language is the target** -- The prompt didn't make source/target clear. Answer directly, or avoid the question next time with `--source` and/or `--target`.
 - **Translation doesn't match my usual voice** -- Soul tone rules only apply if `.data/soul/SOUL.md` exists with a `## Tone Rules` section; without it, voice falls back to target-language conventions. Run the `soul` skill first, or set `--style` explicitly.
 - **A technical term is translated inconsistently** -- Check whether it's mapped in `references/glossary.md`. If the project uses different terminology, point `--glossary` at a custom file, or add the missing term to the default glossary before translating.
-- **QA felt too slow for a quick draft** -- `--skip-qa` skips Ditto's accuracy, formatting, and glossary review. Use it only for low-stakes or throwaway output -- it removes the only check on the four points above.
+- **QA felt too slow for a quick draft** -- `--skip-qa` skips the `editor`'s accuracy, formatting, and glossary review. Use it only for low-stakes or throwaway output -- it removes the only check on the four points above.
 
 ## Works With
 

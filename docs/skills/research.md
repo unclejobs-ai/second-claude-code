@@ -10,7 +10,7 @@
 Research the current state of AI agent frameworks in 2026
 ```
 
-**What happens:** Eevee (sonnet) executes depth-controlled web searches with varied query phrasings, an analyst structures findings and identifies gaps, then a writer synthesizes a Research Brief with sources, data points, and limitations. Search count is controlled; the skill does not guarantee 20 unique sources.
+**What happens:** The `researcher` (sonnet) executes depth-controlled web searches with varied query phrasings, an analyst structures findings and identifies gaps, then a writer synthesizes a Research Brief with sources, data points, and limitations. Search count is controlled; the skill does not guarantee 20 unique sources.
 
 With the default `--engine jina`, the researcher uses Jina Search/Reader when
 `JINA_API_KEY` is available. Without the key (or after a Jina failure), it
@@ -26,7 +26,7 @@ fallbacks, not extra search-count or unique-source guarantees.
 ```
 
 **Process:**
-1. Researcher Eevee (sonnet) runs the selected depth: exactly 3 search calls (shallow), exactly 5 (medium), or 10+ (deep). With the legacy engine or no Jina key, the same counts use WebSearch calls.
+1. `researcher` (sonnet) runs the selected depth: exactly 3 search calls (shallow), exactly 5 (medium), or 10+ (deep). With the legacy engine or no Jina key, the same counts use WebSearch calls.
 2. Analyst (sonnet) structures raw findings into categories, identifies gaps in protocol standards, coding agents, and vendor SDK comparison.
 3. Where depth permits, the researcher fills analyst-identified gaps within the search budget.
 4. The researcher documents unresolved gaps rather than inventing coverage.
@@ -50,6 +50,7 @@ fallbacks, not extra search-count or unique-source guarantees.
 | `--sources` | `web\|academic\|news` | `web` |
 | `--lang` | `ko\|en\|auto` | `auto` |
 | `--engine` | `jina\|legacy` | `jina` |
+| `--interactive` | flag | off (force Playwright for every URL fetch) |
 
 ### Depth Behavior
 
@@ -66,7 +67,7 @@ of 20 unique sources; duplicate or unusable pages are documented or discarded.
 
 ```mermaid
 graph TD
-    A[User Query] --> B[Eevee researcher - sonnet]
+    A[User Query] --> B[researcher - sonnet]
     B -->|Jina Search; fallback WebSearch/WebFetch → unblock → Playwright| C[Raw Findings]
     C --> D[Analyst - sonnet]
     D --> E{Gaps Found?}

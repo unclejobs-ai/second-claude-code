@@ -20,16 +20,16 @@ Research and write a report on AI agent frameworks
 ```
 
 **Process:**
-1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then Eevee (researcher), Alakazam (analyst), and Mewtwo (strategist) structure findings.
+1. **Plan**: Question Protocol asks up to 3 clarifying questions. If available, external memory/research dispatch uses `Skill: claude-mem:knowledge-agent`; then `researcher`, `analyst`, and `strategist` structure findings.
 2. **Plan→Do Gate**: The runtime verifies a research brief, at least five counted sources, an analysis artifact, and plan approval. Five counted sources is not a guarantee of five unique usable URLs.
-3. **Do**: Smeargle (writer) produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
+3. **Do**: `writer` produces the report in pure execution mode using Plan artifacts. Design-heavy execution can first route to `Skill: frontend-design:frontend-design` when that plugin is the stronger match.
 4. **Do→Check Gate**: Verifies artifact is complete, format followed, plan findings integrated.
-5. **Check**: The selected review preset dispatches 2–5 reviewers from Xatu (opus), Absol (sonnet), Porygon (sonnet), Jigglypuff (sonnet), and Unown (sonnet), with the review skill's consensus rules. External review is optional.
+5. **Check**: The selected review preset dispatches 2–5 reviewers from `deep-reviewer` (opus), `devil-advocate` (sonnet), `fact-checker` (sonnet), `tone-guardian` (sonnet), and `structure-analyst` (sonnet), with the review skill's consensus rules. External review is optional.
 6. **Check→Act Gate**: APPROVED → ship. Others → Action Router.
 7. **Act**: Action Router classifies findings by root cause. Shipping prompts prefer `/commit-commands:commit` when installed:
    - Source/assumption gaps → back to **Plan**
    - Completeness/format issues → back to **Do**
-   - Execution quality → **Loop** (Ditto editor)
+   - Execution quality → **Refine** (`editor` via `/scc:refine`)
 8. Cycle repeats until target met or max iterations reached.
 
 ## Options
@@ -40,14 +40,14 @@ Research and write a report on AI agent frameworks
 | `--depth` | `shallow\|medium\|deep` | `medium` |
 | `--target` | verdict or score | `APPROVED` |
 | `--max` | max Act iterations | `3` |
+| `--max-cycles` | max full re-cycles (Act → Plan → Do → Check) | `3` |
 | `--no-questions` | skip Question Protocol | `false` |
-| `--domain` | `code\|content\|analysis\|pipeline` | `code` |
 
-The `--domain` flag selects domain-specific stage contracts, Definition of Done criteria, and rollback targets for each phase transition.
+There is no `--domain` flag. The MCP call `pdca_start_run` takes a `domain` parameter (`code` \| `content` \| `analysis` \| `pipeline`, default `code`) that selects domain-specific stage contracts, Definition of Done criteria, and rollback targets.
 
 ### Code Engineering Lane
 
-When `--domain code` is active, PDCA loads the Code Engineering Lane from `skills/pdca/references/code-engineering-lane.md`. It keeps the normal Plan -> Do -> Check -> Act order while adding code-work discipline: executable acceptance criteria, worker-validator separation, stage reports for long work, human approval gates for broad or risky execution, cleanup/simplification, and issue/PR/local handoff state.
+When the task is code work, PDCA loads the Code Engineering Lane from `skills/pdca/references/code-engineering-lane.md`. It keeps the normal Plan -> Do -> Check -> Act order while adding code-work discipline: executable acceptance criteria, worker-validator separation, stage reports for long work, human approval gates for broad or risky execution, cleanup/simplification, and issue/PR/local handoff state.
 
 ## How It Works
 

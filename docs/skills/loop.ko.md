@@ -20,7 +20,7 @@
 |------------|------|
 | `list-suites` | `benchmarks/loop/` 아래 번들 스위트 목록 표시 |
 | `show-suite <name>` | 스위트 정의와 점수 예산 확인 |
-| `run <name>` | 전체 최적화 실행 |
+| `run <name> [--targets path1,path2] [--budget N] [--parallel N] [--max-generations N]` | 전체 최적화 실행 |
 | `resume <run_id>` | 저장된 loop 상태 재로딩 |
 
 ## 허용 타깃

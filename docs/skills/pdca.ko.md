@@ -2,7 +2,7 @@
 
 # PDCA
 
-> 명시적 런타임 전환 게이트가 있는 Plan → Do → Check → Act 사이클입니다. 포맷·리뷰 규칙은 게이트에 명시되지 않는 한 스킬 수준 계약입니다.
+> `/scc:godhands`의 슬래시 전용 호환 이름입니다. 런타임은 명시적 전환 게이트가 있는 Plan → Do → Check → Act(`pdca_*`)입니다. 포맷·리뷰 규칙은 게이트에 명시되지 않는 한 스킬 수준 계약입니다.
 
 ## 빠른 예시
 
@@ -20,16 +20,16 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 ```
 
 **진행 과정:**
-1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 가능하면 외부 메모리/리서치 디스패치가 `Skill: claude-mem:knowledge-agent`를 먼저 사용하고, 이후 이브이(Eevee), 후딘(Alakazam), 뮤츠(Mewtwo)가 결과를 구조화합니다.
+1. **Plan**: 질문 프로토콜이 최대 3개의 범위 확인 질문을 합니다. 가능하면 외부 메모리/리서치 디스패치가 `Skill: claude-mem:knowledge-agent`를 먼저 사용하고, 이후 `researcher`, `analyst`, `strategist`가 결과를 구조화합니다.
 2. **Plan→Do 게이트**: 런타임이 리서치 브리프, 집계된 소스 5개 이상, 분석 아티팩트, Plan 승인 여부를 검증합니다. 이는 사용 가능한 고유 URL 5개를 보장한다는 뜻이 아닙니다.
-3. **Do**: 루브도(Smeargle, 라이터)가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다. 디자인 성격이 강한 실행은 설치되어 있을 때 `Skill: frontend-design:frontend-design`로 먼저 갈 수 있어요.
+3. **Do**: `writer`가 Plan 아티팩트를 사용하여 순수 실행 모드로 보고서를 작성합니다. 디자인 성격이 강한 실행은 설치되어 있을 때 `Skill: frontend-design:frontend-design`로 먼저 갈 수 있어요.
 4. **Do→Check 게이트**: 아티팩트 완성도, 포맷 준수, Plan 결과 반영을 검증합니다.
-5. **Check**: 선택한 리뷰 프리셋이 실제 내장 패널 Xatu(opus), Absol(sonnet), Porygon(sonnet), Jigglypuff(sonnet), Unown(sonnet) 중 2~5명을 병렬 실행하고 리뷰 스킬의 합의 규칙을 적용합니다. 외부 리뷰는 선택 사항입니다.
+5. **Check**: 선택한 리뷰 프리셋이 실제 내장 패널 `deep-reviewer`(opus), `devil-advocate`(sonnet), `fact-checker`(sonnet), `tone-guardian`(sonnet), `structure-analyst`(sonnet) 중 2~5명을 병렬 실행하고 리뷰 스킬의 합의 규칙을 적용합니다. 외부 리뷰는 선택 사항입니다.
 6. **Check→Act 게이트**: APPROVED → 출하. 그 외 → 액션 라우터.
 7. **Act**: 액션 라우터가 소견을 근본원인별로 분류합니다. 출하/커밋 프롬프트는 설치되어 있으면 `/commit-commands:commit`을 우선합니다:
    - 소스/가정 갭 → **Plan**으로 복귀
    - 완성도/포맷 문제 → **Do**로 복귀
-   - 실행 품질 → **Loop** (메타몽 에디터)
+   - 실행 품질 → **Refine** (`editor`, `/scc:refine`)
 8. 목표 달성 또는 최대 반복 횟수까지 사이클이 반복됩니다.
 
 ## 옵션
@@ -40,14 +40,14 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 | `--depth` | `shallow\|medium\|deep` | `medium` |
 | `--target` | 판정 또는 점수 | `APPROVED` |
 | `--max` | 최대 Act 반복 횟수 | `3` |
+| `--max-cycles` | 전체 재사이클(Act → Plan → Do → Check) 최대 횟수 | `3` |
 | `--no-questions` | 질문 프로토콜 건너뛰기 | `false` |
-| `--domain` | `code\|content\|analysis\|pipeline` | `code` |
 
-`--domain` 플래그(v1.0.0 신규)는 페이즈 전환마다 도메인별 단계 계약, 완료 정의(DoD), 롤백 대상을 선택합니다.
+`--domain` 플래그는 없습니다. MCP 호출 `pdca_start_run`의 `domain` 파라미터(`code` \| `content` \| `analysis` \| `pipeline`, 기본 `code`)가 페이즈 전환마다 도메인별 단계 계약, 완료 정의(DoD), 롤백 대상을 선택합니다.
 
 ### 코드 엔지니어링 레인
 
-`--domain code`가 활성화되면 PDCA는 `skills/pdca/references/code-engineering-lane.md`의 코드 엔지니어링 레인을 로드합니다. 기본 Plan → Do → Check → Act 순서는 유지하되, 코드 작업에는 테스트 가능한 수용 기준, worker-validator 분리, 장기 작업 stage report, 넓거나 위험한 실행의 human approval gate, 정리/단순화, issue/PR/local handoff state를 추가 계약으로 둡니다.
+작업이 코드 작업이면 PDCA는 `skills/pdca/references/code-engineering-lane.md`의 코드 엔지니어링 레인을 로드합니다. 기본 Plan → Do → Check → Act 순서는 유지하되, 코드 작업에는 테스트 가능한 수용 기준, worker-validator 분리, 장기 작업 stage report, 넓거나 위험한 실행의 human approval gate, 정리/단순화, issue/PR/local handoff state를 추가 계약으로 둡니다.
 
 ## 작동 원리
 

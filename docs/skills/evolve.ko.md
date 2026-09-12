@@ -25,7 +25,7 @@
 | `list-failures [--min-recurrence N] [--asset PATH]` | 재발 임계치를 넘은 자산을 띄움 |
 | `show-failure <id>` | 출처 레코드 + 해당 자산의 기존 승인 체크 확인 |
 | `harvest <id> --assertion '<정규식>[,<정규식>]' [--target PATH]` | 메인테이너 체크를 붙이고 스위트 생성 |
-| `run <name>` | 그대로의 loop 엔진 실행 + 홀드아웃 회귀 보고(권고) |
+| `run evolve-<id> [--budget N] [--max-generations N] [--parallel N]` | 그대로의 loop 엔진 실행 + 홀드아웃 회귀 보고(권고) |
 | `resume <run_id>` | loop 엔진의 resume에 위임 |
 
 ## 분리된 두 관심사

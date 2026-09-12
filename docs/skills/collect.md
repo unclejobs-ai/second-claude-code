@@ -24,8 +24,8 @@ https://sdk.vercel.ai/docs -- save this for later
 **Process:**
 1. Source detection -- identified as URL. Followed 301 redirect from `sdk.vercel.ai` to `ai-sdk.dev/docs`.
 2. Extraction -- WebFetch stripped navigation, footer, and sidebar. Extracted ~3,500 words of structured documentation.
-3. Reduction -- produced 3 key points: (a) provider abstraction layer for vendor-agnostic LLM integration, (b) dual-module architecture separating Core (generation) from UI (framework hooks), (c) composable middleware system for extending model behavior.
-4. Connection -- linked to existing `design-principles.md` through "composable architecture with small surface area" as the shared concept.
+3. Reduction (`analyst` subagent) -- produced 3 key points: (a) provider abstraction layer for vendor-agnostic LLM integration, (b) dual-module architecture separating Core (generation) from UI (framework hooks), (c) composable middleware system for extending model behavior.
+4. Connection (`knowledge-connector` subagent) -- linked to existing `design-principles.md` through "composable architecture with small surface area" as the shared concept.
 5. Classification -- assigned `resource` (reference material, no deadline, not an ongoing responsibility).
 6. Duplicate check -- grepped for `sdk.vercel.ai` and `ai-sdk.dev` across the repository. No duplicates found.
 7. Saved to `.data/knowledge/resources/vercel-ai-sdk-docs.json` and `.data/knowledge/resources/vercel-ai-sdk-docs.md`.

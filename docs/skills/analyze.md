@@ -42,6 +42,7 @@ matches, the skill uses SWOT and states that assumption.
 | Flag | Values | Default |
 |---|---|---|
 | `--framework` | listed above | auto-detect |
+| `--context` | `plan\|do` | auto from PDCA phase |
 | `--with-research` | flag | off |
 | `--depth` | `quick\|standard\|thorough` | `standard` |
 | `--skip-challenge` | flag | off |

@@ -2,7 +2,7 @@
 
 # Soul
 
-> Tool-only command: observe user patterns and synthesize a persistent, evidence-backed identity profile (SOUL.md). It records or serves state; it is not a reasoning skill.
+> Slash-only skill (`disable-model-invocation: true`): observe user patterns and synthesize a persistent, evidence-backed identity profile (SOUL.md).
 
 **Not auto-routed.** The skill carries `disable-model-invocation: true` — it runs when you call `/scc:soul`. Files stay in the plugin. Daily observations remain `soul/observations/YYYY-MM-DD.jsonl`.
 
@@ -12,7 +12,7 @@
 /scc:soul learn
 ```
 
-**What happens:** The skill dispatches the analyst subagent to scan the current session for behavioral signals (corrections, style, expertise, decisions, emotional markers), rejects any observation missing a `signal_type` or `raw_text`, appends the valid ones through `soul_record_observation`, and reports "Added N observations (total: M)".
+**What happens:** The skill dispatches the analyst subagent to scan the current session for behavioral signals (corrections, style, expertise, decisions, emotional markers), rejects any observation missing `signal` or `category` (optional `confidence`, `raw_context` ≤ 200 chars), appends the valid ones through `soul_record_observation`, and reports "Added N observations (total: M)".
 
 ## Subcommands
 
@@ -38,7 +38,7 @@
 **Process:**
 1. Threshold check -- 12 sessions and 34 observations both clear the minimum (10 sessions OR 30 observations), so synthesis proceeds.
 2. Shipping metrics -- the 4 most recent `shipping` entries from past `retro` runs are pulled in as quantitative evidence for the Work Patterns and Shipping Cadence dimensions.
-3. Dispatch -- soul-keeper (Pikachu, opus) receives the full observation log, the shipping metrics, and the current SOUL.md (none exists yet, so this is a first synthesis).
+3. Dispatch -- `soul-keeper` (opus) receives the full observation log, the shipping metrics, and the current SOUL.md (none exists yet, so this is a first synthesis).
 4. Synthesis -- soul-keeper applies the synthesis algorithm: every dimension needs 2+ evidence citations, and contradictions are written as conditional rules rather than averaged into one trait.
 5. Output -- a proposed SOUL.md comes back with evidence citations inline. There's no prior SOUL.md to diff against yet, so no drift check runs this time.
 6. Nothing is written to disk -- the user reviews the proposal and calls `apply` to persist it.
@@ -62,7 +62,7 @@
 
 | Flag | Values | Default | Effect |
 |------|--------|---------|--------|
-| `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual` = only user-triggered observation; `learning` = auto-observe every session; `hybrid` = auto-observe + prompts for synthesis after every 10th new observation |
+| `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual` = only user-triggered observation; `learning` = auto-observe every session; `hybrid` = auto-observe + a synthesis prompt once `proposal_due` is set (default: observation count ≥ 30) |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | Starter template for `init` |
 | `--period` | `week\|month\|quarter` | `week` | Time range for `retro` metrics |
 | `--projects` | comma-separated paths | auto-detect | Project directories for `retro` git scanning |
@@ -71,7 +71,7 @@
 
 - **manual** -- Observations are only recorded when the user explicitly calls `learn`. No automatic logging.
 - **learning** -- The SessionStart hook adds a `learn` call to every session automatically. Synthesis still requires an explicit `propose`.
-- **hybrid** -- Same as `learning`, plus a synthesis prompt after every 10th new observation.
+- **hybrid** -- Same as `learning`, plus a synthesis prompt once `proposal_due` is set (default threshold 30 observations).
 
 ## How It Works
 

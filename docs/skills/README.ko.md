@@ -28,7 +28,7 @@
 
 ## 가이드 선택
 
-- 기본 자동 라우터: `godhands`, `research`, `write`, `review`, `refine`, `coach`
+- 기본 자동 라우터: `godhands`, `research`, `write`, `review`, `refine`, `coach`. 모든 스킬이 `user-invocable: false`라서 자연어 라우팅은 SKILL.md가 아니라 `commands/<name>.md`의 `description`을 읽습니다(`evals/`로 측정)
 - God Hands Gather는 `analyze`(`/scc:analyze`)를 쓰며 최상위 초이스 행이 아닙니다
 - 도구: `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`
 - 슬래시 전용 (디스크에 유지): `collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`, `evolve`, `pdca`

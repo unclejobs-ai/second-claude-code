@@ -134,7 +134,8 @@ claude agents        # 상태 확인
 | `--output_dir` | 모든 단계 출력의 디렉토리 | 현재 작업 디렉토리 |
 | `--var` | `key=value` 쌍, 커스텀 변수용 (반복 가능) | 없음 |
 | `--skip-research` | write 단계에 전달하여 중복 리서치 방지 | off |
-| `on_fail` (단계별) | `abort`, `skip`, `retry` | `abort` |
+| `--background` | `run`에 붙이는 플래그: 포그라운드 대신 컴패니언 데몬 큐로 실행 | off |
+| `on_fail` (단계별) | `abort`, `continue`, `retry` | `abort` |
 | `parallel` (단계별) | `true`, `false` | `false` |
 
 ## 작동 원리
@@ -167,7 +168,7 @@ graph TD
 
 모든 프리셋은 `--topic`과 `--var` 플래그를 지원합니다.
 
-**autopilot**: 기본 엔드투엔드 파이프라인. research가 소스를 수집하고, analyze가 프레임워크를 적용하며(기본: SWOT, `--var framework=porter`로 변경 가능), write가 결과물을 생성하고, review가 비평하고, refine이 피드백을 반영합니다. 완성도 높은 결과물에 적합합니다.
+**autopilot**: 기본 엔드투엔드 파이프라인. research가 소스를 수집하고, analyze가 프레임워크를 적용하며(기본: SWOT, `--var framework=porter`로 변경 가능), write가 `--skip-research --skip-review`로 결과물을 생성하고, review가 비평하고, refine이 피드백을 반영합니다. 완성도 높은 결과물에 적합합니다.
 
 **quick-draft**: 분석과 리뷰를 건너뜁니다. research 결과가 바로 write로 전달됩니다. 수동으로 정제할 시간 제약이 있는 초안에 적합합니다.
 

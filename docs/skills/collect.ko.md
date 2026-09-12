@@ -24,8 +24,8 @@ https://sdk.vercel.ai/docs -- 나중에 참고할 수 있게 저장해줘
 **진행 과정:**
 1. 소스 감지 -- URL로 식별. `sdk.vercel.ai`에서 `ai-sdk.dev/docs`로의 301 리다이렉트 추적.
 2. 추출 -- WebFetch가 내비게이션, 푸터, 사이드바를 제거. 약 3,500단어의 구조화된 문서를 추출.
-3. 축약 -- 핵심 포인트 3개 생성: (a) 벤더 독립적 LLM 통합을 위한 프로바이더 추상화 레이어, (b) Core(생성)와 UI(프레임워크 훅)를 분리한 듀얼 모듈 아키텍처, (c) 모델 동작을 확장하는 컴포저블 미들웨어 시스템.
-4. 연결 -- "작은 표면적을 가진 컴포저블 아키텍처"라는 공유 개념을 통해 기존 `design-principles.md`에 링크.
+3. 축약(`analyst` 서브에이전트) -- 핵심 포인트 3개 생성: (a) 벤더 독립적 LLM 통합을 위한 프로바이더 추상화 레이어, (b) Core(생성)와 UI(프레임워크 훅)를 분리한 듀얼 모듈 아키텍처, (c) 모델 동작을 확장하는 컴포저블 미들웨어 시스템.
+4. 연결(`knowledge-connector` 서브에이전트) -- "작은 표면적을 가진 컴포저블 아키텍처"라는 공유 개념을 통해 기존 `design-principles.md`에 링크.
 5. 분류 -- `resource` 지정 (마감도 없고 진행 중인 책임도 없는 참고 자료).
 6. 중복 검사 -- 저장소 전체에서 `sdk.vercel.ai`와 `ai-sdk.dev`를 검색. 중복 없음.
 7. `.data/knowledge/resources/vercel-ai-sdk-docs.json` 및 `.data/knowledge/resources/vercel-ai-sdk-docs.md`에 저장.

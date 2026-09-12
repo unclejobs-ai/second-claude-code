@@ -20,7 +20,7 @@
 |------------|---------|
 | `list-suites` | List bundled loop suites from `benchmarks/loop/` |
 | `show-suite <name>` | Inspect the suite manifest and scoring budget |
-| `run <name>` | Execute a full optimization run |
+| `run <name> [--targets path1,path2] [--budget N] [--parallel N] [--max-generations N]` | Execute a full optimization run |
 | `resume <run_id>` | Reload the saved loop state |
 
 ## Allowed Targets

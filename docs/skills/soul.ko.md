@@ -2,7 +2,7 @@
 
 # Soul
 
-> 도구 전용 명령: 여러 세션의 사용자 패턴을 관찰해 근거 기반 SOUL.md를 기록·제공합니다. 추론 스킬이 아닙니다.
+> 슬래시 전용 스킬(`disable-model-invocation: true`): 여러 세션의 사용자 패턴을 관찰해 근거 기반 SOUL.md를 종합합니다.
 
 **자동 라우팅되지 않습니다.** 스킬에 `disable-model-invocation: true`가 붙어 있어 `/scc:soul`로 직접 부를 때만 돕니다. 파일은 플러그인에 그대로 남습니다. 일별 관찰은 계속 `soul/observations/YYYY-MM-DD.jsonl`입니다.
 
@@ -12,7 +12,7 @@
 /scc:soul learn
 ```
 
-**동작 방식:** analyst 서브에이전트가 현재 세션을 스캔해 행동 신호(정정, 스타일, 전문성, 의사결정, 감정 신호)를 추출합니다. `signal_type`이나 `raw_text`가 빠진 관찰은 거부되며, 유효한 항목만 `soul_record_observation`으로 기록한 뒤 "Added N observations (total: M)" 형태로 결과를 보고합니다.
+**동작 방식:** analyst 서브에이전트가 현재 세션을 스캔해 행동 신호(정정, 스타일, 전문성, 의사결정, 감정 신호)를 추출합니다. `signal`이나 `category`가 빠진 관찰은 거부되며(선택: `confidence`, 200자 이내 `raw_context`), 유효한 항목만 `soul_record_observation`으로 기록한 뒤 "Added N observations (total: M)" 형태로 결과를 보고합니다.
 
 ## 서브커맨드
 
@@ -38,7 +38,7 @@
 **진행 과정:**
 1. 임계값 확인 -- 세션 12개, 관찰 34개 모두 최소 기준(세션 10개 또는 관찰 30개)을 넘어 종합이 진행됩니다.
 2. 작업 지표 반영 -- 과거 `retro` 실행에서 나온 최근 `shipping` 항목 4개를 Work Patterns, Shipping Cadence 차원의 정량적 근거로 포함합니다.
-3. 디스패치 -- soul-keeper(Pikachu, opus)가 전체 관찰 로그, 작업 지표, 현재 SOUL.md(아직 없어 이번이 첫 종합)를 전달받습니다.
+3. 디스패치 -- `soul-keeper`(opus)가 전체 관찰 로그, 작업 지표, 현재 SOUL.md(아직 없어 이번이 첫 종합)를 전달받습니다.
 4. 종합 -- soul-keeper가 종합 알고리즘을 적용합니다. 모든 차원은 근거 인용 2개 이상이 필요하고, 모순되는 행동은 평균으로 뭉개지 않고 조건부 규칙으로 남깁니다.
 5. 출력 -- 근거 인용이 포함된 제안된 SOUL.md가 반환됩니다. 이전 SOUL.md가 없어 이번에는 드리프트 검사가 실행되지 않습니다.
 6. 아직 파일에는 저장되지 않습니다 -- 사용자가 제안 내용을 검토한 뒤 `apply`를 호출해야 반영됩니다.
@@ -62,7 +62,7 @@
 
 | 플래그 | 값 | 기본값 | 효과 |
 |--------|-----|--------|------|
-| `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual`은 사용자가 직접 호출할 때만 관찰, `learning`은 매 세션 자동 관찰, `hybrid`는 자동 관찰에 더해 새 관찰 10개마다 종합을 제안 |
+| `--mode` | `manual\|learning\|hybrid` | `hybrid` | `manual`은 사용자가 직접 호출할 때만 관찰, `learning`은 매 세션 자동 관찰, `hybrid`는 자동 관찰에 더해 `proposal_due`가 켜지면(기본 관찰 30건) 종합을 제안 |
 | `--template` | `default\|developer\|writer\|researcher` | `default` | `init`의 시작 템플릿 |
 | `--period` | `week\|month\|quarter` | `week` | `retro` 지표의 기간 범위 |
 | `--projects` | 콤마로 구분된 경로 | 자동 감지 | `retro`가 git을 스캔할 프로젝트 디렉터리 |
@@ -71,7 +71,7 @@
 
 - **manual** -- 사용자가 직접 `learn`을 호출할 때만 관찰이 기록됩니다. 자동 로깅은 없습니다.
 - **learning** -- SessionStart 훅이 매 세션마다 자동으로 `learn`을 호출합니다. 종합은 여전히 명시적인 `propose` 호출이 필요합니다.
-- **hybrid** -- `learning`과 동일하되, 새 관찰 10개마다 종합을 제안합니다.
+- **hybrid** -- `learning`과 동일하되, `proposal_due`가 켜지면(기본 관찰 30건) 종합을 제안합니다.
 
 ## 작동 원리
 

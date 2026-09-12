@@ -25,7 +25,7 @@
 | `list-failures [--min-recurrence N] [--asset PATH]` | Surface assets that crossed the recurrence threshold |
 | `show-failure <id>` | Inspect one provenance record and its prior ratified checks |
 | `harvest <id> --assertion '<regex>[,<regex>]' [--target PATH]` | Attach the maintainer check and generate the suite |
-| `run <name>` | Run the unmodified loop engine, then report holdout regressions (advisory) |
+| `run evolve-<id> [--budget N] [--max-generations N] [--parallel N]` | Run the unmodified loop engine, then report holdout regressions (advisory) |
 | `resume <run_id>` | Delegate to the loop engine's resume |
 
 ## Two Separated Concerns

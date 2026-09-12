@@ -50,7 +50,7 @@ AI 에이전트의 미래에 대한 전문가 아티클을 써줘, 약 800단어
 |------|---------------|
 | `peer-mentor` | newsletter |
 | `expert` | report, article |
-| `casual` | shorts, social |
+| `casual` | shorts, social, card-news |
 
 ### 포맷 규칙
 
@@ -80,12 +80,12 @@ AI 에이전트의 미래에 대한 전문가 아티클을 써줘, 약 800단어
 ```mermaid
 graph TD
     A[User Prompt] --> B{Sources Provided?}
-    B -->|No| C[Research Skill]
+    B -->|소스 없고 skip 아님| C[Research Skill]
     B -->|Yes| D[Writer - opus]
     C --> D
     D --> E[Draft]
     E --> F{Skip Review?}
-    F -->|No| G[Review Skill - content preset]
+    F -->|No| G[Review Skill - quick preset]
     F -->|Yes| I[Final Output]
     G --> H[Editor - opus]
     H --> I
@@ -111,4 +111,4 @@ graph TD
 | research | 자료가 없을 때 초안 전 내부 호출 (`--skip-research` 미설정 시) |
 | review | 초안 후 `quick` 프리셋으로 내부 호출 (`--skip-review` 미설정 시) |
 | workflow | 커스텀 워크플로우의 한 단계로 연결 가능 |
-| loop | 리뷰 소견 반영 후 반복 개선 |
+| refine | 리뷰 소견 반영 후 반복 개선 |

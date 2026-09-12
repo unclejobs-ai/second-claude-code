@@ -16,4 +16,8 @@
 
 Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips write's internal review.
 
+## Options
+
+Same flags as the compat command `/scc:pdca`: `--phase`, `--depth`, `--target`, `--max`, `--max-cycles` (default `3`), `--no-questions`. Not for a request that already names a single skill, a vague ask (that takes a clarifying question), or work that is really `/scc:workflow` / `/scc:batch`.
+
 See [pdca.md](pdca.md) for phase schemas, runtime-enforced gate subsets, and cycle memory. That guide is the engine; this one is the public name.

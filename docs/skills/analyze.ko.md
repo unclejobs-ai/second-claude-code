@@ -41,6 +41,7 @@
 | 플래그 | 값 | 기본값 |
 |---|---|---|
 | `--framework` | 위 목록 | 자동 판별 |
+| `--context` | `plan\|do` | PDCA 페이즈에서 자동 |
 | `--with-research` | flag | off |
 | `--depth` | `quick\|standard\|thorough` | `standard` |
 | `--skip-challenge` | flag | off |

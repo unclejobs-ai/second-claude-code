@@ -134,7 +134,8 @@ Declare defaults in the workflow definition under `"defaults"`:
 | `--output_dir` | output directory for all step outputs | current working directory |
 | `--var` | `key=value` pairs for custom variables (repeatable) | none |
 | `--skip-research` | passed to write steps to avoid redundant research | off |
-| `on_fail` (per step) | `abort`, `skip`, `retry` | `abort` |
+| `--background` | flag on `run`: queue via the companion daemon instead of running in the foreground | off |
+| `on_fail` (per step) | `abort`, `continue`, `retry` | `abort` |
 | `parallel` (per step) | `true`, `false` | `false` |
 
 ## How It Works
@@ -168,7 +169,7 @@ Run a named preset with `/scc:workflow run <preset>`:
 All presets accept `--topic` and `--var` flags for runtime parameterization.
 Together they let you automate the full Gather → Produce → Verify → Refine loop.
 
-**autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write produces the artifact, review critiques it, and refine incorporates feedback. Best for polished deliverables.
+**autopilot**: The default end-to-end pipeline. Research gathers sources, analyze applies a framework (default: SWOT, override with `--var framework=porter`), write runs with `--skip-research --skip-review` and produces the artifact, review critiques it, and refine incorporates feedback. Best for polished deliverables.
 
 **quick-draft**: Skips analysis and review. Research feeds directly into write. Best for time-sensitive first drafts that will be manually refined.
 
@@ -188,7 +189,7 @@ Together they let you automate the full Gather → Produce → Verify → Refine
 ## Troubleshooting
 
 - **"Variable not resolved" error** -- Check `{{variable}}` spelling in your pipeline definition. Variable names must be alphanumeric plus underscores (`[a-zA-Z_][a-zA-Z0-9_]*`). Ensure the variable is either declared in `"defaults"` or provided via `--topic`, `--output_dir`, or `--var key=value` at runtime.
-- **Step fails mid-pipeline** -- Check the `on_fail` strategy for the failed step. `abort` halts the entire pipeline (default). `skip` moves to the next step. `retry` re-runs the failed step. To resume a halted pipeline, run the same pipeline again -- the orchestrator picks up from the last saved state.
+- **Step fails mid-pipeline** -- Check the `on_fail` strategy for the failed step. `abort` halts the entire pipeline (default). `continue` moves to the next step. `retry` re-runs the failed step. To resume a halted pipeline, run the same pipeline again -- the orchestrator picks up from the last saved state.
 - **Workflow not found** -- Verify the workflow name with `/scc:workflow list`. Definitions are stored at `${CLAUDE_PLUGIN_DATA}/workflows/{name}.json`.
 - **Unexpected output location** -- Check whether `{{output_dir}}` is set. Without `--output_dir`, all outputs go to the current working directory.
 

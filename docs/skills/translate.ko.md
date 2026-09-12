@@ -12,7 +12,7 @@
 /scc:translate --input docs/skills/collect.md --target ko
 ```
 
-**동작 방식:** 원문이 영어임을 감지합니다(목표 언어는 `--target ko`로 이미 지정됨). 문체는 `natural`, 형식은 `preserve`가 기본값으로 적용되며, `references/glossary.md` 용어집을 불러온 뒤 Smeargle이 한국어 초안을 작성합니다. 이어서 Ditto가 정확성과 서식을 검수하고, 마지막으로 결과물을 자동 저장합니다.
+**동작 방식:** 원문이 영어임을 감지합니다(목표 언어는 `--target ko`로 이미 지정됨). 문체는 `natural`, 형식은 `preserve`가 기본값으로 적용되며, `references/glossary.md` 용어집을 불러온 뒤 `writer`가 한국어 초안을 작성합니다. 이어서 `editor`가 정확성과 서식을 검수하고, 마지막으로 결과물을 자동 저장합니다.
 
 ## 실전 예시
 
@@ -30,8 +30,8 @@ instructions and applies the relevant checkpoint rules.
 1. 언어 감지 -- 원문을 영어로 판단합니다. 요청에 목표 언어("한국어로")가 이미 나와 있어 따로 물어볼 필요가 없습니다. 문체와 형식은 각각 `--style natural`, `--format preserve`에 대응합니다.
 2. 소울 확인 -- `.data/soul/SOUL.md`가 있고, `## Tone Rules` 항목은 문장을 짧고 단정하게 쓰며 존대 표현을 중복하지 말라고 규정합니다. 이 규칙이 `natural` 문체 위에 추가 제약으로 더해집니다.
 3. 용어집 로드 -- `references/glossary.md`의 plugin → 플러그인, agent → 에이전트, checkpoint → 체크포인트 같은 매핑을 일관되게 사용합니다.
-4. 초안 작성 -- Smeargle(라이터, opus)가 문장을 자연스럽게 재구성하고 `##` 제목을 유지합니다.
-5. 검수 -- Ditto(에디터, opus)가 정확성, 용어집, `--format preserve`의 문단 구조를 확인합니다.
+4. 초안 작성 -- `writer`(opus)가 문장을 자연스럽게 재구성하고 `##` 제목을 유지합니다.
+5. 검수 -- `editor`(opus)가 정확성, 용어집, `--format preserve`의 문단 구조를 확인합니다.
 6. 수정 -- Critical·Major 소견을 저장 전에 반영하고 Minor는 남길 수 있습니다.
 7. 자동 저장 -- `.captures/translate-en-to-ko-quick-start-2026-07-12.md`에 저장합니다.
 
@@ -58,8 +58,8 @@ instructions and applies the relevant checkpoint rules.
 graph TD
     A[Detect source + target language] --> B[Read SOUL.md tone rules if present]
     B --> C[Load glossary]
-    C --> D[Draft with Smeargle]
-    D --> E[QA with Ditto]
+    C --> D[Draft with writer]
+    D --> E[QA with editor]
     E --> F[Address Critical/Major findings]
     F --> G[Auto-save result]
 ```
@@ -119,7 +119,7 @@ graph TD
 - **기본값을 직역으로 착각하지 않기** -- 기본 문체는 단어 대 단어 번역이 아니라 `natural`(자연스럽게 다듬은 의역)입니다. 대상 언어에 딱 맞는 관용구가 없어도 `natural`이나 `creative` 모드에서는 가장 가까운 표현으로 바꿉니다. 원문 그대로 남기는 건 `--style literal`일 때뿐입니다.
 - **코드 블록과 인라인 코드** -- ``` 안이나 백틱 안의 내용은 절대 번역하지 않습니다. 번역 대상은 주변 문장뿐이고, `creative` 모드에서만 인접한 주석까지 포함됩니다.
 - **존댓말과 반말 혼용** -- 하나의 번역 안에서 존댓말과 반말을 섞으면 안 됩니다. 시작할 때 존대 수준(기본 해요체)을 정하고 검수 단계까지 일관되게 유지합니다.
-- **용어집 무시** -- `references/glossary.md`(또는 `--glossary`로 지정한 파일)에 매핑이 있으면 매번 그대로 따라야 합니다. Ditto의 검수 단계에서 용어집 항목을 모두 다시 확인합니다.
+- **용어집 무시** -- `references/glossary.md`(또는 `--glossary`로 지정한 파일)에 매핑이 있으면 매번 그대로 따라야 합니다. `editor`의 검수 단계에서 용어집 항목을 모두 다시 확인합니다.
 - **`preserve` 모드에서 구조 변경** -- 제목, 목록 중첩, 표의 열은 그대로 두고 그 안의 자연어 텍스트만 바꿉니다.
 - **목표 언어 추측** -- 요청만으로 원문이나 목표 언어가 분명하지 않으면 스킬이 먼저 물어봅니다. 영어→한국어라고 임의로 가정하지 않습니다.
 - **고유명사 번역** -- 용어집에 매핑이 없으면 고유명사는 원문 그대로 둡니다. 한국 고유명사를 영어로 옮길 때만 로마자 표기법을 적용합니다.
@@ -129,7 +129,7 @@ graph TD
 - **스킬이 목표 언어를 되묻는 경우** -- 요청만으로 원문과 목표 언어를 구분할 수 없었기 때문입니다. 바로 답해 주거나, 다음부터는 `--source`나 `--target`을 미리 지정해 되묻는 과정을 건너뛸 수 있습니다.
 - **번역 결과가 평소 말투와 다른 경우** -- 소울 톤 규칙은 `.data/soul/SOUL.md`에 `## Tone Rules` 항목이 있을 때만 적용됩니다. 없으면 대상 언어의 관습대로 기본값이 적용됩니다. `soul` 스킬을 먼저 실행하거나 `--style`을 직접 지정하세요.
 - **기술 용어가 문서마다 다르게 번역되는 경우** -- `references/glossary.md`에 해당 용어가 매핑되어 있는지 확인합니다. 프로젝트에서 다른 용어를 쓴다면 `--glossary`로 별도 파일을 지정하거나, 번역 전에 기본 용어집에 누락된 용어를 추가합니다.
-- **검수 단계가 느리게 느껴지는 경우** -- `--skip-qa`는 Ditto의 정확성·서식·용어집 검수를 건너뜁니다. 위 세 가지를 확인할 유일한 장치가 사라지므로, 부담이 적거나 버려도 되는 결과물에만 쓰세요.
+- **검수 단계가 느리게 느껴지는 경우** -- `--skip-qa`는 `editor`의 정확성·서식·용어집 검수를 건너뜁니다. 위 세 가지를 확인할 유일한 장치가 사라지므로, 부담이 적거나 버려도 되는 결과물에만 쓰세요.
 
 ## 연동 스킬
 

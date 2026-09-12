@@ -28,7 +28,7 @@ the guide, but flags, defaults, gates, and safety boundaries must match.
 
 ## Choosing a guide
 
-- Default auto-router: `godhands`, `research`, `write`, `review`, `refine`, `coach`.
+- Default auto-router: `godhands`, `research`, `write`, `review`, `refine`, `coach`. Every skill is `user-invocable: false`, so natural-language routing reads `commands/<name>.md` `description`, not the SKILL.md description; `evals/` measures it.
 - God Hands Gather uses `analyze` (`/scc:analyze`); it is not a top-level chooser row.
 - Tools: `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`.
 - Slash-only (still on disk): `collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`, `evolve`, `pdca`.

@@ -27,7 +27,7 @@
 | `content` | deep-reviewer, devil-advocate, tone-guardian | 2/3 |
 | `strategy` | deep-reviewer, devil-advocate, fact-checker | 2/3 |
 | `code` | deep-reviewer, fact-checker, structure-analyst | 2/3 |
-| `security` | code 구성; `--external` 시 `mmbridge security` 선택 | 2/3 또는 2/4 |
+| `security` | code 구성; `--external` 시 `mmbridge security` 선택 | 2/3 또는 3/4 |
 | `academic` | deep-reviewer, fact-checker, structure-analyst, devil-advocate | 3/4 |
 | `quick` | devil-advocate, fact-checker | 2/2 |
 | `full` | 리뷰어 5명 전원 | 3/5 |
@@ -48,12 +48,13 @@ FIXES`, `NEEDS IMPROVEMENT`, `MUST FIX`이며, Critical 없이 기준 미달이�
 | `--scope` | `auth\|api\|infra\|all` | `all` (security) |
 | `--compliance` | `GDPR,SOC2,HIPAA,PCI-DSS` | 없음 |
 | `--citation-style` | `APA\|MLA\|Chicago` | `APA` (academic) |
+| `--team-review` | flag | off |
 
 ## 출력 계약
 
 모든 소견은 `location`, `severity`(`Critical`, `Major`, `Minor`), `description`,
 `fix suggestion`을 포함합니다. 보고서는
-`skills/review/references/critic-schema.md`의 `## Critic Output` 형식을 따릅니다.
+`references/critic-schema.md`의 `## Critic Output` 형식을 따릅니다.
 팩트체커는 URL 없이 검증했다고 말할 수 없습니다. 산출물 작성에 관여한
 에이전트는 투표에서 제외되며, 독립 리뷰어가 부족하면 `BLOCKED — QUORUM SHORT`입니다.
 

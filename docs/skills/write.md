@@ -50,7 +50,7 @@ Write an expert article about the future of AI agents, approximately 800 words
 |-------|-------------|
 | `peer-mentor` | newsletter |
 | `expert` | report, article |
-| `casual` | shorts, social |
+| `casual` | shorts, social, card-news |
 
 ### Format Rules
 
@@ -85,7 +85,7 @@ graph TD
     C --> D
     D --> E[Draft]
     E --> F{Skip Review?}
-    F -->|No| G[Review Skill - content preset]
+    F -->|No| G[Review Skill - quick preset]
     F -->|Yes| I[Final Output]
     G --> H[Editor - opus]
     H --> I

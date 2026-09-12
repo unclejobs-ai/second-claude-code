@@ -7,7 +7,7 @@
 ## Quick Example
 
 ```
-/scc:refine draft.md --target 4.5 --max 3
+/scc:refine "raise this to 4.5/5" --file draft.md --target 4.5 --max 3
 ```
 
 **What happens:** The skill reads the current draft, dispatches reviewers as independent subagents, applies the top 3 feedback items, then re-reviews. This cycle repeats until the target score is met, the max rounds are exhausted, or improvement plateaus. A final completion gate must pass before refine exits.
@@ -58,6 +58,8 @@ Round 2 (post-edit): 4.5/5  ||||||||||||||||||  APPROVED     (+0.7)
 
 | Flag | Values | Default |
 |------|--------|---------|
+| `--file` | path to the draft to iterate on | required |
+| `--review` | path to an initial review report (skips the first review cycle) | none |
 | `--max` | `1-10` | `3` |
 | `--target` | score (e.g. `4.5`) or verdict (e.g. `APPROVED`) | `APPROVED` |
 | `--promise` | text injected into each reviewer's context as a constraint | none |

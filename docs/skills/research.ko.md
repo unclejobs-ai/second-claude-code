@@ -10,7 +10,7 @@
 AI 에이전트 프레임워크 현황을 조사해
 ```
 
-**동작 방식:** 이브이(Eevee, sonnet)가 깊이에 맞춰 다양한 검색어로 웹 검색을 수행하고, 애널리스트가 자료를 구조화하면서 누락 영역을 식별한 뒤, 라이터가 출처·데이터 포인트·한계점을 포함한 리서치 브리프로 종합합니다. 검색 횟수는 깊이로 제어되며 고유 출처 20개를 보장하지 않습니다.
+**동작 방식:** `researcher`(sonnet)가 깊이에 맞춰 다양한 검색어로 웹 검색을 수행하고, 애널리스트가 자료를 구조화하면서 누락 영역을 식별한 뒤, 라이터가 출처·데이터 포인트·한계점을 포함한 리서치 브리프로 종합합니다. 검색 횟수는 깊이로 제어되며 고유 출처 20개를 보장하지 않습니다.
 
 기본 `--engine jina`은 `JINA_API_KEY`가 있을 때 Jina Search/Reader를 사용합니다.
 키가 없거나 Jina가 실패하면 WebSearch/WebFetch로 대체하고, 막힌 페이지는
@@ -25,7 +25,7 @@ AI 에이전트 프레임워크 현황을 조사해
 ```
 
 **진행 과정:**
-1. 리서처 이브이(sonnet)가 선택한 깊이로 검색합니다: shallow 정확히 3회, medium 정확히 5회, deep 10회 이상. Jina 키가 없으면 같은 횟수의 WebSearch 호출로 대체합니다.
+1. `researcher`(sonnet)가 선택한 깊이로 검색합니다: shallow 정확히 3회, medium 정확히 5회, deep 10회 이상. Jina 키가 없으면 같은 횟수의 WebSearch 호출로 대체합니다.
 2. 애널리스트(sonnet)가 수집 자료를 카테고리별로 구조화하고, 프로토콜 표준, 코딩 에이전트, 벤더 SDK 비교 영역의 누락을 식별합니다.
 3. 깊이가 허용하는 범위에서 식별된 공백을 보충 검색합니다.
 4. 해결하지 못한 공백은 숨기지 않고 기록합니다.
@@ -49,6 +49,7 @@ AI 에이전트 프레임워크 현황을 조사해
 | `--sources` | `web\|academic\|news` | `web` |
 | `--lang` | `ko\|en\|auto` | `auto` |
 | `--engine` | `jina\|legacy` | `jina` |
+| `--interactive` | flag | off (모든 URL을 Playwright로 강제 수집) |
 
 ### Depth 동작 방식
 
@@ -65,7 +66,7 @@ WebSearch/WebFetch로 대체합니다. 횟수는 호출 수이며 고유 출처 
 
 ```mermaid
 graph TD
-    A[User Query] --> B[Eevee 리서처 - sonnet]
+    A[User Query] --> B[researcher - sonnet]
     B -->|Jina Search; WebSearch/WebFetch → unblock → Playwright 대체| C[Raw Findings]
     C --> D[Analyst - sonnet]
     D --> E{Gaps Found?}
