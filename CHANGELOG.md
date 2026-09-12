@@ -5,6 +5,21 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.1.1] - 2026-09-12
+
+### Fixed
+
+- `/scc:review`, `/scc:refine`, `/scc:coach` now trigger from natural requests
+  ("review this draft", "fix it per the feedback", "help me decide A or B").
+  Since 3.1.0 hides skills from the `/` menu, the model only reads the
+  `commands/*.md` description, and the old phase-label wording never matched.
+
+### Added
+
+- `evals/`: `claude plugin eval` routing suite (6 positive, 2 negative cases).
+  Run `claude plugin eval . --runs 3 --ablation none --model claude-sonnet-5`.
+  Measured 24/24 on this release; review and refine were 0/3 before the fix.
+
 ## [3.1.0] - 2026-09-10
 
 **God Hands** (신의 손) is the public name. Extra hands that find, analyze, plan,

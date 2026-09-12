@@ -2,7 +2,7 @@
 
 Display name **Second Claude Code**. Plugin id **`scc`**. Repo **[unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)**. Slash namespace **`/scc:*`**.
 
-Plugin version **3.1.0** (`.claude-plugin/plugin.json`, `CHANGELOG.md`). GitHub **Latest Release is v3.1.0**.
+Plugin version **3.1.1** (`.claude-plugin/plugin.json`, `CHANGELOG.md`). GitHub **Latest Release is v3.1.1**.
 
 God Hands knowledge work system: **16 skills**, **19 command markdown files** plus `commands/version.mjs`, **17 agents**, **10 hook events**, **3 MCP servers**. `/scc:godhands` is the public orchestrator.
 
@@ -124,7 +124,7 @@ Active (edit these for current behavior):
 |---|---|
 | [AGENTS.md](AGENTS.md) · [CLAUDE.md](CLAUDE.md) | Agent/host contract (this file) |
 | [README.md](README.md) · [README.ko.md](README.ko.md) | Install and entry points |
-| [CHANGELOG.md](CHANGELOG.md) | 3.0.1–3.1.0 notes; GitHub Latest Release is v3.1.0 |
+| [CHANGELOG.md](CHANGELOG.md) | 3.0.1–3.1.1 notes; GitHub Latest Release is v3.1.1 |
 | [docs/README.md](docs/README.md) | Command and document index |
 | [docs/directory-map.md](docs/directory-map.md) | Locked directory architecture (3.1.0) |
 | [docs/DOCUMENT-INDEX.md](docs/DOCUMENT-INDEX.md) | Public file catalog |

@@ -1,7 +1,7 @@
 {
   "name": "scc",
   "description": "God Hands — extra hands that find, analyze, plan, decompose, benchmark, and improve. The AI workflow that does not skip Check. 16 skills, 19 commands, 17 agents, 10 lifecycle hook events, 3 MCP servers. /scc:godhands gathers, drafts, checks, and cuts.",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "author": {
     "name": "Unclejobs",
     "email": "parkeungje@gmail.com"
