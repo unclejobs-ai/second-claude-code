@@ -1,5 +1,5 @@
 ---
-description: "Settle an open fork into a recorded standard before any artifact is drafted"
+description: "Use when the user cannot choose between two or more defensible options and wants the rule fixed before work starts (A or B?, help me decide, set the standard first). Settle an open fork into a recorded standard before any artifact is drafted"
 argument-hint: "<request> | resume | status | finalize"
 ---
 

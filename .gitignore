@@ -36,3 +36,6 @@ tests/skill-tests/
 
 # Codex test artifacts (numbered dirs at root)
 /[0-9]*/
+
+# Plugin eval runs
+evals/results/

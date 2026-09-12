@@ -1,5 +1,5 @@
 ---
-description: "Check/Verify phase -- multi-perspective review with consensus gate"
+description: "Use when the user asks to review, critique, or judge any draft, article, plan, or code (review this, is this good?, where is it weak?, can I publish this?). Check/Verify phase -- multi-perspective review with consensus gate"
 argument-hint: draft.md --preset content
 ---
 
