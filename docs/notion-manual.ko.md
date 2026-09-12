@@ -100,8 +100,7 @@ grok plugin install unclejobs-ai/second-claude-code --trust
 ```
 
 훅과 MCP 서버를 로드하려면 `--trust`가 필요합니다. `walnut.manifest.yaml`은 Walnut 목록입니다.
-`origin/main`에는 아직 `.grok-plugin/`이 없습니다. 그 브랜치에 없는 Grok 마켓플레이스
-디렉터리를 문서화하지 마세요.
+Grok는 `.grok-plugin/plugin.json`을 읽고, `walnut.manifest.yaml`이 Walnut 목록입니다.
 
 ### v3 업데이트 (Claude)
 

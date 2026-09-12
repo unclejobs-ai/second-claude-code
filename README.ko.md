@@ -31,10 +31,13 @@
 `/scc:workflow`는 이름 있는 재생(슬래시)이고 `/scc:batch`는 독립 병렬
 분할(슬래시)이다.
 
-모든 프롬프트를 자동으로 스킬에 배정하지는 않습니다. Claude Code의 일반 스킬·명령 흐름이
-설명을 바탕으로 적합한 스킬을 선택할 수 있고, 예측 가능한 진입점이 필요하면 슬래시 명령을
-직접 사용하세요. Codex와 Grok는 16개 스킬을 이름으로 노출하지만 Claude 슬래시 명령 전체를
-그대로 제공하지는 않습니다.
+모든 프롬프트를 자동으로 스킬에 배정하지는 않습니다. 모든 스킬이 `user-invocable: false`라서
+Claude Code는 자연어 요청을 `skills/*/SKILL.md`가 아니라 `commands/*.md`의 frontmatter
+`description`으로 라우팅합니다. `evals/`의 라우팅 평가는 `research`, `write`, `review`,
+`refine`, `coach`, `analyze`를 측정하며(3.1.1에서 24/24), 막연한 요청은 패스를 시작하면 안 됩니다.
+예측 가능한 진입점이 필요하면 슬래시 명령을 직접 사용하세요. Codex는 `.codex-plugin/plugin.json`으로
+16개 스킬을 노출하고, Grok는 `.grok-plugin/` + `walnut.manifest.yaml`로 설치합니다. 둘 다 Claude
+슬래시 명령 전체를 그대로 제공하지는 않습니다.
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
@@ -74,9 +77,8 @@ claude plugin update scc
 
 업데이트 후 Claude Code를 다시 시작하세요.
 
-Claude Code는 `commands/`와 `skills/`를 모두 등록합니다. 3.1.0에서는 슬래시
-메뉴에 같은 `/scc:*` 이름이 두 번 나타날 수 있습니다. 어느 쪽을 골라도 같은 작업을
-가리킵니다. 스킬에 `user-invocable: false`가 있어 `/scc:*` 이름이 한 번만 보입니다.
+Claude Code는 `commands/`와 `skills/`를 모두 등록합니다. 3.1.0부터 모든 스킬에
+`user-invocable: false`가 있어 슬래시 메뉴에는 `/scc:*` 이름이 명령 한 번만 보입니다.
 
 ### Codex
 
@@ -230,10 +232,10 @@ God Hands **Check**는 **별도의** 리뷰입니다. Draft 단계는 write를 `
 
 ```text
 /scc:research "AI 에이전트 프레임워크" --depth medium
-/scc:write --format report --skip-research report-notes.md
-/scc:write --format report --skip-research --skip-review draft.md
+/scc:write --format report --skip-research --input report-notes.md
+/scc:write --format report --skip-research --skip-review --input draft.md
 /scc:review draft.md --preset content
-/scc:refine draft.md --max 3
+/scc:refine "4.5/5까지 올려줘" --file draft.md --max 3
 /scc:godhands "AI 에이전트 시장 보고서" --depth deep
 /scc:workflow run autopilot --topic "edge computing"
 /scc:batch --topic "AI 인프라 10부작" --skill write --parallel 3
@@ -292,7 +294,7 @@ God Hands **Check**는 **별도의** 리뷰입니다. Draft 단계는 write를 `
 | `/scc:standard-check` | 프로젝트에 기록된 기준을 산출물 하나에 적용 |
 
 [스킬 가이드](docs/skills/)에서 명령 문법, 옵션, 예시, 제한을 확인하세요. 슬래시 전용
-스킬은 디스크에 남아 있고 자동 라우팅되지 않으며 `/scc:<name>`으로 호출합니다.
+스킬은 `disable-model-invocation: true`이며 명령 설명은 보이지만 `/scc:<name>`으로 직접 호출합니다.
 유지보수자 전용 `loop`와 `evolve`도 그 슬래시 전용 집합에 있습니다. 공개된
 `/scc:loop` 명령은 고정 벤치마크 스위트로 프롬프트 자산을 최적화하는 유지보수자용
 직접 진입점입니다.
@@ -358,7 +360,7 @@ Cut    → 빈틈을 Gather·Draft·Refine 중 알맞은 곳으로 회송
 
 선택한 방향, 탈락한 대안, 재검토 조건, 검사를 함께 보존합니다. 이후 세션이 활성 기준을
 읽을 수 있고, `/scc:standard-check artifact.md`가 산출물 하나에 이를 적용합니다. 검사
-결과는 `PASS`, `FAIL`, `UNPROVEN`, `UNCHECKED`가 될 수 있으며, adversarial 검사의 통과를
+결과는 `FAIL`, `UNPROVEN`, `UNCHECKED`로 출력되고 깨끗하면 `ok — N standard(s) checked`가 찍히며, adversarial 검사의 통과를
 검사기 스스로 만들어내지는 않습니다.
 
 ## 상태·연동·백그라운드 작업
@@ -379,23 +381,9 @@ claude agents
 
 ## 설정
 
-모든 필드는 선택 사항입니다. 프로젝트 또는 플러그인 설정이 기대하는 위치에 둡니다.
-
-```jsonc
-{
-  "defaults": {
-    "research_depth": "medium",     // shallow | medium | deep
-    "write_voice": "peer-mentor",
-    "review_preset": "content",     // content | strategy | code | security | academic | quick | full
-    "refine_max_iterations": 3,
-    "publish_target": "file"        // file | notion
-  },
-  "quality_gate": {
-    "consensus_threshold": 0.67,
-    "external_reviewers": []
-  }
-}
-```
+따로 둘 설정 파일은 없습니다. 기본값은 각 스킬의 Options 표(`skills/<name>/SKILL.md`)에
+있고, `--depth`, `--preset`, `--max` 같은 플래그로 호출마다 덮어씁니다.
+`config/config.example.json`은 과거 스케치이며 로드되지 않습니다.
 
 ## 더 읽기
 

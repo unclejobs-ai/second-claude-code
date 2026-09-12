@@ -27,10 +27,13 @@ call them with `/scc:<name>`. The one orchestrator is `/scc:godhands`.
 `/scc:workflow` is named replay (slash) and `/scc:batch` is an independent
 parallel split (slash).
 
-It does not auto-dispatch a skill from every prompt. Claude Code's normal skill/command
-flow can select a matching skill from its description; use a slash command when you
-need a predictable entry point. Codex and Grok expose the 16 skills by name and do
-not mirror every Claude slash command.
+It does not auto-dispatch a skill from every prompt. Every skill sets `user-invocable: false`,
+so Claude Code routes a natural request from the `commands/*.md` frontmatter `description`,
+not from `skills/*/SKILL.md`. The routing eval suite in `evals/` measures `research`, `write`,
+`review`, `refine`, `coach`, and `analyze` (24/24 on 3.1.1); a vague ask must not start a pass.
+Use a slash command when you need a predictable entry point. Codex exposes the 16 skills
+through `.codex-plugin/plugin.json`; Grok installs from `.grok-plugin/` + `walnut.manifest.yaml`.
+Neither mirrors every Claude slash command.
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
@@ -230,10 +233,10 @@ supplied (or Plan/workflow already produced it).
 
 ```text
 /scc:research "AI agent frameworks" --depth medium
-/scc:write --format report --skip-research report-notes.md
-/scc:write --format report --skip-research --skip-review draft.md
+/scc:write --format report --skip-research --input report-notes.md
+/scc:write --format report --skip-research --skip-review --input draft.md
 /scc:review draft.md --preset content
-/scc:refine draft.md --max 3
+/scc:refine "raise this to 4.5/5" --file draft.md --max 3
 /scc:godhands "AI agent market report" --depth deep
 /scc:workflow run autopilot --topic "edge computing"
 /scc:batch --topic "10-part series on AI infrastructure" --skill write --parallel 3
@@ -293,7 +296,7 @@ Auto-router: `coach`, `godhands`, `refine`, `research`, `review`, `write`. God H
 | `/scc:standard-check` | Apply recorded project standards to one artifact |
 
 The [skill guides](docs/skills/) contain command syntax, options, examples, and
-limitations. Slash-only skills stay on disk and are never auto-routed; call them
+limitations. Slash-only skills set `disable-model-invocation: true`; their command descriptions stay visible, but call them
 with `/scc:<name>`. Maintainer-only `loop` and `evolve` stay in that slash-only
 set. The public `/scc:loop` command optimizes prompt assets against a fixed
 benchmark suite; it is a direct maintainer entry point.
@@ -365,8 +368,8 @@ specialization of PDCA, not a second runtime.
 The record keeps the chosen direction, rejected alternatives, reopening
 conditions, and checks. Sessions can read active standards later, and
 `/scc:standard-check artifact.md` reports whether one artifact meets them.
-Checks can return `PASS`, `FAIL`, `UNPROVEN`, or `UNCHECKED`; the checker does
-not invent a passing judgment for an adversarial check.
+Checks print `FAIL`, `UNPROVEN`, or `UNCHECKED`; a clean run prints `ok — N standard(s) checked`.
+The checker does not invent a passing judgment for an adversarial check.
 
 ## State, integrations, and background work
 
@@ -389,24 +392,9 @@ claude agents
 
 ## Configuration
 
-All fields are optional. Place the file where your project or plugin
-configuration expects it:
-
-```jsonc
-{
-  "defaults": {
-    "research_depth": "medium",     // shallow | medium | deep
-    "write_voice": "peer-mentor",
-    "review_preset": "content",     // content | strategy | code | security | academic | quick | full
-    "refine_max_iterations": 3,
-    "publish_target": "file"        // file | notion
-  },
-  "quality_gate": {
-    "consensus_threshold": 0.67,
-    "external_reviewers": []
-  }
-}
-```
+There is no config file to place. Defaults live in each skill's Options table
+(`skills/<name>/SKILL.md`) and are overridden per call with flags such as `--depth`,
+`--preset`, or `--max`. `config/config.example.json` is a historical sketch and is not loaded.
 
 ## Further reading
 

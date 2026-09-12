@@ -2,7 +2,7 @@
 
 Public file catalog for **Second Claude Code** (display name; plugin id `scc`; slash `/scc:*`; GitHub [unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)).
 
-디스크 버전 **3.1.0**. GitHub Latest Release는 **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**. CHANGELOG에는 `[3.0.1]`–`[3.1.0]`이 있다. 설치는 마켓플레이스 `main` 또는 그 릴리즈.
+디스크 버전 **3.1.1**. GitHub Latest Release는 **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**. CHANGELOG에는 `[3.0.1]`–`[3.1.1]`이 있다. 설치는 마켓플레이스 `main` 또는 그 릴리즈.
 
 This index is the full inventory. Start with [docs/README.md](README.md) for the human map. Do not treat archive rows as current product contracts. `.data/` and `.claude/agent-memory` are runtime state, not product docs, and are not listed.
 
@@ -29,15 +29,15 @@ These counts must match this tree:
 | status | `canonical` · `drift-fixed-this-run` · `archive-candidate` · `do-not-ship` |
 
 - **canonical** — current public contract.
-- **drift-fixed-this-run** — edited this run to match disk (3.1.0, 16/19/17/10/3, God Hands, `user-invocable: false`, `.grok-plugin/`).
+- **drift-fixed-this-run** — edited this run to match disk (3.1.1 after 3.1.0, 16/19/17/10/3, God Hands, `user-invocable: false`, `.grok-plugin/`).
 - **archive-candidate** — leave on disk this run; mark for later archive/delete. Stale counts (18-skill, Deep Interview, 31 MCP tools) live here.
 - **do-not-ship** — not SCC product docs; do not publish as plugin documentation.
 
-## Remaining drift / 남은 드리프트 (tree 3.1.0)
+## Remaining drift / 남은 드리프트 (tree 3.1.1)
 
 | Item | Fact |
 |---|---|
-| GitHub Latest Release | **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**. Uninstall leftover `second-claude-code` / old `scc` caches. |
+| GitHub Latest Release | **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**. Uninstall leftover `second-claude-code` / old `scc` caches. |
 | Duplicate `/scc:*` names | **3.1.0 ships `user-invocable: false`.** Each `/scc:*` name is the command. Do not document duplicates as current. |
 | Grok layout | Install is `grok plugin install unclejobs-ai/second-claude-code --trust`. This tree has `.grok-plugin/plugin.json` and `walnut.manifest.yaml`. |
 | Write + God Hands | `/scc:write` runs internal `/scc:review` unless `--skip-review`. God Hands Check is a separate review. Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips. |
@@ -63,13 +63,13 @@ Default auto-router: `/scc:godhands`, `/scc:research`, `/scc:write`, `/scc:revie
 
 | path | audience | role | status |
 |---|---|---|---|
-| [README.md](../README.md) | user | Install and overview (EN). Display name Second Claude Code; plugin id `scc`; `/scc:*`; GitHub unclejobs-ai/second-claude-code; tree 3.1.0 = GitHub Latest v3.1.0 | canonical |
+| [README.md](../README.md) | user | Install and overview (EN). Display name Second Claude Code; plugin id `scc`; `/scc:*`; GitHub unclejobs-ai/second-claude-code; tree 3.1.1 = GitHub Latest v3.1.1 | canonical |
 | [README.ko.md](../README.ko.md) | user | 설치·개요 (한국어). 표시 이름 Second Claude Code, 플러그인 id `scc`, `/scc:*` | drift-fixed-this-run |
 | [AGENTS.md](../AGENTS.md) | maintainer | Working contract: host split, catalog counts, MCP = 3 servers, orchestrator picker (`/scc:godhands`), write/God Hands double-review, DOCUMENT-INDEX pointer. Soul path is `soul/observations/YYYY-MM-DD.jsonl` | drift-fixed-this-run |
 | [CLAUDE.md](../CLAUDE.md) | maintainer | Claude Code adapter. Install: `claude plugin marketplace add unclejobs-ai/second-claude-code` then `claude plugin install scc` | drift-fixed-this-run |
-| [CHANGELOG.md](../CHANGELOG.md) | user | Notes `[3.0.0]`–`[3.1.0]`. `[3.1.0]` is God Hands + `user-invocable: false`. GitHub Latest is v3.1.0 | canonical |
-| [package.json](../package.json) | maintainer | Package name `scc`, version `3.1.0`, description 16 skills / 19 commands / 17 agents / 3 MCP servers | drift-fixed-this-run |
-| [walnut.manifest.yaml](../walnut.manifest.yaml) | user | walnut.world listing. Version 3.1.0. Pair with `.grok-plugin/plugin.json` | drift-fixed-this-run |
+| [CHANGELOG.md](../CHANGELOG.md) | user | Notes `[3.0.0]`–`[3.1.1]`. `[3.1.0]` is God Hands + `user-invocable: false`; `[3.1.1]` fixes review/refine/coach routing and adds `evals/`. GitHub Latest is v3.1.1 | canonical |
+| [package.json](../package.json) | maintainer | Package name `scc`, version `3.1.1`, description 16 skills / 19 commands / 17 agents / 3 MCP servers | drift-fixed-this-run |
+| [walnut.manifest.yaml](../walnut.manifest.yaml) | user | walnut.world listing. Version 3.1.1. Pair with `.grok-plugin/plugin.json` | drift-fixed-this-run |
 | [LICENSE](../LICENSE) | user | MIT license | canonical |
 | [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md) | maintainer | Generated notices for the checked-in MCP bundle | canonical |
 
@@ -78,7 +78,7 @@ Default auto-router: `/scc:godhands`, `/scc:research`, `/scc:write`, `/scc:revie
 | path | audience | role | status |
 |---|---|---|---|
 | [docs/README.md](README.md) | user | Human map: 16 skills, 3 tool-only commands, auto-router vs slash-only, one orchestrator (`godhands`) plus two slash utilities, `/scc:pdca` compat, MCP = 3 servers. Links here | drift-fixed-this-run |
-| [docs/directory-map.md](directory-map.md) | maintainer | **Locked** directory architecture for tree 3.1.0. Do not restyle the tree in architecture.md | canonical |
+| [docs/directory-map.md](directory-map.md) | maintainer | **Locked** directory architecture for tree 3.1.1. Do not restyle the tree in architecture.md | canonical |
 | [docs/DOCUMENT-INDEX.md](DOCUMENT-INDEX.md) | maintainer | This catalog | canonical |
 | [docs/methodology.md](methodology.md) | maintainer | Trajectory vs DSH; Artifact HTML vs live viewer | canonical |
 | [docs/methodology.ko.md](methodology.ko.md) | maintainer | 궤적 vs DSH; Artifact HTML vs 라이브 뷰어 | canonical |
@@ -88,10 +88,11 @@ Default auto-router: `/scc:godhands`, `/scc:research`, `/scc:write`, `/scc:revie
 | [docs/architecture.ko.md](architecture.ko.md) | user | 런타임 경계·God Hands 패스·16개 스킬 (한국어). 트리는 directory-map.md | drift-fixed-this-run |
 | [docs/orchestrator-architecture.md](orchestrator-architecture.md) | user | Advisory cross-plugin planner vs `/scc:godhands` (the orchestrator) and slash utilities `workflow` / `batch`. `/scc:pdca` is slash-only compat. Autopilot is a named `/scc:workflow` preset, not gates | drift-fixed-this-run |
 | [docs/orchestrator-architecture.ko.md](orchestrator-architecture.ko.md) | user | 자문용 크로스-플러그인 플래너와 `/scc:godhands`(오케스트레이터) 및 슬래시 유틸리티 `workflow` / `batch`. `/scc:pdca`는 호환 이름 (한국어) | drift-fixed-this-run |
-| [docs/images/](images/) | user | Product diagrams (`hero.svg`, `pdca-cycle.svg`, `review-flow.svg`, `agent-roster.svg`). README thumbnail is `thumbnail.png` — bronze God Hands still-life; alt text God Hands, not PDCA loop | canonical |
+| [docs/images/](images/) | user | Product diagrams, EN + KO pairs (`hero.svg`/`hero.ko.svg`, `pdca-cycle.svg`/`.ko.svg`, `review-flow.svg`/`.ko.svg`, `agent-roster.svg`/`.ko.svg`) plus `hero-still.jpg`. Roster and review-flow embed from architecture.md; pdca-cycle from docs/skills/pdca.md. README thumbnail is `thumbnail.png` — bronze God Hands still-life; alt text God Hands, not PDCA loop | canonical |
 | [agents/README.md](../agents/README.md) | maintainer | 17 Claude Code subagents: Pokemon filenames vs job `name`. Codex does not mirror this roster | drift-fixed-this-run |
-| [packages/core/README.md](../packages/core/README.md) | maintainer | `@second-claude/core` host-neutral quality contracts. Not a mandatory plugin workflow gate. Core package 4.0.0 ≠ plugin 3.1.0 | canonical |
+| [packages/core/README.md](../packages/core/README.md) | maintainer | `@second-claude/core` host-neutral quality contracts. Not a mandatory plugin workflow gate. Core package 4.0.0 ≠ plugin 3.1.1 | canonical |
 | [packages/core/release/README.md](../packages/core/release/README.md) | maintainer | Checked-in `second-claude-core-4.0.0.tgz` regeneration | canonical |
+| [evals/](../evals/) | maintainer | `claude plugin eval` routing suite (6 positive, 2 negative cases); `evals/results/` is gitignored | canonical |
 
 ## 3. Skill guides / 스킬 가이드 (`docs/skills/`)
 
@@ -164,9 +165,9 @@ Grok: `grok plugin install unclejobs-ai/second-claude-code --trust`. This tree s
 
 | path | audience | role | status |
 |---|---|---|---|
-| [.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | maintainer | Claude plugin: name `scc`, version `3.1.0`, 3 MCP servers (`pdca-state`, optional `playwright`, optional `mmbridge`) | drift-fixed-this-run |
-| [.claude-plugin/marketplace.json](../.claude-plugin/marketplace.json) | maintainer | Claude marketplace listing: plugin id `scc`, version `3.1.0` | drift-fixed-this-run |
-| [.grok-plugin/plugin.json](../.grok-plugin/plugin.json) | maintainer | Grok plugin manifest: name `scc`, version `3.1.0` | drift-fixed-this-run |
+| [.claude-plugin/plugin.json](../.claude-plugin/plugin.json) | maintainer | Claude plugin: name `scc`, version `3.1.1`, 3 MCP servers (`pdca-state`, optional `playwright`, optional `mmbridge`) | drift-fixed-this-run |
+| [.claude-plugin/marketplace.json](../.claude-plugin/marketplace.json) | maintainer | Claude marketplace listing: plugin id `scc`, version `3.1.1` | drift-fixed-this-run |
+| [.grok-plugin/plugin.json](../.grok-plugin/plugin.json) | maintainer | Grok plugin manifest: name `scc`, version `3.1.1` | drift-fixed-this-run |
 | [.codex-plugin/plugin.json](../.codex-plugin/plugin.json) | maintainer | Codex-native manifest: skills + plugin-relative MCP. No `CLAUDE_PLUGIN_ROOT` | drift-fixed-this-run |
 | [.mcp.json](../.mcp.json) | maintainer | Codex MCP: `pdca-state` on; `playwright` and `mmbridge` `enabled: false` | canonical |
 
@@ -182,7 +183,7 @@ Do not treat `skills/*/SKILL.md`, `tests/`, `ui/`, `packages/core/` sources, `mc
 
 ## 6. Archive candidates / 보관·삭제 후보 (leave on disk this run)
 
-Do **not** delete in this run. Do **not** use as current 3.1.0 contracts. Historical snapshots mention 18 skills, Deep Interview / `/scc:deep-interview`, and (in some specs) 31 MCP tools.
+Do **not** delete in this run. Do **not** use as current 3.1.1 contracts. Historical snapshots mention 18 skills, Deep Interview / `/scc:deep-interview`, and (in some specs) 31 MCP tools.
 
 ### `docs/RELEASE-v*` (v0.9.0–v1.5.2)
 
@@ -204,7 +205,7 @@ Do **not** delete in this run. Do **not** use as current 3.1.0 contracts. Histor
 | path | audience | role | status |
 |---|---|---|---|
 | [docs/changelog-archive.md](changelog-archive.md) | historical | Pre-3.0 changelog dump (v1.2.0 and older). Current changes: [CHANGELOG.md](../CHANGELOG.md) | archive-candidate |
-| [docs/demo.tape](demo.tape) | historical | vhs demo script (`docs/images/demo.gif`). Auto-routing copy is stale | archive-candidate |
+| [docs/demo.tape](demo.tape) | historical | vhs demo script. `docs/images/demo.gif` is not in the tree. Auto-routing copy is stale | archive-candidate |
 | [docs/maintenance/residual-worktrees-2026-09-06.md](maintenance/residual-worktrees-2026-09-06.md) | historical | 2026-09-06 worktree recovery notes. Core 4.0.0 vs plugin 3.0.3 | archive-candidate |
 | [docs/proposals/evolve-ouroboros-spec.md](proposals/evolve-ouroboros-spec.md) | historical | 2026-06-12 evolve design proposal, not a current contract | archive-candidate |
 | [docs/superpowers/plans/2026-03-22-mmbridge-full-integration.md](superpowers/plans/2026-03-22-mmbridge-full-integration.md) | historical | Past MMBridge Phase 1 implementation plan | archive-candidate |

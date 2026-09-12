@@ -36,9 +36,9 @@ Public maintainer loop command: `/scc:loop`. `loop` and `evolve` are never auto-
 - **Codex** uses `.codex-plugin/plugin.json` and `.mcp.json` (plugin-relative `pdca-state` path; no `CLAUDE_PLUGIN_ROOT`). Skills resolve host-neutral paths via `skills/runtime-paths.md`. Playwright and MMBridge stay **disabled by default**. Ask for the skill by name or describe the task; do not assume Claude slash commands exist.
 - **Grok** uses `.grok-plugin/plugin.json` and `walnut.manifest.yaml`. Do not document a Grok-native command/agent layout that is not on disk.
 
-## Slash surface (3.1.0)
+## Slash surface (3.1.x)
 
-3.1.0 sets `user-invocable: false` on every skill so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Skills stay model-invocable unless they also set `disable-model-invocation`.
+3.1.0 sets `user-invocable: false` on every skill so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Skills stay model-invocable unless they also set `disable-model-invocation`. Natural-language routing reads the `commands/*.md` frontmatter `description`, not SKILL.md; `evals/` measures it.
 
 ## MCP
 
@@ -54,7 +54,7 @@ Public maintainer loop command: `/scc:loop`. `loop` and `evolve` are never auto-
 
 ## Language
 
-Skills, hooks, and the MCP server runtime are JavaScript ESM (`.mjs`). That is **not** “no TypeScript”: `packages/core/` is TypeScript (`packages/core/src/index.ts`, checked-in `dist/`) and `ui/` is TypeScript (artifact viewer). `@second-claude/core` is host-neutral quality contracts; the plugin does not activate it as a mandatory workflow gate. User installs must not compile anything.
+Hooks, scripts, and the MCP server runtime are JavaScript ESM (`.mjs`); skills are Markdown (`skills/*/SKILL.md`). That is **not** “no TypeScript”: `packages/core/` is TypeScript (`packages/core/src/index.ts`, checked-in `dist/`) and `ui/` is TypeScript (artifact viewer). `@second-claude/core` is host-neutral quality contracts; the plugin does not activate it as a mandatory workflow gate. User installs must not compile anything.
 
 ## Agent dispatch
 
@@ -124,7 +124,7 @@ Active (edit these for current behavior):
 |---|---|
 | [AGENTS.md](AGENTS.md) · [CLAUDE.md](CLAUDE.md) | Agent/host contract (this file) |
 | [README.md](README.md) · [README.ko.md](README.ko.md) | Install and entry points |
-| [CHANGELOG.md](CHANGELOG.md) | 3.0.1–3.1.1 notes; GitHub Latest Release is v3.1.1 |
+| [CHANGELOG.md](CHANGELOG.md) | 3.0.0–3.1.1 notes; GitHub Latest Release is v3.1.1 |
 | [docs/README.md](docs/README.md) | Command and document index |
 | [docs/directory-map.md](docs/directory-map.md) | Locked directory architecture (3.1.0) |
 | [docs/DOCUMENT-INDEX.md](docs/DOCUMENT-INDEX.md) | Public file catalog |
@@ -149,7 +149,7 @@ Archive / delete (leave on disk this run; do not treat as current product docs):
 
 ```bash
 # Syntax check all hooks and MCP server
-node --check hooks/*.mjs mcp/*.mjs daemon/*.mjs
+node --check hooks/*.mjs hooks/lib/*.mjs mcp/*.mjs mcp/lib/*.mjs daemon/*.mjs
 
 # Validate plugin manifest
 node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'))"
@@ -159,6 +159,9 @@ for f in agents/*.md; do head -1 "$f" | grep -q '^---' || echo "MISSING frontmat
 
 # Verify all skills have SKILL.md — skills/unblock/ is engine-only by design
 for d in skills/*/; do [ -f "${d}SKILL.md" ] || [ "$d" = "skills/unblock/" ] || echo "MISSING SKILL.md: $d"; done
+
+# Run full test suite
+npm test
 
 # Regenerate and verify checked-in release artifacts
 npm run build:mcp
@@ -172,7 +175,7 @@ git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
 - Dispatch `Agent` with a Pokemon filename. Use frontmatter `name`.
 - Advertise “31 MCP tools” in user blurbs. Say 3 servers.
 - Document slash-menu duplicates as current 3.1.0 behavior. 3.1.0 ships `user-invocable: false`.
-- Claim a GitHub Release for 3.1.0.
+- GitHub Latest Release is v3.1.1; v3.1.0 is a historical tag.
 - Modify agent model tiers without checking `docs/architecture.md` roster table.
 - Edit `hooks.json` directly — it is the plugin hook registry; changes affect all users.
 - Translate an English file into Korean or vice versa. Keep each language file in its language.

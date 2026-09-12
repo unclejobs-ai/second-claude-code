@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture — SCC 3.1.0
+# Orchestrator Architecture — SCC 3.1.1
 
-SCC 3.1.0 can inspect installed Claude Code plugins, score capabilities against a requested intent,
+SCC 3.1.1 can inspect installed Claude Code plugins, score capabilities against a requested intent,
 and return an advisory dispatch plan. The orchestrator does not execute external Skills or slash
 commands.
 
@@ -20,7 +20,7 @@ parallel split. Users still call those with `/scc:*`; they are not peer orchestr
 | Kind | Command | When |
 | --- | --- | --- |
 | Built-in orchestrator | `/scc:godhands` | One compound task needs gated Gather → Draft → Check → Cut. `/scc:pdca` is slash-only compat; runtime stays `pdca_*`. |
-| Slash-only named replay | `/scc:workflow` | Reusable or sequenced steps. The `autopilot` preset approximates that God Hands pass as a saved pipeline (`research` → `analyze` → `write --skip-review` → `review` → `refine`); it is not the God Hands runtime gates. Not auto-routed. |
+| Slash-only named replay | `/scc:workflow` | Reusable or sequenced steps. The `autopilot` preset approximates that God Hands pass as a saved pipeline (`research` → `analyze` → `write --skip-research --skip-review` → `review` → `refine`); it is not the God Hands runtime gates. Not auto-routed. |
 | Slash-only parallel split | `/scc:batch` | Large homogeneous work that splits into independent parallel units. Not auto-routed. |
 
 Layer 1 in the diagram below ("compound intent?") is only a hint that the caller may choose the

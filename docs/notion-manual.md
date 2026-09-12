@@ -99,8 +99,7 @@ grok plugin install unclejobs-ai/second-claude-code --trust
 ```
 
 `--trust` is required so hooks and MCP servers load. `walnut.manifest.yaml` is the Walnut listing.
-There is no `.grok-plugin/` on `origin/main` yet; do not document a Grok marketplace directory that
-is not on that branch.
+Grok reads `.grok-plugin/plugin.json`; `walnut.manifest.yaml` is the Walnut listing.
 
 ### Updating v3 (Claude)
 

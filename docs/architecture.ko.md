@@ -1,6 +1,6 @@
 [English](architecture.md) | **한국어**
 
-# 아키텍처 — SCC 3.1.0
+# 아키텍처 — SCC 3.1.1
 
 ## 런타임 경계
 
@@ -63,7 +63,7 @@ Second Claude Code는 Claude Code 플러그인이지, 독립 실행 에이전트
 
 스킬 목록 밖에 **도구 전용 명령** 셋이 있습니다 — `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`. 실행만 하고 판단이 없습니다. 판단 0인 항목이 스킬 목록에 앉아 있으면 모델의 선택지만 갉아먹습니다. `viewer`는 스킬이 아니라 명령입니다. `skills/unblock/`은 페치 엔진만 두고 `SKILL.md`가 없습니다. `standard-check`는 명령과 스크립트뿐입니다.
 
-이 트리(3.1.0)에서는 모든 스킬이 `user-invocable: false`라서 Claude Code가 합친 `/` 메뉴에 `/scc:*` 이름이 한 번만 보입니다(명령). 슬래시 중복은 3.0.3 호스트 머지 잔재입니다. `commands/version.mjs`는 버전 헬퍼이지 열여덟 번째 슬래시-스킬 쌍이 아닙니다.
+이 트리(3.1.1)에서는 모든 스킬이 `user-invocable: false`라서 Claude Code가 합친 `/` 메뉴에 `/scc:*` 이름이 한 번만 보입니다(명령). 슬래시 중복은 3.0.3 호스트 머지 잔재입니다. `commands/version.mjs`는 버전 헬퍼이지 열여덟 번째 슬래시-스킬 쌍이 아닙니다.
 
 ### 내장 오케스트레이터와 슬래시 전용 재생
 
@@ -73,7 +73,7 @@ Second Claude Code는 Claude Code 플러그인이지, 독립 실행 에이전트
 |---------|------|
 | `/scc:godhands` (내장 오케스트레이터) | 게이트가 있는 수집 → 초안 → 검사 → 손질 패스. 런타임은 `pdca_*`. `/scc:pdca`는 슬래시 전용 호환 이름. |
 | `/scc:workflow` (슬래시 전용 이름 있는 재생) | 다시 돌릴 이름 있는 다단계 파이프라인. 스텝은 메모리가 아니라 파일로 넘깁니다. 기본 `autopilot` 프리셋이 God Hands에 가깝습니다 (`research → analyze → write(--skip-research --skip-review) → review → refine`). 게이트는 없습니다. |
-| `/scc:batch` (슬래시 전용 병렬 분할) | 같은 스킬·다른 주제의 독립 동종 단위 5개 이상을 병렬 worktree에서 실행. 단위 N이 N−1 출력이 필요하면 배치가 아닙니다 — 명시적 `/scc:workflow`를 쓰세요. |
+| `/scc:batch` (슬래시 전용 병렬 분할) | 같은 스킬·다른 주제의 독립 동종 단위 2–10개를 병렬 worktree에서 실행. 단위 N이 N−1 출력이 필요하면 배치가 아닙니다 — 명시적 `/scc:workflow`를 쓰세요. |
 
 `write`는 `--skip-review`가 없으면 내부에서 `/scc:review`를 돌립니다. God Hands Check는 그와 별개의 리뷰입니다. `/scc:write` 다음에 `/scc:godhands`를 바로 쓰면 Draft가 write 내부 리뷰를 건너뛰지 않는 한 리뷰가 두 번입니다. Autopilot은 write에 `--skip-review`를 넘깁니다. 워크플로의 `review` 스텝이 Check이기 때문입니다.
 
@@ -121,7 +121,7 @@ flowchart LR
 
 ## 디렉토리 구조
 
-디렉터리 아키텍처는 [directory-map.md](directory-map.md)에 **잠겨 있습니다** (트리 3.1.0).
+디렉터리 아키텍처는 [directory-map.md](directory-map.md)에 **잠겨 있습니다** (트리 3.1.1).
 여기서 트리를 다시 그리지 마세요. 공개 오케스트레이터는 `godhands`, `pdca`는 슬래시 전용 호환과
 `pdca_*` 런타임입니다. 수: 스킬 16, 명령 마크다운 19, 에이전트 17, 훅 이벤트 10, MCP 서버 3.
 
@@ -129,37 +129,39 @@ flowchart LR
 
 ## 에이전트 로스터
 
+![에이전트 로스터 — 잡 17개](images/agent-roster.ko.svg)
+
 서브에이전트 17개가 3개 모델 티어에 걸쳐 배치돼 있어요. 파일명은 사람을 위한 포켓몬 라벨이고, 디스패치는 frontmatter `name`(잡)을 씁니다. `Agent(subagent_type: "eevee")`는 실패합니다. `Agent(subagent_type: "researcher")`가 잡입니다.
 
-### 프로덕션 에이전트 (Plan / Do)
+### 프로덕션 에이전트 (Plan / Do / Act)
 
 | 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
 |-------------|------|------|------------|------|
-| researcher | eevee.md | sonnet | Gather | 웹 검색 + 다출처 데이터 수집 |
-| analyst | alakazam.md | sonnet | Produce | 패턴 인식 + 데이터 종합 |
-| strategist | mewtwo.md | sonnet | Produce | 전략 프레임워크 적용 |
-| writer | smeargle.md | opus | Produce | 장문 콘텐츠 제작 |
-| editor | ditto.md | opus | Refine | 콘텐츠 편집 + 품질 개선 |
+| researcher | eevee.md | sonnet | Plan / 수집 | 웹 검색 + 다출처 데이터 수집 |
+| analyst | alakazam.md | sonnet | Plan / 수집 | 패턴 인식 + 데이터 종합 |
+| strategist | mewtwo.md | sonnet | Plan / 수집 | 전략 프레임워크 적용 |
+| writer | smeargle.md | opus | Do / 초안 | 장문 콘텐츠 제작 |
+| editor | ditto.md | opus | Act / 손질 | 콘텐츠 편집 + 품질 개선 |
 
 ### 리뷰 에이전트 (Check)
 
 | 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
 |-------------|------|------|------------|------|
-| deep-reviewer | xatu.md | opus | Verify | 논리, 구조, 완성도 검토 |
-| devil-advocate | absol.md | sonnet | Verify | 약점과 맹점 공격 |
-| fact-checker | porygon.md | sonnet | Verify | 주장, 수치, 출처 검증 |
-| tone-guardian | jigglypuff.md | sonnet | Verify | 목소리와 대상 독자 적합성 |
-| structure-analyst | unown.md | sonnet | Verify | 구성과 가독성 |
+| deep-reviewer | xatu.md | opus | Check | 논리, 구조, 완성도 검토 |
+| devil-advocate | absol.md | sonnet | Check | 약점과 맹점 공격 |
+| fact-checker | porygon.md | sonnet | Check | 주장, 수치, 출처 검증 |
+| tone-guardian | jigglypuff.md | sonnet | Check | 목소리와 대상 독자 적합성 |
+| structure-analyst | unown.md | sonnet | Check | 구성과 가독성 |
 
 ### 파이프라인 & 탐색 에이전트
 
 | 잡 (`name`) | 파일 | 모델 | PDCA 페이즈 | 역할 |
 |-------------|------|------|------------|------|
-| pipeline-orchestrator | arceus.md | sonnet | Produce | 파이프라인 조율 |
-| pipeline-step-executor | machamp.md | sonnet | Produce | 단일 파이프라인 스텝 실행 |
-| skill-searcher | noctowl.md | haiku | Gather | 스킬 후보용 외부 소스 검색 |
-| skill-inspector | magnezone.md | sonnet | Gather | 스킬 후보 검사 |
-| skill-evaluator | deoxys.md | sonnet | Gather | 스킬 후보 채점 |
+| pipeline-orchestrator | arceus.md | sonnet | Do / 초안 | 파이프라인 조율 |
+| pipeline-step-executor | machamp.md | sonnet | Do / 초안 | 단일 파이프라인 스텝 실행 |
+| skill-searcher | noctowl.md | haiku | Plan / 수집 | 스킬 후보용 외부 소스 검색 |
+| skill-inspector | magnezone.md | sonnet | Plan / 수집 | 스킬 후보 검사 |
+| skill-evaluator | deoxys.md | sonnet | Plan / 수집 | 스킬 후보 채점 |
 | knowledge-connector | abra.md | haiku | 확장 | 지식 연결 |
 
 ### Soul 에이전트
@@ -186,24 +188,24 @@ Act 페이즈에는 액션 라우터가 있어요.
 
 ```mermaid
 flowchart TD
-    subgraph PLAN["Gather (Plan)"]
+    subgraph PLAN["수집 (Plan)"]
         direction LR
         P1[researcher]
-        P2[skill-searcher]
-        P3[skill-inspector]
-        P4[knowledge-connector]
+        P2[analyst]
+        P3[strategist]
+        P4[skill-searcher]
+        P5[skill-inspector]
+        P6[skill-evaluator]
     end
 
-    subgraph DO["Produce (Do)"]
+    subgraph DO["초안 (Do)"]
         direction LR
-        D1[analyst]
-        D2[strategist]
-        D3[writer]
-        D4[pipeline-orchestrator]
-        D5[pipeline-step-executor]
+        D1[writer]
+        D2[pipeline-orchestrator]
+        D3[pipeline-step-executor]
     end
 
-    subgraph CHECK["Verify (Check)"]
+    subgraph CHECK["검사 (Check)"]
         direction LR
         C1[deep-reviewer]
         C2[devil-advocate]
@@ -212,10 +214,16 @@ flowchart TD
         C5[structure-analyst]
     end
 
-    subgraph ACT["Refine (Act)"]
+    subgraph ACT["손질 (Act)"]
         direction LR
         A1[editor]
         AR{"액션 라우터"}
+    end
+
+    subgraph EXTEND["확장"]
+        direction LR
+        E1[knowledge-connector]
+        E2[soul-keeper]
     end
 
     PLAN -->|"research → analyze + 질문 프로토콜"| DO
@@ -223,16 +231,16 @@ flowchart TD
     CHECK -->|"병렬 리뷰"| ACT
     AR -->|"Plan"| PLAN
     AR -->|"Do"| DO
-    AR -->|"Refine"| ACT
+    AR -->|"refine 스킬"| A1
 ```
 
 보조 커맨드도 같은 루프를 따라가요:
 
-- `pdca` — 품질 게이트와 액션 라우터로 게이트된 1사이클을 조율
+- `/scc:godhands` — 게이트가 있는 수집 → 초안 → 검사 → 손질 패스를 액션 라우터와 함께 실행. `/scc:pdca`는 슬래시 전용 호환 이름
 - `/scc:loop` — 고정 벤치마크 스위트로 프롬프트 자산을 격리 브랜치에서 최적화
 - `collect` — 다음 Plan 사이클에 쓸 원천 자료와 노트를 보관
 - `discover` — 현재 스킬셋으로 부족할 때 시스템을 확장 (`skill-searcher`, `skill-inspector`, `skill-evaluator`)
-- `workflow` — 이름 있는 재사용 파이프라인을 만들고, `autopilot`이 PDCA에 가깝게 동작
+- `workflow` — 이름 있는 재사용 파이프라인을 만들고, `autopilot`이 `pdca_*` 게이트 없이 God Hands에 가깝게 동작
 - `batch` — 큰 동종 작업을 병렬 단위로 분해하고 격리된 worktree에서 동시 실행
 - `soul` — 관찰된 행동 시그널로부터 사용자 정체성 프로필을 구축하고 유지
 - `/scc:viewer` — 도구 전용 명령. 저장된 PDCA/session 아티팩트를 로컬 뷰어로 띄우고 브라우저 URL을 반환
@@ -314,6 +322,8 @@ PDCA가 Do 페이즈에 진입할 때 디스패처가 사용자 프롬프트를 
 Sub-skill 입출력 계약과 실패 처리는 `skills/pdca/references/domain-pipeline-integration.md`에 정리.
 
 ### 리뷰어 독립성 (Check 게이트)
+
+![리뷰 흐름](images/review-flow.ko.svg)
 
 만드는 데 관여한 쪽은 그것을 통과시키지 못합니다. 이 불변식은 에이전트 재사용으로 조용히 깨집니다. critic 로스터와 상류 단계가 빌려 쓰는 에이전트가 같은 풀에서 나오기 때문에, 같은 이름이 결정을 만들고 나서 그 결정이 다스리는 작업에 표를 던질 수 있습니다. 형식만 적대 검수이고 실질은 자기 검수입니다.
 
@@ -551,9 +561,7 @@ Second Claude Code는 메모리 레이어 두 개를 의도적으로 분리해 �
 │   └── events.jsonl     # 추가 전용 이벤트 로그
 ├── cycle-002/
 │   └── ...
-├── insights.json        # 시간 감쇠 가중치가 적용된 교차 사이클 인사이트
-└── proposals/           # 자동 생성된 주의사항 제안 (자기 진화)
-    └── gotchas-{category}.md
+└── insights.json        # 시간 감쇠 가중치가 적용된 교차 사이클 인사이트
 ```
 
 ### 통합 지점
@@ -678,7 +686,7 @@ CI가 생성물의 변경 여부를 확인해요.
 
 ## 문서 색인
 
-제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.0**이고, GitHub Latest Release도 **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**입니다.
+제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.1**이고, GitHub Latest Release도 **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**입니다.
 
 **보관 / 삭제** (런타임이 아님. 현재 아키텍처로 다루지 마세요):
 
@@ -686,4 +694,4 @@ CI가 생성물의 변경 여부를 확인해요.
 - `docs/RELEASE-v*` — 과거 릴리스 노트 (v0.9 ~ v1.5.2). 현재 버전 기록은 [CHANGELOG.md](../CHANGELOG.md)입니다.
 
 릴리스 기록과 마이그레이션 노트는 [CHANGELOG.md](../CHANGELOG.md)에 모아 두었습니다. 이 문서는
-과거 릴리스 내용을 복사하지 않고 SCC 3.1.0 런타임의 현재 구조를 설명합니다.
+과거 릴리스 내용을 복사하지 않고 SCC 3.1.1 런타임의 현재 구조를 설명합니다.

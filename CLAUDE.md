@@ -26,13 +26,13 @@ Other hosts (do not mix manifests):
 
 Plugin version 3.1.1 is in the manifests and `CHANGELOG.md`. GitHub **Latest Release is v3.1.1**.
 
-## Slash surface (3.1.0)
+## Slash surface (3.1.x)
 
 3.1.0 sets `user-invocable: false` on every skill so Claude Code's merged `/` menu shows each `/scc:*` name once (the command).
 
 ## Key conventions
 
-- **Runtime language**: skills, hooks, and the MCP server are JavaScript ESM (`.mjs`). **TypeScript exists**: `packages/core/` (quality contracts, checked-in `dist/`) and `ui/` (artifact viewer). Not a “no TypeScript” repo. User installs must not compile.
+- **Runtime language**: hooks, scripts, and the MCP server are JavaScript ESM (`.mjs`); skills are Markdown (`skills/*/SKILL.md`). **TypeScript exists**: `packages/core/` (quality contracts, checked-in `dist/`) and `ui/` (artifact viewer). Not a “no TypeScript” repo. User installs must not compile.
 - **Agent naming**: Pokemon filenames are labels. Dispatch uses frontmatter `name`. `Agent(subagent_type: "eevee")` fails; use `researcher`. See [agents/README.md](agents/README.md). These are Claude Code subagents; Codex/Grok do not share this Agent roster.
 - **Bilingual docs**: EN (`.md`) + KO (`.ko.md`) maintained independently, not translated.
 - **PDCA phases** (job names): Plan (researcher + analyst) → Do (writer) → Check (deep-reviewer + devil-advocate + fact-checker + tone-guardian + structure-analyst) → Act (editor).
@@ -41,7 +41,7 @@ Plugin version 3.1.1 is in the manifests and `CHANGELOG.md`. GitHub **Latest Rel
 
 ## Built-in orchestrator, write, soul
 
-The auto-router spine is `godhands`, `research`, `write`, `review`, `refine`, and `coach`. Leave `analyze` model-invocable; God Hands Gather slash-chains `/scc:analyze`. `pdca` is `disable-model-invocation` (slash-only compat).
+The auto-router spine is `godhands`, `research`, `write`, `review`, `refine`, and `coach`. Leave `analyze` model-invocable; God Hands Gather slash-chains `/scc:analyze`. Routing reads the `commands/*.md` frontmatter `description` (skills are `user-invocable: false`, so SKILL.md descriptions are not what the model sees); `evals/` measures it — run `claude plugin eval . --runs 3 --ablation none` after touching a command description. `pdca` is `disable-model-invocation` (slash-only compat).
 
 - **`/scc:godhands`**: the built-in orchestrator. Gated Gather → Draft → Check → Cut, Action Router. The one orchestrator to choose. Runtime stays `pdca_*`. `/scc:pdca` is slash-only compat.
 - **`/scc:workflow`**: slash-only named replay. Preset **autopilot** approximates God Hands (research → analyze → write `--skip-research --skip-review` → review → refine) without `pdca_*` state or gates. God Hands Draft may call it as an explicit slash, not as auto-route.
@@ -59,7 +59,7 @@ Archive/delete (leave on disk): `translations/`, `docs/RELEASE-v*`. Full index i
 
 ```bash
 # Syntax check all hooks and MCP server
-node --check hooks/*.mjs hooks/lib/*.mjs mcp/*.mjs mcp/lib/*.mjs
+node --check hooks/*.mjs hooks/lib/*.mjs mcp/*.mjs mcp/lib/*.mjs daemon/*.mjs
 
 # Validate plugin manifest
 node -e "JSON.parse(require('fs').readFileSync('.claude-plugin/plugin.json','utf8'))"

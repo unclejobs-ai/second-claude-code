@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | **한국어**
 
-# 오케스트레이터 아키텍처 — SCC 3.1.0
+# 오케스트레이터 아키텍처 — SCC 3.1.1
 
-SCC 3.1.0의 크로스-플러그인 오케스트레이터는 설치된 플러그인 capability를 런타임에 발견하고
+SCC 3.1.1의 크로스-플러그인 오케스트레이터는 설치된 플러그인 capability를 런타임에 발견하고
 사용자 의도와 점수화한 뒤, 호출자가 검토할 자문용 dispatch plan을 반환합니다.
 오케스트레이터나 MCP 도구가 외부 Skill 또는 슬래시 커맨드를 실행하지는 않습니다.
 
@@ -21,7 +21,7 @@ SCC 3.1.0의 크로스-플러그인 오케스트레이터는 설치된 플러그
 | 종류 | 명령 | 고를 때 |
 | --- | --- | --- |
 | 내장 오케스트레이터 | `/scc:godhands` | 한 건의 복합 작업에 게이트가 있는 수집 → 초안 → 검사 → 손질이 필요할 때. `/scc:pdca`는 슬래시 전용 호환 이름이며 런타임은 `pdca_*`입니다. |
-| 슬래시 전용 이름 있는 재생 | `/scc:workflow` | 재사용하거나 순서가 있는 단계. `autopilot` 프리셋은 그 Hands 패스를 저장된 파이프라인으로 근사합니다 (`research` → `analyze` → `write --skip-review` → `review` → `refine`). Hands 런타임 게이트 자체는 아닙니다. 자동 라우트되지 않습니다. |
+| 슬래시 전용 이름 있는 재생 | `/scc:workflow` | 재사용하거나 순서가 있는 단계. `autopilot` 프리셋은 그 Hands 패스를 저장된 파이프라인으로 근사합니다 (`research` → `analyze` → `write --skip-research --skip-review` → `review` → `refine`). Hands 런타임 게이트 자체는 아닙니다. 자동 라우트되지 않습니다. |
 | 슬래시 전용 병렬 분할 | `/scc:batch` | 독립 단위로 나눌 수 있는 대규모 동종 작업을 병렬로 돌릴 때. 자동 라우트되지 않습니다. |
 
 아래 다이어그램 Layer 1("복합 의도인가?")은 호출자가 내장 오케스트레이터 `/scc:godhands`를

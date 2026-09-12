@@ -14,7 +14,7 @@ SCC 궤적 = `.data/events`와 `.data/cycles`에서 **한 번의** PDCA 또는 w
 
 | 출처 | 재구성하는 것 |
 |------|----------------|
-| `.data/events/pdca-{run_id}.jsonl` | `cycle_start` / `cycle_end`, `phase_start` / `phase_end`, `gate_check` / `gate_pass` / `gate_fail`, `review_started` / `review_completed`, `stuck_detected`, `error` |
+| `.data/events/pdca-{run_id}.jsonl` | `cycle_start` / `cycle_end`, `phase_start` / `phase_end`, `gate_check` / `gate_pass` / `gate_fail`, `review_started` / `review_completed`, `artifact_created`, `stuck_detected`, `error` |
 | `.data/cycles/cycle-NNN/{phase}.md` | 페이즈 아티팩트, `metrics.json`, 사이클별 `events.jsonl` |
 | `state.action_router_history` | Act가 작업을 되돌린 이유. 이 필드가 생기기 전 런은 이후 사이클 번호로 재진입만 추론하고 사유는 없습니다 |
 

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 540" fill="none" role="img" aria-labelledby="pc-title pc-desc">
   <title id="pc-title">PDCA 품질 사이클</title>
-  <desc id="pc-desc">하나의 PDCA 실행이 수집, 집필, 검증, 개선을 거친다. 문제가 생기면 원인이 있는 단계로 돌아간다.</desc>
+  <desc id="pc-desc">하나의 God Hands 패스가 수집, 초안, 검사, 손질을 거친다. 런타임은 PDCA다. 문제가 생기면 원인이 있는 단계로 돌아간다.</desc>
   <defs>
     <marker id="arr" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto" markerUnits="strokeWidth">
       <path d="M0.5,0.5 L4,2.5 L0.5,4.5" fill="none" stroke="#484f58" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -21,7 +21,7 @@
 
   <!-- Philosophy header -->
   <text x="390" y="36" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">PDCA 실행은 검증을 거쳐 마무리된다.</text>
-  <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집, 집필, 검증, 개선 &#x2014; 단계마다 통과 기준이 있다.</text>
+  <text x="390" y="58" text-anchor="middle" fill="#8b949e" font-size="11" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">수집, 초안, 검사, 손질 &#x2014; 런타임 Plan, Do, Check, Act. 단계마다 통과 기준이 있다.</text>
 
   <!-- Divider -->
   <line x1="30" y1="74" x2="750" y2="74" stroke="#30363d" stroke-width="0.5"/>
@@ -95,7 +95,7 @@
   <!-- ↻ REFINE -->
   <rect x="510" y="422" width="200" height="72" rx="6" fill="#161b22" stroke="#30363d" stroke-width="0.5"/>
   <rect x="510" y="422" width="3" height="72" rx="1.5" fill="#bc8cff"/>
-  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; REFINE</text>
+  <text x="526" y="446" fill="#bc8cff" font-size="11" font-weight="600" font-family="SF Mono, Consolas, monospace">&#x21BB; ACT &#xB7; refine</text>
   <text x="526" y="464" fill="#8b949e" font-size="9" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다듬기 필요</text>
   <text x="526" y="480" fill="#484f58" font-size="8.5" font-family="Apple SD Gothic Neo, Malgun Gothic, sans-serif">다듬고 재검증</text>
 </svg>

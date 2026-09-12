@@ -14,7 +14,7 @@ SCC trajectory = reconstruct **one** PDCA or workflow run from `.data/events` an
 
 | Source | Reconstructs |
 |--------|----------------|
-| `.data/events/pdca-{run_id}.jsonl` | `cycle_start` / `cycle_end`, `phase_start` / `phase_end`, `gate_check` / `gate_pass` / `gate_fail`, `review_started` / `review_completed`, `stuck_detected`, `error` |
+| `.data/events/pdca-{run_id}.jsonl` | `cycle_start` / `cycle_end`, `phase_start` / `phase_end`, `gate_check` / `gate_pass` / `gate_fail`, `review_started` / `review_completed`, `artifact_created`, `stuck_detected`, `error` |
 | `.data/cycles/cycle-NNN/{phase}.md` | Phase artifacts, `metrics.json`, per-cycle `events.jsonl` |
 | `state.action_router_history` | Why Act sent work back. Runs recorded before that field existed infer re-entry from a later cycle number and carry no reason |
 

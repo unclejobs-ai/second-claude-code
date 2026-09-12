@@ -1,6 +1,6 @@
 **English** | [한국어](architecture.ko.md)
 
-# Architecture — SCC 3.1.0
+# Architecture — SCC 3.1.1
 
 ## Runtime Boundary
 
@@ -60,7 +60,7 @@ skills (`collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`,
 
 Three **tool-only commands** sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `viewer` is a command, not a skill. `skills/unblock/` keeps the fetch engine and has no `SKILL.md`. `standard-check` is command-plus-script only.
 
-On this tree (3.1.0), every skill sets `user-invocable: false` so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Duplicate slash rows were a 3.0.3 host-merge artifact. `commands/version.mjs` is a version helper, not an eighteenth slash-skill pair.
+On this tree (3.1.1), every skill sets `user-invocable: false` so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Duplicate slash rows were a 3.0.3 host-merge artifact. `commands/version.mjs` is a version helper, not an eighteenth slash-skill pair.
 
 ### Built-in orchestrator and slash-only replay
 
@@ -70,7 +70,7 @@ On this tree (3.1.0), every skill sets `user-invocable: false` so Claude Code's 
 |------|------|
 | `/scc:godhands` (built-in orchestrator) | One gated Gather → Draft → Check → Cut pass, with phase gates and the Action Router. Runtime stays `pdca_*`. `/scc:pdca` is slash-only compat. |
 | `/scc:workflow` (slash-only named replay) | A named, reusable multi-step pipeline you will run again. Steps pass files, not memory. The shipped `autopilot` preset approximates God Hands (`research → analyze → write(--skip-research --skip-review) → review → refine`) without gates. |
-| `/scc:batch` (slash-only parallel split) | Five or more independent homogeneous units (same skill, different topics) executed in parallel worktrees. If unit N needs unit N−1's output, it is not a batch job — use an explicit `/scc:workflow`. |
+| `/scc:batch` (slash-only parallel split) | 2–10 independent homogeneous units (same skill, different topics) executed in parallel worktrees. If unit N needs unit N−1's output, it is not a batch job — use an explicit `/scc:workflow`. |
 
 `write` runs an internal `/scc:review` unless `--skip-review`. God Hands Check is a separate review. Direct `/scc:write` plus `/scc:godhands` double-reviews unless Draft skips write's internal review. Autopilot already passes `--skip-review` to write because the workflow's own `review` step is the Check.
 
@@ -120,7 +120,7 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 
 ## Directory Structure
 
-The directory architecture is **locked** in [directory-map.md](directory-map.md) (tree 3.1.0).
+The directory architecture is **locked** in [directory-map.md](directory-map.md) (tree 3.1.1).
 Do not restyle the tree here. `godhands` is the public orchestrator; `pdca` is slash-only
 compat plus `pdca_*` runtime. Counts: 16 skills, 19 command markdown files, 17 agents,
 10 hook events, 3 MCP servers.
@@ -129,37 +129,39 @@ compat plus `pdca_*` runtime. Counts: 16 skills, 19 command markdown files, 17 a
 
 ## Agent Roster
 
+![Agent roster — 17 jobs](images/agent-roster.svg)
+
 17 specialized subagents across 3 model tiers. Filenames are Pokemon labels for humans; dispatch uses the frontmatter `name` (the job). `Agent(subagent_type: "eevee")` fails. `Agent(subagent_type: "researcher")` is the job.
 
-### Production Agents (Plan / Do)
+### Production Agents (Plan / Do / Act)
 
 | Job (`name`) | File | Model | PDCA Phase | Role |
 |--------------|------|-------|------------|------|
-| researcher | eevee.md | sonnet | Gather | Web search + multi-source data collection |
-| analyst | alakazam.md | sonnet | Produce | Pattern recognition + data synthesis |
-| strategist | mewtwo.md | sonnet | Produce | Strategic framework application |
-| writer | smeargle.md | opus | Produce | Long-form content creation |
-| editor | ditto.md | opus | Refine | Content editing + quality improvement |
+| researcher | eevee.md | sonnet | Plan / Gather | Web search + multi-source data collection |
+| analyst | alakazam.md | sonnet | Plan / Gather | Pattern recognition + data synthesis |
+| strategist | mewtwo.md | sonnet | Plan / Gather | Strategic framework application |
+| writer | smeargle.md | opus | Do / Draft | Long-form content creation |
+| editor | ditto.md | opus | Act / Cut | Content editing + quality improvement |
 
 ### Review Agents (Check)
 
 | Job (`name`) | File | Model | PDCA Phase | Role |
 |--------------|------|-------|------------|------|
-| deep-reviewer | xatu.md | opus | Verify | Logic, structure, and completeness |
-| devil-advocate | absol.md | sonnet | Verify | Attacks weakest points and blind spots |
-| fact-checker | porygon.md | sonnet | Verify | Verifies claims, numbers, and sources |
-| tone-guardian | jigglypuff.md | sonnet | Verify | Voice and audience fit |
-| structure-analyst | unown.md | sonnet | Verify | Organization and readability |
+| deep-reviewer | xatu.md | opus | Check | Logic, structure, and completeness |
+| devil-advocate | absol.md | sonnet | Check | Attacks weakest points and blind spots |
+| fact-checker | porygon.md | sonnet | Check | Verifies claims, numbers, and sources |
+| tone-guardian | jigglypuff.md | sonnet | Check | Voice and audience fit |
+| structure-analyst | unown.md | sonnet | Check | Organization and readability |
 
 ### Pipeline & Discover Agents
 
 | Job (`name`) | File | Model | PDCA Phase | Role |
 |--------------|------|-------|------------|------|
-| pipeline-orchestrator | arceus.md | sonnet | Produce | Pipeline orchestration |
-| pipeline-step-executor | machamp.md | sonnet | Produce | Single pipeline step execution |
-| skill-searcher | noctowl.md | haiku | Gather | External source search for skill candidates |
-| skill-inspector | magnezone.md | sonnet | Gather | Skill candidate inspection |
-| skill-evaluator | deoxys.md | sonnet | Gather | Skill candidate scoring |
+| pipeline-orchestrator | arceus.md | sonnet | Do / Draft | Pipeline orchestration |
+| pipeline-step-executor | machamp.md | sonnet | Do / Draft | Single pipeline step execution |
+| skill-searcher | noctowl.md | haiku | Plan / Gather | External source search for skill candidates |
+| skill-inspector | magnezone.md | sonnet | Plan / Gather | Skill candidate inspection |
+| skill-evaluator | deoxys.md | sonnet | Plan / Gather | Skill candidate scoring |
 | knowledge-connector | abra.md | haiku | Extend | Knowledge linking |
 
 ### Soul Agents
@@ -189,21 +191,21 @@ flowchart TD
     subgraph PLAN["Gather (Plan)"]
         direction LR
         P1[researcher]
-        P2[skill-searcher]
-        P3[skill-inspector]
-        P4[knowledge-connector]
+        P2[analyst]
+        P3[strategist]
+        P4[skill-searcher]
+        P5[skill-inspector]
+        P6[skill-evaluator]
     end
 
-    subgraph DO["Produce (Do)"]
+    subgraph DO["Draft (Do)"]
         direction LR
-        D1[analyst]
-        D2[strategist]
-        D3[writer]
-        D4[pipeline-orchestrator]
-        D5[pipeline-step-executor]
+        D1[writer]
+        D2[pipeline-orchestrator]
+        D3[pipeline-step-executor]
     end
 
-    subgraph CHECK["Verify (Check)"]
+    subgraph CHECK["Check"]
         direction LR
         C1[deep-reviewer]
         C2[devil-advocate]
@@ -212,10 +214,16 @@ flowchart TD
         C5[structure-analyst]
     end
 
-    subgraph ACT["Refine (Act)"]
+    subgraph ACT["Cut (Act)"]
         direction LR
         A1[editor]
         AR{Action Router}
+    end
+
+    subgraph EXTEND["Extend"]
+        direction LR
+        E1[knowledge-connector]
+        E2[soul-keeper]
     end
 
     PLAN -->|"research → analyze + Question Protocol"| DO
@@ -223,16 +231,16 @@ flowchart TD
     CHECK -->|"parallel review"| ACT
     AR -->|"Plan"| PLAN
     AR -->|"Do"| DO
-    AR -->|"Refine"| ACT
+    AR -->|"refine skill"| A1
 ```
 
 Supporting commands reinforce the same loop:
 
-- `pdca` orchestrates one gated cycle with quality gates and the Action Router
+- `/scc:godhands` runs one gated Gather → Draft → Check → Cut pass with the Action Router; `/scc:pdca` is the slash-only compat alias
 - `/scc:loop` runs fixed benchmark suites to evolve prompt assets in isolated winner branches
 - `collect` keeps source material and notes available for the next planning cycle
 - `discover` expands the system when the current skill set is not enough (`skill-searcher`, `skill-inspector`, `skill-evaluator`)
-- `workflow` builds named reusable pipelines; `autopilot` approximates PDCA
+- `workflow` builds named reusable pipelines; `autopilot` approximates God Hands without `pdca_*` gates
 - `batch` decomposes large homogeneous tasks into parallel units executed concurrently in isolated worktrees
 - `soul` builds and maintains a persistent user identity profile from observed behavioral signals
 - `/scc:viewer` is a tool-only command: it starts the local artifact viewer for saved PDCA/session artifacts and returns a browser URL
@@ -314,6 +322,8 @@ When PDCA enters the Do phase, it matches the requested artifact format against 
 Sub-skill input/output contracts and failure handling are documented in `skills/pdca/references/domain-pipeline-integration.md`.
 
 ### Reviewer Independence (Check Gate)
+
+![Review flow](images/review-flow.svg)
 
 Whoever helped produce something does not get to certify it. Agent reuse breaks this quietly: the
 critic roster and the agents an upstream phase borrows come from the same pool, so one name can
@@ -626,9 +636,7 @@ The cycle memory module (`mcp/lib/cycle-memory.mjs`) provides durable cross-cycl
 │   └── events.jsonl     # Append-only event log
 ├── cycle-002/
 │   └── ...
-├── insights.json        # Cross-cycle structured insights with time-decay weights
-└── proposals/           # Auto-generated gotcha proposals (self-evolution)
-    └── gotchas-{category}.md
+└── insights.json        # Cross-cycle structured insights with time-decay weights
 ```
 
 ### Integration Points
@@ -690,7 +698,7 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 
 ## Document index
 
-Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.0**; GitHub Latest Release is **[v3.1.0](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.0)**.
+Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.1**; GitHub Latest Release is **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**.
 
 **Archive / delete** (not runtime; do not treat as current architecture):
 
@@ -698,4 +706,4 @@ Canonical product docs live under `docs/`. Start from [docs/README.md](README.md
 - `docs/RELEASE-v*` — historical release notes (v0.9 through v1.5.2). Current version history is [CHANGELOG.md](../CHANGELOG.md).
 
 Release history and migration notes live in [CHANGELOG.md](../CHANGELOG.md). This architecture guide
-describes the SCC 3.1.0 runtime rather than copying historical release notes.
+describes the SCC 3.1.1 runtime rather than copying historical release notes.

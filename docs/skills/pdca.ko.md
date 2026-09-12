@@ -51,7 +51,7 @@ AI 에이전트 프레임워크 알아보고 보고서 써줘
 
 ## 작동 원리
 
-![PDCA Cycle](../images/pdca-cycle.svg)
+![PDCA 사이클](../images/pdca-cycle.ko.svg)
 
 ### 페이즈 게이트
 

@@ -14,7 +14,7 @@ Review state is read from the session/prompt-namespaced aggregation file used by
 
 ## Arguments
 - Optional: file path to review (defaults to staged files)
-- `--preset content|strategy|code|quick|full` (default: content)
+- `--preset content|strategy|code|security|academic|quick|full` (default: content)
 
 ## Your task
 Perform the review now using the plugin's loaded `review` skill and the provided arguments.

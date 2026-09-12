@@ -3,7 +3,7 @@
 This is the human map for **Second Claude Code** (plugin id `scc`, slash
 commands `/scc:*`, GitHub
 [unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)).
-Version **3.1.0** on disk.
+Version **3.1.1** on disk.
 
 The plugin ships **16 skills** and **3 tool-only commands**. The default
 auto-router is `/scc:godhands`, `/scc:research`, `/scc:write`, `/scc:review`,
@@ -31,7 +31,7 @@ archive candidates, is in [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md).
 | Skill guides | [skills/README.md](skills/README.md) | [skills/README.ko.md](skills/README.ko.md) |
 | Agent roster (17 agents) | [agents/README.md](../agents/README.md) | — |
 | Working contract | [AGENTS.md](../AGENTS.md), [CLAUDE.md](../CLAUDE.md) | — |
-| Changelog `[3.0.0]`–`[3.1.0]` | [CHANGELOG.md](../CHANGELOG.md) | — |
+| Changelog `[3.0.0]`–`[3.1.1]` | [CHANGELOG.md](../CHANGELOG.md) | — |
 
 Marketplace listing: [walnut.manifest.yaml](../walnut.manifest.yaml). Claude and
 Codex manifests live under `.claude-plugin/` and `.codex-plugin/`.
