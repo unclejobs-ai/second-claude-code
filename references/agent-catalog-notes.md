@@ -65,6 +65,5 @@ These roles are documented as reference for users who want to customize their ag
 1. Create `agents/{pokemon-name}.md` with YAML frontmatter (`description`, `model`, `color`). Use Pokemon names for filenames (e.g., `eevee.md` not `researcher.md`).
 2. Write a system prompt in the body following the guidance schema.
 3. Reference the agent in the relevant SKILL.md's `Subagents` section.
-4. Update `config.example.json` if the agent needs configuration.
 
 See `references/guidance-schema.md` for the full authoring guide.

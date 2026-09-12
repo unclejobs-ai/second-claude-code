@@ -2,7 +2,7 @@
 
 Display name **Second Claude Code**. Plugin id **`scc`**. Repo **[unclejobs-ai/second-claude-code](https://github.com/unclejobs-ai/second-claude-code)**. Slash namespace **`/scc:*`**.
 
-Plugin version **3.1.1** (`.claude-plugin/plugin.json`, `CHANGELOG.md`). GitHub **Latest Release is v3.1.1**.
+Plugin version **3.1.2** (`.claude-plugin/plugin.json`, `CHANGELOG.md`). GitHub **Latest Release is v3.1.2**.
 
 God Hands knowledge work system: **16 skills**, **19 command markdown files** plus `commands/version.mjs`, **17 agents**, **10 hook events**, **3 MCP servers**. `/scc:godhands` is the public orchestrator.
 
@@ -124,7 +124,7 @@ Active (edit these for current behavior):
 |---|---|
 | [AGENTS.md](AGENTS.md) · [CLAUDE.md](CLAUDE.md) | Agent/host contract (this file) |
 | [README.md](README.md) · [README.ko.md](README.ko.md) | Install and entry points |
-| [CHANGELOG.md](CHANGELOG.md) | 3.0.0–3.1.1 notes; GitHub Latest Release is v3.1.1 |
+| [CHANGELOG.md](CHANGELOG.md) | 3.0.0–3.1.2 notes; GitHub Latest Release is v3.1.2 |
 | [docs/README.md](docs/README.md) | Command and document index |
 | [docs/directory-map.md](docs/directory-map.md) | Locked directory architecture (3.1.0) |
 | [docs/DOCUMENT-INDEX.md](docs/DOCUMENT-INDEX.md) | Public file catalog |
@@ -137,12 +137,10 @@ Active (edit these for current behavior):
 | [walnut.manifest.yaml](walnut.manifest.yaml) | walnut.world listing |
 | [packages/core/README.md](packages/core/README.md) | TypeScript core contracts |
 
-Archive / delete (leave on disk this run; do not treat as current product docs):
+Archive (do not treat as current product docs). `translations/` and `docs/RELEASE-v*` were removed in 3.1.2; git history keeps them.
 
 | Path | Why |
 |---|---|
-| `translations/` | Claude Mythos preview translation workspace, not SCC product docs |
-| `docs/RELEASE-v*` | Historical snapshots (v0.9.0–v1.5.2, EN/KO). Counts and commands in them are stale |
 | [docs/changelog-archive.md](docs/changelog-archive.md) | Pre-3.0 changelog dump |
 
 ## Verification
@@ -175,7 +173,7 @@ git diff --exit-code -- mcp/pdca-state-server.bundle.mjs THIRD_PARTY_NOTICES.md
 - Dispatch `Agent` with a Pokemon filename. Use frontmatter `name`.
 - Advertise “31 MCP tools” in user blurbs. Say 3 servers.
 - Document slash-menu duplicates as current 3.1.0 behavior. 3.1.0 ships `user-invocable: false`.
-- GitHub Latest Release is v3.1.1; v3.1.0 is a historical tag.
+- GitHub Latest Release is v3.1.2; v3.1.0 is a historical tag.
 - Modify agent model tiers without checking `docs/architecture.md` roster table.
 - Edit `hooks.json` directly — it is the plugin hook registry; changes affect all users.
 - Translate an English file into Korean or vice versa. Keep each language file in its language.

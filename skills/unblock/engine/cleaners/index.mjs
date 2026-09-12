@@ -36,6 +36,3 @@ export function pickCleaner(rawUrl) {
   return null;
 }
 
-export function listCleaners() {
-  return CLEANERS.map((c) => c.name);
-}

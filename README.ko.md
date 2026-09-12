@@ -1,6 +1,6 @@
 [English](README.md) | **한국어**
 
-![version](https://img.shields.io/badge/version-3.1.1-blue)
+![version](https://img.shields.io/badge/version-3.1.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code — 세컨클코
@@ -34,14 +34,14 @@
 모든 프롬프트를 자동으로 스킬에 배정하지는 않습니다. 모든 스킬이 `user-invocable: false`라서
 Claude Code는 자연어 요청을 `skills/*/SKILL.md`가 아니라 `commands/*.md`의 frontmatter
 `description`으로 라우팅합니다. `evals/`의 라우팅 평가는 `research`, `write`, `review`,
-`refine`, `coach`, `analyze`를 측정하며(3.1.1에서 24/24), 막연한 요청은 패스를 시작하면 안 됩니다.
+`refine`, `coach`, `analyze`를 측정하며(3.1.2에서 24/24), 막연한 요청은 패스를 시작하면 안 됩니다.
 예측 가능한 진입점이 필요하면 슬래시 명령을 직접 사용하세요. Codex는 `.codex-plugin/plugin.json`으로
 16개 스킬을 노출하고, Grok는 `.grok-plugin/` + `walnut.manifest.yaml`로 설치합니다. 둘 다 Claude
 슬래시 명령 전체를 그대로 제공하지는 않습니다.
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
-**이 트리는 3.1.1입니다. GitHub Latest Release는 [v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)입니다.**
+**이 트리는 3.1.2입니다. GitHub Latest Release는 [v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2)입니다.**
 아래 세 블록처럼 마켓플레이스 **`main`** 또는 그 릴리즈에서 설치하세요. 예전
 `second-claude-code` / 옛 `scc` 캐시는 먼저 지우세요.
 
@@ -51,8 +51,8 @@ Claude Code는 자연어 요청을 `skills/*/SKILL.md`가 아니라 `commands/*.
 
 ## 설치
 
-실제로 쓰는 호스트의 블록만 실행하세요. 세 경로 모두 **`main`**(3.1.1)을 받습니다.
-GitHub Latest Release 태그는 **`v3.1.1`**입니다.
+실제로 쓰는 호스트의 블록만 실행하세요. 세 경로 모두 **`main`**(3.1.2)을 받습니다.
+GitHub Latest Release 태그는 **`v3.1.2`**입니다.
 
 ### Claude Code
 
@@ -87,7 +87,7 @@ codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
 codex plugin add scc@scc
 ```
 
-Codex가 현재 `main`(v3.1.1)을 따라가도록 `--ref main`이 필요합니다.
+Codex가 현재 `main`(v3.1.2)을 따라가도록 `--ref main`이 필요합니다.
 설치하거나 마켓플레이스를 새로 고친 뒤 Codex를 다시 시작하세요.
 
 Codex는 `.codex-plugin/plugin.json`과 플러그인 상대경로 MCP 설정을 사용하므로
@@ -108,8 +108,8 @@ grok plugin install unclejobs-ai/second-claude-code --trust
 ```
 
 `--trust`가 필요합니다. 이 저장소에는 **`.grok-plugin/plugin.json`**과
-**`walnut.manifest.yaml`**(Walnut 리스팅, 버전 3.1.1)이 있습니다. Grok는 GitHub **`main`**
-또는 **v3.1.1** 릴리즈에서 설치합니다. 설치 후에는 Codex와 같이 스킬 이름으로 요청하세요.
+**`walnut.manifest.yaml`**(Walnut 리스팅, 버전 3.1.2)이 있습니다. Grok는 GitHub **`main`**
+또는 **v3.1.2** 릴리즈에서 설치합니다. 설치 후에는 Codex와 같이 스킬 이름으로 요청하세요.
 
 ### v3 이전 Claude 설치에서 마이그레이션
 
@@ -383,7 +383,6 @@ claude agents
 
 따로 둘 설정 파일은 없습니다. 기본값은 각 스킬의 Options 표(`skills/<name>/SKILL.md`)에
 있고, `--depth`, `--preset`, `--max` 같은 플래그로 호출마다 덮어씁니다.
-`config/config.example.json`은 과거 스케치이며 로드되지 않습니다.
 
 ## 더 읽기
 
@@ -396,4 +395,4 @@ claude agents
 
 이슈와 풀 리퀘스트를 환영합니다. [Unclejobs](https://github.com/unclejobs-ai)가 만들었습니다.
 
-*버전 3.1.1 | GitHub Latest Release [v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1) | MIT 라이선스*
+*버전 3.1.2 | GitHub Latest Release [v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2) | MIT 라이선스*

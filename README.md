@@ -1,6 +1,6 @@
 [English](README.md) | [한국어](README.ko.md)
 
-![version](https://img.shields.io/badge/version-3.1.1-blue)
+![version](https://img.shields.io/badge/version-3.1.2-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
 # Second Claude Code
@@ -30,14 +30,14 @@ parallel split (slash).
 It does not auto-dispatch a skill from every prompt. Every skill sets `user-invocable: false`,
 so Claude Code routes a natural request from the `commands/*.md` frontmatter `description`,
 not from `skills/*/SKILL.md`. The routing eval suite in `evals/` measures `research`, `write`,
-`review`, `refine`, `coach`, and `analyze` (24/24 on 3.1.1); a vague ask must not start a pass.
+`review`, `refine`, `coach`, and `analyze` (24/24 on 3.1.2); a vague ask must not start a pass.
 Use a slash command when you need a predictable entry point. Codex exposes the 16 skills
 through `.codex-plugin/plugin.json`; Grok installs from `.grok-plugin/` + `walnut.manifest.yaml`.
 Neither mirrors every Claude slash command.
 
 [![Second Claude Code — God Hands](docs/images/thumbnail.png)](https://github.com/unclejobs-ai/second-claude-code)
 
-**This tree is 3.1.1. GitHub Latest Release is [v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1).**
+**This tree is 3.1.2. GitHub Latest Release is [v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2).**
 Install from marketplace **`main`** or that release. Uninstall any leftover
 `second-claude-code` / old `scc` cache first.
 
@@ -47,8 +47,8 @@ Install from marketplace **`main`** or that release. Uninstall any leftover
 
 ## Install
 
-Use the host that you actually run. All three pull **`main`**, which is 3.1.1.
-The GitHub Latest Release tag is **`v3.1.1`**.
+Use the host that you actually run. All three pull **`main`**, which is 3.1.2.
+The GitHub Latest Release tag is **`v3.1.2`**.
 
 ### Claude Code
 
@@ -83,7 +83,7 @@ codex plugin marketplace add unclejobs-ai/second-claude-code --ref main
 codex plugin add scc@scc
 ```
 
-`--ref main` is required so Codex follows current `main` (v3.1.1), not an older Release zip.
+`--ref main` is required so Codex follows current `main` (v3.1.2), not an older Release zip.
 Restart Codex after installing or refreshing the marketplace.
 
 Codex uses `.codex-plugin/plugin.json` and plugin-relative MCP paths. It does not
@@ -104,8 +104,8 @@ grok plugin install unclejobs-ai/second-claude-code --trust
 ```
 
 `--trust` is required. This repository has **`.grok-plugin/plugin.json`** and
-**`walnut.manifest.yaml`** (Walnut listing, version 3.1.1). Grok installs from
-GitHub **`main`** or the **v3.1.1** Release. After install,
+**`walnut.manifest.yaml`** (Walnut listing, version 3.1.2). Grok installs from
+GitHub **`main`** or the **v3.1.2** Release. After install,
 request skills by name the same way Codex does.
 
 ### Migrating a pre-v3 Claude install
@@ -394,7 +394,7 @@ claude agents
 
 There is no config file to place. Defaults live in each skill's Options table
 (`skills/<name>/SKILL.md`) and are overridden per call with flags such as `--depth`,
-`--preset`, or `--max`. `config/config.example.json` is a historical sketch and is not loaded.
+`--preset`, or `--max`.
 
 ## Further reading
 
@@ -407,4 +407,4 @@ There is no config file to place. Defaults live in each skill's Options table
 
 Issues and pull requests are welcome. Built by [Unclejobs](https://github.com/unclejobs-ai).
 
-*Version 3.1.1 | GitHub Latest Release [v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1) | MIT License*
+*Version 3.1.2 | GitHub Latest Release [v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2) | MIT License*

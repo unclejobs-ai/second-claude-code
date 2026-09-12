@@ -1,8 +1,8 @@
 [English](orchestrator-architecture.md) | [한국어](orchestrator-architecture.ko.md)
 
-# Orchestrator Architecture — SCC 3.1.1
+# Orchestrator Architecture — SCC 3.1.2
 
-SCC 3.1.1 can inspect installed Claude Code plugins, score capabilities against a requested intent,
+SCC 3.1.2 can inspect installed Claude Code plugins, score capabilities against a requested intent,
 and return an advisory dispatch plan. The orchestrator does not execute external Skills or slash
 commands.
 

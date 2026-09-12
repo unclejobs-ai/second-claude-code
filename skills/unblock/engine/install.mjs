@@ -1,9 +1,6 @@
-import { existsSync, mkdirSync } from "node:fs";
-import { homedir, platform } from "node:os";
-import { join } from "node:path";
+import { platform } from "node:os";
 import { runProcess } from "./util.mjs";
 
-const CACHE_DIR = process.env.UNBLOCK_CACHE_DIR || join(homedir(), ".cache", "unblock");
 const RESOLVED = new Map();
 
 async function which(bin) {
@@ -111,7 +108,3 @@ export async function ensureBinary(name) {
   }
 }
 
-export function cacheDir() {
-  if (!existsSync(CACHE_DIR)) mkdirSync(CACHE_DIR, { recursive: true });
-  return CACHE_DIR;
-}

@@ -1,6 +1,6 @@
 [English](architecture.md) | **한국어**
 
-# 아키텍처 — SCC 3.1.1
+# 아키텍처 — SCC 3.1.2
 
 ## 런타임 경계
 
@@ -63,7 +63,7 @@ Second Claude Code는 Claude Code 플러그인이지, 독립 실행 에이전트
 
 스킬 목록 밖에 **도구 전용 명령** 셋이 있습니다 — `/scc:viewer`, `/scc:unblock`, `/scc:standard-check`. 실행만 하고 판단이 없습니다. 판단 0인 항목이 스킬 목록에 앉아 있으면 모델의 선택지만 갉아먹습니다. `viewer`는 스킬이 아니라 명령입니다. `skills/unblock/`은 페치 엔진만 두고 `SKILL.md`가 없습니다. `standard-check`는 명령과 스크립트뿐입니다.
 
-이 트리(3.1.1)에서는 모든 스킬이 `user-invocable: false`라서 Claude Code가 합친 `/` 메뉴에 `/scc:*` 이름이 한 번만 보입니다(명령). 슬래시 중복은 3.0.3 호스트 머지 잔재입니다. `commands/version.mjs`는 버전 헬퍼이지 열여덟 번째 슬래시-스킬 쌍이 아닙니다.
+이 트리(3.1.2)에서는 모든 스킬이 `user-invocable: false`라서 Claude Code가 합친 `/` 메뉴에 `/scc:*` 이름이 한 번만 보입니다(명령). 슬래시 중복은 3.0.3 호스트 머지 잔재입니다. `commands/version.mjs`는 버전 헬퍼이지 열여덟 번째 슬래시-스킬 쌍이 아닙니다.
 
 ### 내장 오케스트레이터와 슬래시 전용 재생
 
@@ -121,7 +121,7 @@ flowchart LR
 
 ## 디렉토리 구조
 
-디렉터리 아키텍처는 [directory-map.md](directory-map.md)에 **잠겨 있습니다** (트리 3.1.1).
+디렉터리 아키텍처는 [directory-map.md](directory-map.md)에 **잠겨 있습니다** (트리 3.1.2).
 여기서 트리를 다시 그리지 마세요. 공개 오케스트레이터는 `godhands`, `pdca`는 슬래시 전용 호환과
 `pdca_*` 런타임입니다. 수: 스킬 16, 명령 마크다운 19, 에이전트 17, 훅 이벤트 10, MCP 서버 3.
 
@@ -686,12 +686,7 @@ CI가 생성물의 변경 여부를 확인해요.
 
 ## 문서 색인
 
-제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.1**이고, GitHub Latest Release도 **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**입니다.
-
-**보관 / 삭제** (런타임이 아님. 현재 아키텍처로 다루지 마세요):
-
-- `translations/` — Claude mythos 번역 작업 공간. 플러그인 런타임이 아닙니다.
-- `docs/RELEASE-v*` — 과거 릴리스 노트 (v0.9 ~ v1.5.2). 현재 버전 기록은 [CHANGELOG.md](../CHANGELOG.md)입니다.
+제품 문서는 `docs/` 아래에 있습니다. [docs/README.md](README.md)(명령·문서 색인), 이 파일, [orchestrator-architecture.ko.md](orchestrator-architecture.ko.md), [사용자 매뉴얼](notion-manual.ko.md)부터 보세요. 스킬 가이드는 [docs/skills/](skills/)입니다. 트리 안 플러그인 버전은 **3.1.2**이고, GitHub Latest Release도 **[v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2)**입니다.
 
 릴리스 기록과 마이그레이션 노트는 [CHANGELOG.md](../CHANGELOG.md)에 모아 두었습니다. 이 문서는
-과거 릴리스 내용을 복사하지 않고 SCC 3.1.1 런타임의 현재 구조를 설명합니다.
+과거 릴리스 내용을 복사하지 않고 SCC 3.1.2 런타임의 현재 구조를 설명합니다.

@@ -353,7 +353,6 @@ more tokens.
 Leave these on disk for this run. The [document index](README.md) should mark them as
 archive/delete candidates:
 
-- `translations/` — one-off translation workspace, not product docs
-- `docs/RELEASE-v*` — historical release notes; current history is `CHANGELOG.md`
+- `docs/RELEASE-v*` and `translations/` were removed in 3.1.2; release history is `CHANGELOG.md`
 
 *Version 3.1.0 | MIT License*

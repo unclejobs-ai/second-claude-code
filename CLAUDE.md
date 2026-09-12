@@ -4,7 +4,7 @@ Read [AGENTS.md](AGENTS.md) first. It owns identity, host split, catalog counts,
 
 This adapter is for **Claude Code**. Plugin id **`scc`**. Slash **`/scc:*`**. Repo **unclejobs-ai/second-claude-code**.
 
-Claude Code plugin (v3.1.1) with Codex and Grok install paths. God Hands knowledge work system — **16 skills**, 19 commands, 17 agents, 10 hook events, and **3 MCP servers** (`pdca-state`, optional `playwright`, optional `mmbridge`). `/scc:godhands` is the public orchestrator. Do not lead with a tool count.
+Claude Code plugin (v3.1.2) with Codex and Grok install paths. God Hands knowledge work system — **16 skills**, 19 commands, 17 agents, 10 hook events, and **3 MCP servers** (`pdca-state`, optional `playwright`, optional `mmbridge`). `/scc:godhands` is the public orchestrator. Do not lead with a tool count.
 
 `viewer`, `unblock`, and `standard-check` ship as commands with no skill: they execute and make no judgment, so they take no slot in the skill list. `skills/unblock/` still holds the fetch engine.
 
@@ -24,7 +24,7 @@ Other hosts (do not mix manifests):
 - Codex: `codex plugin marketplace add unclejobs-ai/second-claude-code --ref main` then `codex plugin add scc@scc`. Skills only; no full `/scc:*` command mirror. Playwright and MMBridge disabled by default.
 - Grok: `grok plugin install unclejobs-ai/second-claude-code --trust`. `.grok-plugin/plugin.json` plus `walnut.manifest.yaml`.
 
-Plugin version 3.1.1 is in the manifests and `CHANGELOG.md`. GitHub **Latest Release is v3.1.1**.
+Plugin version 3.1.2 is in the manifests and `CHANGELOG.md`. GitHub **Latest Release is v3.1.2**.
 
 ## Slash surface (3.1.x)
 
@@ -53,7 +53,7 @@ Folded (slash still works): `collect`, `discover`, `translate`, `batch`, `workfl
 
 Hooks and `/scc:soul` use `soul/observations/YYYY-MM-DD.jsonl`. Do not append by hand.
 
-Archive/delete (leave on disk): `translations/`, `docs/RELEASE-v*`. Full index in [AGENTS.md](AGENTS.md) DOCUMENT-INDEX.
+Removed from the tree in 3.1.2 (git history keeps them): `translations/` (37 MB of translation PDFs), `docs/RELEASE-v*`. Full index in [AGENTS.md](AGENTS.md) DOCUMENT-INDEX.
 
 ## Verification
 

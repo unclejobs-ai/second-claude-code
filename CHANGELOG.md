@@ -5,6 +5,24 @@ Format follows [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+## [3.1.2] - 2026-09-13
+
+### Changed
+
+- Docs and diagrams synced with the 3.1.x tree after a full audit
+  (`docs/maintenance/audit-2026-09-13.md`): routing reads `commands/*.md`
+  descriptions; agents are named by job `name`; phase vocabulary is
+  Gather/Draft/Check/Cut over runtime Plan/Do/Check/Act; SVGs updated.
+
+### Removed
+
+- `translations/` (37 MB of translation PDFs shipped with every install),
+  `docs/RELEASE-v*.md`, `scripts/usage-tracker.sh`, `config/config.example.json`,
+  `docs/demo.tape`. Git history keeps them.
+- Unused exports in `hooks/lib/soul-observer.mjs` (observation writers superseded
+  by the MCP `soul_record_observation` tool), `hooks/lib/state-boundary.mjs`,
+  and the unblock engine.
+
 ## [3.1.1] - 2026-09-12
 
 ### Fixed

@@ -1,6 +1,6 @@
 # Directory map / 디렉터리 맵
 
-**Locked for tree 3.1.1.** File inventory: [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md). Human map: [README.md](README.md). Do not restyle this tree in `architecture.md`.
+**Locked for tree 3.1.2.** File inventory: [DOCUMENT-INDEX.md](DOCUMENT-INDEX.md). Human map: [README.md](README.md). Do not restyle this tree in `architecture.md`.
 
 Second Claude Code is a **plugin**, not a host and not Uncle Code. Public method: **God Hands** (`/scc:godhands`). Runtime state stays `pdca_*`.
 
@@ -10,7 +10,7 @@ Second Claude Code is a **plugin**, not a host and not Uncle Code. Public method
 
 | Layer | Paths | Role |
 |---|---|---|
-| Host adapters | `.claude-plugin/`, `.codex-plugin/`, `.grok-plugin/`, `.mcp.json`, `walnut.manifest.yaml` | Install only. Versions must all say **3.1.1** and `16 skills`. |
+| Host adapters | `.claude-plugin/`, `.codex-plugin/`, `.grok-plugin/`, `.mcp.json`, `walnut.manifest.yaml` | Install only. Versions must all say **3.1.2** and `16 skills`. |
 | Public method | `skills/godhands/`, `commands/godhands.md`, `docs/skills/godhands.md` | Gather → Draft → Check → Cut. Check is never skipped. |
 | Runtime gates | `skills/pdca/`, `mcp/`, `hooks/` | `pdca_*` state, phase gates, Action Router. `/scc:pdca` is slash-only compat. |
 | Skills | `skills/<name>/SKILL.md` | **16**. Fold with `disable-model-invocation`; do not delete SKILL.md. |
@@ -18,10 +18,10 @@ Second Claude Code is a **plugin**, not a host and not Uncle Code. Public method
 | Slash | `commands/*.md` | **19** (16 skill wrappers + 3 tools) plus `commands/version.mjs`. |
 | Agents | `agents/*.md` | **17**. Claude Code only. Dispatch YAML `name`, not Pokemon filename. |
 | User docs | `README.md`, `docs/` | EN + KO. Guides live in `docs/skills/`; runtime lives in `skills/*/SKILL.md`. |
-| Quality lib | `packages/core/` | Host-neutral contracts. Not a plugin install gate. Core **4.0.0** ≠ plugin **3.1.1**. |
+| Quality lib | `packages/core/` | Host-neutral contracts. Not a plugin install gate. Core **4.0.0** ≠ plugin **3.1.2**. |
 | Live viewer | `ui/` | Local projection. Not the shareable Artifact (`scripts/export-artifact.mjs`). |
 | Trajectory | `docs/methodology.md`, `scripts/export-artifact.mjs`, `.data/events`, `.data/cycles` | Reconstruct **one** run. Not a second host loop. |
-| Archive | `translations/`, `docs/RELEASE-v*`, `docs/superpowers/`, `docs/changelog-archive.md` | Leave on disk. Not current 3.1.1 contracts. |
+| Archive | `docs/superpowers/`, `docs/changelog-archive.md`, `docs/proposals/` | Leave on disk. Not current 3.1.2 contracts. `translations/` and `docs/RELEASE-v*` were removed in 3.1.2 (git history). |
 
 ## Locked counts / 잠긴 수
 
@@ -33,14 +33,14 @@ Auto-router spine: `godhands`, `research`, `write`, `review`, `refine`, `coach`.
 
 ```
 second-claude/
-├── .claude-plugin/plugin.json     # Claude: scc 3.1.1, 3 MCP servers
+├── .claude-plugin/plugin.json     # Claude: scc 3.1.2, 3 MCP servers
 ├── .codex-plugin/plugin.json      # Codex-native; plugin-relative pdca-state
-├── .grok-plugin/plugin.json       # Grok 3.1.1
+├── .grok-plugin/plugin.json       # Grok 3.1.2
 ├── .mcp.json                      # Codex MCP: pdca-state on; playwright/mmbridge off
-├── walnut.manifest.yaml           # walnut.world listing 3.1.1
+├── walnut.manifest.yaml           # walnut.world listing 3.1.2
 ├── AGENTS.md · CLAUDE.md          # Working contract
 ├── README.md · README.ko.md       # Install + God Hands
-├── CHANGELOG.md                   # [3.1.1]; GitHub Latest is v3.1.1
+├── CHANGELOG.md                   # [3.1.2]; GitHub Latest is v3.1.2
 ├── skills/                        # 16 SKILL.md + unblock engine
 │   ├── godhands/SKILL.md          # Public orchestrator
 │   ├── pdca/                      # Compat skill + gate checklists in references/
@@ -84,8 +84,8 @@ second-claude/
 ## Do not / 하지 마라
 
 - Do not add a fourth orchestrator or a host loop (no DSH copy, no Uncle Code runtime inside SCC).
-- Do not document slash-menu duplicates as current 3.1.1 (`user-invocable: false` is shipped on this tree).
-- GitHub Latest Release is **v3.1.1**. Uninstall leftover `second-claude-code` / old `scc` caches.
+- Do not document slash-menu duplicates as current 3.1.2 (`user-invocable: false` is shipped on this tree).
+- GitHub Latest Release is **v3.1.2**. Uninstall leftover `second-claude-code` / old `scc` caches.
 - Do not advertise “31 MCP tools” in user blurbs. Say **3 servers**.
 - Do not move `skills/*/SKILL.md` into `docs/` or treat `docs/skills/` as the runtime.
 - Do not delete folded skills. Slash `/scc:<name>` still works.

@@ -1,6 +1,6 @@
 **English** | [한국어](architecture.ko.md)
 
-# Architecture — SCC 3.1.1
+# Architecture — SCC 3.1.2
 
 ## Runtime Boundary
 
@@ -60,7 +60,7 @@ skills (`collect`, `discover`, `translate`, `batch`, `workflow`, `soul`, `loop`,
 
 Three **tool-only commands** sit outside the skill list: `/scc:viewer`, `/scc:unblock`, and `/scc:standard-check`. They execute and make no judgment, and a judgment-free entry in the skill list costs the model a choice without giving it one. `viewer` is a command, not a skill. `skills/unblock/` keeps the fetch engine and has no `SKILL.md`. `standard-check` is command-plus-script only.
 
-On this tree (3.1.1), every skill sets `user-invocable: false` so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Duplicate slash rows were a 3.0.3 host-merge artifact. `commands/version.mjs` is a version helper, not an eighteenth slash-skill pair.
+On this tree (3.1.2), every skill sets `user-invocable: false` so Claude Code's merged `/` menu shows each `/scc:*` name once (the command). Duplicate slash rows were a 3.0.3 host-merge artifact. `commands/version.mjs` is a version helper, not an eighteenth slash-skill pair.
 
 ### Built-in orchestrator and slash-only replay
 
@@ -120,7 +120,7 @@ The point is not to add a second runtime. It tightens the existing Plan -> Do ->
 
 ## Directory Structure
 
-The directory architecture is **locked** in [directory-map.md](directory-map.md) (tree 3.1.1).
+The directory architecture is **locked** in [directory-map.md](directory-map.md) (tree 3.1.2).
 Do not restyle the tree here. `godhands` is the public orchestrator; `pdca` is slash-only
 compat plus `pdca_*` runtime. Counts: 16 skills, 19 command markdown files, 17 agents,
 10 hook events, 3 MCP servers.
@@ -698,12 +698,7 @@ See `skills/research/references/playwright-guide.md` for full tool reference and
 
 ## Document index
 
-Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.1**; GitHub Latest Release is **[v3.1.1](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.1)**.
-
-**Archive / delete** (not runtime; do not treat as current architecture):
-
-- `translations/` — Claude mythos translation workspace; not part of the plugin runtime.
-- `docs/RELEASE-v*` — historical release notes (v0.9 through v1.5.2). Current version history is [CHANGELOG.md](../CHANGELOG.md).
+Canonical product docs live under `docs/`. Start from [docs/README.md](README.md) (command and document index), this file, [orchestrator-architecture.md](orchestrator-architecture.md), and the [user manual](notion-manual.md). Skill guides are in [docs/skills/](skills/). Plugin version in-tree is **3.1.2**; GitHub Latest Release is **[v3.1.2](https://github.com/unclejobs-ai/second-claude-code/releases/tag/v3.1.2)**.
 
 Release history and migration notes live in [CHANGELOG.md](../CHANGELOG.md). This architecture guide
-describes the SCC 3.1.1 runtime rather than copying historical release notes.
+describes the SCC 3.1.2 runtime rather than copying historical release notes.

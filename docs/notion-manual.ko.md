@@ -353,7 +353,6 @@ MMBridge는 선택입니다. `pdca-state`의 오케스트레이터 결과는 자
 이번 실행에서는 디스크에 그대로 둡니다. [문서 색인](README.md)에는 아래를 보관/삭제
 후보로 표시해야 합니다.
 
-- `translations/` — 일회성 번역 작업 공간이며 제품 문서가 아님
-- `docs/RELEASE-v*` — 과거 릴리스 노트. 현재 이력은 `CHANGELOG.md`
+- `docs/RELEASE-v*`와 `translations/`는 3.1.2에서 제거됨. 릴리스 이력은 `CHANGELOG.md`
 
 *버전 3.1.0 | MIT 라이선스*
