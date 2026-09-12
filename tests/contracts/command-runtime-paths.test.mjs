@@ -58,7 +58,8 @@ test("command state contexts resolve a CLAUDE_PLUGIN_DATA fixture", () => {
     }
     writeFileSync(path.join(dataDir, "state", "batch-fixture.json"), "{}\n");
     writeFileSync(path.join(dataDir, "soul", "SOUL.md"), "# Fixture Soul\nVisible fixture\n");
-    writeFileSync(path.join(dataDir, "soul", "observations.jsonl"), '{"n":1}\n{"n":2}\n');
+    mkdirSync(path.join(dataDir, "soul", "observations"), { recursive: true });
+    writeFileSync(path.join(dataDir, "soul", "observations", "2026-01-01.jsonl"), '{"n":1}\n{"n":2}\n');
     writeFileSync(
       path.join(dataDir, "state", "review-aggregation-review-fixture.json"),
       JSON.stringify({ fixture: "review" })

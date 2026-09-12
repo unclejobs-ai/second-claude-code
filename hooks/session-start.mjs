@@ -98,7 +98,8 @@ function getActiveState(projectRoot) {
   }
 
   const coach = readState(projectRoot);
-  if (coach) {
+  // pending_approval = interview finalized, awaiting the user; not an open run.
+  if (coach && coach.status !== "pending_approval") {
     const status = sanitize(coach.status || "active");
     const round = Number(coach.round) || 0;
     const ambiguity =

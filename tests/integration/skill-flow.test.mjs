@@ -122,6 +122,7 @@ test("state-manager written state flows through session start and session end ho
     cwd: root,
     env,
     encoding: "utf8",
+    input: JSON.stringify({ hook_event_name: "SessionEnd" }),
   });
   assert.match(endResult.stderr || "", /HANDOFF\.md saved/);
 

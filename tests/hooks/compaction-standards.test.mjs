@@ -90,7 +90,7 @@ test("a finalized (pending_approval) interview is not reported as open", () => {
 
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Second Claude Code/);
+    assert.doesNotMatch(result.stdout, /Active coach run/);
     assert.equal(result.post.stdout, "");
   });
 });
@@ -99,7 +99,7 @@ test("a project with no .scc tree at all produces no output and does not throw",
   withProjectRoot((projectRoot) => {
     const result = runPostCompact(projectRoot);
     assert.equal(result.status, 0);
-    assert.match(result.stdout, /Second Claude Code/);
+    assert.equal(result.stdout.trim(), "");
     assert.equal(result.post.stdout, "");
     assert.equal(result.post.stderr, "");
   });
