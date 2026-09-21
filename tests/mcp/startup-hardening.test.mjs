@@ -61,6 +61,7 @@ test("a fresh packaged plugin initializes without running a package manager", {
       readFileSync(join(pluginRoot, ".claude-plugin", "plugin.json"), "utf8")
     );
     assert.equal(manifest.mcpServers.playwright.optional, true);
+    assert.equal(manifest.mcpServers.playwright.args.includes("--headless"), true);
     assert.notEqual(manifest.mcpServers["pdca-state"].optional, true);
     const configuredEntry = manifest.mcpServers["pdca-state"].args[0];
     const entryPath = configuredEntry.replace("${CLAUDE_PLUGIN_ROOT}", pluginRoot);
@@ -128,6 +129,7 @@ test("the Codex-native plugin entry initializes without Claude path interpolatio
     false,
     "Codex must not start the optional Playwright integration by default"
   );
+  assert.equal(mcpConfig.mcpServers.playwright.args.includes("--headless"), true);
   assert.equal(
     mcpConfig.mcpServers.mmbridge.enabled,
     false,
