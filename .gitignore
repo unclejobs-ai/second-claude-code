@@ -39,3 +39,4 @@ tests/skill-tests/
 
 # Plugin eval runs
 evals/results/
+/translations/*/tmp/
