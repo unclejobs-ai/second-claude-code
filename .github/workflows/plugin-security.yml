@@ -1,0 +1,40 @@
+name: Plugin Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Scan with the catalog's pinned HOL scanner
+        uses: hashgraph-online/ai-plugin-scanner-action@caba2e96aa8ad2feb6cf6fca52442b52e22e779f # v1.2.635
+        with:
+          plugin_dir: "."
+          mode: scan
+          format: json
+          output: ${{ runner.temp }}/source-scan.json
+          min_score: 80
+          fail_on_severity: high
+          online: "false"
+          trust_repository_policy: "false"
+          pr_comment: "off"
+      - name: Keep the scan report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: hol-source-scan
+          path: ${{ runner.temp }}/source-scan.json
+          if-no-files-found: error
+          retention-days: 14

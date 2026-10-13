@@ -53,18 +53,19 @@ test("generated notices cover every dependency bundled into the MCP server", () 
   assert.equal(existsSync(noticesPath), true);
   const notices = readFileSync(noticesPath, "utf8");
   const expectedPackages = [
+    "@cfworker/json-schema",
     "@modelcontextprotocol/sdk",
-    "ajv",
-    "ajv-formats",
-    "fast-deep-equal",
-    "fast-uri",
-    "json-schema-traverse",
     "zod",
     "zod-to-json-schema",
   ];
   for (const packageName of expectedPackages) {
     assert.match(notices, new RegExp(`^## ${packageName.replace("/", "\\/")}@`, "m"));
   }
+  assert.equal((notices.match(/^## /gm) ?? []).length, expectedPackages.length);
+  assert.doesNotMatch(notices, /^## (?:ajv|ajv-formats|fast-deep-equal|fast-uri|json-schema-traverse)@/m);
+  const cfworkerLicense = readFileSync(path.join(root, "mcp", "vendor-licenses", "cfworker-json-schema-4.1.1-LICENSE.md"), "utf8");
+  assert.match(cfworkerLicense, /Copyright \(c\) 2020 Jeremy Danyow/);
+  assert.match(notices, /Copyright \(c\) 2020 Jeremy Danyow/);
   assert.match(notices, /Permission is hereby granted, free of charge/);
 });
 

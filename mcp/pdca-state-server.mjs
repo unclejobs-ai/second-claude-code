@@ -78,16 +78,18 @@ const PLUGIN_ROOT = join(__dirname, "..");
 const DATA_DIR = process.env.CLAUDE_PLUGIN_DATA ?? join(PLUGIN_ROOT, ".data");
 
 async function importSdk() {
-  const [serverMod, stdioMod, typesMod] = await Promise.all([
+  const [serverMod, stdioMod, typesMod, validatorMod] = await Promise.all([
     import("@modelcontextprotocol/sdk/server/index.js"),
     import("@modelcontextprotocol/sdk/server/stdio.js"),
     import("@modelcontextprotocol/sdk/types.js"),
+    import("@modelcontextprotocol/sdk/validation/cfworker"),
   ]);
   return {
     Server: serverMod.Server,
     StdioServerTransport: stdioMod.StdioServerTransport,
     CallToolRequestSchema: typesMod.CallToolRequestSchema,
     ListToolsRequestSchema: typesMod.ListToolsRequestSchema,
+    JsonSchemaValidator: validatorMod.CfWorkerJsonSchemaValidator,
   };
 }
 
@@ -97,6 +99,7 @@ const {
   StdioServerTransport,
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  JsonSchemaValidator,
 } = SKIP_START
   ? {
       // Keep source-level contract tests from opening an MCP transport. The
@@ -107,6 +110,7 @@ const {
       StdioServerTransport: class TestTransport {},
       CallToolRequestSchema: {},
       ListToolsRequestSchema: {},
+      JsonSchemaValidator: class TestValidator {},
     }
   : await importSdk();
 
@@ -707,7 +711,11 @@ const TOOL_DEFINITIONS = [
 
 const server = new Server(
   { name: "pdca-state", version: "1.0.0" },
-  { capabilities: { tools: {} } }
+  {
+    capabilities: { tools: {} },
+    // Interpret JSON Schema rather than compiling schema-derived JavaScript.
+    jsonSchemaValidator: new JsonSchemaValidator(),
+  }
 );
 
 server.setRequestHandler(ListToolsRequestSchema, async () => ({

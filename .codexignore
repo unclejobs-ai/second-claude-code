@@ -1,0 +1,16 @@
+# Local dependencies and private runtime state are not plugin source.
+node_modules/
+ui/node_modules/
+.data/
+.gjc/
+.scc/
+.captures/
+.claude/agent-memory/
+.claude/handoffs/
+.claude/last30days.env
+.claude/settings.local.json
+*.local.json
+.env
+.env.*
+!.env.example
+!.env.sample

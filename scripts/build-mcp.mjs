@@ -9,7 +9,31 @@ const scriptDir = dirname(fileURLToPath(import.meta.url));
 const root = join(scriptDir, "..");
 const bundlePath = join(root, "mcp", "pdca-state-server.bundle.mjs");
 
+// The SDK statically imports its AJV default even when a custom validator is
+// supplied. Replace that default with the SDK's supported interpreted provider
+// in the release bundle: retain schema validation without shipping a JIT code
+// compiler. This is a provider substitution, not a scanner exclusion.
+let schemaDefaultsReplaced = 0;
+const interpretedSchemaProvider = {
+  name: "interpreted-json-schema-provider",
+  setup(bundler) {
+    bundler.onResolve({ filter: /^\.\.\/validation\/ajv-provider\.js$/ }, (args) => {
+      if (!args.importer.replaceAll("\\", "/").includes("/node_modules/@modelcontextprotocol/sdk/")) {
+        return undefined;
+      }
+      schemaDefaultsReplaced += 1;
+      return { path: "sdk-interpreted-schema-default", namespace: "scc-json-schema" };
+    });
+    bundler.onLoad({ filter: /.*/, namespace: "scc-json-schema" }, () => ({
+      contents: 'export { CfWorkerJsonSchemaValidator as AjvJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/cfworker";',
+      loader: "js",
+      resolveDir: root,
+    }));
+  },
+};
+
 const result = await build({
+  plugins: [interpretedSchemaProvider],
   entryPoints: [join(root, "mcp", "pdca-state-server.mjs")],
   outfile: bundlePath,
   bundle: true,
@@ -27,10 +51,20 @@ const result = await build({
   },
 });
 
+if (schemaDefaultsReplaced === 0) {
+  throw new Error("SDK default schema-provider import changed; review the interpreted provider substitution");
+}
+if (Object.keys(result.metafile.inputs).some((input) => /(?:^|\/)node_modules\/ajv(?:-formats)?\//.test(input))) {
+  throw new Error("Release bundle must not ship the AJV dynamic code compiler");
+}
+
 const normalizedBundle = readFileSync(bundlePath, "utf8")
   .replaceAll("\r\n", "\n")
   .replace(/[ \t]+$/gm, "")
   .trimEnd();
+if (/\b(?:eval\s*\(|new\s+Function\s*\()/.test(normalizedBundle)) {
+  throw new Error("Release bundle must not contain string-based JavaScript execution");
+}
 writeFileSync(bundlePath, `${normalizedBundle}\n`, "utf8");
 
 function packageRootFromInput(inputPath) {
@@ -52,7 +86,16 @@ const packages = packageRoots.map((packageRoot) => {
   const licenseFiles = readdirSync(packageRoot)
     .filter((fileName) => /^(license|licence|notice|copying)(?:[._-].*)?$/i.test(fileName))
     .sort();
-  if (licenseFiles.length === 0) {
+  // @cfworker/json-schema's published tarball omits its monorepo license.
+  // Keep the exact release license locally so offline, reproducible builds
+  // include attribution without fetching an unpinned file at build time.
+  const vendoredLicense = packageJson.name === "@cfworker/json-schema" && packageJson.version === "4.1.1"
+    ? {
+        fileName: "mcp/vendor-licenses/cfworker-json-schema-4.1.1-LICENSE.md (cfworker/cfworker@5409fdc2bd144f68e8b28c61c71fcb16600000a6/LICENSE.md)",
+        text: readFileSync(join(root, "mcp/vendor-licenses/cfworker-json-schema-4.1.1-LICENSE.md"), "utf8").trim(),
+      }
+    : null;
+  if (licenseFiles.length === 0 && !vendoredLicense) {
     throw new Error(`Bundled package ${packageJson.name} has no top-level license or notice file`);
   }
   return {
@@ -61,10 +104,13 @@ const packages = packageRoots.map((packageRoot) => {
     declaredLicense: typeof packageJson.license === "string"
       ? packageJson.license
       : JSON.stringify(packageJson.license ?? "UNKNOWN"),
-    licenseFiles: licenseFiles.map((fileName) => ({
-      fileName,
-      text: readFileSync(join(packageRoot, fileName), "utf8").replaceAll("\r\n", "\n").trim(),
-    })),
+    licenseFiles: [
+      ...licenseFiles.map((fileName) => ({
+        fileName,
+        text: readFileSync(join(packageRoot, fileName), "utf8").replaceAll("\r\n", "\n").trim(),
+      })),
+      ...(vendoredLicense && licenseFiles.length === 0 ? [vendoredLicense] : []),
+    ],
   };
 }).sort((a, b) => a.name.localeCompare(b.name));
 

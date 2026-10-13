@@ -14,6 +14,7 @@
     "verify:core-dist": "node scripts/verify-core-dist.mjs"
   },
   "devDependencies": {
+    "@cfworker/json-schema": "4.1.1",
     "@modelcontextprotocol/sdk": "1.30.0",
     "esbuild": "0.28.2",
     "typescript": "^7.0.2"

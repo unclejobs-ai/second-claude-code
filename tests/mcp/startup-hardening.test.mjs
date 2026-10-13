@@ -76,7 +76,9 @@ test("a fresh packaged plugin initializes without running a package manager", {
       },
     }) + "\n";
 
-    const result = spawnSync(process.execPath, [entryPath], {
+    // A fresh packaged release must initialize with string-based JavaScript
+    // generation forbidden, not merely with a dormant compiler in the bundle.
+    const result = spawnSync(process.execPath, ["--disallow-code-generation-from-strings", entryPath], {
       cwd: pluginRoot,
       env: {
         ...process.env,

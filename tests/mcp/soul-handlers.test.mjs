@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, rmSync } from "node:fs";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
@@ -540,18 +540,36 @@ function hoursAgoIso(hoursAgo) {
 }
 
 function commitAt(repoDir, message, iso) {
-  execSync(`git add file.txt && git commit -m '${message}'`, {
+  execFileSync("git", ["add", "file.txt"], { cwd: repoDir, encoding: "utf8" });
+  execFileSync("git", ["commit", "-m", message], {
     cwd: repoDir,
     encoding: "utf8",
     env: { ...process.env, GIT_AUTHOR_DATE: iso, GIT_COMMITTER_DATE: iso },
   });
 }
 
+test("retro git fixture preserves shell metacharacters as literal commit data", () => {
+  const repoDir = makeTempDir();
+  try {
+    initGitRepo(repoDir);
+    writeFileSync(path.join(repoDir, "file.txt"), "literal message\n", "utf8");
+    const message = "quote' ; $(printf unexpected) `printf unwanted` & end";
+    commitAt(repoDir, message, hoursAgoIso(46));
+    const recorded = execFileSync("git", ["log", "-1", "--format=%s"], {
+      cwd: repoDir,
+      encoding: "utf8",
+    }).trim();
+    assert.equal(recorded, message);
+  } finally {
+    rmSync(repoDir, { recursive: true, force: true });
+  }
+});
+
 function initGitRepo(repoDir) {
   mkdirSync(repoDir, { recursive: true });
-  execSync("git init", { cwd: repoDir, encoding: "utf8" });
-  execSync("git config user.email 'test@test.test'", { cwd: repoDir, encoding: "utf8" });
-  execSync("git config user.name 'Test'", { cwd: repoDir, encoding: "utf8" });
+  execFileSync("git", ["init"], { cwd: repoDir, encoding: "utf8" });
+  execFileSync("git", ["config", "user.email", "test@test.test"], { cwd: repoDir, encoding: "utf8" });
+  execFileSync("git", ["config", "user.name", "Test"], { cwd: repoDir, encoding: "utf8" });
 
   writeFileSync(path.join(repoDir, "file.txt"), "line 1\n", "utf8");
   commitAt(repoDir, "first commit", hoursAgoIso(52));
