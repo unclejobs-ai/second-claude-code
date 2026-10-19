@@ -32,7 +32,7 @@ Source file: `mcp/vendor-licenses/cfworker-json-schema-4.1.1-LICENSE.md (cfworke
     OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
     SOFTWARE.
 
-## @modelcontextprotocol/sdk@1.30.0
+## @modelcontextprotocol/sdk@1.32.1
 
 Declared license: MIT
 
