@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Scan with the catalog's pinned HOL scanner
-        uses: hashgraph-online/ai-plugin-scanner-action@8c2dd4f9cc381ad56496ca44aab10ce19f6bdd0f # v1.2.813
+        uses: hashgraph-online/ai-plugin-scanner-action@fe3a28696ed8316792c076c495482f602a59205d # v1.2.818
         with:
           plugin_dir: "."
           mode: scan
